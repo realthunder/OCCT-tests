@@ -41,14 +41,13 @@ STAGES = {
     "s22c": ("c747dd8371", "22"),
     "s23": ("80fa234b05", "23"),
 }
-# Upstream: the eleven files the fix chain touches, at the fork's base.
+# Upstream: every file the fork has changed in the two packages the fix chain
+# works in, at the fork's base. The packages are named, not the files: it was
+# eleven files once, the chain went on into six more, and a library built
+# again with those six left as the fork has them showed its fixes as upstream's.
 UPSTREAM = ("91be8c4c71", [
-    "src/ModelingAlgorithms/TKBool/BRepAlgo/" + f for f in (
-        "BRepAlgo_Loop.cxx", "BRepAlgo_Loop.hxx", "BRepAlgo_AsDes.cxx",
-        "BRepAlgo_FaceRestrictor.cxx", "BRepAlgo_Image.cxx")] + [
-    "src/ModelingAlgorithms/TKOffset/BRepOffset/" + f for f in (
-        "BRepOffset_Tool.cxx", "BRepOffset_Inter2d.cxx", "BRepOffset_Inter2d.hxx",
-        "BRepOffset_Inter3d.cxx", "BRepOffset_MakeLoops.cxx", "BRepOffset_MakeOffset.cxx")])
+    "src/ModelingAlgorithms/TKBool/BRepAlgo",
+    "src/ModelingAlgorithms/TKOffset/BRepOffset"])
 def _blindpot():
     # The blind hole's wall and floor and the top beside them, an open shell:
     # Face3 is the top.

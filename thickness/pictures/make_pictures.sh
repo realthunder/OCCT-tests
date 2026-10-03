@@ -25,7 +25,12 @@ LIBS="libTKBool.so.8.0.1 libTKOffset.so.8.0.1"
 
 # The libraries: "up" and one per stage.
 set -- $(tables "print(cases.UPSTREAM[0], ' '.join(cases.UPSTREAM[1]))")
-[ -e $W/old/up/lib/libTKOffset.so.8.0.1 ] || $HERE/mkold.sh $1 $W/old/up "${@:2}" > $W/old/up.log
+if [ ! -e $W/old/up/lib/libTKOffset.so.8.0.1 ]; then
+    # upstream's files of the chain's packages, those the fork has changed
+    O=${OCCT:-$(cd $HERE && git rev-parse --show-superproject-working-tree)}
+    UPFILES=$(cd $O && git diff --name-only $1 HEAD -- "${@:2}")
+    $HERE/mkold.sh $1 $W/old/up $UPFILES > $W/old/up.log
+fi
 STAGES=$(tables "print(' '.join(cases.STAGES))")
 for st in $STAGES; do
     commit=$(tables "print(cases.STAGES['$st'][0])")

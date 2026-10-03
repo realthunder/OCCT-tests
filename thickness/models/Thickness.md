@@ -41,9 +41,10 @@ this page that fixed it.
 Four columns:
 
 - **the shape given** -- the input, the removed face or faces in magenta.
-- **upstream OCCT 8.0.1** -- upstream's eleven files of the fix chain at the
-  fork's base (`91be8c4c71`), compiled into scratch `TKBool`/`TKOffset`
-  libraries and preloaded, the rest of the fork as it is.
+- **upstream OCCT 8.0.1** -- upstream's files of the fix chain's two packages,
+  `BRepAlgo` and `BRepOffset`, at the fork's base (`91be8c4c71`), compiled
+  into scratch `TKBool`/`TKOffset` libraries and preloaded, the rest of the
+  fork as it is.
 - **fork before** -- the fork's `TKBool`/`TKOffset` sources at the commit just
   before the fix (named in the heading), the same way.
 - **fork after** -- the fork now.
@@ -1585,7 +1586,7 @@ have no before-and-after here.
 ten minutes on the dev box, most of it building libraries:
 
 1. `mkold.sh` builds scratch `TKBool`/`TKOffset` libraries -- upstream's
-   eleven chain files at `91be8c4c71`, and the fork's sources at each
+   `BRepAlgo` and `BRepOffset` files at `91be8c4c71`, and the fork's sources at each
    stage's "before" commit (`STAGES` in `cases.py`) -- from the build tree's
    own compile commands (`oldbuild.py`).
 2. `compute.py` runs every case of `cases.py` under `FreeCADCmd`, once per
