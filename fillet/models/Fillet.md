@@ -165,9 +165,8 @@ volume is the unsplit fin's.
 
 ![fin_on_block_wall_r0.8](pictures/fin_on_block_wall_r0.8.png)
 
-Still open: a radius equal to the narrow piece's width, 0.7, where the
-fillet's line on the wall runs along the split itself (`slot_split_wall_r0.7`,
-`fin_on_block_wall_r0.7`, XFAIL).
+A radius equal to the narrow piece's width, 0.7, where the fillet's line on
+the wall runs along the split itself, stayed open; see the last fix below.
 
 ### A corner plate whose boundary curve missed its first surface (`2b9df66c48`, realthunder/FreeCAD#962)
 
@@ -262,6 +261,33 @@ outline does not show. The same fix gives four more edges into these corners
 gives them, and tolerances of 0.007 to 0.12 where they had the radius.
 
 ![issue962_e33_r0.3](pictures/issue962_e33_r0.3.png)
+
+### A fillet as wide as the piece of a split wall (`98c6125b85`)
+
+The slot and the fin of the two fixes above, their wall split 0.7 from the
+outer face, at a radius within the walk's tolerance (1e-4) of 0.7: the
+fillet's line on the wall runs along the split, its whole length. The walk
+starts, and goes on, only at points inside both faces, and a line along
+the split is on the boundary of both pieces everywhere. At 0.7 the walk
+did not start: the fin's picture shows the input in both "before"
+columns. Just past it, at 0.7001, it started on the wide piece, but the
+line's ends fell on the split's own vertices and nothing cut the narrow
+piece away: the wide piece kept the split and the fillet's line side by
+side, a slit of no width, and the narrow piece stayed whole beside the
+fillet. The slot's picture draws the wall red, the split's edges red, and
+on the third row the block's top still holding the narrow piece's edge, a
+loose end circled red. Upstream fails too, with another volume.
+
+Now, on the far piece, a point on the split toward the piece the spine is
+on counts as inside; a line along that split cuts the split away, as it
+does the spine's edge; and the top corner, of three convex edges, cuts
+away the narrow piece's edge on the top as the floor's corner already did.
+Every radius from 0.69995 to 0.7001 gives the unsplit slot's volume, and a
+chamfer of the same size, which walks the same way, comes out right with
+it.
+
+![slot_split_wall_r0.7001](pictures/slot_split_wall_r0.7001.png)
+![fin_on_block_wall_r0.7](pictures/fin_on_block_wall_r0.7.png)
 
 ## Making the pictures
 

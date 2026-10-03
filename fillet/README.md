@@ -210,13 +210,8 @@ go from failing to valid -- the split fin's own edge at 0.8 and 2 -- and
 the other 3919 are the same. FreeCAD's `TestPartApp` (139) and
 `TestPartDesignApp` (77) pass.
 
-Still open (XFAIL), on the split slot as on the split fin: a radius
-within about 1e-4 of the piece's width, 0.7. The fillet's line on the wall
-then runs along the split itself, its whole length; the start of the walk
-wants a point inside both faces (`BRepBlend_Walking::PerformFirstSection`),
-and it is on the boundary of both pieces everywhere. 0.69999 and 0.701
-work; 0.7 and 0.70001 fail to start, 0.7001 comes out invalid. It wants the
-walk to take the tangent pieces as one face, a larger change.
+A radius within about 1e-4 of the piece's width, 0.7, stayed open; see
+below.
 
 ## A corner plate whose boundary curve missed its first surface (realthunder/FreeCAD#962, 2026-10-02)
 
@@ -454,11 +449,59 @@ of #876's results came out differently by order alone. Run on a fresh copy
 each, #876's two shapes change only in 48 invalid results becoming
 exceptions.)
 
+## A fillet as wide as the piece of a split wall (2026-10-03)
+
+The last of the split-wall cases: the slot and the fin above, their wall
+split 0.7 from the outer face, at a radius within the walk's tolerance
+(1e-4) of 0.7. The fillet's line on the wall then runs along the split
+itself, its whole length. 0.69999 and 0.701 worked; 0.7 and 0.70001 failed
+to start (`StartsolFailure`), and 0.7001 came out invalid.
+
+Two things stood in the way. The walk starts and goes on only at points IN
+both faces (`BRepBlend_Walking::PerformFirstSection`, and each step after
+it), and a line along the split is ON the boundary of both pieces,
+everywhere. And where it did start (0.7001), on the wide piece, the line's
+ends fell on the split's vertices, and the corners had nothing to cut away
+the narrow piece with: the wide piece kept the split and the fillet's line
+side by side, a slit of no width, and the narrow piece stayed whole beside
+the fillet -- an unorientable shell.
+
+Fix `98c6125b85`, in three parts:
+
+- **The walk's domain.** On the far piece, a point that is ON only the
+  split toward the piece the spine is on, and on the face's own side of
+  it, is IN: the piece the spine is on goes under the fillet whole, the far
+  piece keeps all of itself. The split must be tangent and must not touch
+  the spine -- a side of the spine's face that meets the spine at its end
+  (#474's Fillet003, edge 18, a B-spline ring face) is crossed by the line,
+  not followed, and treating it so turned a walking failure into an invalid
+  shape.
+- **The split under the line.** When the line on a face runs from vertex to
+  vertex along such a split, each corner cuts the split away from its end,
+  as it cuts the spine's edge.
+- **The end face at a convex corner.** The edges of the end face from the
+  vertex to a common point beyond the face beside it lie under the fillet
+  -- the narrow piece's top edge here. Only the corner `OnSame` (concave
+  spine, the floor) cut them away; the corner of three convex edges (the
+  top) does now as well.
+
+Every radius from 0.69995 to 0.7001 gives the unsplit slot's volume, the
+fillet a quarter cylinder of the radius over the spine's 9.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_split_{wall,both}_r{0.7,0.70001,0.7001}` | the slot, its wall split (and its outer face too): the unsplit slot's volume |
+| `fin_on_block_wall_r{0.7,0.70001,0.7001}` | the same on the fin flush with the block |
+| `slot_split_wall_chamfer_d{0.7,0.70001,0.7001}` | a chamfer of that size on the slot, which walks the same way (it failed or came out invalid as the fillet did): 1130 - 9 d^2/2 |
+
+The every-edge sweep (3921 fillets of 25 shapes) has nothing else move: no
+valid result changes its volume or tolerance, and no status changes.
+FreeCAD's `TestPartApp` (139) and `TestPartDesignApp` (77) pass.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
-| `slot_split_wall_r0.7`, `fin_on_block_wall_r0.7` | `StdFail_NotDone` (no start for the walk): the radius equal to the wall's piece, the fillet's line on the wall running along the split |
 | `arm_on_tall_block_whole_r0.5` | invalid at every radius: #962's edge 36 corner with the block's side one face; the arm's top, extended under the block's wall, crosses itself |
 | `seam_end_bottom_r2` | invalid, where its mirror image across z=5 (`seam_end_top_r2`) is valid: at radius 2 the fillet's end reaches the far end of the cylinder's face too (u = pi/2, the vertex at (0, 2)) |
 | `mirror_top_r2` | `StdFail_NotDone`, the same reach on the side without the seam |

@@ -19,6 +19,7 @@ STAGES = {
     "s962d": ("d4f71dfae3", "2b9df66c48"),
     "s962e": ("6d61205cc1", "fb9200b0fd"),
     "s962f": ("1e6f5a464c", "3fa9420429"),
+    "s962g": ("b6928966df", "98c6125b85"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -156,6 +157,8 @@ UVFACE_CASE = {
     "issue962_e56_r0.8": _plate_near(38.5, 27.2, -3.75),
     # the corner's plate at edge 33's end
     "issue962_e33_r0.3": _plate_near(38.5, 10.2, -3.75),
+    # the block's top beside the slot (y 0..3), where the fillet ends at the top
+    "slot_split_wall_r0.7001": _plane_at("z", 14, None, {"y": 3.0}),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -190,6 +193,10 @@ UVLABEL = {
     "armfoot": ("the arm's bottom", False),
     "armtall": ("the corner's plate", False),
     "p474": ("the corner's plate", False),
+}
+# case -> the same, when its face is not the shape's (UVFACE_CASE)
+UVLABEL_CASE = {
+    "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -233,6 +240,10 @@ CASES = {
                               (-13, 0, 13), (-1, 1, 0.6)),
     "issue962_e33_r0.3": ("s962f", "p962", ((17.356038, -9.42499, -3.75), (38.5, 10.2, -3.75)),
                           0.3, 11583.5858, (38.5, 10.2, -3.75), (-1, -1, 0.6)),
+    "slot_split_wall_r0.7001": ("s962g", "slotwall", ((10, 3, 5), (10, 3, 14)), 0.7001, 1129.0533,
+                                (10, 3, 5), (1, 0.9, 0.8)),
+    "fin_on_block_wall_r0.7": ("s962g", "finwall", ((10, 3, 5), (10, 3, 14)), 0.7, 769.0536,
+                               (10, 3, 5), (1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

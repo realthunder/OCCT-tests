@@ -15,7 +15,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cases import CASES, EDGES, NAMES, STAGES, UVLABEL, VIEW, ZOOM
+from cases import CASES, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM
 
 P = os.environ["FILLET_WORK"]
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
@@ -133,7 +133,7 @@ for name in sys.argv[2:] or list(CASES):
         for ci, uv in enumerate(uvs):
             x = ci * W
             P2 = lambda p: (x + mx + (p[0] - u0) * sx, y0 + my + (v1 - p[1]) * sy)
-            label, grid = UVLABEL[sk]
+            label, grid = UVLABEL_CASE.get(name, UVLABEL[sk])
             d.text((x + 10, y0 + 6), label + " in (u, v)", font=F, fill=(110, 110, 110))
             k = 0
             while grid and k * (math.pi / 2) <= u1 + 1e-9:

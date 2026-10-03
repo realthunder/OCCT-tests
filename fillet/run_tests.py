@@ -107,8 +107,10 @@ def document_case(name, filename, volumes=None):
 # Shape cases: one fillet on a stored or built shape.
 # ---------------------------------------------------------------------------
 
-def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None):
-    """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list.
+def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
+                chamfer=False):
+    """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
+    makeChamfer(radius, ...) with chamfer=True.
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
                     ref_volume when given, and no edge or vertex tolerance
@@ -119,7 +121,8 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
     try:
         before = signature(shape)
         indices = edge_index if isinstance(edge_index, list) else [edge_index]
-        r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
+        op = shape.makeChamfer if chamfer else shape.makeFillet
+        r = op(radius, [shape.Edges[i - 1] for i in indices])
         problems = []
         if signature(shape) != before:
             problems.append("input changed: valid=%s vol=%.4f" % signature(shape))
@@ -370,10 +373,22 @@ for r in (0.3, 0.8, 2.0):
     taken = plain.Volume - plain.makeFillet(r, [plain.Edges[spine - 1]]).Volume
     fillet_case("fin_on_block_wall_r%g" % r, fin, edge_between(fin, (10, 3, 5), (10, 3, 14)), r,
                 "pass", fin.Volume - taken)
-# exactly as wide as the wall's piece: the fillet's line on the wall runs
-# along the split itself
-for tag, s in (("slot_split_wall", slotted(wall=True)), ("fin_on_block_wall", fin)):
-    fillet_case("%s_r0.7" % tag, s, edge_between(s, (10, 3, 5), (10, 3, 14)), 0.7, "xfail")
+# exactly as wide as the wall's piece, and within the walk's tolerance (1e-4)
+# of it: the fillet's line on the wall runs along the split itself, the
+# narrow piece and the split go under the fillet
+for r in (0.7, 0.70001, 0.7001):
+    taken = plain.Volume - plain.makeFillet(r, [plain.Edges[spine - 1]]).Volume
+    for tag, s in (("slot_split_wall", slotted(wall=True)),
+                   ("slot_split_both", slotted(wall=True, outer=True)),
+                   ("fin_on_block_wall", fin)):
+        fillet_case("%s_r%g" % (tag, r), s, edge_between(s, (10, 3, 5), (10, 3, 14)), r, "pass",
+                    s.Volume - taken)
+# and a chamfer of that size, which walks the same way: a triangle of d^2/2
+# over the spine's 9
+for d in (0.7, 0.70001, 0.7001):
+    s = slotted(wall=True)
+    fillet_case("slot_split_wall_chamfer_d%g" % d, s, edge_between(s, (10, 3, 5), (10, 3, 14)), d,
+                "pass", s.Volume - 4.5 * d * d, chamfer=True)
 
 # realthunder/FreeCAD#876's first Fillet input: the four edges at the corner
 # (17,16.75,3). The two-stripe corner there has its common points on two
