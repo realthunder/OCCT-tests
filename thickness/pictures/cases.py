@@ -42,6 +42,8 @@ STAGES = {
     "s23": ("80fa234b05", "23"),
     "s24": ("42475a8cca", "24"),
     "s25": ("8d5aa88952", "25"),
+    "s26a": ("99971a1dc8", "26"),
+    "s26b": ("54d2c02774", "26"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -102,6 +104,11 @@ def _split_at(shape, i):
     # The shape with a vertex at the middle of its edge i (0-based).
     e = shape.Edges[i]
     return shape.generalFuse([Part.Vertex(e.valueAt((e.FirstParameter + e.LastParameter) / 2))])[0].Solids[0]
+
+
+def _reordered(shape, order):
+    # The solid with its faces in another order (1-based).
+    return Part.Solid(Part.Shell([shape.Faces[i - 1] for i in order]))
 
 
 def _axis_wedge(ang):
@@ -186,6 +193,9 @@ SHAPES = {
     "bulletsplit": lambda: _split_at(Part.makeCylinder(5, 4, V(0, 0, -4)).fuse(
         Part.makeSphere(5, V(), V(0, 0, 1), 0, 90, 360)).removeSplitter(), 1),
     "dome270split": lambda: _split_at(Part.makeSphere(5, V(), V(0, 0, 1), 0, 90, 270), 3),
+    "cutballsplit": lambda: _split_at(Part.makeSphere(5).cut(Part.makeBox(20, 20, 20, V(-10, -20, -10))), 2),
+    "luneballsplit": lambda: _split_at(_halfball("meridian"), 0),
+    "luneball_flatsfirst": lambda: _reordered(_halfball("meridian"), (3, 4, 1, 2)),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -351,6 +361,13 @@ CASES = {
     "luneball_sphere1_in": ("s25", "luneball", 1, -0.5, False, 0, 73.5777),
     "turned_eqball_sphere2_in": ("s25", "turned_eqball", 2, -0.5, False, 0, 73.5777),
     "placed_luneball_sphere2_in": ("s25", "placed_luneball", 2, -0.5, False, 0, 73.5777),
+    "cutballsplit_sphere_out": ("s26a", "cutballsplit", 1, +0.5, False, 0, 39.1390),
+    "cutballsplit_disc_join_out": ("s26a", "cutballsplit", 2, +0.5, False, 2, 86.6556),
+    "cutballsplit_disc_join_in": ("s26a", "cutballsplit", 2, -0.5, False, 2, 70.9476),
+    "luneball_flatsfirst_sphere1_join_out": ("s26b", "luneball_flatsfirst", 3, +0.5, False, 2, 91.1786),
+    "luneball_flatsfirst_sphere2_join_in": ("s26b", "luneball_flatsfirst", 4, -0.5, False, 2, 74.1857),
+    "luneballsplit_sphere1_join_out": ("s26b", "luneballsplit", 1, +0.5, False, 2, 91.1786),
+    "luneballsplit_sphere1_join_in": ("s26b", "luneballsplit", 1, -0.5, False, 2, 74.1857),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

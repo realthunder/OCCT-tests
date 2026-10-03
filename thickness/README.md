@@ -444,6 +444,20 @@ case is marked `XFAIL`.
 | `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `placed_eqball_sphere2_out`, `turned_eqball_sphere2_in` | the half ball with its sphere in two domes, one removed, Arc join | 89.1638 outward, 73.5777 inward; refused. The flat's offset is closed by a step between two circles that never meet, an edge of the ball round the tangent edge's end; no sliver face |
 | `luneball_sphere1_out/in`, `luneball_sphere2_out/in`, `placed_luneball_sphere2_in`, `turned_luneball_sphere2_out` | the same in two lunes | the same volumes; refused. The line between the flat's halves is cut at the section and both halves have it cut |
 
+## A seam that is none, and a face beyond its tangent edge (2026-10-03, sec 26)
+
+`models/Thickness.md`, "Sec 26", has the causes: the two sec 24 found and
+left. No case is marked `XFAIL`. `sweep/survey.sh` runs the two surveys
+behind sec 22, 24 and 26 -- a vertex on an edge (`split`) and the solid's
+faces in another order (`order`) must change nothing -- over 25 shapes,
+plain, `placed` or `turned`; both are clean.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `cutballsplit_rim_*` | half a ball cut from a ball by a box, a vertex on the half of its rim that was the ball's seam | 39.1390, 86.6556, 70.9476; refused. The edge has two pcurves on the sphere and the face runs along it once: no seam, and its pieces are joined |
+| `luneball_flatsfirst_sphere1/2_join_out/in`, `turned_luneball_flatsfirst_sphere1_join_out` | the half ball in two lunes, its faces in the order flat, flat, lune, lune; one lune removed, Intersection join | 91.1786 outward, 74.1857 inward; an invalid 87.4583 and 72.4404. The flat's half beside the removed lune built the other half's face a second time, beyond the line between them |
+| `luneballsplit_meridian_*`, `luneballsplit_rim_*`, `placed_luneballsplit_meridian_f1_join_in` | the same solid as made, a vertex on the meridian between the lunes or on the rim beside the removed one | the same volumes; refused. Joined, it is the solid in that order |
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
@@ -531,5 +545,6 @@ tests/fork/thickness/
     pictures/        before and after, one PNG per fixed case
   pictures/          the tools that make them (make_pictures.sh)
     sliver/          the Arc join's sliver face, a figure of its own (sec 25)
-  sweep/             the 928-run sweep, its reference and its hand values
+  sweep/             the 928-run sweep, its reference and its hand values,
+                     and the two surveys (survey.sh)
 ```

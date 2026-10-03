@@ -1190,6 +1190,40 @@ _capsplit = split_at(_cap, 2)
 thickness_case("placed_capsplit_seam_f1_out", placed(_capsplit), face_of(_capsplit, _cap, 1), +0.5,
                "pass", 31.285)
 
+# Sec 26. The two the vertex survey of sec 24 left. Half a ball cut from a
+# ball by a box keeps the ball's seam for half its rim, both pcurves still on
+# it: with a vertex there the pieces were taken for a seam's, not joined, and
+# the sphere not turned onto its middle -- refused four ways. And the half
+# ball in two lunes, one removed with the Intersection join, was right or
+# wrong by the order its faces came in: the flat's half beside the removed
+# lune holds the arc that bounds the other half too, closed it with the line
+# between them, and the shell had the other half's face twice -- an invalid
+# 87.4583 for 91.1786 with both halves before the lune that stays, which is
+# the order the solid has once a vertex on the meridian or the rim is joined
+# away. An offset face does not reach across its tangent edge.
+split_cases("cutballsplit_rim", _cutball, 3, [(1, +0.5, 0, 39.1390), (1, +0.5, 2, 39.1390),
+                                              (2, +0.5, 2, 86.6556), (2, -0.5, 2, 70.9476)])
+split_cases("luneballsplit_meridian", _lunes, 1, [(1, +0.5, 2, 91.1786), (1, -0.5, 2, 74.1857)])
+split_cases("luneballsplit_rim", _lunes, 3, [(1, +0.5, 2, 91.1786)])
+
+
+def reordered(shape, order):
+    """the solid with its faces in another order (1-based indices of `shape`)"""
+    return Part.Solid(Part.Shell([shape.Faces[i - 1] for i in order]))
+
+
+_flatsfirst = reordered(_lunes, (3, 4, 1, 2))
+for _fi in (1, 2):
+    thickness_case("luneball_flatsfirst_sphere%d_join_out" % _fi, _flatsfirst, _fi + 2, +0.5,
+                   "pass", 91.1786, False, 2)
+    thickness_case("luneball_flatsfirst_sphere%d_join_in" % _fi, _flatsfirst, _fi + 2, -0.5,
+                   "pass", 74.1857, False, 2)
+thickness_case("turned_luneball_flatsfirst_sphere1_join_out", turned(_flatsfirst), 3, +0.5,
+               "pass", 91.1786, False, 2)
+_luneballsplit = split_at(_lunes, 1)
+thickness_case("placed_luneballsplit_meridian_f1_join_in", placed(_luneballsplit),
+               face_of(_luneballsplit, _lunes, 1), -0.5, "pass", 74.1857, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

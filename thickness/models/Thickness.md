@@ -117,14 +117,15 @@ a mode: 204. From that section on the sweep is also run with every solid
 under a location and with its geometry turned in space (`SWEEP_PLACE`): the
 same 928 volumes, all right.
 
-Of the 146 pictured cases, 39 are ones upstream gets right and the fork had
+Of the 169 pictured cases, 40 are ones upstream gets right and the fork had
 broken -- the chain's casualties (sec 2, 3, part of 4, the holed
 cone's top with intersection on, sec 10, a short box's and a box's bottom
 alone, sec 11 and 12, a pocket's open shell, sec 13, the
 input left inside out, sec 14, the faces closed at a pole, sec
 16, half of a cap turned in space, its sphere removed, sec 20,
-a dome with its rim in two arcs, sec 21, and an edge in pieces, sec 22).
-The other 107 fail upstream too: the fork
+a dome with its rim in two arcs, sec 21, an edge in pieces, sec 22, and a
+seam in pieces, sec 24).
+The other 129 fail upstream too: the fork
 now does better than upstream there.
 
 Nothing in the suite fails. Half a ball cut through both its poles, which
@@ -133,7 +134,9 @@ leaves it, or with its sphere in two faces, in sec 21, which marks
 eight cases known broken: ball wedges on more than half a turn with the
 sphere removed, and a dome's half flat with the Intersection join. Sec 22
 answers the eight, and an edge in pieces, which broke the faces beside it
-in 361 of 824 runs. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
+in 361 of 824 runs; sec 24 and sec 26 answer what a wider survey of that
+still found, and sec 26 the order of a solid's faces, asked about there for
+the first time. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
 piece is a plain plate or disc, with either join (sec 12), and sec 13
 the pieces that are pockets and bosses: every one checks by hand. The one
 refusal left in the sweep is the torus's face, and it is right: with its one
@@ -1718,6 +1721,78 @@ domes and twelve in lunes, eight inward, the smallest a ball's.
 ![placed_luneball_sphere2_in](pictures/placed_luneball_sphere2_in.png)
 
 Sec 24's two found and not fixed are as they were.
+
+### Sec 26: a seam that is none, and a face beyond its tangent edge
+
+The two sec 24 found and left.
+
+**A seam the face runs along once** (`54d2c02774`, `BRepOffset_MakeOffset`,
+`HasSplitEdge`). Half a ball cut from a ball by a box has the ball's seam
+for half of its rim: the cutting plane passes through it. The edge keeps
+both of the pcurves it had on the sphere, and `BRep_Tool::IsClosed` says it
+is closed on the face -- which runs along it once, half a turn from pole to
+pole. An edge in pieces is joined first (sec 22), and what tells an edge in
+pieces from a seam in pieces asked just that: with a vertex on that half of
+the rim the two pieces were a seam's of a face with none, between two faces
+and not one, and nothing was joined. The sphere, its outline in five edges
+where the half ball's has four, was then not turned onto its middle either
+(sec 21), and the thick solid was made of the solid as it came: the sphere
+removed outward, `Standard_ConstructionError` with the Arc join and refused
+with the Intersection join, for 39.1390; the disc removed with the
+Intersection join, refused both ways, for 86.6556 and 70.9476. Placed or
+turned it was right -- a copy has the one pcurve. A seam is told by
+`BRepTools::IsReallyClosed`, which looks for the edge twice in the face,
+there and wherever else the cut and the joins ask.
+
+![cutballsplit_sphere_out](pictures/cutballsplit_sphere_out.png)
+
+![cutballsplit_disc_join_out](pictures/cutballsplit_disc_join_out.png)
+
+![cutballsplit_disc_join_in](pictures/cutballsplit_disc_join_in.png)
+
+**The order of the faces.** The half ball in two lunes with a vertex on the
+meridian between them, or on the rim beside the removed lune, was refused
+three ways with the Intersection join. The vertex has nothing to do with
+it. Joined away, it leaves the solid sec 23 gets right -- with its faces in
+another order, both halves of the flat before the lunes, and in that order
+the plain solid is wrong too, and not refused: an invalid solid of 87.4583
+for 91.1786 outward and 72.4404 for 74.1857 inward. A second survey asks
+that the order of a solid's faces change nothing (`sweep/survey.sh order`:
+every rotation of the face list and its reverse, the 25 shapes of the
+vertex survey): 10 runs of 2038 changed, all of them this solid's, and 32 of
+368 over all 24 orders of its four faces -- every order with both halves of
+the flat before the lune that stays.
+
+**A cell beyond a tangent edge** (`d0c9abd649`, `BRepOffset_MakeOffset`,
+`DropCellsBeyondTangentEdges`). The offset of the lune that stays cuts both
+halves of the flat along one circle: a section three faces share, cut for
+all of them, each keeping the pieces the others take (sec 18). The loops
+make a face of every cell their edges close, whichever way an edge is run
+(sec 7). So the half beside the removed lune, holding the arc that bounds
+the other half, closed it with the line between the halves: the other
+half's face a second time, under the wrong face. With the lune first the
+shell dropped one of the two as hanging; with the halves first it kept
+both.
+
+An offset face does not reach across the offset of an edge it shares with a
+face tangent to it: what lies beyond is the neighbour's. Once the loops are
+made, a cell is dropped that lies -- of the image of such an edge -- on the
+side the face does not lie of the edge itself. The side is the surface's
+normal crossed with the edge's direction, taken in the cell and in the
+face; a face's last cell stays.
+
+![luneball_flatsfirst_sphere1_join_out](pictures/luneball_flatsfirst_sphere1_join_out.png)
+
+![luneball_flatsfirst_sphere2_join_in](pictures/luneball_flatsfirst_sphere2_join_in.png)
+
+![luneballsplit_sphere1_join_out](pictures/luneballsplit_sphere1_join_out.png)
+
+![luneballsplit_sphere1_join_in](pictures/luneballsplit_sphere1_join_in.png)
+
+Both surveys now change nothing, plain, placed and turned: a vertex on an
+edge in 3696 runs, the order of the faces in 2038. Neither counts a run the
+shape as made has no valid answer for -- the torus's one face -- and the
+order survey takes all the orders of one solid only.
 
 ## The captured models
 

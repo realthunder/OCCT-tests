@@ -44,7 +44,10 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "placed_luneball": "half a ball, its sphere in two lunes, placed",
          "capsplit": "a sphere's cap above latitude 30, a vertex on its seam",
          "bulletsplit": "a dome on a cylinder, a vertex on the cylinder's seam",
-         "dome270split": "three quarters of a dome, a vertex on an edge"}
+         "dome270split": "three quarters of a dome, a vertex on an edge",
+         "cutballsplit": "a ball cut in half by a box, a vertex on its rim",
+         "luneballsplit": "half a ball, its sphere in two lunes, a vertex on the meridian between them",
+         "luneball_flatsfirst": "half a ball, its sphere in two lunes, its faces in the order flat, flat, lune, lune"}
 JOIN = {0: "Arc join", 2: "Intersection join"}
 def status(d):
     if d["ok"] and d.get("refused"):
