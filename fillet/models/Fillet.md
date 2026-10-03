@@ -191,8 +191,8 @@ small block is the same corner made small; it failed the same way.
 The fix lets five other fillets of the sweep get past their plate, and they
 fail further on, as an invalid shape instead of an exception (see
 `../README.md`). Also open: the same corner with the block's side one face
-(`arm_on_tall_block_whole_r0.5`, XFAIL), invalid at every radius, before
-the fix as after.
+(`arm_on_tall_block_whole_r0.5`), invalid at every radius, before the fix
+as after -- fixed since, below.
 
 ### A corner plate folded to stay tangent (`fb9200b0fd`, realthunder/FreeCAD#962)
 
@@ -288,6 +288,32 @@ it.
 
 ![slot_split_wall_r0.7001](pictures/slot_split_wall_r0.7001.png)
 ![fin_on_block_wall_r0.7](pictures/fin_on_block_wall_r0.7.png)
+
+### A fillet's end under a wall that runs on past the corner (`692cae9e35`)
+
+The small block of the plate fix above with the block's side y=27.2 left
+one face, from the floor to the block's top. The fillet's line on the arm's
+side stops at the arm's top; the one on the block's side runs on up the
+wall. The corner stretched the arm's top out to meet it, and the arm's top
+reaches under the block there: the section's arc crossed the arm top's own
+edge x=38.5, and the arm top's outline crossed itself. In both "before"
+columns the arm's top is drawn red, the face that fails, its shading
+folded along a diagonal; zoomed on the fillet's top, it runs on as a flat
+red sheet past the fillet into the block's corner. Upstream fails the same
+way, with the same volume. The crossing itself is 0.375 wide at radius 2
+(0.1875 r), too small to show in the third row, which draws the whole arm
+top: its outline looks the same in all three columns.
+
+Now the corner checks for that crossing first. When the arm top's other
+edge runs into the corner, the line on the block's side is cut where the
+arm's side ends, as a split at the arm's top would cut it, and the corner
+gets the plate the split block gets: the same result to within 0.5% of
+what the fillet takes -- in the zoom, the small patch where the fillet's
+top meets the arm's top and the block's corner. The mirror corner, the block's edge coming down onto
+the arm's top, crosses nothing -- there the stretched arm top is the
+fillet's floor -- and keeps the exact plane.
+
+![arm_on_tall_block_whole_r2](pictures/arm_on_tall_block_whole_r2.png)
 
 ## Making the pictures
 

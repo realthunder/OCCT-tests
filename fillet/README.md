@@ -254,7 +254,8 @@ and `makeFillet` hand the invalid shape back. FreeCAD's `TestPartApp`
 Found on the way, open (XFAIL): the same corner with the block's side one
 face, `arm_on_tall_block_whole_r0.5`, is invalid at every radius, with the
 fork before the fix as after -- the arm's top is extended past the block's
-wall by the fillet's reach (0.1875 r) and its wire crosses itself.
+wall by the fillet's reach (0.1875 r) and its wire crosses itself. (Fixed
+since: "A fillet's end under a wall that runs on past the corner", below.)
 
 ## A corner plate folded to stay tangent (realthunder/FreeCAD#962, 2026-10-02)
 
@@ -498,11 +499,61 @@ The every-edge sweep (3921 fillets of 25 shapes) has nothing else move: no
 valid result changes its volume or tolerance, and no status changes.
 FreeCAD's `TestPartApp` (139) and `TestPartDesignApp` (77) pass.
 
+## A fillet's end under a wall that runs on past the corner (2026-10-03)
+
+The open case of the plate fix above: the arm fused to the taller block,
+the fillet on the arm's edge against the block's side y=27.2, that side one
+face from the floor to the block's top. Split at the arm's top, the corner
+is valid; whole, it was invalid at every radius.
+
+The fillet is a cylinder, and each of its lines is clipped to its own face:
+the one on the arm's side stops at the arm's top (z=-3.75), the one on the
+block's side runs on to the block's top (z=14). The end vertex has four
+edges, one line ends on an edge of it and the other does not, and
+`PerformIntersectionAtEnd` hands such a corner to `IntersectMoreCorner`. That
+extends the face at end -- the arm's top -- to cut the line on the block's
+side, and takes the face beyond the arm top's other edge at the vertex to
+be the block's side again or tangent to it. Here it is the block's face
+x=38.5, standing on the arm's top: the arc of the section on the extended
+arm top runs under it, across the arm top's own edge, and the arm top's
+wire crossed itself. What lies there is not the arm's top at all but a
+ceiling under the block, facing down.
+
+Fix `692cae9e35`: the corner first checks whether the arm top's other
+edge at the vertex runs into the corner between the vertex and the
+section's two points (`SectionCrossesEndFace`). If it does, the line on the
+block's side is cut at the section through the arm side's end -- where an
+edge splitting the block's side there would cut it -- and the corner is
+filled as the split side's is, with the corner plate. The result is the
+split block's to within 0.5% of the volume the fillet takes, and its
+plate's tolerance is no worse (0.0216 at radius 3, 0.0249 split).
+
+The test is the crossing, not the face beyond being tangent: the mirror
+corner, the block's edge x=38.5 y=10.2 coming down onto the arm's top, has
+a face beyond that is not tangent either (the arm's other side), but there
+the extended arm top is the floor of the fillet's end, faces the arm top's
+way, and crosses nothing. `IntersectMoreCorner` makes it exactly; a plate
+in its place misses by 1e-2 (a first version of the fix did that, and the
+sweep showed 13 valid results turn to exceptions and 6 invalid, #962 and
+#474's edges coming down onto a step among them).
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_tall_block_whole_r{0.1,0.3,0.5,2}` | the corner with the block's side one face: valid (no volume: the change is below GProp's precision on the whole shape) |
+| `arm_on_tall_block_down_r{0.3,1,2}` | the mirror corner: the exact floor, the volume of a quarter-round's section over the edge's 17.75, tolerance under 1e-3 |
+
+The every-edge sweep (3921 fillets of 25 shapes) is the same to the last
+digit. The vertex sweep -- at every vertex of the same shapes and the two
+arm blocks, all its edges together, each pair and each alone, at radii 0.3
+and 1: 12722 fillets -- moves 12 results, all on the unsplit arm block, all
+from invalid to valid: the edge at radius 0.3 and 1, alone and with the
+other edges of its two vertices. FreeCAD's `TestPartApp` (139) and
+`TestPartDesignApp` (77) pass.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
-| `arm_on_tall_block_whole_r0.5` | invalid at every radius: #962's edge 36 corner with the block's side one face; the arm's top, extended under the block's wall, crosses itself |
 | `seam_end_bottom_r2` | invalid, where its mirror image across z=5 (`seam_end_top_r2`) is valid: at radius 2 the fillet's end reaches the far end of the cylinder's face too (u = pi/2, the vertex at (0, 2)) |
 | `mirror_top_r2` | `StdFail_NotDone`, the same reach on the side without the seam |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |

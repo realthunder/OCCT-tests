@@ -10,6 +10,7 @@
 #
 # See README.md for what each case covers and the history of each problem.
 
+import math
 import os
 import sys
 import traceback
@@ -331,11 +332,22 @@ atb = arm_on_tall_block()
 top = edge_between(atb, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
 for r in (0.1, 0.3, 2.0):
     fillet_case("arm_on_tall_block_r%g" % r, atb, top, r, "pass")
-# the block's side one face: invalid at every radius, the arm's top extended
-# under the block's wall past the edge between them
+# The block's side one face: the line on it runs on up past the arm's top,
+# and the arm's top, extended to meet it, crossed its own edge under the
+# block's wall -- invalid at every radius. Cut at the section through the
+# arm's side, the corner is that of the split side.
 atb = arm_on_tall_block(split=False)
-fillet_case("arm_on_tall_block_whole_r0.5", atb,
-            edge_between(atb, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 0.5, "xfail")
+top = edge_between(atb, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
+for r in (0.1, 0.3, 0.5, 2.0):
+    fillet_case("arm_on_tall_block_whole_r%g" % r, atb, top, r, "pass")
+# The mirror corner, the block's edge x=38.5 y=10.2 coming down onto the arm's
+# top: there the arm's top, extended, is the floor of the fillet's end and
+# crosses nothing, and must stay the exact plane it is (a plate in its place
+# misses by 1e-2): a quarter-round's section over the edge's 17.75.
+low = edge_between(atb, (38.5, 10.2, -3.75), (38.5, 10.2, 14))
+for r in (0.3, 1.0, 2.0):
+    fillet_case("arm_on_tall_block_down_r%g" % r, atb, low, r, "pass",
+                atb.Volume - (1 - math.pi / 4) * r * r * 17.75, max_tol=1e-3)
 
 # A fin padded flush with the block's side: the outer face is two faces, the
 # fin's and the block's, split at the floor's height, and the fillet's line on

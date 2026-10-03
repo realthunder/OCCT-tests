@@ -20,6 +20,7 @@ STAGES = {
     "s962e": ("6d61205cc1", "fb9200b0fd"),
     "s962f": ("1e6f5a464c", "3fa9420429"),
     "s962g": ("b6928966df", "98c6125b85"),
+    "s962h": ("76de040ead", "692cae9e35"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -60,15 +61,17 @@ def _fin_wall():
     return _fin().generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
 
 
-def _arm_on_tall_block():
+def _arm_on_tall_block(split=True):
     # run_tests.py's arm fused to a block that goes on above it, the block's
-    # side y=27.2 two faces split at the arm's top
+    # side y=27.2 two faces split at the arm's top (or one face)
     V = App.Vector
     pts = [V(17.356, -9.425, -9.75), V(38.5, 10.2, -9.75), V(38.5, 27.2, -9.75),
            V(10.898, 16.471, -9.75)]
     arm = Part.Face(Part.makePolygon(list(reversed(pts)) + [pts[-1]])).extrude(V(0, 0, 6))
     bp = [V(38.5, 27.2, -9.75), V(38.5, 10.2, -9.75), V(50, 10.2, -9.75), V(50, 27.2, -9.75)]
     s = Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 23.75)).fuse(arm)
+    if not split:
+        return s
     cut = Part.LineSegment(V(38.5, 27.2, -3.75), V(50, 27.2, -3.75)).toShape()
     return s.generalFuse([cut])[0].Solids[0]
 
@@ -91,6 +94,7 @@ SHAPES = {
     "finwall": _fin_wall,
     "armfoot": _arm_on_block,
     "armtall": _arm_on_tall_block,
+    "armwhole": lambda: _arm_on_tall_block(split=False),
     "p474": _brep("issue474_fillet003_base.brep"),
 }
 
@@ -141,6 +145,8 @@ UVFACE = {
     # the corner's plate at the edge's top
     "armtall": (lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
                 and f.BoundBox.isInside(App.Vector(38.5, 27.2, -3.76))),
+    # the arm's top, which the fillet's end cuts
+    "armwhole": _plane_at("z", -3.75),
     # the corner's plate at edge 6's top
     "p474": _plate_near(-13, 0, 13),
 }
@@ -170,6 +176,7 @@ NAMES = {
     "armfoot": "an arm fused to an 11.5x17x6 block, their bottoms two faces split along x=38.5",
     "armtall": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 two faces "
                "split at the arm's top",
+    "armwhole": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
 }
 # shape -> the whole shape's view: (center, height)
@@ -181,6 +188,7 @@ VIEW = {
     "finwall": ((5, 5, 7), 20.0),
     "armfoot": ((30, 9, -6.75), 42.0),
     "armtall": ((30, 9, 2), 46.0),
+    "armwhole": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
@@ -192,6 +200,7 @@ UVLABEL = {
     "finwall": ("the block's top", False),
     "armfoot": ("the arm's bottom", False),
     "armtall": ("the corner's plate", False),
+    "armwhole": ("the arm's top", False),
     "p474": ("the corner's plate", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
@@ -244,12 +253,15 @@ CASES = {
                                 (10, 3, 5), (1, 0.9, 0.8)),
     "fin_on_block_wall_r0.7": ("s962g", "finwall", ((10, 3, 5), (10, 3, 14)), 0.7, 769.0536,
                                (10, 3, 5), (1, 0.9, 0.8)),
+    "arm_on_tall_block_whole_r2": ("s962h", "armwhole", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)),
+                                   2.0, None, (38.5, 27.2, -3.75), (-0.4, 1, 0.5)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
     "issue962_e36_r0.3": 0.5,
     "arm_on_tall_block_r0.3": 0.5,
     "issue962_e33_r0.3": 0.5,
+    "arm_on_tall_block_whole_r2": 3.0,
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
