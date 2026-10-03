@@ -1794,6 +1794,62 @@ edge in 3696 runs, the order of the faces in 2038. Neither counts a run the
 shape as made has no valid answer for -- the torus's one face -- and the
 order survey takes all the orders of one solid only.
 
+## Where the chase stands (2026-10-04)
+
+It stops here for now, with nothing known broken.
+
+**What holds**, on the fork at `d0c9abd649`, with shape values frozen and
+not:
+
+- The suite: 377 cases pass, none marked `XFAIL`.
+- The sweep: 928 runs of 928 right -- 24 solids, every face, +/-1,
+  intersection off and on, both joins -- plain, under a location, and turned
+  in space at three placements.
+- The surveys (`sweep/survey.sh`), over 25 shapes, plain, placed and turned:
+  a vertex at the middle of an edge changes nothing in 3696 runs, the
+  order of the solid's faces nothing in 2038.
+- 169 cases pictured; upstream is right on 40 of them, all of which the
+  fork had broken and has back.
+- FreeCAD on this fork: its Python suite 2992 OK and its C++ tests 856 of
+  856, both ways; 26 of its regression tests are thickness cases from
+  these sections (`src/Mod/Part/parttests/regression_tests.py`,
+  `test_thickness_*`).
+
+**What is refused, and right to be:** a solid with every face removed (sec
+15), the torus's one face among them. **What was declined:** a setting to
+drop faces under some area (sec 25); the one sliver that raised it is never
+built.
+
+**Where the next fault is likeliest**, by what has not been asked. Every
+fault since sec 19 came from a question the suite and the sweep did not
+put, not from a case they held:
+
+- The order of the faces, every permutation. Only the half ball in lunes
+  had all 24 of its orders tried (`PERM=1`); the other shapes had the
+  rotations of the face list and its reverse.
+- Two faces removed, and more. The sweep and both surveys remove one face
+  at a time; the suite has a handful of sets (both lunes, both domes, a
+  box's four sides, a cylinder down to one cap).
+- Other thicknesses. The surveys run at +/-0.5 and the sweep at +/-1, on
+  shapes 5 to 10 across, and the suite at one or the other: three of its
+  cases are a dome's at twice the 0.5 its others have. The rules
+  that reach a thickness into a removed face (sec 9, 23, 25) and the
+  tolerances beside them have been met at those sizes only.
+- A thickness of its own on a face (`SetOffsetOnFace`). Nothing in the
+  sweep or the surveys sets one.
+- Shapes the surveys do not have: a torus beyond the whole one, whose one
+  face leaves no run to compare, a spline or a swept surface (the four
+  captured models are the only ones in the suite), and a cone or cylinder
+  cut across its seam.
+
+**To take it up again.** `sweep/survey.sh split|order` says which run of
+which shape differs; `sweep/probe.py` runs that one run and lists what the
+fork's `SHOW_TOPO_SHAPE` dumps show of its way there, by source file and
+name; a fix goes through `run_tests.py`, `sweep/sweep.sh` six ways, both
+surveys, and FreeCAD's two suites, each frozen and not; its cases are
+pictured (`pictures/cases.py`, a stage for the commit before the fix) and
+written up here as the next section, sec 27.
+
 ## The captured models
 
 The suite's four document cases (realthunder/OCCT#1-#4: an elliptic pad, a

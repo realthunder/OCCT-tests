@@ -450,7 +450,9 @@ case is marked `XFAIL`.
 left. No case is marked `XFAIL`. `sweep/survey.sh` runs the two surveys
 behind sec 22, 24 and 26 -- a vertex on an edge (`split`) and the solid's
 faces in another order (`order`) must change nothing -- over 25 shapes,
-plain, `placed` or `turned`; both are clean.
+plain, `placed` or `turned`; both are clean. `sweep/probe.py` runs one of
+their runs and lists the fork's dumps on the way; `models/Thickness.md`,
+"Where the chase stands", says what holds and what has not been asked.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
@@ -546,5 +548,6 @@ tests/fork/thickness/
   pictures/          the tools that make them (make_pictures.sh)
     sliver/          the Arc join's sliver face, a figure of its own (sec 25)
   sweep/             the 928-run sweep, its reference and its hand values,
-                     and the two surveys (survey.sh)
+                     the two surveys (survey.sh), and one run looked into
+                     (probe.py)
 ```

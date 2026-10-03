@@ -99,6 +99,9 @@ def variants_split(base):
         yield "E%d" % (ei + 1), s, order
 
 
+key = ""
+
+
 def variants_order(base):
     n = len(base.Faces)
     if os.environ.get("PERM") == "1" and n <= 5:
@@ -115,30 +118,37 @@ def variants_order(base):
         yield label, s, [o.index(i) for i in range(n)]
 
 
-key = os.environ.get("SHAPE", "list")
-if key == "list":
-    out(" ".join(SHAPES))
+def main():
+    global key
+    key = os.environ.get("SHAPE", "list")
+    if key == "list":
+        out(" ".join(SHAPES))
+        os._exit(0)
+    FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
+        "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
+    base = place(SHAPES[key](), os.environ.get("PLACE"))
+    RUNS = [(fi, off, j) for fi in range(len(base.Faces)) for off in (0.5, -0.5) for j in (0, 2)]
+    ref = {r: run(base, *r) for r in RUNS}
+    variants = variants_order if os.environ.get("SURVEY", "split") == "order" else variants_split
+    good = bad = 0
+    for label, s, order in variants(base):
+        for fi, off, j in RUNS:
+            r0 = ref[fi, off, j]
+            if r0[0] is not True:
+                continue
+            if order[fi] is None:
+                out("%s %s F%d: face not found" % (key, label, fi + 1))
+                continue
+            r = run(s, order[fi], off, j)
+            if r[0] is True and abs(r[1] - r0[1]) < 2e-3 * max(1, abs(r0[1])):
+                good += 1
+            else:
+                bad += 1
+                out("BAD %s %s F%d %+.1f j%d: %s for %s" % (key, label, fi + 1, off, j, r, r0[1]))
+    out("SUMMARY %s good=%d bad=%d" % (key, good, bad))
     os._exit(0)
-FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
-base = place(SHAPES[key](), os.environ.get("PLACE"))
-RUNS = [(fi, off, j) for fi in range(len(base.Faces)) for off in (0.5, -0.5) for j in (0, 2)]
-ref = {r: run(base, *r) for r in RUNS}
-variants = variants_order if os.environ.get("SURVEY", "split") == "order" else variants_split
-good = bad = 0
-for label, s, order in variants(base):
-    for fi, off, j in RUNS:
-        r0 = ref[fi, off, j]
-        if r0[0] is not True:
-            continue
-        if order[fi] is None:
-            out("%s %s F%d: face not found" % (key, label, fi + 1))
-            continue
-        r = run(s, order[fi], off, j)
-        if r[0] is True and abs(r[1] - r0[1]) < 2e-3 * max(1, abs(r0[1])):
-            good += 1
-        else:
-            bad += 1
-            out("BAD %s %s F%d %+.1f j%d: %s for %s" % (key, label, fi + 1, off, j, r, r0[1]))
-out("SUMMARY %s good=%d bad=%d" % (key, good, bad))
-os._exit(0)
+
+
+# probe.py takes the shapes and the variants from here.
+if not os.environ.get("SURVEY_AS_MODULE"):
+    main()
