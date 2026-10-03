@@ -73,7 +73,9 @@ does not end on a seam (1092.5263 at radius 1).
 
 At radius 2, the cylinder's own radius, the cap reaches the face's far end
 as well (u = 5 pi/2, which is pi/2 a period on). The top is right now; the
-bottom, its mirror image, is still invalid (`seam_end_bottom_r2`, XFAIL).
+bottom, its mirror image, is still invalid (`seam_end_bottom_r2`, XFAIL):
+not for its geometry, which is the top's, but for a crossing of 2e-9 that
+BRepCheck sees on one and not the other (see `../README.md`).
 
 ![seam_end_top_r2](pictures/seam_end_top_r2.png)
 
@@ -314,6 +316,25 @@ the arm's top, crosses nothing -- there the stretched arm top is the
 fillet's floor -- and keeps the exact plane.
 
 ![arm_on_tall_block_whole_r2](pictures/arm_on_tall_block_whole_r2.png)
+
+### An end point a rounding error past the line (`efbe5c99fd`, realthunder/FreeCAD#523)
+
+The box and cylinder of the first fix, at radius 2, on the top edge across
+the box's diagonal from the one ending on the seam: x=0, from the
+cylinder's face at (0, 2) to (0, 10). The fillet's line on the top, x=2,
+runs to the cylinder's top circle and is tangent to it at the line's very
+end, the seam's vertex (2, 0, 10). The corner cuts the line with the
+cylinder extended past its face, and found that point -- 6e-15 past the
+line's end, where on the seam's side it fell 7e-15 inside. Thrown away, it
+left the corner with nothing to cut the line with, and the fillet was
+refused, upstream and in the fork alike: both "before" columns show the
+input. Now a point a rounding error past an end, when none lies on the
+line, is the end, and the result is the seam case's, the cap of the
+cylinder running from its face's start back to the seam: in the third row,
+the piece left of pi/2, down to u=0, where the cap's curve meets the
+circle tangentially.
+
+![mirror_top_r2](pictures/mirror_top_r2.png)
 
 ## Making the pictures
 

@@ -21,6 +21,7 @@ STAGES = {
     "s962f": ("1e6f5a464c", "3fa9420429"),
     "s962g": ("b6928966df", "98c6125b85"),
     "s962h": ("76de040ead", "692cae9e35"),
+    "s523b": ("1e8eb69f6a", "efbe5c99fd"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -253,6 +254,8 @@ CASES = {
                                 (10, 3, 5), (1, 0.9, 0.8)),
     "fin_on_block_wall_r0.7": ("s962g", "finwall", ((10, 3, 5), (10, 3, 14)), 0.7, 769.0536,
                                (10, 3, 5), (1, 0.9, 0.8)),
+    "mirror_top_r2": ("s523b", "boxcyl", ((0, 2, 10), (0, 10, 10)), 2.0, 1087.3009,
+                      (0, 2, 10), (-1, 0.55, 0.75)),
     "arm_on_tall_block_whole_r2": ("s962h", "armwhole", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)),
                                    2.0, None, (38.5, 27.2, -3.75), (-0.4, 1, 0.5)),
 }

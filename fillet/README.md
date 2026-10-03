@@ -550,12 +550,61 @@ from invalid to valid: the edge at radius 0.3 and 1, alone and with the
 other edges of its two vertices. FreeCAD's `TestPartApp` (139) and
 `TestPartDesignApp` (77) pass.
 
+## An end point a rounding error past the line (realthunder/FreeCAD#523, 2026-10-03)
+
+#523's box and cylinder at radius 2, the cylinder's own radius. The
+fillet's line on the top runs to the cylinder's top circle and is tangent
+to it there, at the line's very end: (0, 2, 10) for the edge ending on the
+seam, (2, 0, 10) for its mirror image across the box's diagonal. The
+corner (`PerformOneCorner`, `OnSame`) cuts the line with the cylinder
+extended past its face; the intersection finds the tangent point at W = -2,
+and the line's range starts at -2.0000000000000071 on the seam's side but
+-1.9999999999999938 on the other. 6e-15 past the end, the point was thrown
+away, nothing else was found, and the corner was refused ("bouchon non
+ecrit", `StdFail_NotDone`) -- on one side and not the other.
+
+Fix `efbe5c99fd`: `Update` (curve against surface), when no point lies on
+the curve's range, takes one within `Precision::PConfusion()` of an end as
+that end -- where the curve is tangent to the surface there, the case in
+which the point is ill-conditioned along the curve. Only as a fallback:
+taking such a point over one on the range broke the cylinder's own arcs at
+radius 1 (`every_edge_r1_e11`, `e13`). And only at a tangent point: a
+crossing found past the end is past the end -- taking those (#962's
+0.05-long edge 1, with fillets of 0.3 and more) turned its exception into
+an invalid shape.
+
+`mirror_top_r2` passes now, at the seam case's volume. The bottoms --
+`seam_end_bottom_r2`, and `mirror_bottom_r2`, which got as far now --
+are built as the tops are and come out "Self-intersecting wire" on the
+cylinder. They are not wrong by any measure but that one. The corner's
+curve on the extended cylinder ends at the far vertex tangent to the
+circle the bottom cuts there, and leaves it at fourth order (z = x^4/64):
+over its last 1% it stays within 2e-9 of the circle. All four corner
+curves, tops and bottoms, are the same curve to 1e-11, running up to
+1.6e-9 past the face there against an edge tolerance of 1e-7. BRepCheck's
+2D intersection, at 1e-10, sees the bottoms cross the circle 0.025 from the
+vertex, and excuses a crossing only within the vertex's tolerance (1.3e-7)
+or where both edges keep within twice their tolerance of the straight line
+to it (the circle's sag alone is 4e-5 there). On the tops it does not find
+the crossing. Radius 1.999 and below is valid on all four; above 2 all
+four are refused (the fillet's end then meets the box's side as well as
+the cylinder) -- open, not covered here.
+
+| Case | What it covers |
+|------|----------------|
+| `mirror_top_r2` | the edge across the diagonal at radius 2: valid, the seam case's volume |
+| `mirror_bottom_r2` | XFAIL, as `seam_end_bottom_r2` |
+
+The every-edge sweep moves those two results and nothing else (3919 the
+same to the last digit); the vertex sweep (12722 fillets, radii 0.3 and 1)
+moves nothing. FreeCAD's `TestPartApp` (139) and `TestPartDesignApp` (77)
+pass.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
-| `seam_end_bottom_r2` | invalid, where its mirror image across z=5 (`seam_end_top_r2`) is valid: at radius 2 the fillet's end reaches the far end of the cylinder's face too (u = pi/2, the vertex at (0, 2)) |
-| `mirror_top_r2` | `StdFail_NotDone`, the same reach on the side without the seam |
+| `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
 
 ## Pictures

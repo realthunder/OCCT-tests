@@ -185,10 +185,17 @@ for r, vol in ((0.5, 1093.8183), (1.0, 1092.5263)):
     fillet_case("mirror_top_r%g" % r, bc, mtop, r, "pass", vol)
     fillet_case("mirror_bottom_r%g" % r, bc, mbottom, r, "pass", vol)
 # At the cylinder's radius the fillet's end reaches the far end of the
-# cylinder's face as well.
+# cylinder's face as well: the fillet's line on the top (bottom) is tangent
+# to the cylinder there, at the line's very end. The mirror cases found
+# that point a rounding error past the line's end and refused the corner.
+# The bottoms are built as the tops are, but the corner's curve on the
+# cylinder meets the face's circle at fourth order, within 2e-9 of it over
+# its last 1%, and BRepCheck's 2D intersection sees it cross (README.md);
+# on the tops it happens not to.
 fillet_case("seam_end_top_r2", bc, top, 2.0, "pass", 1087.3009)
 fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "xfail")
-fillet_case("mirror_top_r2", bc, mtop, 2.0, "xfail")
+fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009)
+fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "xfail")
 
 # Every edge at radius 1: nothing else moved.
 for i in range(1, len(bc.Edges) + 1):
