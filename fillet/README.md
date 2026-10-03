@@ -251,6 +251,14 @@ it throws. PartDesign's Fillet reports either as an error; `Part::Fillet`
 and `makeFillet` hand the invalid shape back. FreeCAD's `TestPartApp`
 (139), `TestPartDesignApp` (77) and `TestSurfaceApp` pass.
 
+Followed up (2026-10-03): #876's two went back to exceptions with the
+projection fix `68c5d4efd0`. #474's edge 52 is the input's: the sweep's
+Fillet003 shape holds a sliver face at the edge's end vertex, a plane 2
+tall and 4.5e-7 wide (area 9e-7), which leaves a pair of near-coincident
+vertical edges at each end of the edge. The result is the input's volume
+at every radius -- nothing cut -- and invalid. Not pursued: the input is
+what is wrong there.
+
 Found on the way, open (XFAIL): the same corner with the block's side one
 face, `arm_on_tall_block_whole_r0.5`, is invalid at every radius, with the
 fork before the fix as after -- the arm's top is extended past the block's
