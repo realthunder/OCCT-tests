@@ -22,6 +22,7 @@ STAGES = {
     "s962g": ("b6928966df", "98c6125b85"),
     "s962h": ("76de040ead", "692cae9e35"),
     "s523b": ("1e8eb69f6a", "efbe5c99fd"),
+    "s876": ("f9d329a663", "538ce9f99a"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -87,6 +88,17 @@ def _arm_on_block():
     return Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 6)).fuse(arm)
 
 
+def _post_on_plate():
+    # run_tests.py's post on a plate: a cylinder r3 on a stadium plate whose side y=-3 runs
+    # tangent into the plate's round end under the post. The post turned a quarter, its
+    # seam at the back: the pictures mark a seam's edge red.
+    V = App.Vector
+    plate = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
+    post = Part.makeCylinder(3, 15, V(0, 0, 3))
+    post.rotate(V(0, 0, 0), V(0, 0, 1), 90)
+    return plate.fuse(post)
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -97,6 +109,7 @@ SHAPES = {
     "armtall": _arm_on_tall_block,
     "armwhole": lambda: _arm_on_tall_block(split=False),
     "p474": _brep("issue474_fillet003_base.brep"),
+    "postplate": _post_on_plate,
 }
 
 
@@ -150,6 +163,8 @@ UVFACE = {
     "armwhole": _plane_at("z", -3.75),
     # the corner's plate at edge 6's top
     "p474": _plate_near(-13, 0, 13),
+    # the plate's side, whose outline ran up to the top and back down
+    "postplate": _plane_at("y", -3),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -179,6 +194,8 @@ NAMES = {
                "split at the arm's top",
     "armwhole": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
+    "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
+                 "its round end under the post",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -191,6 +208,7 @@ VIEW = {
     "armtall": ((30, 9, 2), 46.0),
     "armwhole": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
+    "postplate": ((-4.5, 0, 9), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -203,6 +221,7 @@ UVLABEL = {
     "armtall": ("the corner's plate", False),
     "armwhole": ("the arm's top", False),
     "p474": ("the corner's plate", False),
+    "postplate": ("the plate's side", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -258,6 +277,8 @@ CASES = {
                       (0, 2, 10), (-1, 0.55, 0.75)),
     "arm_on_tall_block_whole_r2": ("s962h", "armwhole", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)),
                                    2.0, None, (38.5, 27.2, -3.75), (-0.4, 1, 0.5)),
+    "post_on_plate_r0.6": ("s876", "postplate", ((-12, -3, 3), (0, -3, 3)), 0.6, 681.6610,
+                           (0, -3, 3), (0.5, -1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

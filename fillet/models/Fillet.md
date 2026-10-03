@@ -336,6 +336,26 @@ circle tangentially.
 
 ![mirror_top_r2](pictures/mirror_top_r2.png)
 
+### A fillet's end on the edge where its side runs into a wall (`538ce9f99a`, realthunder/FreeCAD#876)
+
+A post, a cylinder of radius 3, stands on a 3-thick plate whose side y=-3
+runs tangent into the plate's round end under the post; the fillet is on
+the plate's top edge along that side. The top pinches out between the side
+and the post's base at (0,-3,3), where the edge ends, so the fillet is cut
+by the post's cylinder, carried down past its face: in the zoom, the
+fillet's end curving up into the post, the same in all three columns. On
+the plate's side the cut ends exactly on the edge where the side turns into
+the round end. The piece of that edge above it should bound the round end
+and the post's wall alone; it stayed in the side face as well, whose
+outline ran up to the plate's top and back down -- the spur at the top
+right of the third row, before. In both "before" columns the side is drawn
+red, the face that fails; upstream fails the same way. Now that piece goes
+to the round end and the side stops at the fillet: the volume is the same,
+the shape valid. With the post drafted 1 deg (#876's own corner) the
+fillet is still refused -- open.
+
+![post_on_plate_r0.6](pictures/post_on_plate_r0.6.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

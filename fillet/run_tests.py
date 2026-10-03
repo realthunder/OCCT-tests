@@ -422,6 +422,60 @@ c876 = [edge_between(p876, (17, 16.75, 0), (17, 16.75, 3)),
 for r in (0.3, 1.0):
     fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "xfail")
 
+# A post on a plate, the plate's side running tangent into its round end
+# under the post: the plate's top edge along that side ends where the top
+# face pinches out against the post's base. The fillet is cut by the post's
+# cylinder, its end on the side face lands on the edge where the side meets
+# the round end, and the piece of that edge above the end bounds the round
+# end and the post's wall (one cylinder). That piece was left in the side
+# face as well: a wire running up to the plate's top and back down, an
+# invalid shape at every radius. The corner kept by the cut is the corner
+# prism inside the cylinder, which gives the volume.
+def post_on_plate(draft=0.0, turn=0.0):
+    plate = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
+    if draft:
+        post = Part.makeCone(3, 3 - 15 * math.tan(math.radians(draft)), 15, V(0, 0, 3))
+    else:
+        post = Part.makeCylinder(3, 15, V(0, 0, 3))
+    if turn:
+        post.rotate(V(0, 0, 0), V(0, 0, 1), turn)
+    return plate.fuse(post)
+
+
+pp = post_on_plate()
+side = edge_between(pp, (-12, -3, 3), (0, -3, 3))
+for r in (0.1, 0.6, 2.0):
+    corner = Part.makeBox(12, r, r, V(-12, -3, 3 - r)).cut(
+        Part.makeCylinder(r, 12, V(-12, -3 + r, 3 - r), V(1, 0, 0)))
+    removed = corner.cut(Part.makeCylinder(3, 10, V(0, 0, -2))).Volume
+    fillet_case("post_on_plate_r%g" % r, pp, side, r, "pass", pp.Volume - removed)
+
+# The post's own seam through the edge's end (the post turned three
+# quarters, its seam at (0,-3)): invalid at every radius, and too much
+# taken (12 at radius 0.6), before the fix and after alike -- open.
+pps = post_on_plate(turn=270)
+fillet_case("post_seam_on_plate_r0.6", pps, edge_between(pps, (-12, -3, 3), (0, -3, 3)), 0.6,
+            "xfail")
+
+# The same with a drafted post (1 deg): the post's wall is a cone, the round
+# end below it a cylinder, and the fillet's end must be cut by the round
+# end's surface, not the cone's. Refused (a faulty vertex) -- open, as is
+# #876's Fillet002 below, where the corner is the same.
+ppd = post_on_plate(1.0)
+fillet_case("post_draft_on_plate_r0.6", ppd,
+            edge_between(ppd, (-12, -3, 3), (0, -3, 3)), 0.6, "xfail")
+
+# realthunder/FreeCAD#876's Fillet002: its input (Fillet001's result) has a
+# plate whose top outline -- two lines and an arc, one tangent chain --
+# runs at both ends into a drafted corner of the tall body, the plate's side
+# tangent to the round end below it. Invalid at every radius (the
+# drafted-post corner above, reached through PerformIntersectionAtEnd).
+p876b = Part.read(os.path.join(MODELS, "issue876_fillet002_base.brep"))
+e876b = [edge_between(p876b, (-19.238761, -15.746985, 3), (-30.167832, -3.494723, 3)),
+         edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
+for r in (0.3, 0.6):
+    fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "xfail")
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

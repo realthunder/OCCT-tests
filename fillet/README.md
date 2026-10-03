@@ -608,12 +608,72 @@ same to the last digit); the vertex sweep (12722 fillets, radii 0.3 and 1)
 moves nothing. FreeCAD's `TestPartApp` (139) and `TestPartDesignApp` (77)
 pass.
 
+## A fillet's end on the edge where its side runs into a wall (realthunder/FreeCAD#876, 2026-10-04)
+
+#876's Pocket "added material" because Fillet002 came out invalid (an open
+shell once FreeCAD's FixShape had dropped its bad faces; FreeCAD now
+refuses both, fcad `bb6c4ea481`). Its edges are a plate's top outline,
+which at each end runs into a corner of the tall body beside it: the
+plate's side is tangent to the body's rounded corner there, which is a
+cylinder below the plate's top and a 1 deg cone (the body's draft) above.
+
+Made small without the draft (`post_on_plate`): a post, a cylinder of
+radius 3, on a stadium-shaped plate whose side y=-3 runs tangent into the
+plate's round end under the post. The plate's top pinches out between the
+side and the post's base at (0,-3,3), where the fillet's edge ends. The
+corner (`PerformOneCorner`, `OnSame`) cuts the fillet with the post's
+cylinder extended down past its face. On the side face the cut ends at
+(0,-3,3-r) -- on the edge between the side and the round end, the side
+being tangent to the cylinder along it -- and the extension from there to
+the vertex is that edge's upper piece. It went into the side face, which
+kept the whole edge too: its wire ran up to the top and back down, and the
+result was invalid at every radius.
+
+The corner already handles a fillet line ending on such an edge (`Etan`,
+between Fop and the face tangent to it, `zobOnEtan`): the edge is split at
+the line's end and the extension bounds the tangent face, not Fop. Fix
+`538ce9f99a` takes that path also when the line ended inside Fop and the cut
+moved its end onto `Etan` -- provided Fv's surface holds `Etan` from there
+to the vertex, so that the extension runs along it. The extension's curve
+on the tangent face is then moved onto that face's period at the vertex:
+projected on the cylinder it landed one period off (u = 3pi/2 against the
+face's -pi/2), and the face's wire did not close in its domain. The
+volume is what the fillet removes outside the post's cylinder, computed
+from the corner prism by booleans.
+
+With the draft the post's wall is a cone, which does not hold the edge
+below it, and the vertex has four sharp edges, so it goes to
+`PerformIntersectionAtEnd` instead: refused on the small model, invalid on
+#876's own. The cut there has to be made by the round end's surface, not
+the cone's -- open. So is the post turned so that its own seam runs
+through the edge's end: invalid at every radius, taking far too much, in
+upstream and the fork before and after alike.
+
+| Case | What it covers |
+|------|----------------|
+| `post_on_plate_r{0.1,0.6,2}` | the post on the plate: valid, the volume outside the post's cylinder (invalid at every radius before) |
+| `post_seam_on_plate_r0.6` | XFAIL, the post's seam through the edge's end: invalid |
+| `post_draft_on_plate_r0.6` | XFAIL, the post drafted 1 deg: refused |
+| `issue876_fillet002_r{0.3,0.6}` | XFAIL, #876's Fillet002 on its input (`models/issue876_fillet002_base.brep`, Fillet001's result): invalid, an open shell |
+
+The every-edge sweep (4431 fillets, #876's Fillet002 input and the post
+models added) turns 12 invalid results valid -- the post's two edges along
+the side, and two edges of #962's own inputs, the Chamfer's 7 and the
+Fillet's 4, at every radius, their volumes as they were -- and moves
+nothing else (2412 valid results the same to the last digit, tolerances
+too). The vertex sweep (14274 fillets) turns 46 invalid results valid
+(28 of the post, 12 of #962's Chamfer, 6 of its Fillet), changes one
+invalid result's volume in the fourth decimal, and nothing else. FreeCAD's
+`TestPartApp` (139) and `TestPartDesignApp` (78) pass.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
+| `post_seam_on_plate_r0.6` | invalid, too much taken: the post's seam runs through the fillet's end (see "A fillet's end on the edge where its side runs into a wall", above) |
+| `post_draft_on_plate_r0.6`, `issue876_fillet002_r{0.3,0.6}` | the fillet's end where the plate's side runs tangent into a drafted wall: refused, or invalid (see "A fillet's end on the edge where its side runs into a wall", above) |
 
 ## Pictures
 
