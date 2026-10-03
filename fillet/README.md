@@ -411,13 +411,48 @@ On the way, the other corner of those edges, (-17,16.75,3), threw out of
 a point's projections without asking whether there is one (index -1).
 Stopping that, the projection went on into `BRepAlgo_NormalProjection`,
 which read the curve of an approximation that had built none (its error
-reads 0). Fix `ce5aa60088` drops such an approximation. The `FindSplitPoint`
-change is not in: it made none of the sweeps' failures valid and turned 69
-of them from an exception into an invalid shape.
+reads 0). Fix `ce5aa60088` drops such an approximation.
 
 | Case | What it covers |
 |------|----------------|
 | `issue876_corner4_r{0.3,1}` | XFAIL, an exception: the process survives to the suite's summary (the build before `76a730386a` dies here, exit 139) |
+
+## A projection's split point with no point on the surface (realthunder/FreeCAD#876, 2026-10-03)
+
+`FindSplitPoint` splits a curve where it crosses a periodic surface's
+border: it projects each candidate point on the surface and keeps it if the
+projection is on the border. The search finds only extrema inside the
+surface; a point whose nearest is on the boundary has none, and it took
+"the nearest" of none, index -1. Here the point was the start of a range the
+recursion opened just past a split already found, 7e-5 from the cylinder's
+seam at (-17,16.75,3). Fix `2ab42e74f6`: such a point is not a split.
+
+Alone that made things worse: 99 fillets of #876 (E10 at every radius, E30
+to E32 at 0.8 and 1, their mirror images, and edge sets with them) went from
+an exception to an invalid shape, none to a valid one. Past the split, the
+corner's `CurveHermite` projected its curve on the faces between the
+stripes, and the pieces did not run end to end. At (-17,16.75,3) E10's
+stripe ends 0.007 wide and the curve runs along the edge x=-17 between the
+two faces: on both at once, each projection kept half, the first face the
+curve's end and the second its start. For E30 at 1 the first face's piece
+runs from (-17,16.75) to (-19.24,15.75) and the curve starts at (-14,13.9).
+The curves stored from such pieces joined the wrong points; the volume came
+out anything (+11, -278).
+
+Fix `68c5d4efd0`: the first piece present must touch the curve's start (at
+either of its ends; a backward one is turned round where it is stored, see
+above) and the last its end, or the corner fails. Swapping such pieces was
+tried and made none of the 99 valid -- the piece on the B-spline face lies
+on the edge of the surface's parameter domain and does not project there
+either.
+
+With both: no valid result moves in the every-edge sweep or the vertex
+sweep; 11 and 56 invalid results become exceptions, and nothing goes the
+other way. (The vertex sweep runs every fillet of a shape on one copy of
+it, and a fillet that fails can leave that input changed for the next: two
+of #876's results came out differently by order alone. Run on a fresh copy
+each, #876's two shapes change only in 48 invalid results becoming
+exceptions.)
 
 ## Known broken (XFAIL)
 
@@ -427,7 +462,7 @@ of them from an exception into an invalid shape.
 | `arm_on_tall_block_whole_r0.5` | invalid at every radius: #962's edge 36 corner with the block's side one face; the arm's top, extended under the block's wall, crosses itself |
 | `seam_end_bottom_r2` | invalid, where its mirror image across z=5 (`seam_end_top_r2`) is valid: at radius 2 the fillet's end reaches the far end of the cylinder's face too (u = pi/2, the vertex at (0, 2)) |
 | `mirror_top_r2` | `StdFail_NotDone`, the same reach on the side without the seam |
-| `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed inside its projection |
+| `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
 
 ## Pictures
 
