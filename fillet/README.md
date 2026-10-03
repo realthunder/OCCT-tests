@@ -10,7 +10,7 @@ and the fixes are shown before and after in `models/Fillet.md`.
 Any FreeCAD build linked against this OCCT tree:
 
 ```
-FreeCADCmd tests/fillet/run_tests.py
+FreeCADCmd tests/fork/fillet/run_tests.py
 ```
 
 The suite runs with FreeCAD's shape values unfrozen (`ImmutableShapeValues`
@@ -339,7 +339,7 @@ macOS; add a case to `pictures/cases.py`, with its stage, to picture it.
 ## Layout
 
 ```
-tests/fillet/
+tests/fork/fillet/
   README.md          this file
   run_tests.py       the suite (FreeCADCmd script)
   models/            captured models and shapes

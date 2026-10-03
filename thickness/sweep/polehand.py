@@ -11,7 +11,7 @@
 # At a thickness of 0.5 it gives the 76 volumes the suite and the probes of
 # models/Thickness.md sec 16 to 19 had settled one by one.
 #
-# The rules (tests/thickness/models/Thickness.md):
+# The rules (tests/fork/thickness/models/Thickness.md):
 #  - the skin is closed in the removed face's own surface, extended;
 #  - j2 (Intersection) meets the kept faces' offsets in sharp corners;
 #  - j0 (Arc) rounds them where they part: outward at a convex edge, inward

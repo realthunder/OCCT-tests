@@ -2,7 +2,7 @@
 #
 # Run with any FreeCAD build linked against this OCCT:
 #
-#     FreeCADCmd tests/fillet/run_tests.py
+#     FreeCADCmd tests/fork/fillet/run_tests.py
 #
 # Exit code is 0 when no expected-pass case fails.  Known-broken cases are
 # declared XFAIL below; when one starts passing the suite prints

@@ -92,7 +92,7 @@ def main(out):
     if os.environ.get("SWEEP"):
         intro += " The sweep: %s." % os.environ["SWEEP"]
     intro += (" Section numbers are those of the write-up, which lives in the fork with the pictures:"
-              " <code>tests/thickness/models/Thickness.md</code> and <code>models/pictures/</code>.")
+              " <code>tests/fork/thickness/models/Thickness.md</code> and <code>models/pictures/</code>.")
 
     e = html.escape
     parts = []

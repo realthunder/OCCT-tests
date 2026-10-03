@@ -236,7 +236,7 @@ whose corner was folded either way and is now rejected by `BRepCheck`
 
 ## Making the pictures
 
-`tests/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
+`tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
 a few minutes, most of it building one library per column:
 
 1. `mkold.sh` builds scratch `TKFillet` libraries (and `TKGeomAlgo` where a

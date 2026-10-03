@@ -217,12 +217,12 @@ figcaption code { background: none; padding: 0; }
   <ol>
 %(toc)s
   </ol>
-  <p class="count">%(nfig)d pictures &middot; source <code>tests/fillet/models/Fillet.md</code></p>
+  <p class="count">%(nfig)d pictures &middot; source <code>tests/fork/fillet/models/Fillet.md</code></p>
 </nav>
 <article>
 %(body)s
-<p class="source">Rendered from <code>tests/fillet/models/Fillet.md</code> in the OCCT fork; the suite is
-<code>tests/fillet/run_tests.py</code>, the pictures come from <code>tests/fillet/pictures/make_pictures.sh</code>.</p>
+<p class="source">Rendered from <code>tests/fork/fillet/models/Fillet.md</code> in the OCCT fork; the suite is
+<code>tests/fork/fillet/run_tests.py</code>, the pictures come from <code>tests/fork/fillet/pictures/make_pictures.sh</code>.</p>
 </article>
 </div>
 </div>

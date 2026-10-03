@@ -16,7 +16,8 @@
 #      OUTDIR      where the pictures go (default ../models/pictures)
 set -e
 HERE=$(cd $(dirname $0) && pwd)
-O=$(cd $HERE/../../.. && pwd)
+O=${OCCT:-$(cd $HERE && git rev-parse --show-superproject-working-tree)}
+[ -n "$O" ] || { echo "run from the fork's tests/fork submodule, or set OCCT to the fork's tree"; exit 1; }
 export FILLET_WORK=${FILLET_WORK:-/tmp/fillet-pictures}
 export RUN=${RUN:-$HOME/works/sw/fcad/.conda/run.sh}
 MAC=$([ "$(uname)" = Darwin ] && echo 1 || true)

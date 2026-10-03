@@ -13,7 +13,7 @@ pins down both the fixed models and the known remaining breakage.
 Any FreeCAD build linked against this OCCT tree:
 
 ```
-FreeCADCmd tests/thickness/run_tests.py
+FreeCADCmd tests/fork/thickness/run_tests.py
 ```
 
 The suite runs with FreeCAD's shape values unfrozen (`ImmutableShapeValues`
@@ -473,7 +473,7 @@ under Xvfb); add a case to `pictures/cases.py`, with its stage, to picture it.
 ## Layout
 
 ```
-tests/thickness/
+tests/fork/thickness/
   README.md          this file
   run_tests.py       the suite (FreeCADCmd script)
   models/            captured user models, one per reported issue

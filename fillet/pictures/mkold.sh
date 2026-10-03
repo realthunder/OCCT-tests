@@ -10,7 +10,8 @@ set -e
 HERE=$(cd $(dirname $0) && pwd)
 C=$1; D=$2; shift 2
 case "$D" in /*) ;; *) D=$PWD/$D ;; esac
-O=$(cd $HERE/../../.. && pwd)
+O=${OCCT:-$(cd $HERE && git rev-parse --show-superproject-working-tree)}
+[ -n "$O" ] || { echo "run from the fork's tests/fork submodule, or set OCCT to the fork's tree"; exit 1; }
 TKS=${TOOLKITS:-TKFillet}
 if [ -e "$D" ]; then
     # only ever remove a directory this script made

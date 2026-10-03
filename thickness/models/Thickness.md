@@ -20,12 +20,12 @@ the only write-up.
 
 Where things are:
 
-- The fork's suite: `tests/thickness/run_tests.py` (`FreeCADCmd
-  tests/thickness/run_tests.py`; PASS 277, XFAIL 8) and its `README.md`, the
+- The fork's suite: `tests/fork/thickness/run_tests.py` (`FreeCADCmd
+  tests/fork/thickness/run_tests.py`; PASS 277, XFAIL 8) and its `README.md`, the
   case-by-case reference.
 - The pictures: `pictures/<case>.png` beside this page, one per case of the
   suite that a fix turned from failing to passing.
-- The tools that made them: `tests/thickness/pictures/` (`make_pictures.sh`,
+- The tools that made them: `tests/fork/thickness/pictures/` (`make_pictures.sh`,
   see "Making the pictures" below).
 - FreeCAD's own cases: `parttests.regression_tests` in FreeCAD's `src/Mod/Part`, one
   test per step (`test_thickness_*`).
@@ -1315,7 +1315,7 @@ have no before-and-after here.
 
 ## Making the pictures
 
-`tests/thickness/pictures/make_pictures.sh` does it all; about
+`tests/fork/thickness/pictures/make_pictures.sh` does it all; about
 ten minutes on the dev box, most of it building libraries:
 
 1. `mkold.sh` builds scratch `TKBool`/`TKOffset` libraries -- upstream's
