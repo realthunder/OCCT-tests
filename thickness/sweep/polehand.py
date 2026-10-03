@@ -87,10 +87,15 @@ class Wedge:
         """distance to the complement, 0 outside (for the erosion)"""
         if self.whole:
             return np.full_like(X, INF)
-        if self.reflex:                                   # complement convex: quadrant between the sides
-            ca, cb = np.clip(self.a, 0, None), np.clip(self.b, 0, None)
-            both = (self.a > 0) & (self.b > 0)
-            return np.where(both, np.hypot(ca, cb), np.maximum(ca, cb))
+        if self.reflex:
+            # complement convex: nearest one of its two half planes, at the foot on
+            # it, or at the axis where the foot falls off it. (Not hypot(a, b): that
+            # is the distance to the axis only when the sides are square, at 270 deg;
+            # at 240 it made the Arc join 39.9613 for 40.4447.)
+            ub = math.cos(self.A) * X + math.sin(self.A) * Y
+            fa = np.where(X >= 0, np.abs(self.a), RHO)
+            fb = np.where(ub >= 0, np.abs(self.b), RHO)
+            return np.where(self.inside(), np.minimum(fa, fb), 0.)
         return np.clip(np.minimum(self.a, self.b), 0, None)
 
 
