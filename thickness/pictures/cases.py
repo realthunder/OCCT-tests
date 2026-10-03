@@ -41,6 +41,7 @@ STAGES = {
     "s22c": ("c747dd8371", "22"),
     "s23": ("80fa234b05", "23"),
     "s24": ("42475a8cca", "24"),
+    "s25": ("8d5aa88952", "25"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -344,6 +345,12 @@ CASES = {
     "bulletsplit_flat_out": ("s24", "bulletsplit", 3, +0.5, False, 0, 152.629),
     "bulletsplit_sphere_in": ("s24", "bulletsplit", 2, -0.5, False, 0, 97.2749),
     "dome270split_side_out": ("s24", "dome270split", 3, +0.5, False, 0, 111.7391),
+    "eqball_sphere1_out": ("s25", "eqball", 1, +0.5, False, 0, 89.1638),
+    "eqball_sphere1_in": ("s25", "eqball", 1, -0.5, False, 0, 73.5777),
+    "luneball_sphere1_out": ("s25", "luneball", 1, +0.5, False, 0, 89.1638),
+    "luneball_sphere1_in": ("s25", "luneball", 1, -0.5, False, 0, 73.5777),
+    "turned_eqball_sphere2_in": ("s25", "turned_eqball", 2, -0.5, False, 0, 73.5777),
+    "placed_luneball_sphere2_in": ("s25", "placed_luneball", 2, -0.5, False, 0, 73.5777),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

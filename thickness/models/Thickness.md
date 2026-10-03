@@ -1568,7 +1568,7 @@ offset, the sphere and the ball (0.025 long, about 1e-5 in area): the flat's
 slab is cut by the sphere above the equator and not below it, and the
 sphere bends away from the flat's offset by t^2 / 2R. Whether the Arc join
 should keep that, or round it away, is left to be ruled on before it is
-built.
+built. (Ruled and built: sec 25.)
 
 The seam crossing at a negative parameter that sec 21 worked round is still
 worked round.
@@ -1636,6 +1636,88 @@ lune takes the whole section circle from the other half (sec 23) and builds
 the other half's face again from it; on the plain shape the shell drops one
 of the two copies, here neither, and the solid is not valid. A copy of a
 coplanar neighbour's face needs a rule of its own.
+
+### Sec 25: the Arc join between two faces of one sphere
+
+Sec 23 left the Arc join refused, all eight ways, and one thing to be ruled
+on. Outward, the exact answer -- built here from primitives, a valid solid
+of 89.1639 for the hand value 89.1638 -- has a sliver face at each end of
+the tangent edge:
+
+![arc_join_sliver](pictures/arc_join_sliver.png)
+
+The flat's slab is cut by the removed dome's sphere above the equator, where
+its offset reaches a radius of 4.975, and below it runs out to 5, where the
+tube round its rim touches it. The step between the two, t^2 / 2R long, lies
+under the ball round the edge's end, and the ball, touching the flat's
+offset in one point, does not cover it: a face in the plane z = 0, 0.025
+long and 0.0006 wide, 5.2e-6 in area, two of its three edges tangent at its
+tip. Filling it runs on along the whole upper rim and carving it away along
+the whole lower one; there is no exact answer without it.
+
+**Ruled (2026-10-03): round it away.** The sliver is not built. The ball
+and the flat's offset share the step, an edge of tolerance t^3 / 8R^2 --
+6.6e-4 here -- and the result has one face fewer at each end. The kernel's
+own repair says the same of the exact solid: `ShapeFix_FixSmallFace` takes
+its two strips out and leaves a valid solid of ten faces at a tolerance of
+6.3e-4. A setting to drop faces under some area after the fact was
+considered and is not needed for this: the face is never made.
+
+**The step** (`31440694cb`, `BRepOffset_Tool::ExtentFace`). The flat's
+offset is stretched to the removed face before anything else: its rim on
+the removed side becomes the section with the sphere, and the edges beside
+it are stretched to cross it. The section and the offset of the flat's own
+rim are circles about one centre in one plane that never cross, and the
+face was left without a wire. Where a section and its neighbour do not
+cross they are joined by a step, straight in the face's parameters, from
+the vertex -- which stays the neighbour's end -- to the nearest point of
+the section. The neighbour, both its vertices kept, stays the edge it was:
+a copy is an edge the tube round the flat's rim, which is not stretched,
+does not have, and the shell came out open along it.
+
+**The ball's fourth edge** (`BRepOffset_MakeOffset::ToContext`). The ball
+round the edge's end had three edges -- the end of the tube round the
+tangent edge, the end of the tube round the flat's rim, and an arc on the
+removed face between them, which was made to end where the rim's tube does:
+0.025 off the sphere. It has the step for a fourth, and its arc on the
+removed face runs to the section's end. Outward only, where the edge the
+step starts from is one that stays. Inward nothing stays there -- the tube
+is cut by the flat's offset, as the intersection finds it -- and the step
+only says where the section ends.
+
+**A section stops at a step** (`BRepOffset_Inter3d::ContextIntByArc`).
+Every section on a removed face is stretched both ways before the faces are
+made, to be cut by whatever crosses it. Past a step nothing does, and the
+circle ran on inside its own face and cut it in two, a disc and a ring 0.025
+wide. A section is not stretched past an end at a step; the vertex is
+marked by having the step for its image.
+
+**In two lunes** the tangent edge ends on the flat's rim, at the poles, and
+the gap falls along the line between the flat's two halves. The half beside
+the removed lune has that line cut short at the section; the other half
+touches the removed face in the poles only, is not stretched, and had the
+line whole; each then cut a copy of its own and the shell was open along
+it. An edge `ExtentFace` has cut is given, cut, to the face on its other
+side, and outward the piece between the section's end and the rim tube's is
+the ball's step.
+
+89.1637 outward and 73.5776 inward, in domes and in lunes, either face,
+plain, placed and turned, frozen and unfrozen: thirteen faces outward in
+domes and twelve in lunes, eight inward, the smallest a ball's.
+
+![eqball_sphere1_out](pictures/eqball_sphere1_out.png)
+
+![eqball_sphere1_in](pictures/eqball_sphere1_in.png)
+
+![luneball_sphere1_out](pictures/luneball_sphere1_out.png)
+
+![luneball_sphere1_in](pictures/luneball_sphere1_in.png)
+
+![turned_eqball_sphere2_in](pictures/turned_eqball_sphere2_in.png)
+
+![placed_luneball_sphere2_in](pictures/placed_luneball_sphere2_in.png)
+
+Sec 24's two found and not fixed are as they were.
 
 ## The captured models
 

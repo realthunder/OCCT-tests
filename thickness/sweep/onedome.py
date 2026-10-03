@@ -14,6 +14,10 @@
 #    there -- the cone from its centre at latitude t / R;
 #  - j0 (Arc): a tube round the edge, its ends where it meets the flat's
 #    offset and, outward, a ball round each end of the edge.
+#    Outward this solid has a sliver face at each end of the edge, in the
+#    plane z = 0 between the flat's offset, the sphere and the ball (0.025 by
+#    0.0006, pictures/sliver); the fork does not build it (sec 25), and the
+#    volume is the same to the last figure given.
 # Elsewhere the rules of polehand.py: the skin is closed in the removed
 # face's own surface, extended (the flat's slab beside the removed dome is cut
 # by the sphere), j2 meets in sharp corners, j0 rounds the convex edges

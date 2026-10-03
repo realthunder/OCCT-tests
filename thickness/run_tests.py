@@ -1144,17 +1144,25 @@ for _ang, _tilt, _runs in ((270, 0, [(+0.5, 0, 36.6474), (+0.5, 2, 36.6474), (-0
 # Intersection join the kept face runs on round the sphere a thickness into
 # the removed one, to a wall square to the sphere there -- a cone from its
 # centre: 91.1786 outward, 74.1857 inward (sweep/onedome.py). The Arc join,
-# a tube round the edge, is still refused: 89.1638 outward, 73.5777 inward.
+# a tube round the edge and outward a ball round each of its ends: 89.1638
+# outward, 73.5777 inward (sec 25). The flat's offset is cut by the sphere
+# beside the removed face and not beside the kept one, two circles about one
+# centre t^2 / 2R apart; the step between them is an edge of the ball, and
+# the sliver the exact answer has there (0.025 by 0.0006) is not built.
 for _tag, _s in (("eqball", _domes), ("luneball", _lunes)):
     for _fi in (1, 2):
         thickness_case("%s_sphere%d_join_out" % (_tag, _fi), _s, _fi, +0.5, "pass", 91.1786, False, 2)
         thickness_case("%s_sphere%d_join_in" % (_tag, _fi), _s, _fi, -0.5, "pass", 74.1857, False, 2)
-        thickness_case("%s_sphere%d_out" % (_tag, _fi), _s, _fi, +0.5, "xfail", 89.1638)
-        thickness_case("%s_sphere%d_in" % (_tag, _fi), _s, _fi, -0.5, "xfail", 73.5777)
+        thickness_case("%s_sphere%d_out" % (_tag, _fi), _s, _fi, +0.5, "pass", 89.1638)
+        thickness_case("%s_sphere%d_in" % (_tag, _fi), _s, _fi, -0.5, "pass", 73.5777)
 thickness_case("placed_eqball_sphere2_join_out",   placed(_domes), 2, +0.5, "pass", 91.1786, False, 2)
 thickness_case("turned_eqball_sphere2_join_in",    turned(_domes), 2, -0.5, "pass", 74.1857, False, 2)
 thickness_case("placed_luneball_sphere2_join_in",  placed(_lunes), 2, -0.5, "pass", 74.1857, False, 2)
 thickness_case("turned_luneball_sphere2_join_out", turned(_lunes), 2, +0.5, "pass", 91.1786, False, 2)
+thickness_case("placed_eqball_sphere2_out",   placed(_domes), 2, +0.5, "pass", 89.1638)
+thickness_case("turned_eqball_sphere2_in",    turned(_domes), 2, -0.5, "pass", 73.5777)
+thickness_case("placed_luneball_sphere2_in",  placed(_lunes), 2, -0.5, "pass", 73.5777)
+thickness_case("turned_luneball_sphere2_out", turned(_lunes), 2, +0.5, "pass", 89.1638)
 
 # Sec 24. A seam in two pieces, joined, came back on a curve of its own
 # parameterised from 0 -- no primitive's seam -- and stretched below its

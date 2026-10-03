@@ -414,13 +414,14 @@ eight.
 ## Two faces of one sphere, one removed (2026-10-03, sec 23)
 
 `models/Thickness.md`, "Sec 23", has the causes and the rule; the hand
-values are `sweep/onedome.py`. Eight cases are marked `XFAIL`: the Arc join.
+values are `sweep/onedome.py`. The Arc join's eight cases were marked `XFAIL`
+here and pass since sec 25.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
 | `eqball_sphere1_join_*`, `eqball_sphere2_join_*`, `placed_eqball_sphere2_join_out`, `turned_eqball_sphere2_join_in` | the half ball with its sphere in two domes, one removed, Intersection join | 91.1786 outward, 74.1857 inward; refused. The kept dome runs on a thickness round the sphere to a wall, a cone from its centre |
 | `luneball_sphere1_join_*`, `luneball_sphere2_join_*`, `placed_luneball_sphere2_join_in`, `turned_luneball_sphere2_join_out` | the same in two lunes | the same volumes: the half ball turned a quarter about its flat's normal; refused |
-| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `luneball_sphere1_out/in`, `luneball_sphere2_out/in` | the same, Arc join | `XFAIL`: 89.1638 outward, 73.5777 inward; refused |
+| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `luneball_sphere1_out/in`, `luneball_sphere2_out/in` | the same, Arc join | 89.1638 outward, 73.5777 inward; refused until sec 25 |
 
 ## A seam in pieces, and the crossing at a negative parameter (2026-10-03, sec 24)
 
@@ -431,6 +432,17 @@ values are `sweep/onedome.py`. Eight cases are marked `XFAIL`: the Arc join.
 | `capsplit_seam_*`, `placed_capsplit_seam_f1_out` | the cap above latitude 30 with a vertex at the middle of its seam | the cap's 31.285 and 27.358; an invalid 105.98, or refused. The joined seam is put back on its iso line |
 | `bulletsplit_seam_*` | a dome on a cylinder with a vertex on the cylinder's seam | the bullet's 97.2749, 69.8169, 152.629, 130.6379, and its side removed two solids, 93.0859 or 76.8543 and 39.2699; invalid (808.26) or refused |
 | `dome270split_e4/e6/e7_f3_out` | three quarters of a dome with a vertex on an edge, a flat side removed outward, Arc join | 111.7391; invalid or refused after sec 23's crossings on a sphere |
+
+## The Arc join between two faces of one sphere (2026-10-03, sec 25)
+
+`models/Thickness.md`, "Sec 25", has the causes, the ruling on the sliver
+face and its picture (`pictures/sliver/make_sliver.sh` makes it again). No
+case is marked `XFAIL`.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `placed_eqball_sphere2_out`, `turned_eqball_sphere2_in` | the half ball with its sphere in two domes, one removed, Arc join | 89.1638 outward, 73.5777 inward; refused. The flat's offset is closed by a step between two circles that never meet, an edge of the ball round the tangent edge's end; no sliver face |
+| `luneball_sphere1_out/in`, `luneball_sphere2_out/in`, `placed_luneball_sphere2_in`, `turned_luneball_sphere2_out` | the same in two lunes | the same volumes; refused. The line between the flat's halves is cut at the section and both halves have it cut |
 
 ## Determinism cases (intersection mode, Arc join)
 
@@ -518,5 +530,6 @@ tests/fork/thickness/
     Thickness.md     the fixes, before and after, in pictures
     pictures/        before and after, one PNG per fixed case
   pictures/          the tools that make them (make_pictures.sh)
+    sliver/          the Arc join's sliver face, a figure of its own (sec 25)
   sweep/             the 928-run sweep, its reference and its hand values
 ```
