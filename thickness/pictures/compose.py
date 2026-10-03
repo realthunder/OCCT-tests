@@ -34,7 +34,12 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "dome2": "half a sphere, its rim in two arcs",
          "dome2f": "half a sphere, its rim in two arcs and its flat in two halves",
          "halfball1": "half a ball cut through both poles, refined: one disc",
-         "cutball": "a ball cut in half by a box: a compound of one solid"}
+         "cutball": "a ball cut in half by a box: a compound of one solid",
+         "ball270": "a ball wedge of 270 degrees, pole to pole", "ball240": "a ball wedge of 240 degrees",
+         "ball150": "a ball wedge of 150 degrees", "boxsplit": "a box with a vertex on an edge",
+         "cylseam": "a cylinder with a vertex on its seam",
+         "ball270split": "the 270 degree ball wedge with a vertex on a meridian",
+         "axiswedge270": "a 270 degree wedge of a ball made on an axis through its face"}
 JOIN = {0: "Arc join", 2: "Intersection join"}
 def status(d):
     if d["ok"] and d.get("refused"):

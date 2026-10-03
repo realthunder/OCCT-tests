@@ -21,7 +21,7 @@ the only write-up.
 Where things are:
 
 - The fork's suite: `tests/fork/thickness/run_tests.py` (`FreeCADCmd
-  tests/fork/thickness/run_tests.py`; PASS 277, XFAIL 8) and its `README.md`, the
+  tests/fork/thickness/run_tests.py`; PASS 326) and its `README.md`, the
   case-by-case reference.
 - The pictures: `pictures/<case>.png` beside this page, one per case of the
   suite that a fix turned from failing to passing.
@@ -116,21 +116,23 @@ a mode: 204. From that section on the sweep is also run with every solid
 under a location and with its geometry turned in space (`SWEEP_PLACE`): the
 same 928 volumes, all right.
 
-Of the 134 pictured cases, 36 are ones upstream gets right and the fork had
+Of the 146 pictured cases, 39 are ones upstream gets right and the fork had
 broken -- the chain's casualties (sec 2, 3, part of 4, the holed
 cone's top with intersection on, sec 10, a short box's and a box's bottom
 alone, sec 11 and 12, a pocket's open shell, sec 13, the
 input left inside out, sec 14, the faces closed at a pole, sec
-16, half of a cap turned in space, its sphere removed, sec 20, and
-a dome with its rim in two arcs, sec 21).
-The other 98 fail upstream too: the fork
+16, half of a cap turned in space, its sphere removed, sec 20,
+a dome with its rim in two arcs, sec 21, and an edge in pieces, sec 22).
+The other 107 fail upstream too: the fork
 now does better than upstream there.
 
 Nothing in the suite fails. Half a ball cut through both its poles, which
 sec 19 left open, is answered in sec 20, and as a refine or a cut
 leaves it, or with its sphere in two faces, in sec 21, which marks
 eight cases known broken: ball wedges on more than half a turn with the
-sphere removed, and a dome's half flat with the Intersection join. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
+sphere removed, and a dome's half flat with the Intersection join. Sec 22
+answers the eight, and an edge in pieces, which broke the faces beside it
+in 361 of 824 runs. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
 piece is a plain plate or disc, with either join (sec 12), and sec 13
 the pieces that are pockets and bosses: every one checks by hand. The one
 refusal left in the sweep is the torus's face, and it is right: with its one
@@ -1278,7 +1280,7 @@ do. Not chased.
 ![eqball_spheres_join_out](pictures/eqball_spheres_join_out.png)
 
 **Known broken**, each marked in the suite with the volume it should give
-(8 cases):
+(8 cases, all answered in sec 22):
 
 - A ball wedge from pole to pole on more than half a turn, its sphere
   removed outward (270 and 240 degrees, both joins: three lunes, refused);
@@ -1304,7 +1306,164 @@ no circle of latitude. Its sphere removed is wrong all eight ways tried on
 each: invalid or refused, and inward with the Intersection join a valid
 solid of 264.29 for 41.6307 (263.24 for 40.5784 on 240 degrees). It is what
 turning the wedges of the list above onto their middle would make of them,
-so that is no way to answer those as it stands.
+so that is no way to answer those as it stands. (Sec 22 answers it the
+other way round: the face is turned onto the wedge's own axis.)
+
+### Sec 22: the rest of the ball, a sphere on another axis, an edge in pieces
+
+Sec 21 left eight cases known broken and three things found beside them.
+The eight are answered, and two of the three; a hand value was wrong; and
+looking at why the third of them was wrong turned up a fault far wider than
+any of them, there since the chain was ported.
+
+**A hand value** (`sweep/polehand.py`). Of the eight, the ball wedge of 240
+degrees with its sphere removed inward and the Arc join gave 40.4447 for
+39.9613. The solid was right. Inward the skin is the solid less the points
+further than the thickness from where the solid is not; for a wedge on more
+than half a turn that is the convex wedge that is missing, and the script
+took the distance to it for `hypot` of the distances to its two planes. That
+is the distance to the axis only where the planes are square, at 270
+degrees. At 240 the skin is the two slabs and a sixth of a tube round the
+axis: 39.14 + 1.31 = 40.45. The table `polehand.txt` does not change -- its
+one reflex wedge is of 270 degrees.
+
+**The rest of the ball** (`631700cbf8`, `BRepOffset_MakeOffset`,
+`MakeThickSolidOfSplit`, `MakeGapOfBall`). A ball wedge from pole to pole on
+more than half a turn, its sphere removed outward, was cut into lunes of a
+quarter turn at the most (sec 20) and refused. The wall lies in the gap
+between the flats: on 270 degrees it is the missing quarter of the sphere
+with a hole in it where the flats' offsets cross -- a face beside none of
+the three lunes, and the image of none of them. On 150 degrees with the Arc
+join the wall holds both poles and a tube round the axis, and was refused
+too.
+
+With every face of one sphere removed and the solid inside its ball, the
+thick solid outward is what lies in the ball, off the solid, within the
+thickness of the solid's other faces. That is the thick solid inward of the
+rest of the ball -- the ball less the solid -- with its faces on the sphere
+removed. The joins answer each other: outward the Arc join rounds a convex
+edge and inward a concave one, and an edge of the solid is the other kind on
+the rest of the ball. The rest is a cut of a ball made with its seam in the
+middle of the faces the solid has, so that the cut takes the seam away; the
+two volumes must make the ball's. Its images come back under the solid's
+faces and edges, the faces on the sphere under the removed face. Where the
+rest gives no valid answer, the face is cut into lunes as before.
+
+36.6474 on 270 degrees and 37.6996 on 240 with either join (a 90 and a 120
+degree wedge inward); 39.7919 and 39.8071 on 150 degrees (a 210 degree wedge
+inward). Plain, under a location and turned in space.
+
+![ball270_sphere_out](pictures/ball270_sphere_out.png)
+
+![ball270_sphere_join_out](pictures/ball270_sphere_join_out.png)
+
+![ball240_sphere_join_out](pictures/ball240_sphere_join_out.png)
+
+![ball150_sphere_out](pictures/ball150_sphere_out.png)
+
+**A sphere on the meridians of another axis** (`c747dd8371`,
+`TurnSphereOntoMeridians`). Two shapes have a sphere face with its own pole
+inside, a seam through it, and its outline on two half great circles
+between the same two points: meridians of another axis.
+
+- The dome with its rim in two arcs and its flat in two halves: the half
+  ball's sphere, put the other way round. One half removed with the
+  Intersection join was refused (sec 21): the dome had to grow below its rim
+  beside the wall closing the edge between the halves, and the wall came out
+  outside its band. The half ball gets this right (sec 20).
+- A ball wedge made on an axis through the middle of its face (sec 21,
+  "found beside these"): wrong every way.
+
+The face is put on the same sphere with its poles at those two points: it
+runs from pole to pole between the two meridians, which is the ball wedge's
+face and the half ball's, and what follows in `MakeThickSolidOfSplit` knows
+it. The axis is a pair of the outline's vertices across the sphere from each
+other, square to the planes of all the outline's edges -- not the normals of
+the edges alone: the dome's two arcs lie on one great circle. Which side of
+the two meridians the face lies on is found by classifying two points off
+the middle and off the equator; the face's own pole sat on the middle of
+the wedge and was neither in nor out. A side of the outline may be in more
+than one edge. The edges take a pcurve on the turned sphere as a cache, as
+in sec 21; the poles' degenerated edges are new. A dome with one face beside
+its rim is left to the loops, which know it (sec 21).
+
+113.0909 and 89.0272, either half; with the Arc join, turned too now,
+111.6001 and 88.5482 as before.
+
+![dome2f_flat_join_out](pictures/dome2f_flat_join_out.png)
+
+![dome2f_flat_join_in](pictures/dome2f_flat_join_in.png)
+
+**An edge in pieces** (`addc5e58fd`). The ball wedge made on an axis through
+its face, once turned, was still wrong all four ways. Its seam had ended on
+one of the wedge's meridians and cut it in two, and the turned face had no
+seam: what was left is the ball wedge with a vertex at the middle of a
+meridian, and that was wrong all four ways too -- `Part.makeSphere(5, ..,
+-90, 90, 270)` fused with a vertex at (5, 0, 0).
+
+So a vertex was put at the middle of each edge in turn of twelve shapes --
+ball wedges, domes, a box, a cylinder, a cone -- and the thickness run with
+every face removed, both ways, both joins, against the shape as made: 361
+runs of 824 came out different. A box with a vertex on an edge, a face
+beside it removed with the Arc join, was refused, or came back as the box
+itself, 480; upstream is right with the Arc join, and with the
+Intersection join gives the box back as a valid solid. The libraries of
+every stage back to sec 2's "before" fail it as well: since the chain was
+ported.
+
+The offsets of the two pieces lie on one curve, and each is stretched far
+past its ends (`ContextIntByArc`), over the other: two sections of the same
+line, and the loops on the removed face closed wires of no area between
+them. Sharing one stretched edge between the pieces put the box right with
+the Arc join but not with the Intersection join, whose sections are trimmed
+elsewhere, and broke the cylinder, whose sections are whole circles.
+
+A vertex that only cuts an edge in two -- its two edges between the same two
+faces, nothing else meeting it -- tells the thickness nothing. The thick
+solid is made of the solid with such pieces joined
+(`ShapeUpgrade_UnifySameDomain`, edges only) by an object of its own, and
+the images of a joined edge come back under each of its pieces. A seam in
+two pieces is joined too, and the cylinder's caps are right that way; but a
+joined seam is no primitive's seam, and the cylinder's side removed outward
+with the Arc join was refused once joined. Where the joined solid gives no
+valid answer, the solid is taken as it came. All 824 runs are right.
+
+The ball wedge on an axis through its face is right in all 24 runs tried:
+270, 240 and 150 degrees, both ways, both joins, the ball turned about its
+axis or not; inward with the Intersection join 41.6307, where it was a
+valid solid of 264.29.
+
+![boxsplit_side_out](pictures/boxsplit_side_out.png)
+
+![boxsplit_side_in](pictures/boxsplit_side_in.png)
+
+![cylseam_top_out](pictures/cylseam_top_out.png)
+
+![ball270split_sphere_join_in](pictures/ball270split_sphere_join_in.png)
+
+![axiswedge270_sphere_join_in](pictures/axiswedge270_sphere_join_in.png)
+
+![axiswedge270_sphere_out](pictures/axiswedge270_sphere_out.png)
+
+**A result that runs off** (`50e7977409`, `MakeThickSolid`). The half ball
+with its sphere in two domes, one dome removed outward with the Arc join,
+was a valid solid of a volume of -1.3e100: two planes of it unbounded,
+1e100 across. A result that reaches past the shape's box grown by a
+thousand times the box's diagonal and the thickness is refused now. The
+skin lies within the thickness of the shape but for a sharp corner of the
+Intersection join, t / sin(a / 2) past an edge of angle a -- 115
+thicknesses at a degree; the room is for any of them.
+
+**Found beside these, not fixed, and not in the suite.** The half ball
+with its sphere in two domes and one of them removed is refused every way
+now, and so is the half ball in two lunes with one removed (sec 21). The
+removed face meets the one that stays along a tangent edge, both on one
+sphere, and the wall that closes that edge has no rule here yet: for two
+faces in one plane it lies a thickness past the edge with the Intersection
+join and is a tube round the edge with the Arc join (sec 6, and
+`sweep/polehand.py`), and on a sphere its place is not settled, so no hand
+value is either. The seam crossing at a negative parameter that sec 21
+worked round is still worked round.
 
 ## The captured models
 
