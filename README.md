@@ -9,12 +9,15 @@ the fork.
 git submodule update --init tests/fork     # once per clone of the fork
 FreeCADCmd tests/fork/thickness/run_tests.py
 FreeCADCmd tests/fork/fillet/run_tests.py
+FreeCADCmd tests/fork/draft/run_tests.py
 ```
 
 - `thickness/` -- the thickness (`BRepOffsetAPI_MakeThickSolid`) suite:
   `run_tests.py`, the sweep, the captured models, `models/Thickness.md`
   (every fix, before and after) and its pictures.
 - `fillet/` -- the fillet suite, laid out the same way, `models/Fillet.md`.
+- `draft/` -- the draft (`BRepOffsetAPI_DraftAngle`) suite: `run_tests.py`
+  and its README; its models are `occ-issues/`'s.
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
 

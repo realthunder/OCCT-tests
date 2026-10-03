@@ -54,7 +54,7 @@ the table above come first:
 | 273 | Body valid; Pad003 invalid, Sketch003 in error (both files). The chamfer crash needs the interactive chamfer scripted |
 | 309 | fixed (see above) |
 | 333 | no crash; Sketch006 "No planar face in AttachEngine3D" (its support remapped to a curved face) |
-| 334 | no crash; Draft003 invalid, Body invalid |
+| 334 | no crash; Draft003 invalid, Body invalid. Draft001 and Draft003, recomputed alone, are **refused now** (`ca766a8a92`): a drafted ledge whose corner a bevel touches needs a new edge, which a draft cannot make, and it gave an invalid shape; see `../draft/` |
 | 360 | not finished: the recompute ran 25 min and the scan was stopped for memory on the 8 GB box |
 | 474 | no crash; Fillet003 and four sketches in error |
 | 523 | Fillet invalid -- **fixed**, `../fillet/` |
