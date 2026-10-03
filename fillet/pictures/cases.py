@@ -18,6 +18,7 @@ STAGES = {
     "s962c": ("e3a3779048", "2ac4fee0c6"),
     "s962d": ("d4f71dfae3", "2b9df66c48"),
     "s962e": ("6d61205cc1", "fb9200b0fd"),
+    "s962f": ("1e6f5a464c", "3fa9420429"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -153,6 +154,8 @@ UVFACE_CASE = {
                           and f.BoundBox.isInside(App.Vector(38.5, 27.2, -3.76))),
     # the corner's plate at edge 56's foot
     "issue962_e56_r0.8": _plate_near(38.5, 27.2, -3.75),
+    # the corner's plate at edge 33's end
+    "issue962_e33_r0.3": _plate_near(38.5, 10.2, -3.75),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -228,11 +231,14 @@ CASES = {
                           11581.7068, (38.5, 27.2, -3.75), (-1, 1, 0.5)),
     "issue474_f003_e6_r0.8": ("s962e", "p474", ((-13, 0, 11), (-13, 0, 13)), 0.8, 1989.1235,
                               (-13, 0, 13), (-1, 1, 0.6)),
+    "issue962_e33_r0.3": ("s962f", "p962", ((17.356038, -9.42499, -3.75), (38.5, 10.2, -3.75)),
+                          0.3, 11583.5858, (38.5, 10.2, -3.75), (-1, -1, 0.6)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
     "issue962_e36_r0.3": 0.5,
     "arm_on_tall_block_r0.3": 0.5,
+    "issue962_e33_r0.3": 0.5,
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {

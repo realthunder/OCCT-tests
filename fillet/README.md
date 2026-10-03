@@ -309,12 +309,63 @@ edge 33 at 0.3, in the Fillet's input and the Chamfer's. That corner's G1 plate 
 its outline crossed itself ten times and its surface folded, and the
 "valid" fillet of radius 0.3 removed 9.4 of volume where 0.6 is due --
 and the G0 one, which fits ten times better, has two of its boundary
-curves meeting head to head, which BRepCheck now rejects. At 1e-2 the
+curves meeting head to head, which BRepCheck now rejects. (Both were one
+fault, not the plates': see the next section. Edge 33 is valid at either
+plate now, and takes 0.55.) At 1e-2 the
 change is smaller -- 17 valid, 107 tighter, the same 2 lost -- and leaves
 the merely mediocre G1 plates (edge 36's at 0.8, 3.3e-3) as they were; at
 1e-3 those are rebuilt too (edge 36's tolerance 0.0215 to 0.0123), most of
 the corners in all. FreeCAD's `TestPartApp` (139),
 `TestPartDesignApp` (77) and `TestSurfaceApp` pass.
+
+## A plate boundary stored backwards (realthunder/FreeCAD#962, 2026-10-03)
+
+#962's edge 33 -- the arm's top on its side, ending at the five-face corner
+(38.5,10.2,-3.75) under edge 50 -- came out invalid at 0.3 once the corner's
+plate was G0, and its "valid" G1 result before that took 9.4 of volume
+where 0.55 is due. A mesh of that same G1 result took 0.555: the shape was
+right and GProp was reading it wrong, on one face -- the block's side
+y=10.2, whose area it put at 62.1 for 69.
+
+`PerformMoreThreeCorner` closes the corner with curves laid on the faces
+between the stripes' ends, each stored as running from the end of stripe
+`ic` to that of `icplus`: the first DS point at its first parameter, the
+second at its last. Where the curve is a projection taken from
+`CurveHermite`, it keeps the direction `BRepAlgo_NormalProjection` built it
+in, and here that was the other way. Its edge, the 0.3 on y=10.2, got its
+FORWARD vertex at its last parameter -- the vertices are each on the curve
+at their own parameters, so BRepCheck passes it, but anything walking the
+edge by its range walks it backwards: GProp's area lost 2 x 11.5 x 0.3. And
+the same curve was the plate's second boundary, head to head with the
+first; `PlateOrientation` read each curve from its first parameter, so its
+corner there was the far end, and with the G0 plate its two sums disagreed
+in sign and the plate face was turned over (negative area, BRepCheck's
+bad orientation).
+
+Fix `3fa9420429`: a projection that runs from `icplus`'s end to `ic`'s is
+reversed, 2D and 3D together (when the two still share one parameter range
+after it; else it is left as it was). And `PlateOrientation` takes the
+plate's `Sense()`, walking a boundary that runs against the others from its
+last parameter. With the first change no plate in the sweep below has such
+a boundary any more (none of 495); the second is what `GeomPlate` reports
+the order by, and alone it was enough to make edge 33 valid, though not to
+make its volume right.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_e33_r{0.1,0.3}` | edge 33: valid, taking 0.062 and 0.554 (they were invalid, 3.0 and 9.4) |
+
+Checked against the fix: the every-edge sweep, 25 shapes, 3921 results:
+the 2 lost to the G0 plate are valid again, and 10 results that were valid
+already change -- #962's edges 29 to 32 (31 and 32 in the Fillet's input,
+29 and 30 in the Chamfer's), edges ending at edge 33's corner or at its
+mirror image (38.5,27.2,-3.75). Each had
+an edge or vertex tolerance equal to the radius and now has 0.007 to 0.12,
+and each volume moves to what a mesh of the result says: edge 32, concave,
+17 long, now adds 0.330 at 0.3 and 14.94 at 2 ((1 - pi/4) r^2 L: 0.328 and
+14.6), where GProp had it taking 9.8 and 49. Nothing else moves, status or
+tolerance. FreeCAD's `TestPartApp` (139), `TestPartDesignApp` (77) and
+`TestSurfaceApp` pass.
 
 ## Known broken (XFAIL)
 
