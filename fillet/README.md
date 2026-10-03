@@ -220,7 +220,7 @@ walk to take the tangent pieces as one face, a larger change.
 
 ## A corner plate whose boundary curve missed its first surface (realthunder/FreeCAD#962, 2026-10-02)
 
-#962's edge 36 alone -- the arm's side against the block's side at its
+Edge 36 of #962 alone -- the arm's side against the block's side at its
 foot, 21 degrees apart -- failed below radius 0.42 with a faulty vertex at
 its top (38.5,27.2,-3.75). Above the arm the block goes on, its side
 y=27.2 two coplanar faces split at the arm's top, and five faces meet at
@@ -263,7 +263,7 @@ wall by the fillet's reach (0.1875 r) and its wire crosses itself.
 
 ## A corner plate folded to stay tangent (realthunder/FreeCAD#962, 2026-10-02)
 
-#962's edge 56 alone took 5.04 of volume where its mirror image, edge 50,
+Edge 56 of #962 alone took 5.04 of volume where its mirror image, edge 50,
 took 2.35 -- and a mesh of the same result said 3.5, GProp's adaptive mode
 2.0. The shape was not right. Its foot is the five-face corner at
 (38.5,27.2,-3.75), which `PerformMoreThreeCorner` fills with a `GeomPlate`
@@ -320,7 +320,7 @@ the corners in all. FreeCAD's `TestPartApp` (139),
 
 ## A plate boundary stored backwards (realthunder/FreeCAD#962, 2026-10-03)
 
-#962's edge 33 -- the arm's top on its side, ending at the five-face corner
+Edge 33 of #962 -- the arm's top on its side, ending at the five-face corner
 (38.5,10.2,-3.75) under edge 50 -- came out invalid at 0.3 once the corner's
 plate was G0, and its "valid" G1 result before that took 9.4 of volume
 where 0.55 is due. A mesh of that same G1 result took 0.555: the shape was
