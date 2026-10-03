@@ -361,7 +361,7 @@ by `sweep/polehand.py`.
 ## Half a ball, and a shape that is placed or turned (2026-10-02, sec 20)
 
 `models/Thickness.md`, "Sec 20", has the causes. No case was marked
-`XFAIL` after it; sec 21 marks eight.
+`XFAIL` after it; sec 21 marks eight, and sec 22 answers them.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
@@ -377,8 +377,9 @@ by `sweep/polehand.py`.
 
 ## A rim in two arcs, and the half ball with one disc (2026-10-02, sec 21)
 
-`models/Thickness.md`, "Sec 21", has the causes. Eight cases are
-marked `XFAIL`, each with the volume it should give.
+`models/Thickness.md`, "Sec 21", has the causes. Eight cases were
+marked `XFAIL`, each with the volume it should give; sec 22 answers all
+eight.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
@@ -389,10 +390,26 @@ marked `XFAIL`, each with the volume it should give.
 | `cutball_*` | the same from a cut by a box: a compound of one solid | the same volumes; refused, the compound not being looked at |
 | `placed_halfball1_*`, `turned_halfball1_*` | the same under a location, and turned in space | the same volumes |
 | `ball270_sphere_in`, `ball270_sphere_join_in`, `ball240_sphere_join_in` | a ball wedge from pole to pole on three quarters and two thirds of a turn, the sphere removed inward | 41.0978, 41.6307, 40.5784 |
-| `ball270_sphere_out`, `ball270_sphere_join_out`, `ball240_sphere_out`, `ball240_sphere_join_out`, `ball240_sphere_in`, `ball150_sphere_out` | ball wedges, the sphere removed | `XFAIL`: 36.6474, 37.6996, 39.9613, 39.7919; refused, and `ball240_sphere_in` a valid solid of 40.4447 |
+| `ball270_sphere_out`, `ball270_sphere_join_out`, `ball240_sphere_out`, `ball240_sphere_join_out`, `ball240_sphere_in`, `ball150_sphere_out` | ball wedges, the sphere removed | `XFAIL` until sec 22: 36.6474, 37.6996, 39.7919; refused. `ball240_sphere_in` gave 40.4447 all along, which is right: its hand value of 39.9613 was wrong (sec 22) |
 | `luneball_flat_join_out/in` | the half ball with its sphere in two lunes, a flat half removed, Intersection join | 113.0909, 89.0272; refused, and inward a valid solid of 182.21: faces of one sphere with one thing done to them are joined first |
 | `eqball_spheres_*` | the half ball with its sphere in two domes, both removed | 39.1390; refused or invalid but for inward with the Intersection join: the same |
-| `dome2f_flat_join_out/in` | the dome with its rim in two arcs and its flat in two halves, one half removed, Intersection join | `XFAIL`: 113.0909, 89.0272; refused, the wall between the halves outside its band |
+| `dome2f_flat_join_out/in` | the dome with its rim in two arcs and its flat in two halves, one half removed, Intersection join | `XFAIL` until sec 22: 113.0909, 89.0272; refused, the wall between the halves outside its band |
+
+## The rest of the ball, a sphere on another axis, and an edge in pieces (2026-10-03, sec 22)
+
+`models/Thickness.md`, "Sec 22", has the causes. No case is marked
+`XFAIL`.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `ball270_sphere_*out`, `ball240_sphere_*out`, `ball150_sphere_*out`, `placed_ball270_sphere_out`, `turned_ball240_sphere_join_out`, `turned_ball150_sphere_out` | ball wedges, the sphere removed outward | 36.6474, 37.6996, 39.7919 (Arc) and 39.8071 (Intersection); refused. The thick solid inward of the rest of the ball |
+| `ball240_sphere_in` | the same inward, Arc join | 40.4447, right before: `sweep/polehand.py` took the missing wedge of a reflex wedge for a quadrant, right at 270 degrees only, and gave 39.9613 |
+| `dome2f_flat_*`, `placed_dome2f_flat_join_in`, `turned_dome2f_flat_join_out` | the dome with its flat in two halves, one half removed | 113.0909, 89.0272 with the Intersection join, refused; 111.6001, 88.5482 with the Arc join. The dome is put on the axis through its rim's ends: the half ball |
+| `boxsplit_e1_*`, `placed_boxsplit_e1_f1_out` | a box with a vertex at the middle of an edge, a face beside it removed | the box's 177.6136, 181.5, 147.5, 170.8282, 142.5; refused or the box itself back, where upstream is right with the Arc join. The pieces are joined |
+| `cylsplit_rim_*`, `cylsplit_seam_*` | a cylinder with a vertex on its top circle, on its seam | 110.4400, 89.9281, 111.9192; invalid. Its side removed with the seam in two: two discs of 25.1327, as the cylinder's |
+| `halfdomesplit_rim_*`, `conesplit_seam_*` | half a dome with a vertex on its rim, a cone with one on its seam | 36.6474, 67.0206, 58.8944; 52.4095, 38.8428. The half dome's sphere inward with the Arc join was an invalid solid of 130.90 |
+| `ball270split_sphere_*`, `turned_ball270split_sphere_join_in` | the 270 degree ball wedge with a vertex on a meridian | 36.6474, 41.0978, 41.6307; wrong every way |
+| `axiswedge270_*`, `axiswedge240_*`, `axiswedge150_*` | a ball made on an axis through the middle of its face, cut by the wedge that is missing | the ball wedge's volumes; wrong every way, inward with the Intersection join a valid solid of 264.29 for 41.6307 |
 
 ## Determinism cases (intersection mode, Arc join)
 
