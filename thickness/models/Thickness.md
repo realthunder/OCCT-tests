@@ -1573,6 +1573,70 @@ built.
 The seam crossing at a negative parameter that sec 21 worked round is still
 worked round.
 
+### Sec 24: a seam in pieces, and the crossing at a negative parameter
+
+Sec 22's survey put a vertex at the middle of each edge of twelve shapes in
+turn and asked that nothing change. Widened to twenty-five shapes -- the
+half ball in domes and in lunes, the filleted box, the box fused of two,
+the dome on a cylinder, the cap, the holed cone, the L, the refined and the
+cut half ball -- it found four that still change.
+
+**The crossing at a negative parameter** (`013502003c`, `BRepAlgo_Loop`). The loop projects
+each vertex on the other edges to find where they cross, and the projection
+answers in the curve's first period; an edge whose range runs below it --
+stretched back past its start -- has the answer wrapped into its range
+(sec 19). A stretched edge's curve is a trimmed circle, and a trimmed curve
+says it is not periodic: the wrap never ran, and a crossing just below the
+start, at 2 pi less a little, was skipped as off the edge. This is the root
+sec 21 worked round by starting the turned half sphere's seam at 2 pi, as a
+primitive's does: started at 0, stretched below the rim, its crossing with
+the section of the removed face was lost. The wrap now takes the period of
+the curve the trimmed one is cut from.
+
+**A seam in pieces** (`5004f3e2ee`, `BRepOffset_MakeOffset`,
+`PutJoinedEdgesOnIsos`). An
+edge in pieces is joined first (sec 22), and a seam joined comes back on a
+circle or line of its own, parameterised from 0 -- no primitive's seam, which
+is its surface's iso line, its parameter the surface's own. Stretched below
+its start it went negative, into the fault above, and other steps count on
+the surface's parameter too. A joined seam is put back on the iso line, its
+pcurves lines of the same parameter, its pcurves on planes dropped to be
+worked out again; only where it runs the way the line does, and on no face
+but such ones and planes. Seams only: a meridian between two faces -- the
+lunes' -- is right as joined, and was broken by it. The cap above latitude
+30 with its seam in two, its sphere removed outward with the Arc join, was
+an invalid solid of 105.98 for 31.285, and refused three other ways; the
+dome on a cylinder with the cylinder's seam in two, an invalid 808.26 for
+152.629, and wrong eight other ways. All right now.
+
+![capsplit_sphere_out](pictures/capsplit_sphere_out.png)
+
+![bulletsplit_flat_out](pictures/bulletsplit_flat_out.png)
+
+![bulletsplit_sphere_in](pictures/bulletsplit_sphere_in.png)
+
+**Sec 23's crossings on a sphere** (`73d91e0d06`, `BRepAlgo_Loop`). The crossing vertices
+sec 23 gave a sphere were given between any two edges, and an edge stretched
+over the pole comes down the far side and crosses edges there that bound
+nothing of it: three quarters of a dome with a vertex on an edge, a flat side
+removed outward with the Arc join, was invalid or refused three ways, where
+before sec 23 it was right. A stretched edge -- its own ends INTERNAL --
+gets no crossing vertex on a sphere.
+
+![dome270split_side_out](pictures/dome270split_side_out.png)
+
+**Found, not fixed.** The half ball cut from a ball by a box, one face its
+sphere: with a vertex on its rim it is refused four ways (placed or
+turned it is right); the edge join gives
+a valid solid of the pieces joined, and the thick solid is made of the solid
+as given all the same -- not chased. The half ball in two lunes with a vertex
+on the meridian between them, or on the rim beside the removed lune: refused
+three ways with the Intersection join. The flat's half beside the removed
+lune takes the whole section circle from the other half (sec 23) and builds
+the other half's face again from it; on the plain shape the shell drops one
+of the two copies, here neither, and the solid is not valid. A copy of a
+coplanar neighbour's face needs a rule of its own.
+
 ## The captured models
 
 The suite's four document cases (realthunder/OCCT#1-#4: an elliptic pad, a

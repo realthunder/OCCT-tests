@@ -1156,6 +1156,32 @@ thickness_case("turned_eqball_sphere2_join_in",    turned(_domes), 2, -0.5, "pas
 thickness_case("placed_luneball_sphere2_join_in",  placed(_lunes), 2, -0.5, "pass", 74.1857, False, 2)
 thickness_case("turned_luneball_sphere2_join_out", turned(_lunes), 2, +0.5, "pass", 91.1786, False, 2)
 
+# Sec 24. A seam in two pieces, joined, came back on a curve of its own
+# parameterised from 0 -- no primitive's seam -- and stretched below its
+# start its crossings fell at negative parameters, where the loop's periodic
+# wrap never looked (a stretched edge's curve is a trimmed circle, which says
+# it is not periodic): the cap with its seam split, its sphere removed
+# outward, an invalid 105.98 for 31.285; the dome on a cylinder with the
+# cylinder's seam split, an invalid 808.26 for 152.629. And sec 23's crossing
+# vertices on a sphere crossed edges stretched over a pole: three quarters of
+# a dome with a vertex on an edge, a flat side removed, invalid.
+_cap = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 30, 90, 360)
+split_cases("capsplit_seam", _cap, 2, [(1, +0.5, 0, 31.285), (1, -0.5, 0, 27.358),
+                                       (1, +0.5, 2, 31.285), (1, -0.5, 2, 27.358)])
+split_cases("bulletsplit_seam", bullet, 2, [(2, -0.5, 0, 97.2749), (2, -0.5, 2, 69.8169),
+                                            (3, +0.5, 0, 152.629), (3, -0.5, 2, 130.6379)])
+_bulletsplit = split_at(bullet, 2)
+pieces_case("bulletsplit_seam_f1_out", _bulletsplit, [face_of(_bulletsplit, bullet, 1)], +0.5,
+            [93.0859, 39.2699])
+pieces_case("bulletsplit_seam_f1_in", _bulletsplit, [face_of(_bulletsplit, bullet, 1)], -0.5,
+            [76.8543, 39.2699])
+_dome270 = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 270)
+for _e in (4, 6, 7):
+    split_cases("dome270split_e%d" % _e, _dome270, _e, [(3, +0.5, 0, 111.7391)])
+_capsplit = split_at(_cap, 2)
+thickness_case("placed_capsplit_seam_f1_out", placed(_capsplit), face_of(_capsplit, _cap, 1), +0.5,
+               "pass", 31.285)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

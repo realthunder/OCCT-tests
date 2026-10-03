@@ -40,6 +40,7 @@ STAGES = {
     "s22b": ("631700cbf8", "22"),
     "s22c": ("c747dd8371", "22"),
     "s23": ("80fa234b05", "23"),
+    "s24": ("42475a8cca", "24"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -180,6 +181,10 @@ SHAPES = {
     "axiswedge270": lambda: _axis_wedge(270),
     "turned_eqball": lambda: _turned(_halfball("equator")),
     "placed_luneball": lambda: _placed(_halfball("meridian")),
+    "capsplit": lambda: _split_at(Part.makeSphere(5, V(), V(0, 0, 1), 30, 90, 360), 1),
+    "bulletsplit": lambda: _split_at(Part.makeCylinder(5, 4, V(0, 0, -4)).fuse(
+        Part.makeSphere(5, V(), V(0, 0, 1), 0, 90, 360)).removeSplitter(), 1),
+    "dome270split": lambda: _split_at(Part.makeSphere(5, V(), V(0, 0, 1), 0, 90, 270), 3),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -335,6 +340,10 @@ CASES = {
     "luneball_sphere1_join_in": ("s23", "luneball", 1, -0.5, False, 2, 74.1857),
     "turned_eqball_sphere2_join_in": ("s23", "turned_eqball", 2, -0.5, False, 2, 74.1857),
     "placed_luneball_sphere2_join_out": ("s23", "placed_luneball", 2, +0.5, False, 2, 91.1786),
+    "capsplit_sphere_out": ("s24", "capsplit", 1, +0.5, False, 0, 31.285),
+    "bulletsplit_flat_out": ("s24", "bulletsplit", 3, +0.5, False, 0, 152.629),
+    "bulletsplit_sphere_in": ("s24", "bulletsplit", 2, -0.5, False, 0, 97.2749),
+    "dome270split_side_out": ("s24", "dome270split", 3, +0.5, False, 0, 111.7391),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
