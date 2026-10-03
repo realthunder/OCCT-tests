@@ -1595,7 +1595,10 @@ ten minutes on the dev box, most of it building libraries:
 3. `mkjobs.py` and `render.py` draw the panels in the FreeCAD GUI under
    `xvfb-run` -- the shape given with its removed faces in magenta, then
    each result -- and `compose.py` lays them out (Pillow, from the FreeCAD
-   conda env).
+   conda env). The viewer is started afresh for every hundred panels, under
+   a limit on its address space: it kept memory for every panel drawn, and
+   all 1248 in one run took the machine down (`render.py` has the numbers
+   and the two causes, both fixed since).
 
 A case added to `cases.py` with its stage gets its picture on the next run.
 `mkpage.py OUTDIR` then builds the "Thickness Before and After" page from

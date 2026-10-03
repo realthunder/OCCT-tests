@@ -11,6 +11,8 @@
 #      FCBUILD     a FreeCAD build linked against this OCCT tree
 #      RUN         the wrapper that runs a command in the build's environment
 #      OUTDIR      where the pictures go (default ../models/pictures)
+#      RENDER_BATCH  panels rendered by one run of the viewer (default 100)
+#      RENDER_VMEM   the viewer's address space limit in kB (default 20 GB)
 set -e
 HERE=$(cd $(dirname $0) && pwd)
 export THICK_WORK=${THICK_WORK:-/tmp/thickness-pictures}
@@ -46,10 +48,22 @@ for st in $STAGES; do
     compute $W/old/$st/lib $W/r/$st STAGES=$st
 done
 
-# The pictures.
+# The pictures. The viewer keeps memory for every panel it has drawn
+# (render.py), so it is started afresh for each batch, and under a limit on
+# its address space: a run that grows anyway is refused memory and fails,
+# where without the limit it has taken the machine into swap and down.
 rm -rf $W/png
 python3 $HERE/mkjobs.py
-JOBS=$W/jobs.json FREECAD_USER_HOME=$W/home xvfb-run -a -s "-screen 0 1600x1200x24" \
-    $RUN $FCBUILD/bin/FreeCAD $HERE/render.py > $W/render.log 2>&1
-grep -q '^DONE' $W/render.log || { echo "render failed, see $W/render.log"; exit 1; }
+PANELS=$(python3 -c "import json; print(len(json.load(open('$W/jobs.json'))['panels']))")
+BATCH=${RENDER_BATCH:-100}
+: > $W/render.log
+for ((first = 0; first < PANELS; first += BATCH)); do
+    (ulimit -v ${RENDER_VMEM:-20000000}
+     FIRST=$first COUNT=$BATCH JOBS=$W/jobs.json FREECAD_USER_HOME=$W/home \
+         xvfb-run -a -s "-screen 0 1600x1200x24" \
+         $RUN $FCBUILD/bin/FreeCAD $HERE/render.py > $W/render.part 2>&1) || true
+    cat $W/render.part >> $W/render.log
+    grep -q '^DONE' $W/render.part || { echo "render failed at panel $first, see $W/render.log"; exit 1; }
+done
+rm -f $W/render.part
 $RUN python $HERE/compose.py ${OUTDIR:-$HERE/../models/pictures}

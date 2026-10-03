@@ -10,8 +10,19 @@
 # not used once each way round are drawn red, and faces failing isValid() are
 # red. Faces of no area are left out (the mesher draws nothing otherwise).
 # Next to each PNG a .json says what was done: clipped, huge, dropped.
+#
+# $FIRST and $COUNT pick the panels of one run. make_pictures.sh starts the
+# viewer afresh for every batch, and under a limit on its memory: all 1248
+# panels in one run took the machine down on 2026-10-03, 56 MB a panel and
+# 7.5 MB of shared memory with the X server, 79 GB. Two causes. This script
+# runs before the event loop starts, so a closed view's deleteLater is never
+# delivered: the deferred deletes are sent by hand below. And FreeCAD's bgfx
+# renderer left three render targets behind at every view's end, 18.6 MB a
+# view, fixed in FreeCAD the same day. With both a panel keeps under 1 MB;
+# the batches and the limit stay, against the next leak.
 import os, json
 import FreeCAD as App, FreeCADGui as Gui, Part
+from PySide6 import QtCore
 V = App.Vector
 def emit(s): os.write(1, (s + "\n").encode())
 # The transaction log is off: the pictures need no history. (Its worker once
@@ -56,7 +67,9 @@ def bbcache_get(f):
     if f not in bbcache:
         t = Part.Shape(); t.read(f); bbcache[f] = t.BoundBox
     return bbcache[f]
-for job in jobs["panels"]:
+first = int(os.environ.get("FIRST", "0"))
+count = int(os.environ.get("COUNT", "0")) or len(jobs["panels"])
+for job in jobs["panels"][first:first + count]:
     doc = App.newDocument("R")
     Gui.updateGui()
     n = V(*job["normal"]); n.normalize()
@@ -205,6 +218,7 @@ for job in jobs["panels"]:
     if clipped:
         sg.removeChild(cp)
     App.closeDocument(doc.Name)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
     json.dump(meta, open(job["png"] + ".json", "w"))
     emit("PNG %s %s badedges=%d badfaces=%d" % (job["png"], "clipped" if clipped else "", len(bad), len(badf)))
 emit("DONE")
