@@ -375,6 +375,19 @@ for r in (0.3, 0.8, 2.0):
 for tag, s in (("slot_split_wall", slotted(wall=True)), ("fin_on_block_wall", fin)):
     fillet_case("%s_r0.7" % tag, s, edge_between(s, (10, 3, 5), (10, 3, 14)), 0.7, "xfail")
 
+# realthunder/FreeCAD#876's first Fillet input: the four edges at the corner
+# (17,16.75,3). The two-stripe corner there has its common points on two
+# different edges and filled along a pivot it does not have -- a null
+# dereference that took the process down. It fails now, as it should; this
+# case is here so that the suite gets to its summary.
+p876 = Part.read(os.path.join(MODELS, "issue876_fillet_base.brep"))
+c876 = [edge_between(p876, (17, 16.75, 0), (17, 16.75, 3)),
+        edge_between(p876, (-17, 16.75, 3), (17, 16.75, 3)),
+        edge_between(p876, (19.238761, 15.746985, 3), (17, 16.75, 3)),
+        edge_between(p876, (17, 16.75, 3), (17, 16.442791, 20.6))]
+for r in (0.3, 1.0):
+    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "xfail")
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

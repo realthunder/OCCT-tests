@@ -367,6 +367,58 @@ and each volume moves to what a mesh of the result says: edge 32, concave,
 tolerance. FreeCAD's `TestPartApp` (139), `TestPartDesignApp` (77) and
 `TestSurfaceApp` pass.
 
+## A corner's curve over several faces (2026-10-03)
+
+The fix above covers the curves `PerformMoreThreeCorner` lays on one face.
+When the faces under two stripes' ends differ (`moresurf`), the curve
+between them is projected on each face in turn and stored in pieces, with
+the same two assumptions: that each projection runs from `ic`'s end to
+`icplus`'s, and that the faces come in the order the curve crosses them.
+A piece that did not start at `ic`'s end started where the piece before it
+ended -- `ind`, which is 0, no point of the DS, for the first one.
+
+No single-edge fillet reaches that code. A vertex sweep does -- at every
+vertex of the 25 sweep shapes, all its edges, every pair and each alone,
+at 0.3 and 1, about 11000 fillets -- 40 times, all on split walls and
+corners an edge too short for the radius overflows (#962, #876, the split
+wall shapes below). No piece ran backwards, but the order did not hold: at
+#962's chamfer, corner (38.5,13.7,14), the first face's piece is the one
+that ends at `icplus`, and it and two others took point 0. Each of those
+fillets fails at another corner first, so nothing showed it.
+
+Fix `f1d8509ff6`: a piece whose ends match the chain the other way round is
+reversed, as above, and a point between pieces is made once, by whichever
+piece reaches it first, and given to the other. The 40 come out as they
+did; it is a guard, with no case yet to show it.
+
+## A two-stripe corner with no pivot (realthunder/FreeCAD#876, 2026-10-03)
+
+The same vertex sweep stopped dead on both of #876's Fillet inputs: the
+four edges at the corner (17,16.75,3), at 0.3 or 1, took FreeCAD down.
+`ChFi3d_FilBuilder::PerformTwoCorner`, when the stripes' common points on
+the faces are distinct, fills between them along the pivot -- the edge both
+lie on -- and only looks the pivot up when both are on the same edge. Here
+each is on an edge of its own, and the fill trimmed a null curve.
+
+Fix `76a730386a`: such a corner goes to `PerformMoreThreeCorner`, as the
+other corners this code cannot build already do. It still fails, with an
+exception the caller gets. Both sweeps of #876 now run to the end, 2088
+fillets; what the old build reached is unchanged, and so are the other 23
+shapes and the every-edge sweep.
+
+On the way, the other corner of those edges, (-17,16.75,3), threw out of
+`ProjLib_CompProjectedCurve`'s `FindSplitPoint`, which takes the nearest of
+a point's projections without asking whether there is one (index -1).
+Stopping that, the projection went on into `BRepAlgo_NormalProjection`,
+which read the curve of an approximation that had built none (its error
+reads 0). Fix `ce5aa60088` drops such an approximation. The `FindSplitPoint`
+change is not in: it made none of the sweeps' failures valid and turned 69
+of them from an exception into an invalid shape.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_corner4_r{0.3,1}` | XFAIL, an exception: the process survives to the suite's summary (the build before `76a730386a` dies here, exit 139) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -375,6 +427,7 @@ tolerance. FreeCAD's `TestPartApp` (139), `TestPartDesignApp` (77) and
 | `arm_on_tall_block_whole_r0.5` | invalid at every radius: #962's edge 36 corner with the block's side one face; the arm's top, extended under the block's wall, crosses itself |
 | `seam_end_bottom_r2` | invalid, where its mirror image across z=5 (`seam_end_top_r2`) is valid: at radius 2 the fillet's end reaches the far end of the cylinder's face too (u = pi/2, the vertex at (0, 2)) |
 | `mirror_top_r2` | `StdFail_NotDone`, the same reach on the side without the seam |
+| `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed inside its projection |
 
 ## Pictures
 
