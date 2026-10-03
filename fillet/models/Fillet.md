@@ -171,7 +171,7 @@ fillet's line on the wall runs along the split itself (`slot_split_wall_r0.7`,
 
 ### A corner plate whose boundary curve missed its first surface (`2b9df66c48`, realthunder/FreeCAD#962)
 
-#962's edge 36 alone, below radius 0.42. The edge is shallow -- the arm's
+Edge 36 of #962 alone, below radius 0.42. The edge is shallow -- the arm's
 side meets the block's side at 21 degrees -- and at its top five faces
 meet: the arm's top, the block's wall above the arm, and the block's side
 going on upward as a second, coplanar face. The fillet fills that corner
@@ -197,7 +197,7 @@ the fix as after.
 
 ### A corner plate folded to stay tangent (`fb9200b0fd`, realthunder/FreeCAD#962)
 
-#962's edge 56 alone gave a valid solid whose volume nobody could agree
+Edge 56 of #962 alone gave a valid solid whose volume nobody could agree
 on: 5.04 taken by GProp's default integration, 2.0 by its adaptive one,
 3.5 by a mesh, where its mirror image, edge 50, takes 2.4 by all three.
 Its foot is the five-face corner of the previous fix, filled by a
@@ -219,7 +219,7 @@ what shows the fold. The volume is edge 50's.
 
 ![issue962_e56_r0.8](pictures/issue962_e56_r0.8.png)
 
-#474's Fillet003 input is one of the 17 results the change turns valid:
+The Fillet003 input of #474 is one of the 17 results the change turns valid:
 edge 6's corner plate missed by 1.8 at radius 2, its fillet was invalid at
 every radius, with a face of no area and edge tolerances up to 36. In the
 third row the old plate's outline is a sliver -- its boundary curves lie
@@ -230,9 +230,38 @@ corner of 0.8.
 
 Edge 50's and #962's whole-Fillet pictures above changed with it: their
 "fork after" corners are the rebuilt plates now (tolerances 0.009 where they
-were 0.195). One result goes the other way -- #962's edge 33 at radius 0.3,
-whose corner was folded either way and is now rejected by `BRepCheck`
-(see `../README.md`).
+were 0.195). One result went the other way -- #962's edge 33 at radius 0.3,
+rejected by `BRepCheck` with the new plate. That was not the plate's fault:
+see the next fix.
+
+### A plate boundary stored backwards (`3fa9420429`, realthunder/FreeCAD#962)
+
+Edge 33 of #962, the arm's top along its side, ends at the five-face corner
+under edge 50. Upstream's fillet of it at 0.3 is valid, but GProp says it
+takes 9.4 of volume where 0.55 is due -- a mesh of the same result says
+0.555. The corner's plate is closed by curves laid on the faces between the
+stripes' ends, each stored as running from one stripe's end to the next;
+one of them, the 0.3 on the block's side y=10.2, was a projection that ran
+the other way and was stored as it was. Its edge had its FORWARD vertex at
+its last parameter: each vertex is on the curve where it says, so
+`BRepCheck` passes it, but GProp walks the edge by its range and so
+backwards, and put the block's side at 62.1 of its 69. The same curve, as a
+boundary of the plate, ran head to head with the one before it, and the
+plate's orientation is worked out from a polygon of the boundaries' starts:
+with the G0 plate of the fix above it came out turned over -- "fork before"
+draws that plate as a face of no area, and the edges round it red, each
+used the same way by both faces it bounds. The projection is now reversed
+before it is stored, and the orientation read with the boundaries'
+directions as the plate reports them.
+
+The zoom shows the corner: upstream's is the G1 plate, dark where it
+crumples, the fork's before is missing, after it is the G0 plate. The third row, the plate's
+outline, looks alike in all three; what was wrong is a direction, which an
+outline does not show. The same fix gives four more edges into these corners
+-- two in each of #962's Fillet and Chamfer inputs -- the volumes a mesh
+gives them, and tolerances of 0.007 to 0.12 where they had the radius.
+
+![issue962_e33_r0.3](pictures/issue962_e33_r0.3.png)
 
 ## Making the pictures
 

@@ -246,6 +246,16 @@ fillet_case("issue962_e50_r0.8", p2, e50, 0.8, "pass", 11581.7204, 0.05)
 # alone it takes what e50 takes.
 e56 = edge_between(p2, (38.5, 27.2, -3.75), (38.5, 27.2, 14))
 fillet_case("issue962_e56_r0.8", p2, e56, 0.8, "pass", 11581.7068, 0.05)
+# Edge 33, the arm's top on its side, ending at the corner (38.5,10.2,-3.75)
+# under e50. The plate's boundary on the block's side (y=10.2) is a projection
+# that came out running from the corner's far end to its near one, and was
+# stored as running the other way: its edge had its FORWARD vertex at its
+# last parameter, which BRepCheck does not look at and GProp walks backwards
+# (9.4 of volume taken at 0.3, where 0.55 is due), and the plate's outline
+# had two curves head to head, which turned the plate face over.
+e33 = edge_between(p2, (17.356038, -9.42499, -3.75), (38.5, 10.2, -3.75))
+for r, vol in ((0.1, 11584.0782), (0.3, 11583.5858)):
+    fillet_case("issue962_e33_r%g" % r, p2, e33, r, "pass", vol, 0.05)
 # Edges 36 and 49, the foot of the block where the arm meets it (x=38.5,
 # z -9.75..-3.75): each fine alone, together they gave an invalid solid 7225
 # too large. The bottom is two coplanar faces, the arm's and the block's,
