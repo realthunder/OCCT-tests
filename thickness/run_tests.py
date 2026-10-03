@@ -1138,6 +1138,24 @@ for _ang, _tilt, _runs in ((270, 0, [(+0.5, 0, 36.6474), (+0.5, 2, 36.6474), (-0
                                                       "out" if _off > 0 else "in"),
                        _w, sphere_index(_w), _off, "pass", _vol, False, _join)
 
+# Sec 23. The half ball with its sphere in two domes or two lunes, ONE of
+# them removed: refused every way. The removed face lies on the kept face's
+# own sphere, and the kept face's offset never meets it. With the
+# Intersection join the kept face runs on round the sphere a thickness into
+# the removed one, to a wall square to the sphere there -- a cone from its
+# centre: 91.1786 outward, 74.1857 inward (sweep/onedome.py). The Arc join,
+# a tube round the edge, is still refused: 89.1638 outward, 73.5777 inward.
+for _tag, _s in (("eqball", _domes), ("luneball", _lunes)):
+    for _fi in (1, 2):
+        thickness_case("%s_sphere%d_join_out" % (_tag, _fi), _s, _fi, +0.5, "pass", 91.1786, False, 2)
+        thickness_case("%s_sphere%d_join_in" % (_tag, _fi), _s, _fi, -0.5, "pass", 74.1857, False, 2)
+        thickness_case("%s_sphere%d_out" % (_tag, _fi), _s, _fi, +0.5, "xfail", 89.1638)
+        thickness_case("%s_sphere%d_in" % (_tag, _fi), _s, _fi, -0.5, "xfail", 73.5777)
+thickness_case("placed_eqball_sphere2_join_out",   placed(_domes), 2, +0.5, "pass", 91.1786, False, 2)
+thickness_case("turned_eqball_sphere2_join_in",    turned(_domes), 2, -0.5, "pass", 74.1857, False, 2)
+thickness_case("placed_luneball_sphere2_join_in",  placed(_lunes), 2, -0.5, "pass", 74.1857, False, 2)
+thickness_case("turned_luneball_sphere2_join_out", turned(_lunes), 2, +0.5, "pass", 91.1786, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

@@ -1465,6 +1465,113 @@ join and is a tube round the edge with the Arc join (sec 6, and
 value is either. The seam crossing at a negative parameter that sec 21
 worked round is still worked round.
 
+### Sec 23: two faces of one sphere, one removed
+
+The half ball with its sphere in two faces that meet along a tangent edge --
+two domes (the edge half the equator) or two lunes (a meridian) -- and one
+of them removed: refused every way since sec 22, and wrong or refused before
+it. The removed face lies on the kept face's own sphere, and the kept
+face's offset, a sphere of R + t or R - t, never meets it. Sec 22 left the
+rule open; it is settled here as the one for two faces in one plane
+(sec 9, sec 18), carried onto the sphere.
+
+**The rule** (`sweep/onedome.py`). With the Intersection join the kept face
+runs on round the sphere a thickness -- an arc of t -- into the removed one,
+to a wall square to the sphere there: the cone from the sphere's centre at
+latitude t / R from the edge. With the Arc join a tube round the edge,
+turning into the removed face until it meets it, and outward a ball round
+each end of the edge. Elsewhere the rules of `sweep/polehand.py`; in
+particular the flat's slab beside the removed dome is cut by the sphere
+extended. The half ball turned a quarter about the flat's normal takes the
+domes onto the lunes, and the flat's split along the axis changes nothing,
+so both give one set of values: with the Intersection join 91.1786 outward
+and 74.1857 inward, with the Arc join 89.1638 and 73.5777.
+
+**The wall on a sphere** (`dcd80b8727`, `BRepOffset_Analyse`,
+`TreatTangentCaps`). The closure of a tangent edge between coplanar faces
+(sec 9) takes a circle between two faces of one sphere too: the kept face
+is its own strip, as a plane is, its offset runs on to the wall's far edge,
+and the wall is a cone (`SphereCapWall`). That far edge lies off the kept
+face's sphere and has no pcurve on it; its type is worked out from the
+sphere's normal (`SphereCapWallEdgeType`). The cone needed four things the
+plane did not:
+
+- *Grown to its apex* (`BRepOffset_Inter3d`, `KeepWallInItsBand`). Grown as
+  any face is, the cone runs on to its apex, and the flat side of the lunes
+  cut it there too, along a hyperbola that leaves the wall's band at one
+  end and comes back into it at the other. The section ran the length of
+  the shape; the flat's offset took it for an edge and the kept lune's
+  offset was left hanging -- a valid solid of 162.28 for 74.1857. The wall
+  is grown across its band by a tenth of it.
+- *One face at both ends*. Both ends of the lunes' wall meet the same half
+  of the flat, and the section of the two was asked for once: one end got
+  its piece, the other none. Each end takes its own.
+- *A face that meets the kept one at a vertex only*. That half of the flat
+  meets the kept lune at the poles alone. Faces meeting at a vertex alone
+  are intersected there on planar shapes only, and the flat half would
+  "carry on" the other half, which meets the kept lune along the rim; at the
+  ends of such a wall, on any shape, the face takes the kept face's section
+  from the half it carries on.
+- *A crossing on the sphere* (`BRepAlgo_Loop`). Outward the wall meets the
+  removed face along a circle that runs out through the rim. A crossing of
+  two edges gets a vertex of its own on a plane (sec 17), and now on a
+  sphere: without it the removed face's piece was the whole face with a
+  hole running out of it.
+
+![eqball_sphere1_join_out](pictures/eqball_sphere1_join_out.png)
+
+![eqball_sphere1_join_in](pictures/eqball_sphere1_join_in.png)
+
+![luneball_sphere1_join_out](pictures/luneball_sphere1_join_out.png)
+
+![luneball_sphere1_join_in](pictures/luneball_sphere1_join_in.png)
+
+**A cone and a sphere** (`43b4128193`, TKGeomBase, `IntAna_QuadQuadGeo`).
+The domes outward came out of all this refused still: the wall met the
+removed face in B-splines walked point by point, cut in odd places. A cone
+with its apex at a sphere's centre meets it in circles, and the analytic
+intersection took the sphere's own axis -- any line through its centre --
+for the test, asking it to meet the cone's axis exactly at the centre (a
+distance `== 0.0`). Rounding answered as the sphere happened to be turned,
+and the offset algorithm turns spheres off their poles. The cylinder and
+sphere had the same test. Both now ask the one thing that matters: the
+centre lies on the axis. That let a second fault through: the circles were
+placed along the line from the cone's apex to the sphere's centre, which is
+no direction where the two are a rounding apart -- under a location the apex
+lay 1e-15 off, the circles went off along that, the section was empty and
+the half ball placed or turned was refused with one face of the two
+removed. They go along the cone's axis.
+
+![turned_eqball_sphere2_join_in](pictures/turned_eqball_sphere2_join_in.png)
+
+![placed_luneball_sphere2_join_out](pictures/placed_luneball_sphere2_join_out.png)
+
+**The tube's edge on the removed face** (`68ce8cb746`,
+`TangentTubeEdgeOnCap`). With the Arc join, the tube round the equator met
+the removed dome along an edge built point by point, a B-spline, and
+extended with the removed face it ran off to 1e16 -- the -1.3e100 of sec 22.
+A circle edge whose points all land at one height on its axis and one
+distance from it gives that circle.
+
+**Still refused: the Arc join**, all eight runs, marked `XFAIL` with the
+volumes above. Two things are in the way. The flat's offset is stretched to
+the removed face before anything else (`ToContext`, `ExtentFace`): its rim
+on the removed side becomes the sphere's section, and its rim on the kept
+side -- the raw offset of the edge, to be cut later -- is stretched to meet
+it. Here the two are circles about one centre in one plane, of radius 4.975
+and 5, that never meet, and the flat's offset is left with no wire. And the
+tube round the equator ends at the flat itself, where inward it should end
+at the flat's offset. Outward the exact answer has one more face at each
+end of the tube, a sliver in the tube's end plane between the flat's
+offset, the sphere and the ball (0.025 long, about 1e-5 in area): the flat's
+slab is cut by the sphere above the equator and not below it, and the
+sphere bends away from the flat's offset by t^2 / 2R. Whether the Arc join
+should keep that, or round it away, is left to be ruled on before it is
+built.
+
+The seam crossing at a negative parameter that sec 21 worked round is still
+worked round.
+
 ## The captured models
 
 The suite's four document cases (realthunder/OCCT#1-#4: an elliptic pad, a

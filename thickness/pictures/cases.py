@@ -39,6 +39,7 @@ STAGES = {
     "s22a": ("1e6f5a464c", "22"),
     "s22b": ("631700cbf8", "22"),
     "s22c": ("c747dd8371", "22"),
+    "s23": ("80fa234b05", "23"),
 }
 # Upstream: the eleven files the fix chain touches, at the fork's base.
 UPSTREAM = ("91be8c4c71", [
@@ -178,6 +179,8 @@ SHAPES = {
     "ball270split": lambda: Part.makeSphere(5, V(), V(0, 0, 1), -90, 90, 270).generalFuse(
         [Part.Vertex(V(5, 0, 0))])[0].Solids[0],
     "axiswedge270": lambda: _axis_wedge(270),
+    "turned_eqball": lambda: _turned(_halfball("equator")),
+    "placed_luneball": lambda: _placed(_halfball("meridian")),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -327,6 +330,12 @@ CASES = {
     "ball270split_sphere_join_in": ("s22c", "ball270split", 1, -0.5, False, 2, 41.6307),
     "axiswedge270_sphere_join_in": ("s22c", "axiswedge270", 1, -0.5, False, 2, 41.6307),
     "axiswedge270_sphere_out": ("s22c", "axiswedge270", 1, +0.5, False, 0, 36.6474),
+    "eqball_sphere1_join_out": ("s23", "eqball", 1, +0.5, False, 2, 91.1786),
+    "eqball_sphere1_join_in": ("s23", "eqball", 1, -0.5, False, 2, 74.1857),
+    "luneball_sphere1_join_out": ("s23", "luneball", 1, +0.5, False, 2, 91.1786),
+    "luneball_sphere1_join_in": ("s23", "luneball", 1, -0.5, False, 2, 74.1857),
+    "turned_eqball_sphere2_join_in": ("s23", "turned_eqball", 2, -0.5, False, 2, 74.1857),
+    "placed_luneball_sphere2_join_out": ("s23", "placed_luneball", 2, +0.5, False, 2, 91.1786),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

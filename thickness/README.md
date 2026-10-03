@@ -411,6 +411,17 @@ eight.
 | `ball270split_sphere_*`, `turned_ball270split_sphere_join_in` | the 270 degree ball wedge with a vertex on a meridian | 36.6474, 41.0978, 41.6307; wrong every way |
 | `axiswedge270_*`, `axiswedge240_*`, `axiswedge150_*` | a ball made on an axis through the middle of its face, cut by the wedge that is missing | the ball wedge's volumes; wrong every way, inward with the Intersection join a valid solid of 264.29 for 41.6307 |
 
+## Two faces of one sphere, one removed (2026-10-03, sec 23)
+
+`models/Thickness.md`, "Sec 23", has the causes and the rule; the hand
+values are `sweep/onedome.py`. Eight cases are marked `XFAIL`: the Arc join.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `eqball_sphere1_join_*`, `eqball_sphere2_join_*`, `placed_eqball_sphere2_join_out`, `turned_eqball_sphere2_join_in` | the half ball with its sphere in two domes, one removed, Intersection join | 91.1786 outward, 74.1857 inward; refused. The kept dome runs on a thickness round the sphere to a wall, a cone from its centre |
+| `luneball_sphere1_join_*`, `luneball_sphere2_join_*`, `placed_luneball_sphere2_join_in`, `turned_luneball_sphere2_join_out` | the same in two lunes | the same volumes: the half ball turned a quarter about its flat's normal; refused |
+| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `luneball_sphere1_out/in`, `luneball_sphere2_out/in` | the same, Arc join | `XFAIL`: 89.1638 outward, 73.5777 inward; refused |
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
@@ -437,7 +448,7 @@ are sec 20's: a third and half of a ball from pole to pole.
 
 ```
 sweep/sweep.sh out.txt            # the fork as built; about three minutes
-sweep/sweep.sh up.txt <libdir>    # another build's TKBool/TKOffset (and TKTopAlgo) preloaded
+sweep/sweep.sh up.txt <libdir>    # another build's TKBool/TKOffset (and TKTopAlgo, TKGeomBase) preloaded
 python3 sweep/check.py out.txt    # exit 1 unless every run is right
 SWEEP_PLACE=placed sweep/sweep.sh placed.txt   # every solid under a location
 SWEEP_PLACE=baked sweep/sweep.sh baked.txt     # every solid's geometry turned and moved

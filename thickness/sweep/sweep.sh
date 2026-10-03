@@ -16,6 +16,7 @@ OUT=$(realpath $1)
 PRE=""
 [ -n "$2" ] && PRE="$2/libTKBool.so.8.0.1 $2/libTKOffset.so.8.0.1"
 [ -n "$2" ] && [ -f "$2/libTKTopAlgo.so.8.0.1" ] && PRE="$2/libTKTopAlgo.so.8.0.1 $PRE"
+[ -n "$2" ] && [ -f "$2/libTKGeomBase.so.8.0.1" ] && PRE="$2/libTKGeomBase.so.8.0.1 $PRE"
 : > $OUT
 START=0
 while :; do
