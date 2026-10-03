@@ -930,9 +930,11 @@ thickness_case("placed_filletbox_fillet_out", placed(filletbox), 4, +1.0, "pass"
 #   searched its loops without end until the search was given a number of
 #   steps), the sphere removed was refused outward. The sphere is put on one
 #   turned onto its middle: a dome with its rim in two arcs.
-# - A ball wedge from pole to pole on more than half a turn, its sphere
-#   removed: three lunes outward, refused; on 240 degrees inward with the
-#   Arc join a valid solid of 40.4447. On 150 degrees outward, Arc: refused.
+# - (answered) A ball wedge from pole to pole, its sphere removed outward:
+#   three lunes on 270 and 240 degrees, refused, and 150 degrees with the
+#   Arc join refused. Its thick solid is the inward one of the rest of the
+#   ball. On 240 degrees inward with the Arc join 40.4447 is right: the
+#   hand value of 39.9613 took the missing wedge for a quadrant.
 # - (answered) The half ball cut the other way round: in two lunes with a
 #   flat half removed, in two domes with both removed. Faces of one sphere
 #   that have one thing done with them are joined first.
@@ -962,13 +964,17 @@ ball240 = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), -90, 90, 240)
 ball150 = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), -90, 90, 150)
 thickness_case("ball270_sphere_in",          ball270, 1, -0.5, "pass", 41.0978)
 thickness_case("ball270_sphere_join_in",     ball270, 1, -0.5, "pass", 41.6307, False, 2)
-thickness_case("ball270_sphere_out",         ball270, 1, +0.5, "xfail", 36.6474)
-thickness_case("ball270_sphere_join_out",    ball270, 1, +0.5, "xfail", 36.6474, False, 2)
-thickness_case("ball240_sphere_out",         ball240, 1, +0.5, "xfail", 37.6996)
-thickness_case("ball240_sphere_join_out",    ball240, 1, +0.5, "xfail", 37.6996, False, 2)
-thickness_case("ball240_sphere_in",          ball240, 1, -0.5, "xfail", 39.9613)
+thickness_case("ball270_sphere_out",         ball270, 1, +0.5, "pass", 36.6474)
+thickness_case("ball270_sphere_join_out",    ball270, 1, +0.5, "pass", 36.6474, False, 2)
+thickness_case("ball240_sphere_out",         ball240, 1, +0.5, "pass", 37.6996)
+thickness_case("ball240_sphere_join_out",    ball240, 1, +0.5, "pass", 37.6996, False, 2)
+thickness_case("ball240_sphere_in",          ball240, 1, -0.5, "pass", 40.4447)
 thickness_case("ball240_sphere_join_in",     ball240, 1, -0.5, "pass", 40.5784, False, 2)
-thickness_case("ball150_sphere_out",         ball150, 1, +0.5, "xfail", 39.7919)
+thickness_case("ball150_sphere_out",         ball150, 1, +0.5, "pass", 39.7919)
+thickness_case("ball150_sphere_join_out",    ball150, 1, +0.5, "pass", 39.8071, False, 2)
+thickness_case("placed_ball270_sphere_out",       placed(ball270), 1, +0.5, "pass", 36.6474)
+thickness_case("turned_ball240_sphere_join_out",  turned(ball240), 1, +0.5, "pass", 37.6996, False, 2)
+thickness_case("turned_ball150_sphere_out",       turned(ball150), 1, +0.5, "pass", 39.7919)
 _meridian = Part.Arc(App.Vector(0, 0, -5), App.Vector(0, 5, 0), App.Vector(0, 0, 5)).toShape()
 _equator = Part.ArcOfCircle(Part.Circle(App.Vector(), App.Vector(0, 0, 1), 5), 0, math.pi).toShape()
 _halfball = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), -90, 90, 180)
@@ -1005,9 +1011,17 @@ thickness_case("dome2f_sphere_out",       dome2f, 1, +0.5, "pass", 39.1390)
 thickness_case("dome2f_sphere_in",        dome2f, 1, -0.5, "pass", 39.1390)
 thickness_case("dome2f_sphere_join_out",  dome2f, 1, +0.5, "pass", 39.1390, False, 2)
 thickness_case("dome2f_sphere_join_in",   dome2f, 1, -0.5, "pass", 39.1390, False, 2)
-# Known broken: one half of the flat removed, the Intersection join.
-thickness_case("dome2f_flat_join_out",    dome2f, 2, +0.5, "xfail", 113.0909, False, 2)
-thickness_case("dome2f_flat_join_in",     dome2f, 2, -0.5, "xfail", 89.0272, False, 2)
+# One half of the flat removed: the half ball's flat half, its sphere the
+# other way round. With the Intersection join the dome had to grow below its
+# rim beside the wall closing the edge between the halves, and the wall came
+# out outside its band -- refused. The dome is turned onto its rim's ends.
+thickness_case("dome2f_flat_join_out",    dome2f, 2, +0.5, "pass", 113.0909, False, 2)
+thickness_case("dome2f_flat_join_in",     dome2f, 2, -0.5, "pass", 89.0272, False, 2)
+thickness_case("dome2f_flat2_join_out",   dome2f, 3, +0.5, "pass", 113.0909, False, 2)
+thickness_case("dome2f_flat_out",         dome2f, 2, +0.5, "pass", 111.6001)
+thickness_case("dome2f_flat_in",          dome2f, 2, -0.5, "pass", 88.5482)
+thickness_case("placed_dome2f_flat_join_in",  placed(dome2f), 2, -0.5, "pass", 89.0272, False, 2)
+thickness_case("turned_dome2f_flat_join_out", turned(dome2f), 2, +0.5, "pass", 113.0909, False, 2)
 
 # A circle of section is a whole turn, closed on a vertex of its own that the
 # intersection puts where it likes -- elsewhere once the shape is turned. Cut
@@ -1041,6 +1055,88 @@ thickness_case("placed_coneup_base_out",    placed(Part.makeCone(4, 0, 6)), 2, +
 thickness_case("placed_halfdome_bottom_join_out", placed(Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 180)), 2, +0.5, "pass", 67.0206, False, 2)
 thickness_case("placed_halfdome_side_join_in", placed(Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 180)), 3, -0.5, "pass", 59.1071, False, 2)
 thickness_case("placed_dome270_side_join_out", placed(Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 270)), 3, +0.5, "pass", 113.7486, False, 2)
+
+# Sec 22. A vertex that only cuts an edge in two -- its two edges between
+# the same two faces, nothing else meeting it -- must change nothing. The
+# offsets of the pieces lie on one curve, each stretched over the others,
+# and the loops closed wires of no area between them: a box with a vertex
+# on an edge, a face beside it removed with the Arc join, refused or the box
+# itself back, where upstream is right. 361 runs of 824 over twelve shapes
+# were wrong. The solid is taken with the pieces joined.
+def split_at(shape, edge_index):
+    """the shape with a vertex at the middle of its 1-based edge `edge_index`"""
+    e = shape.Edges[edge_index - 1]
+    p = e.valueAt((e.FirstParameter + e.LastParameter) / 2)
+    return shape.generalFuse([Part.Vertex(p)])[0].Solids[0]
+
+
+def face_of(split, shape, face_index):
+    """the 1-based index in `split` of the face `face_index` of `shape`"""
+    f = shape.Faces[face_index - 1]
+    return [i + 1 for i, g in enumerate(split.Faces)
+            if abs(g.Area - f.Area) < 1e-6 and (g.CenterOfMass - f.CenterOfMass).Length < 1e-6][0]
+
+
+def split_cases(tag, shape, edge_index, runs):
+    """runs: (face index of `shape`, offset, join, volume of `shape` as made)"""
+    s = split_at(shape, edge_index)
+    for fi, off, join, vol in runs:
+        thickness_case("%s_f%d_%s%s" % (tag, fi, "join_" if join else "", "out" if off > 0 else "in"),
+                       s, face_of(s, shape, fi), off, "pass", vol, False, join)
+
+
+_box = Part.makeBox(10, 8, 6)
+split_cases("boxsplit_e1", _box, 1, [(1, +0.5, 0, 177.6136), (1, +0.5, 2, 181.5), (1, -0.5, 0, 147.5),
+                                     (1, -0.5, 2, 147.5), (3, +0.5, 0, 170.8282), (3, -0.5, 2, 142.5)])
+_cyl = Part.makeCylinder(4, 6)
+split_cases("cylsplit_rim", _cyl, 1, [(2, +0.5, 0, 110.44), (2, -0.5, 0, 89.9281), (2, +0.5, 2, 111.9192)])
+split_cases("cylsplit_seam", _cyl, 2, [(2, +0.5, 0, 110.44), (2, -0.5, 2, 89.9281)])
+_cylseam = split_at(_cyl, 2)
+pieces_case("cylsplit_seam_f1_out", _cylseam, [face_of(_cylseam, _cyl, 1)], +0.5, [25.1327, 25.1327])
+_halfdome = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 180)
+split_cases("halfdomesplit_rim", _halfdome, 3, [(1, -0.5, 0, 36.6474), (2, +0.5, 2, 67.0206),
+                                                (3, -0.5, 0, 58.8944)])
+split_cases("conesplit_seam", Part.makeCone(0, 4, 6), 2, [(2, +0.5, 0, 52.4095), (2, -0.5, 2, 38.8428)])
+_ball270v = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), -90, 90, 270).generalFuse(
+    [Part.Vertex(App.Vector(5, 0, 0))])[0].Solids[0]
+thickness_case("ball270split_sphere_out",      _ball270v, 1, +0.5, "pass", 36.6474)
+thickness_case("ball270split_sphere_join_out", _ball270v, 1, +0.5, "pass", 36.6474, False, 2)
+thickness_case("ball270split_sphere_in",       _ball270v, 1, -0.5, "pass", 41.0978)
+thickness_case("ball270split_sphere_join_in",  _ball270v, 1, -0.5, "pass", 41.6307, False, 2)
+thickness_case("placed_boxsplit_e1_f1_out", placed(split_at(_box, 1)), 1, +0.5, "pass", 177.6136)
+thickness_case("turned_ball270split_sphere_join_in", turned(_ball270v), 1, -0.5, "pass", 41.6307, False, 2)
+
+# A ball wedge made on an axis through the middle of its face: a ball on
+# that axis, cut by the wedge that is missing. Its face has a seam and a pole
+# inside, and its outline on the two meridians of the wedge's own axis: it
+# is put on that axis, and the vertex where its seam ended joined away. It
+# was wrong every way, inward with the Intersection join a valid solid of
+# 264.29 for 41.6307.
+def axis_wedge(ang, tilt=0.0):
+    mid = math.radians(ang / 2.0)
+    m = App.Vector(math.cos(mid), math.sin(mid), 0)
+    ball = Part.makeSphere(5, App.Vector(), m)
+    if tilt:
+        ball.rotate(App.Vector(), m, tilt)
+    gap = Part.makeCylinder(10, 20, App.Vector(0, 0, -10), App.Vector(0, 0, 1), 360 - ang)
+    gap.rotate(App.Vector(), App.Vector(0, 0, 1), ang)
+    return ball.cut(gap).Solids[0]
+
+
+def sphere_index(shape):
+    return [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.__class__.__name__ == "Sphere"][0]
+
+
+for _ang, _tilt, _runs in ((270, 0, [(+0.5, 0, 36.6474), (+0.5, 2, 36.6474), (-0.5, 0, 41.0978),
+                                     (-0.5, 2, 41.6307)]),
+                           (270, 30, [(-0.5, 2, 41.6307)]),
+                           (240, 0, [(+0.5, 2, 37.6996), (-0.5, 0, 40.4447)]),
+                           (150, 0, [(+0.5, 0, 39.7919), (-0.5, 2, 38.4709)])):
+    _w = axis_wedge(_ang, _tilt)
+    for _off, _join, _vol in _runs:
+        thickness_case("axiswedge%d%s_sphere_%s%s" % (_ang, "_tilt" if _tilt else "", "join_" if _join else "",
+                                                      "out" if _off > 0 else "in"),
+                       _w, sphere_index(_w), _off, "pass", _vol, False, _join)
 
 counts = {}
 for _, verdict, _ in results:

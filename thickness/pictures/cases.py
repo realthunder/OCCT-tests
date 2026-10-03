@@ -36,6 +36,9 @@ STAGES = {
     "s21a": ("76691d6f87", "21"),
     "s21b": ("b45cff22c5", "21"),
     "s21c": ("20372de2b3", "21"),
+    "s22a": ("1e6f5a464c", "22"),
+    "s22b": ("631700cbf8", "22"),
+    "s22c": ("c747dd8371", "22"),
 }
 # Upstream: the eleven files the fix chain touches, at the fork's base.
 UPSTREAM = ("91be8c4c71", [
@@ -91,6 +94,24 @@ def _halfball(cut=None):
     else:
         return b
     return b.generalFuse([e])[0].Solids[0]
+
+
+def _split_at(shape, i):
+    # The shape with a vertex at the middle of its edge i (0-based).
+    e = shape.Edges[i]
+    return shape.generalFuse([Part.Vertex(e.valueAt((e.FirstParameter + e.LastParameter) / 2))])[0].Solids[0]
+
+
+def _axis_wedge(ang):
+    # A ball made on an axis through the middle of the wedge it is cut to: its
+    # face has a seam and a pole inside. Face1 is the sphere.
+    mid = math.radians(ang / 2.0)
+    m = V(math.cos(mid), math.sin(mid), 0)
+    gap = Part.makeCylinder(10, 20, V(0, 0, -10), V(0, 0, 1), 360 - ang)
+    gap.rotate(V(), V(0, 0, 1), ang)
+    w = Part.makeSphere(5, V(), m).cut(gap).Solids[0]
+    assert w.Faces[0].Surface.__class__.__name__ == "Sphere"
+    return w
 
 
 def _dome2(line=False):
@@ -149,6 +170,14 @@ SHAPES = {
     "dome2f": lambda: _dome2(True),
     "halfball1": lambda: _halfball().removeSplitter(),
     "cutball": lambda: Part.makeSphere(5).cut(Part.makeBox(20, 20, 20, V(-10, -20, -10))),
+    "ball270": lambda: Part.makeSphere(5, V(), V(0, 0, 1), -90, 90, 270),
+    "ball240": lambda: Part.makeSphere(5, V(), V(0, 0, 1), -90, 90, 240),
+    "ball150": lambda: Part.makeSphere(5, V(), V(0, 0, 1), -90, 90, 150),
+    "boxsplit": lambda: _split_at(Part.makeBox(10, 8, 6), 0),
+    "cylseam": lambda: _split_at(Part.makeCylinder(4, 6), 1),
+    "ball270split": lambda: Part.makeSphere(5, V(), V(0, 0, 1), -90, 90, 270).generalFuse(
+        [Part.Vertex(V(5, 0, 0))])[0].Solids[0],
+    "axiswedge270": lambda: _axis_wedge(270),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -286,6 +315,18 @@ CASES = {
     "luneball_flat_join_in": ("s21c", "luneball", 3, -0.5, False, 2, 89.0272),
     "eqball_spheres_out": ("s21c", "eqball", [1, 2], +0.5, False, 0, 39.1390),
     "eqball_spheres_join_out": ("s21c", "eqball", [1, 2], +0.5, False, 2, 39.1390),
+    "ball270_sphere_out": ("s22a", "ball270", 1, +0.5, False, 0, 36.6474),
+    "ball270_sphere_join_out": ("s22a", "ball270", 1, +0.5, False, 2, 36.6474),
+    "ball240_sphere_join_out": ("s22a", "ball240", 1, +0.5, False, 2, 37.6996),
+    "ball150_sphere_out": ("s22a", "ball150", 1, +0.5, False, 0, 39.7919),
+    "dome2f_flat_join_out": ("s22b", "dome2f", 2, +0.5, False, 2, 113.0909),
+    "dome2f_flat_join_in": ("s22b", "dome2f", 2, -0.5, False, 2, 89.0272),
+    "boxsplit_side_out": ("s22c", "boxsplit", 1, +0.5, False, 0, 177.6136),
+    "boxsplit_side_in": ("s22c", "boxsplit", 1, -0.5, False, 0, 147.5),
+    "cylseam_top_out": ("s22c", "cylseam", 2, +0.5, False, 0, 110.4400),
+    "ball270split_sphere_join_in": ("s22c", "ball270split", 1, -0.5, False, 2, 41.6307),
+    "axiswedge270_sphere_join_in": ("s22c", "axiswedge270", 1, -0.5, False, 2, 41.6307),
+    "axiswedge270_sphere_out": ("s22c", "axiswedge270", 1, +0.5, False, 0, 36.6474),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
