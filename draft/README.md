@@ -57,6 +57,7 @@ refused, and PartDesign reports it, instead of handing on an invalid body.
 | `notch_bevel_ledge_a{5,20,45}` | the same with the block's front top edge right of the notch bevelled, the bevel touching the ledge at its corner: refused (was invalid) |
 | `issue334_draft`, `issue334_draft002` | #334's Draft and Draft002 recomputed alone: valid, their stored volumes |
 | `issue334_draft001`, `issue334_draft003` | #334's Draft001 and Draft003: refused (were invalid) |
+| `issue474_ramp_ledge_a{11,15,17}` | #474 Fillet003's input, the ledge top drafted about its end wall after a first recompute: refused (was a segmentation fault) |
 
 Checked with a draft sweep: every planar face of 29 shapes (the fillet
 sweep's 25 and #334's four Draft inputs) against each planar face beside it
@@ -71,8 +72,49 @@ both before the fix and after -- open. FreeCAD's `TestPartApp` (139) and
 `TestPartDesignApp` (77, its `TestDraft` among them) pass, and the
 thickness suite (326) with them.
 
+## A ledge lifted off a helical ramp (#474's Fillet003 input, 2026-10-04)
+
+`../fillet/models/issue474_fillet003_base.brep` has a flat ledge top, face
+3 (z=13, x from -17 to -9), that meets a helical ramp, face 1 -- a radial
+segment from r=9 to r=13 turning once about Z while it rises 5 -- along the
+ramp's first line. Drafted about the ledge's end wall x=-17 (face 10), the
+ledge tilts up toward the ramp and its far end rises 8 tan(a). At 15 deg
+that is z=15.1, where the ramp is 1.5 rad round the axis: the drafted plane
+no longer meets the ramp anywhere near the edge they shared, and no draft
+by moving geometry exists.
+
+`Draft_Modification::Perform` took the only branch of the plane-ramp
+intersection, 9 units away, as the edge's new curve; the corner's new
+point lay past its end. `SmartParameter` then extends the edge's pcurve on
+the plane to the point and projects it onto the ramp to rebuild the curve.
+The extension does not lie on the ramp, the approximation built nothing,
+the edge was left with a null curve, and the next line dereferenced it:
+FreeCAD died. In FreeCAD it shows when a Draft is recomputed in its base's
+frame -- every recompute after the first, so as soon as the angle is
+changed to anything from 11 to 17 deg.
+
+Fix: `SmartParameter` says when the rebuild fails (no pcurve, no projected
+piece, no approximated curve) and leaves the edge as it was; `Perform` stops
+with `Draft_VertexRecomputation` on the vertex, and PartDesign reports the
+draft as failed. Where `Choose` uses it only for a tangent, a failure falls
+back to the parameter at the original curve's end. An approximation short
+of its tolerance (`IsDone()` false with curves) is still taken, as before.
+
+The suite's case recomputes the Draft once at 1 deg, then 11, 15 and 17:
+the brep's shape carries a location, a quarter turn about X, that the
+`Part::Feature` takes as its placement, and the first recompute, in the
+global frame, rounds the problem differently and misses the failure.
+
+Fix `f9d329a663`. The draft sweep (8982 drafts) turns that crash and three
+exceptions -- the same ledge's face 3 against face 7, and face 7 against
+face 3, at 15 deg, in #474's Fillet, Fillet001 and Fillet003 inputs; the
+sweep's driver turns an access violation into an exception -- into
+refusals, and changes nothing else (3510 valid, 893 invalid, the same).
+The draft suite (13), the thickness suite (326), `TestPartApp` (139) and
+`TestPartDesignApp` (78) pass.
+
 ## Known open
 
 | Case | Symptom |
 |------|---------|
-| #474 Fillet003's input, face 3 drafted against face 10 at 15 deg | segmentation fault (not in the suite: it takes the process down) |
+| the sweep's 893 invalid drafts | other causes, not looked at yet |

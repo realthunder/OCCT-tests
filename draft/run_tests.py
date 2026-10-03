@@ -195,6 +195,50 @@ document_drafts("issue334_draft_artifact.FCStd", [
 ])
 
 # ---------------------------------------------------------------------------
+# #474 Fillet003's input: a ledge top that meets a helical ramp. Drafted
+# about the ledge's end wall it lifts off the ramp, which it no longer meets
+# near the edge they shared: the edge's new curve is a far branch of the
+# plane-ramp intersection, and the vertex's new point lies past its end.
+# Extending the curve to the point failed, left the edge with a null curve,
+# and FreeCAD died (a segmentation fault) at 11 to 17 deg. Refused now.
+#
+# The brep's shape carries a location, a quarter turn about X, which the
+# Part::Feature takes as its placement. A Draft's first recompute works in
+# the global frame and its later ones in the base's own: the same problem
+# turned, rounded differently, and only there does the extension fail. So
+# the Draft is recomputed once first, as the task panel does before an
+# angle is typed. A build without the fix takes this suite down here.
+# ---------------------------------------------------------------------------
+
+def ramp_ledge_drafts(angles):
+    doc = App.newDocument("draft_issue474")
+    try:
+        shape = Part.read(os.path.join(HERE, "..", "fillet", "models",
+                                       "issue474_fillet003_base.brep"))
+        base = doc.addObject("Part::Feature", "Base")
+        base.Shape = shape
+        body = doc.addObject("PartDesign::Body", "Body")
+        body.BaseFeature = base
+        doc.recompute()
+        d = body.newObject("PartDesign::Draft", "Draft")
+        # Face3 the ledge top (z=13, x in [-17,-9]), Face10 its end wall x=-17
+        d.Base = (body.BaseFeature, ["Face3"])
+        d.NeutralPlane = (body.BaseFeature, ["Face10"])
+        d.Angle = 1
+        doc.recompute()
+        for a in angles:
+            d.Angle = a
+            doc.recompute()
+            judge("issue474_ramp_ledge_a%d" % a, outcome(d), "refused")
+    except Exception:
+        report("issue474_ramp_ledge", False, False, traceback.format_exc().splitlines()[-1])
+    finally:
+        App.closeDocument(doc.Name)
+
+
+ramp_ledge_drafts((11, 15, 17))
+
+# ---------------------------------------------------------------------------
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
