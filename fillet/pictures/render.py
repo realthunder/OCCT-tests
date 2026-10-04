@@ -6,6 +6,9 @@
 # the whole shape or zoomed on the fillet's end. With "mark", edges not used
 # once each way round are drawn red and faces failing isValid() are red.
 # Faces of no area are left out. Next to each PNG a .json says what was done.
+# Optional, for the draft pictures: "facecolors" ({face index from 0: rgb})
+# and "extras" (more .breps drawn with the shape: brep, color, transparency,
+# linewidth).
 import json
 import os
 
@@ -90,14 +93,28 @@ for job in jobs["panels"]:
     vo.Deviation = 0.02
     if ghost:
         vo.Transparency = 60
-    if badf:
+    fc = job.get("facecolors") if not meta.get("dropped") else None
+    if badf or fc:
         cols = [base + (1.0,)] * len(shape.Faces)
+        for i, c in (fc or {}).items():
+            cols[int(i)] = tuple(c) + (1.0,)
         for i in badf:
             cols[i] = (0.95, 0.25, 0.25, 1.0)
         try:
             vo.DiffuseColor = cols
         except Exception:
             pass
+    for k, x in enumerate(job.get("extras", [])):
+        xs = Part.Shape()
+        xs.read(x["brep"])
+        xo = doc.addObject("Part::Feature", "X%d" % k)
+        xo.Shape = xs
+        doc.recompute()
+        xo.ViewObject.ShapeColor = tuple(x["color"])
+        xo.ViewObject.LineColor = tuple(x.get("linecolor", x["color"]))
+        xo.ViewObject.LineWidth = x.get("linewidth", 1.5)
+        xo.ViewObject.Transparency = x.get("transparency", 0)
+        xo.ViewObject.Deviation = 0.02
     if bad:
         eo.ViewObject.LineColor = (0.9, 0.0, 0.0)
         eo.ViewObject.LineWidth = 5

@@ -16,8 +16,17 @@ Each picture is one case: the shape, the face drafted, the neutral plane,
 the angle and the fork commit that fixed it. The draft goes through a
 PartDesign Draft feature on a `Part::Feature` base, as a user's does.
 
-Three columns:
+Four columns:
 
+- **the draft** -- what is asked, drawn on the input (see-through, so a
+  face inside the part shows): the face drafted in **orange**, with its
+  number and the angle; the neutral face in **green**, with its plane; the
+  **pull direction** as a blue arrow -- PartDesign, given no pull
+  direction, takes the neutral plane's normal; and the **hinge**, a thick
+  dark line where the face's plane meets the neutral plane. The face turns
+  about the hinge by the angle; where it goes is drawn **translucent
+  orange**, the plane OCCT computes for it (the valid results' drafted
+  faces lie in it to 1e-14). Its second row zooms on these faces.
 - **upstream OCCT 8.0.1** -- upstream's `Draft` files (the fork's at
   `18dfed534b`, before it first touched them), compiled into a scratch
   `TKOffset` and loaded ahead of the installed one, the rest of the fork as
@@ -26,15 +35,16 @@ Three columns:
   fix, the same way.
 - **fork after** -- the fork as installed.
 
-Two rows: the whole result, and the result zoomed where the fault is.
+In the last three, two rows: the whole result, and the result zoomed where
+the fault is.
 
-Under each column heading: "valid, volume V" in green; "INVALID, volume V"
-in red; "refused" in blue -- the draft failed and PartDesign reported it,
-the outcome wanted when no draft by moving the geometry exists -- or
-"FreeCAD died" in red. A draft with no shape shows its input, greyed. Faces
-that fail `isValid()` are drawn red; red edges are edges not used once each
-way round by the faces; faces of no area are left out, and the panel says
-how many.
+Under each of those column headings: "valid, volume V" in green; "INVALID,
+volume V" in red; "refused" in blue -- the draft failed and PartDesign
+reported it, the outcome wanted when no draft by moving the geometry exists
+-- or "FreeCAD died" in red. A draft with no shape shows its input, greyed.
+Faces that fail `isValid()` are drawn red; red edges are edges not used
+once each way round by the faces; faces of no area are left out, and the
+panel says how many.
 
 ## The fixes
 
@@ -143,7 +153,11 @@ volume unchanged.
    the libraries loaded ahead of the installed ones (`DYLD_LIBRARY_PATH`,
    set inside the run wrapper, on macOS; `LD_PRELOAD` on Linux), keeping the
    input, the result and a `.json` of what came out.
+   It also writes what the draft column draws: the two faces, the hinge,
+   the pull arrow, and the face turned the way `Draft_Modification` turns a
+   plane (its `FindRotation`, in Python).
 3. `compose.py jobs` lists the panels, the fillet pictures' `render.py`
-   draws them in the FreeCAD GUI, and `compose.py` lays them out.
+   draws them in the FreeCAD GUI (its `extras` key adds the draft column's
+   shapes), and `compose.py` lays them out.
 
 `../../fillet/pictures/doc_html.py <out.html> draft` renders this page.
