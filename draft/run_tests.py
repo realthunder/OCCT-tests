@@ -143,10 +143,14 @@ def notch(bevel):
 
 # The ledge drafted about the notch's back wall: its front edge rises by
 # 5 tan(a) over the notch's 10, so the draft adds a wedge of 125 tan(a).
+# At 45 deg the front edge reaches the block's top and the notch's front
+# edge shrinks to nothing: the result held a zero-length edge (invalid once
+# written and read back), refused now. Past 45 it was refused already.
 plain = notch(False)
-for a in (5, 20, 45):
+for a in (5, 20, 44):
     draft_case("notch_ledge_a%d" % a, plain, plane_at("z", 5), plane_at("y", 5), a, "valid",
                plain.Volume + 125 * math.tan(math.radians(a)))
+draft_case("notch_ledge_a45", plain, plane_at("z", 5), plane_at("y", 5), 45, "refused")
 
 # With the bevel the ledge's front corner is a vertex of four faces, the
 # bevel one that the draft does not reach. The corner moves with the ledge,
@@ -237,6 +241,69 @@ def ramp_ledge_drafts(angles):
 
 
 ramp_ledge_drafts((11, 15, 17))
+
+# ---------------------------------------------------------------------------
+# The sweep's invalid drafts (2026-10-04): a draft that needs a change of
+# topology is refused, and a vertex its edges pass by a hair is given the
+# tolerance to cover it. See README.md.
+# ---------------------------------------------------------------------------
+
+def brep_case(name, path, face, neutral, angle, expect, ref_volume=None):
+    """draft_case on a stored shape, its faces given by index."""
+    shape = Part.read(path)
+    draft_case(name, shape, lambda f, i=face: f.isSame(shape.Faces[i - 1]),
+               lambda f, i=neutral: f.isSame(shape.Faces[i - 1]), angle, expect, ref_volume)
+
+
+def slot(depth):
+    """A 20 cube, a 4x6 slot 2 off its front wall y=0, <depth> deep from the top."""
+    return Part.makeBox(20, 20, 20).cut(
+        Part.makeBox(4, 6, depth, V(8, 2, 20 - depth))).removeSplitter()
+
+
+# The slot's front wall y=2 drafted about the slot's floor: its top swings
+# toward the block's front by 18 tan(a), a wedge of 4 * 18^2 tan(a) / 2 out of
+# the 2 thick wall. Past 2/18 (6.3 deg) it would break through the front;
+# the result was invalid (the top face's wires crossing), refused now.
+deep = slot(18)
+draft_case("slot_wall_a5", deep, plane_at("y", 2), plane_at("z", 2), 5, "valid",
+           deep.Volume - 2 * 18 * 18 * math.tan(math.radians(5)))
+for a in (15, 30):
+    draft_case("slot_wall_a%d" % a, deep, plane_at("y", 2), plane_at("z", 2), a, "refused")
+
+
+def split_floor():
+    """A prism whose front wall y=0 (x in [10,20]) meets a slanted wall at
+    (10,0), the floor and top split in coplanar pieces along x=10 from that
+    corner: two solids fused, not refined."""
+    p = Part.Face(Part.makePolygon([V(0, -5, 0), V(10, 0, 0), V(10, 10, 0), V(0, 10, 0),
+                                    V(0, -5, 0)])).extrude(V(0, 0, 5))
+    return p.fuse(Part.makeBox(10, 10, 5, V(10, 0, 0)))
+
+
+# The front wall drafted about the end wall x=20: the corner at (10,0)
+# slides along the slanted wall, off the split edge x=10, which the draft
+# leaves alone. The result needs the slanted wall's edges to cross the
+# split; it was invalid, refused now.
+split = split_floor()
+draft_case("split_floor_corner_a5", split, plane_at("y", 0), plane_at("x", 20), 5, "refused")
+
+# A slot's wall in two coplanar pieces (split at x=9.3), the long piece
+# drafted about the side x=0: the split edge becomes the piece's hinge line,
+# the piece's top and bottom edges shrink to points, the face to nothing.
+# The result was "invalid" at the input's own volume, refused now.
+for a in (5, 15):
+    brep_case("slot_wall_split_piece_a%d" % a, os.path.join(HERE, "models", "slot_wall_split.brep"),
+              3, 1, a, "refused")
+
+# #962's Pocket002: a wall drafted about a 45 deg chamfer's plane. A vertex
+# of a split edge the draft leaves alone is placed by another edge's curve
+# and misses the split edge by 3.4e-7, three times its tolerance: the
+# result was invalid. The vertex's tolerance now covers it.
+P962 = os.path.join(HERE, "..", "fillet", "models", "issue962_pocket002.brep")
+for face, neutral, a, vol in ((41, 24, 5, 11432.6957), (44, 30, 5, 11738.5401),
+                              (51, 30, 15, 12057.0173)):
+    brep_case("issue962_f%d_n%d_a%d" % (face, neutral, a), P962, face, neutral, a, "valid", vol)
 
 # ---------------------------------------------------------------------------
 counts = {}

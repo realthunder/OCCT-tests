@@ -113,8 +113,70 @@ refusals, and changes nothing else (3510 valid, 893 invalid, the same).
 The draft suite (13), the thickness suite (326), `TestPartApp` (139) and
 `TestPartDesignApp` (78) pass.
 
+## The sweep's invalid drafts (2026-10-04)
+
+The draft sweep above left 893 drafts that came back as invalid solids --
+PartDesign's Draft does not check, so a user got each of them as a body.
+Sorted by what `BRepCheck` reports:
+
+| Count | Report | What it was |
+|------:|--------|-------------|
+| 663 (521 at 60 deg) | a self-intersecting wire | a drafted face swept past an edge of a face beside it -- a slot's wall through the block's outer wall -- so a face the draft never touches gets a wire crossing itself; narrow walls do it at 5 deg |
+| 134 | a vertex off an edge's curve, nothing else | a wall split in coplanar pieces (two solids fused, not refined) whose split edge ends at the drafted corner -- the corner moves, the split edge does not -- and, at #962, a hair's miss: 3.4e-7 on a 1e-7 tolerance |
+| 41 | intersecting wires | an inner wire of a face run into its outer one |
+| 27 | bad orientation of a face in the shell | a face turned inside out, nearly all at 60 deg |
+| 28 | wires not closed, unorientable faces | |
+
+A draft (`Draft_Modification`, a `BRepTools_Modifier`) gives each face a
+new surface, each edge a new curve and each vertex a new point, and keeps
+the topology. Most of these need a new or a vanished edge, which it cannot
+make: they are refused now. The hair's misses get the tolerance that covers
+them. Four changes:
+
+- `Draft_Modification::Perform`: once every vertex has its new point, it is
+  checked against the curve of each edge the draft leaves alone (as it was
+  already against each face's surface). A wall split in coplanar pieces
+  keeps its split edge, and a corner that slides off it is refused with
+  `Draft_VertexRecomputation` -- 100 times the vertex's tolerance, as for
+  the faces.
+- `Draft_Modification::Perform`: an edge the draft shrinks to a point (its
+  three-point chord under `Precision::Confusion()`, from over 10 times that)
+  is refused with `Draft_EdgeRecomputation`, as one that turns round was
+  already. One coplanar piece of a wall drafted about a plane through the
+  split edge loses its top and bottom edges and its area; and a ledge
+  drafted until its edge reaches the face above leaves a zero-length edge
+  (valid in memory, invalid once written and read back).
+- `Draft_Modification::NewPoint`: the vertex's new tolerance covers its
+  distance to each of its edges' curves at its new parameters (0.1% over),
+  up to the 100 times its tolerance `Perform` accepts. The point is
+  computed on one edge's curve and one face's surface, and the other edges
+  pass it by a hair.
+- `BRepOffsetAPI_DraftAngle::Build`: every face the draft rebuilt is
+  checked with `BRepCheck_Analyzer`; one that was valid in the input and is
+  not in the result makes the draft not done. This catches the faces whose
+  wires a drafted face sweeps across, which no per-vertex or per-edge test
+  sees. `Status()` stays `Draft_NoError` for these (the error belongs to
+  the modification); `IsDone()` is false. An input face already invalid is
+  not held against the draft. It costs nothing measurable (a 1.2 s draft of
+  #334's 179-face part, the same).
+
+| Case | What it covers |
+|------|----------------|
+| `notch_ledge_a44`, `notch_ledge_a45` | the notch's ledge just short of the block's top (valid, 125 tan(a) added) and at it: refused (a zero-length edge; the suite had 45 as valid) |
+| `slot_wall_a5`, `slot_wall_a{15,30}` | a slot's wall 2 from the block's front, drafted about the slot's floor: valid at 5 deg (2 * 18^2 tan(a) taken), refused past 6.3 deg where it breaks through (were invalid) |
+| `split_floor_corner_a5` | a front wall drafted about the end wall, its corner where the floor's split edge and a slanted wall meet: refused (was invalid) |
+| `slot_wall_split_piece_a{5,15}` | one coplanar piece of a slot's wall drafted about the side through its split edge: refused (was "invalid" at the input's volume, the piece flattened) |
+| `issue962_f41_n24_a5`, `issue962_f44_n30_a5`, `issue962_f51_n30_a15` | #962's Pocket002, walls drafted about chamfer planes: valid (were invalid, a vertex 3.4e-7 off a split edge) |
+
+The draft sweep (8982 drafts): of the 893 invalid results, 854 are refused
+and 39 come out valid -- 37 within a vertex tolerance of 1e-5, the other two
+#334 Draft002/003 inputs carrying the 27.8 tolerance their stored shapes
+already have. No invalid result is left. The 3510 valid results are the
+same to the last digit (now 3549), and no refusal, exception or crash
+changes otherwise.
+
 ## Known open
 
 | Case | Symptom |
 |------|---------|
-| the sweep's 893 invalid drafts | other causes, not looked at yet |
+| a draft that needs a new edge | refused: a geometry-only modification cannot make it (a split wall, a face swept past a neighbour's edge). Merging coplanar pieces first (refine) avoids the split-wall ones |
