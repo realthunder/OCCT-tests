@@ -162,6 +162,24 @@ def nocrash_case(name, shape, edge_index, radius):
     report(name, ok, False, detail if ok else "input changed; " + detail)
 
 
+def sound_case(name, shape, edge_index, radius, expect="pass"):
+    """The fillet may be refused, but a shape it makes must be a valid solid
+    with one closed shell; the input must be left as it was either way."""
+    before = signature(shape)
+    try:
+        indices = edge_index if isinstance(edge_index, list) else [edge_index]
+        r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
+        ok = r.isValid() and len(r.Shells) == 1 and r.Shells[0].isClosed()
+        detail = "vol=%.4f" % r.Volume if ok else "invalid result, vol=%.4g" % r.Volume
+    except Exception as e:
+        ok = True
+        detail = "refused: " + str(e).strip().splitlines()[-1]
+    if signature(shape) != before:
+        ok = False
+        detail = "input changed; " + detail
+    report(name, ok, expect == "xfail", detail)
+
+
 # realthunder/FreeCAD#523: a 10 box with a three-quarter cylinder (r 2) at its
 # corner on the z axis, made by Part's Connect. The cylinder's seam -- the
 # line x=2, y=0 where it meets the box's side -- stayed an edge with both
@@ -495,22 +513,131 @@ for d in (3.0, 10.0):
     fillet_case("post_draft%g_on_plate_r%g" % (d, r), ppd,
                 edge_between(ppd, (-12, -3, 3), (0, -3, 3)), r, "pass", ppd.Volume - removed)
 
+# The drafted post's corner as #876 has it: a 1 deg drafted post whose
+# base is a circle of radius 3 (the plate's round end, as above) from the
+# plate's side over 41 deg of arc on the plate's top, then a straight wall
+# tangent to it -- a cone and a plane -- the far side closed by a second
+# tangent wall: a teardrop. The fillet's line on the top, at y=-3+r, stays
+# on the arc up to r = 3(1-cos 41deg) = 0.736; past that it ends on the
+# plane's base edge, a face that does not hold the vertex. The cut then runs
+# over the plane and on over the cone, the two pieces meeting where the cut
+# crosses the cone/plane edge carried on below the plate's top; that piece
+# of the edge bounds both. The removed volume is the corner prism outside
+# the post carried on below its base, by booleans. Refused before at r>=0.8.
+def teardrop_post(z0, z1, draft=1.0, arc=41.0):
+    """The post between heights z0 and z1, its outline at z=3 as above."""
+    t1 = -math.pi / 2 - math.radians(arc)
+    q0 = V(3 * math.cos(t1), 3 * math.sin(t1), 0) + V(math.sin(t1), -math.cos(t1), 0) * 6
+    g = math.acos(3 / math.hypot(q0.x, q0.y))
+    t2 = math.atan2(q0.y, q0.x) + g
+    if abs(math.cos(t2 - t1) - 1) < 1e-9:  # that is the first tangent's point
+        t2 -= 2 * g
+    while t2 < t1:
+        t2 += 2 * math.pi
+    tan = math.tan(math.radians(draft))
+
+    def section(z):
+        rad = 3 - (z - 3) * tan
+        n1, n2 = V(math.cos(t1), math.sin(t1), 0), V(math.cos(t2), math.sin(t2), 0)
+        det = n1.x * n2.y - n1.y * n2.x
+        q = V(rad * (n2.y - n1.y) / det, rad * (n1.x - n2.x) / det, z)
+        return rad, V(rad * math.cos(t1), rad * math.sin(t1), z), \
+            V(rad * math.cos(t2), rad * math.sin(t2), z), q
+
+    def cap(z, rad, a, b, q):
+        tm = (t1 + t2) / 2
+        arc_ = Part.Arc(a, V(rad * math.cos(tm), rad * math.sin(tm), z), b).toShape()
+        return Part.Face(Part.Wire([arc_, Part.makeLine(b, q), Part.makeLine(q, a)]))
+
+    r0, a0, b0, q0_ = section(z0)
+    r1, a1, b1, q1_ = section(z1)
+    cone = Part.Cone(V(0, 0, z0), V(0, 0, z1), r0, r1)
+    faces = [cone.toShape(t1 + 2 * math.pi, t2 + 2 * math.pi, 0,
+                          (z1 - z0) / math.cos(math.radians(draft))),
+             Part.Face(Part.makePolygon([a0, q0_, q1_, a1, a0])),
+             Part.Face(Part.makePolygon([q0_, b0, b1, q1_, q0_])),
+             cap(z0, r0, a0, b0, q0_), cap(z1, r1, a1, b1, q1_)]
+    shell = Part.Shell(faces)
+    shell.sewShape()
+    solid = Part.Solid(shell)
+    if solid.Volume < 0:
+        solid.reverse()
+    return solid
+
+
+def teardrop_case(name, r, draft=1.0, arc=41.0, mirror=False, nurbs=False):
+    plate = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
+    post = teardrop_post(3, 18, draft, arc)
+    carried = teardrop_post(-2, 18, draft, arc)
+    if nurbs:
+        post = post.toNurbs()
+    shape = plate.fuse(post).removeSplitter()
+    corner = Part.makeBox(12, r, r, V(-12, -3, 3 - r)).cut(
+        Part.makeCylinder(r, 12, V(-12, -3 + r, 3 - r), V(1, 0, 0)))
+    removed = corner.cut(carried).Volume
+    sy = -3
+    if mirror:
+        shape = shape.mirror(V(0, 0, 0), V(0, 1, 0))
+        sy = 3
+    # the default GProp of the B-spline post is off by more than RELTOL;
+    # its volume was checked with adaptive GProp (README)
+    fillet_case(name, shape, edge_between(shape, (-12, sy, 3), (0, sy, 3)), r, "pass",
+                None if nurbs else shape.Volume - removed)
+
+
+for r in (0.6, 0.8, 1.0, 2.0):
+    teardrop_case("post_draft_plane_on_plate_r%g" % r, r)
+teardrop_case("post_draft_plane_mirror_r1", 1.0, mirror=True)
+teardrop_case("post_draft10_plane_on_plate_r1", 1.0, draft=10.0)
+teardrop_case("post_draft_plane_arc20_r0.6", 0.6, arc=20.0)
+teardrop_case("post_draft_plane_nurbs_r1", 1.0, nurbs=True)
+
+# The plate's other side, y=3, where the cone's arc on the top is 12 deg:
+# from radius 0.9 the line crosses onto the far wall well away from the
+# vertex. With the post's faces B-splines, the cone's surface carried on
+# curves back to meet the fillet's line on the side 8 away from the vertex,
+# nearer to where the walk ended; the cut ran there, inside out (volume up
+# by 50). The cut's end must lie beside the cone's arc: refused, as before.
+plate_n = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
+tear_n = plate_n.fuse(teardrop_post(3, 18).toNurbs()).removeSplitter()
+sound_case("post_draft_plane_nurbs_far_side_r1", tear_n,
+           edge_between(tear_n, (-12, 3, 3), (0, 3, 3)), 1.0)
+
 # realthunder/FreeCAD#876's Fillet002: its input (Fillet001's result) has a
 # plate whose top outline -- two lines and an arc, one tangent chain --
 # runs at both ends into a drafted corner of the tall body, the plate's side
 # tangent to the round end below it: the drafted post's corner above. Two
 # of its walls are cones trimmed at the plate's top, which kept the cut
-# from reaching below it. The volumes are from the fix, adaptive GProp; a
+# from reaching below it. The volumes are from the fixes, adaptive GProp; a
 # Pappus estimate along the chain is short of them by an end loss in
-# proportion to the cut's length at both radii. At radius 1 the line on the
-# top passes the cone's base arc onto the drafted wall's plane, which the
-# cone continues tangent to: the face at the end in two pieces, open.
+# proportion to the cut's length at both radii. From radius 0.8 on, the line
+# on the top passes the cone's base arc onto the drafted wall's plane, which
+# the cone continues tangent to: the cut runs over both (see the teardrop
+# post above). At radius 1.2 one corner's edge from the vertex down the side
+# missed the vertex by 6e-14 more than the tolerance it gave the vertex.
 p876b = Part.read(os.path.join(MODELS, "issue876_fillet002_base.brep"))
 e876b = [edge_between(p876b, (-19.238761, -15.746985, 3), (-30.167832, -3.494723, 3)),
          edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
-for r, taken in ((0.3, 1.51537), (0.6, 5.97437)):
+for r, taken in ((0.3, 1.51537), (0.6, 5.97437), (0.8, 10.53689), (1.0, 16.34631),
+                 (1.5, 36.20076), (2.0, 63.44643), (1.2, 23.38327)):
     fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "pass", p876b.Volume - taken)
-fillet_case("issue876_fillet002_r1", p876b, e876b, 1.0, "xfail")
+
+# #876's Fillet input again, two edges at once: the plate's top edge along its
+# side and the post's base arc on the top beside it, a convex and a concave
+# fillet ending at one vertex of four sharp edges. The first end is OnSame
+# there across the tangent split (the drafted wall's rule above), which the
+# plate of two stripes cannot take: at radius 1 the result was inside out
+# (volume -2e10), refused before that rule and now again. At 0.6 the plate is
+# made of two break points, inside out the same, before the rule as well:
+# open.
+for a, b, c, d in (((19.238761, 15.746985, 3), (30.167832, 3.494723, 3),
+                    (20, 13.750014, 3), (19.238761, 15.746985, 3)),
+                   ((-30.167832, 3.494723, 3), (-19.238761, 15.746985, 3),
+                    (-19.238761, 15.746985, 3), (-20, 13.750021, 3))):
+    pair = [edge_between(p876, a, b), edge_between(p876, c, d)]
+    tag = "x%+d" % round(a[0] if abs(a[0]) < 20 else b[0])
+    sound_case("issue876_side_and_post_%s_r1" % tag, p876, pair, 1.0)
+    sound_case("issue876_side_and_post_%s_r0.6" % tag, p876, pair, 0.6, "xfail")
 
 # #474's Fillet001 (models/issue474_fillet001_base.brep): the edge up the
 # ramp's side ends at a vertex of four sharp edges whose face beside the

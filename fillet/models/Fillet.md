@@ -396,6 +396,33 @@ the seam once.)
 
 ![post_seam_on_plate_r0.6](pictures/post_seam_on_plate_r0.6.png)
 
+### The cut over a drafted wall's cone and plane (`2a623612a8`, realthunder/FreeCAD#876)
+
+#876's tall body has its corner drafted the same way, but the corner's
+cone covers only 41 deg of arc on the plate's top before the drafted
+wall's plane takes over, the cone running on into the plane tangent. Made
+small: the drafted post with a straight wall tangent to its cone there --
+a teardrop. The fillet's line on the plate's top ends where the top does:
+on the cone's base arc up to radius 0.74, on the plane's base edge past
+that. The plane holds no edge of the vertex, so the corner found no edge
+to carry the cut on along and gave up: both "before" columns show the
+input, refused. Now the cut runs over the plane from the line's end, then
+on over the cone, the two pieces meeting where the cut crosses the
+cone/plane edge carried down below the plate's top -- in the zoom, the
+fillet's end rising into the post across the dark plane and the light
+cone, with the notch at the side as before. The third row is the plane's
+outline: at its bottom left the cone/plane edge runs on a little below
+the base, and the cut's piece on the plane brings it back to the base
+edge -- the kink. The volume matches the corner prism outside the post
+carried on below its base to 1e-5. On #876's Fillet002 this makes radius
+0.8 to 2 (refused before); at 1.2 with a fix to the tolerance of the
+vertex at a corner's curve end (`d45fc2c2b6`). With the post's faces
+B-splines, the cut's end on the side must lie beside the cone's arc
+(`8c91316949`): the B-spline cone carried on can meet the side again far
+off.
+
+![post_draft_plane_on_plate_r1](pictures/post_draft_plane_on_plate_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

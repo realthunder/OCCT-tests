@@ -25,6 +25,7 @@ STAGES = {
     "s876": ("f9d329a663", "538ce9f99a"),
     "s876b": ("fa8d202b81", "5310ff9d59"),
     "s876c": ("5310ff9d59", "c34722ef01"),
+    "s876d": ("e25bcf2525", "2a623612a8"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -106,6 +107,50 @@ def _post_on_plate(draft=0.0, turn=90):
     return plate.fuse(post)
 
 
+def _teardrop_post_on_plate():
+    # run_tests.py's teardrop post: drafted 1 deg, its base the plate's round end's
+    # circle over 41 deg of the plate's top, then a straight wall tangent to it
+    import math
+    V = App.Vector
+    t1 = -math.pi / 2 - math.radians(41.0)
+    q0 = V(3 * math.cos(t1), 3 * math.sin(t1), 0) + V(math.sin(t1), -math.cos(t1), 0) * 6
+    g = math.acos(3 / math.hypot(q0.x, q0.y))
+    t2 = math.atan2(q0.y, q0.x) + g
+    if abs(math.cos(t2 - t1) - 1) < 1e-9:
+        t2 -= 2 * g
+    while t2 < t1:
+        t2 += 2 * math.pi
+    tan = math.tan(math.radians(1.0))
+
+    def section(z):
+        rad = 3 - (z - 3) * tan
+        n1, n2 = V(math.cos(t1), math.sin(t1), 0), V(math.cos(t2), math.sin(t2), 0)
+        det = n1.x * n2.y - n1.y * n2.x
+        q = V(rad * (n2.y - n1.y) / det, rad * (n1.x - n2.x) / det, z)
+        return rad, V(rad * math.cos(t1), rad * math.sin(t1), z), \
+            V(rad * math.cos(t2), rad * math.sin(t2), z), q
+
+    def cap(z, rad, a, b, q):
+        tm = (t1 + t2) / 2
+        arc = Part.Arc(a, V(rad * math.cos(tm), rad * math.sin(tm), z), b).toShape()
+        return Part.Face(Part.Wire([arc, Part.makeLine(b, q), Part.makeLine(q, a)]))
+
+    r0, a0, b0, q0_ = section(3)
+    r1, a1, b1, q1_ = section(18)
+    cone = Part.Cone(V(0, 0, 3), V(0, 0, 18), r0, r1)
+    faces = [cone.toShape(t1 + 2 * math.pi, t2 + 2 * math.pi, 0, 15 / math.cos(math.radians(1.0))),
+             Part.Face(Part.makePolygon([a0, q0_, q1_, a1, a0])),
+             Part.Face(Part.makePolygon([q0_, b0, b1, q1_, q0_])),
+             cap(3, r0, a0, b0, q0_), cap(18, r1, a1, b1, q1_)]
+    shell = Part.Shell(faces)
+    shell.sewShape()
+    post = Part.Solid(shell)
+    if post.Volume < 0:
+        post.reverse()
+    plate = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
+    return plate.fuse(post).removeSplitter()
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -119,6 +164,7 @@ SHAPES = {
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
+    "postplane": _teardrop_post_on_plate,
 }
 
 
@@ -179,6 +225,10 @@ UVFACE = {
     # the post's cylinder, whose wire jumped a period at the seam
     "postseam": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
                  and f.BoundBox.ZMax > 10),
+    # the post's wall the cone runs on into, which the cut now crosses
+    "postplane": (lambda f: f.Surface.__class__.__name__ == "Plane"
+                  and abs(f.Surface.Axis.z) < 0.5 and f.BoundBox.ZMax > 10
+                  and f.BoundBox.YMin < -2.0),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -212,6 +262,8 @@ NAMES = {
                  "its round end under the post",
     "postdraft": "the post on the plate drafted 1 deg, a cone on the round end's cylinder",
     "postseam": "the post on the plate turned so that its seam runs up from the edge's end",
+    "postplane": "the drafted post with a straight wall tangent to its cone 41 deg round "
+                 "from the edge's end",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -227,6 +279,7 @@ VIEW = {
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
+    "postplane": ((-4.5, 0, 9), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -242,6 +295,7 @@ UVLABEL = {
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
+    "postplane": ("the post's wall beyond the cone", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -303,6 +357,8 @@ CASES = {
                                  (0, -3, 3), (0.5, -1, 0.7)),
     "post_seam_on_plate_r0.6": ("s876c", "postseam", ((-12, -3, 3), (0, -3, 3)), 0.6, 681.6610,
                                 (0, -3, 3), (0.5, -1, 0.7)),
+    "post_draft_plane_on_plate_r1": ("s876d", "postplane", ((-12, -3, 3), (0, -3, 3)), 1.0,
+                                     754.5565, (-1, -2.5, 3), (0.3, -1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

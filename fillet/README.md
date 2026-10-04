@@ -716,14 +716,15 @@ trimmed surface's basis there. #876's whole document recomputes: Fillet002
 At radius 1 the line on #876's top passes the end of the cone's base arc
 (41 deg of it; radius 1 needs 48) onto the base edge of the drafted wall's
 plane, which the cone continues tangent to: the face at the end comes in
-two pieces and the one reached does not hold the vertex -- open.
+two pieces and the one reached does not hold the vertex -- open then, made
+since ("The cut over a drafted wall's cone and plane", below).
 
 | Case | What it covers |
 |------|----------------|
 | `post_draft_on_plate_r{0.1,0.6,2}` | the post drafted 1 deg: valid, the corner prism outside the cone (refused before) |
 | `post_draft{3,10}_on_plate_r0.6` | drafted 3 and 10 deg (refused, and invalid with 12 taken, before) |
 | `issue876_fillet002_r{0.3,0.6}` | #876's Fillet002 on its input (`models/issue876_fillet002_base.brep`, Fillet001's result): valid (invalid, an open shell, before) |
-| `issue876_fillet002_r1` | XFAIL, the face at the end in two tangent pieces |
+| `issue876_fillet002_r1` | XFAIL then, the face at the end in two tangent pieces; made since, see "The cut over a drafted wall's cone and plane" |
 | `issue474_f001_e12_r{0.3,1}` | #474's Fillet001 (`models/issue474_fillet001_base.brep`), the edge up the ramp's side: the corner of three made at 0.3, and at 1, where it cannot be, the fillet computed again past a break point |
 
 The every-edge sweep (4431 fillets) turns 24 results valid -- #876's
@@ -770,13 +771,132 @@ the two are within half a period and nothing moves.
 Neither sweep has the seam at a fillet's end (the post there is turned a
 quarter), and neither moves.
 
+## The cut over a drafted wall's cone and plane (realthunder/FreeCAD#876, 2026-10-04)
+
+#876's Fillet002 at radius 0.8 and up: the tall body's corner is a 1 deg
+cone over 41 deg of arc on the plate's top, then the drafted wall's plane,
+the cone running on into it tangent across a straight edge (a ruling).
+The fillet's line on the top ends where the top does, on the cone's base
+arc while r < 3(1-cos 41deg) = 0.736 -- and past that on the plane's base
+edge. The corner (`PerformOneCorner`, `OnSame`) takes the face across that
+edge as the face at the end and the edge to extend as one of that face at
+the vertex; the plane holds no edge of the vertex, so none was found, the
+corner went to `PerformIntersectionAtEnd`, and on to the plate, refused.
+
+The wall there is the cone and the plane, one wall in two faces, and the
+cut runs over both. Fix `2a623612a8`: when the face across the line's edge does
+not hold the vertex, but the edge of the top from that edge's end to the
+vertex has a face on its other side (the cone) which the first runs on
+into, tangent, across a straight edge from that end, the cone is the face
+at the end -- the edge to extend and the cut's end on the side are its, as
+for a fillet whose line stays on the arc -- and the cut is made in two
+pieces: on the plane from the line's end to the point where the cut
+crosses the ruling carried on below the top, and on the cone from there.
+That piece of the ruling goes in as an edge of both faces, and the cone's
+base arc, under the fillet now, goes away. The ruling's pcurves are
+projected on the faces' surfaces extended (on #876 one cone is a
+B-spline, which ends at the top).
+
+Made small (`teardrop_post`): the post on the plate drafted 1 deg, its
+base the round end's circle over 41 deg of the top, then the straight wall
+tangent to it, the far side closed by a second tangent wall. The removed
+volume is the corner prism outside the post carried on below its base, by
+booleans; the fillet matches it to under 1e-5 at every radius from 0.3 to
+2, mirrored, drafted 3 and 10 deg, with 20 and 60 deg of arc, and with the
+post's faces converted to B-splines (by adaptive GProp; FreeCAD's default
+integration is off by more than the suite's tolerance on those). #876's
+Fillet002 is valid from 0.8 to 2 (refused before), at 1.2 with the next
+fix.
+
+At #876's corner at y=-13.75 the cone is analytic with its seam on the
+straight edge, and the cone's piece can be computed two ways: from the
+crossing point, or from the cut's end on the side through it to the
+fillet's line on the cone carried on, and cut there. Each comes out loose
+at some radii -- the first next to the switch radius, the second where it
+crosses the seam -- so the fix takes the one that fits better: within the
+input's 1.7e-4 at most radii, 5e-4 to 1.1e-3 at a few.
+
+| Case | What it covers |
+|------|----------------|
+| `post_draft_plane_on_plate_r{0.6,0.8,1,2}` | the teardrop post: 0.6 on the arc as before, 0.8 to 2 over the plane and the cone (refused before) |
+| `post_draft_plane_mirror_r1`, `post_draft10_plane_on_plate_r1`, `post_draft_plane_arc20_r0.6` | mirrored; drafted 10 deg; 20 deg of arc, the line on the plane from 0.18 |
+| `post_draft_plane_nurbs_r1` | the post's faces B-splines: valid (volume by adaptive GProp, README) |
+| `issue876_fillet002_r{0.8,1,1.2,1.5,2}` | #876's Fillet002: valid (refused before) |
+
+The every-edge sweep (4719 fillets, the four teardrop models added) with
+this and the three fixes below turns 53 refused results valid -- #876's
+three models, twelve each (the plate's top chains at 0.8 and 2), and the
+teardrops -- loses none, and moves no volume of the 2596 valid before. On
+the models with newly valid results the tolerances of later fillets rise:
+the sweep fillets one input in turn, and a fillet that now succeeds raises
+the tolerances of sub-shapes it shares with the input (a fresh input gives
+the same tolerance as before). The vertex sweep (15122 fillets) turns 162
+refused results valid, the same models, turns 11 invalid ones into
+refusals (see "Two stripes" below), moves no volume of the 9753 valid
+before, and loses none. FreeCAD's `TestPartApp` and `TestPartDesignApp`
+pass.
+
+## Two stripes at an end across a tangent split (realthunder/FreeCAD#876, 2026-10-04)
+
+`5310ff9d59` makes an end OnSame at a vertex of four sharp edges where a
+face of the spine runs on tangent into another: a corner of three, for a
+fillet ending there alone. #876's plate top edge along its side and the
+post's base arc beside it, filleted together, end at one such vertex: a
+convex and a concave fillet, two stripes, whose corner is
+`PerformMoreThreeCorner`'s plate. With the first end OnSame the plate came
+out inside out (volume -2e10) at radius 1, where before it was refused.
+Fix `86c8d5ad28`: the corner of two stripes at four sharp edges with an
+end OnSame is refused, and `Compute` runs again with that end a break
+point, as it does for a corner of three that fails: refused again at
+radius 1. With both ends break points the same plate is still inside out
+at radius 0.6, and on two more pairs at radius 1, as it was before
+`5310ff9d59` -- open.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_side_and_post_x{+19,-19}_r1` | the two edges at either corner: refused or valid, never an invalid shape (inside out before) |
+| `issue876_side_and_post_x{+19,-19}_r0.6` | XFAIL, the plate of two break points inside out (as before) |
+
+## The cut's end beside the cone (realthunder/FreeCAD#876, 2026-10-04)
+
+The teardrop post with its faces B-splines (`toNurbs`), filleted along the
+plate's other side, y=3, where the cone's arc on the top is only 12 deg:
+from radius 0.9 the line on the top crosses onto the far wall well away
+from the vertex, and the walk ends there. The cut's end on the side, where
+the cone's surface carried on meets the fillet's line on the side, came
+out at the root nearest that end -- on the B-spline cone's extension,
+which curves back to meet the side 8 away -- and the cut ran over the
+extension: inside out, the volume up by 50, where before `2a623612a8` the
+corner was refused. An analytic cone meets the line only beside its arc.
+Fix `8c91316949`: the cut's end must lie on the cone beside its base arc,
+its parameters projecting inside that edge's pcurve; else the corner is
+refused, as before.
+
+| Case | What it covers |
+|------|----------------|
+| `post_draft_plane_nurbs_far_side_r1` | refused or valid, never an invalid shape (inside out before) |
+
+## A vertex at the end of a corner's curve (realthunder/FreeCAD#876, 2026-10-04)
+
+#876's Fillet002 at radius 1.2: at one corner the extension -- the curve
+from the vertex down the plate's side, where the extended cone meets it --
+starts 3.56e-5 off the vertex. `Compute` gives a vertex at the end of a DS
+curve that curve's tolerance, which was 3.5620502505e-5; the curve's end
+lay 3.5620502565e-5 away, 6e-14 farther, and BRepCheck found the vertex
+off the edge: invalid. Fix `d45fc2c2b6`: the vertex takes the larger of the
+two, with a margin of 1e-9 of it against rounding.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_fillet002_r1.2` | valid (invalid before, the vertex off the extension by 6e-14) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
-| `issue876_fillet002_r1` | refused: the line on the top passes the cone's base arc onto the drafted wall's plane, the face at the end in two tangent pieces, one of them not at the vertex (see "A drafted wall at the fillet's end", above) |
+| `issue876_side_and_post_x{+19,-19}_r0.6` | invalid, volume -2e11 to -5e12: two stripes, a convex and a concave fillet, ending at a vertex of four sharp edges with both ends break points; `PerformMoreThreeCorner`'s plate comes out inside out (see "Two stripes at an end across a tangent split", above) |
 
 ## Pictures
 
