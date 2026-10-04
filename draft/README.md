@@ -15,6 +15,12 @@ no draft of its own. A case expects either a valid solid (with its volume
 when known) or a refusal: the feature fails with an error, and no invalid
 shape comes back.
 
+## Pictures
+
+`models/Draft.md` shows each fix in pictures -- upstream, the fork before
+the fix and the fork after, side by side (`models/pictures/`, made by
+`pictures/make_pictures.sh`).
+
 ## A drafted face whose corner a third face touches (realthunder/FreeCAD#334, 2026-10-03)
 
 The model (`../occ-issues/models/issue334_draft_artifact.FCStd`) drafts

@@ -1,8 +1,9 @@
-# python doc_html.py <out.html> -- models/Fillet.md as one HTML page.
+# python doc_html.py <out.html> [suite] -- models/Fillet.md as one HTML page,
+# or another suite's doc: "draft" renders ../../draft/models/Draft.md.
 #
 # The page references its pictures as pictures/<case>.png, beside it; publish
-# models/pictures/*.png at those paths with it. Needs python-markdown (the
-# FreeCAD conda env has it).
+# the suite's models/pictures/*.png at those paths with it. Needs
+# python-markdown (the FreeCAD conda env has it).
 import html
 import os
 import re
@@ -11,7 +12,18 @@ import sys
 import markdown
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "..", "models", "Fillet.md")
+SUITE = sys.argv[2] if len(sys.argv) > 2 else "fillet"
+# suite: (doc, page title, eyebrow's toolkit, lede)
+SUITES = {
+    "fillet": ("Fillet.md", "TKFillet Fixes", "TKFillet / ChFi3d",
+               "Each fix the fork makes to OCCT's fillet builder, with the cases that show it:\n"
+               "  upstream OCCT, the fork before the fix and the fork after, side by side."),
+    "draft": ("Draft.md", "TKOffset Draft Fixes", "TKOffset / Draft",
+              "Each fix the fork makes to OCCT's draft, with the cases that show it:\n"
+              "  upstream OCCT, the fork before the fix and the fork after, side by side."),
+}
+DOC, PAGE_TITLE, TOOLKIT, LEDE = SUITES[SUITE]
+SRC = os.path.join(HERE, "..", "..", SUITE, "models", DOC)
 
 text = open(SRC, encoding="utf-8").read()
 # the first line is the page's heading, set apart from the body
@@ -50,7 +62,7 @@ toc = "\n".join(
         (' <span class="issue">#%s</span>' % i) if i else "")
     for hid, name, c, i in fixes)
 
-page = """<title>TKFillet Fixes</title>
+page = """<title>%(pagetitle)s</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
@@ -206,10 +218,9 @@ figcaption code { background: none; padding: 0; }
 </style>
 <div class="wrap">
 <header class="top">
-  <div class="eyebrow">realthunder OCCT fork &middot; LinkVibe-801 &middot; TKFillet / ChFi3d</div>
+  <div class="eyebrow">realthunder OCCT fork &middot; LinkVibe-801 &middot; %(toolkit)s</div>
   <h1>%(title)s</h1>
-  <p class="lede">Each fix the fork makes to OCCT's fillet builder, with the cases that show it:
-  upstream OCCT, the fork before the fix and the fork after, side by side.</p>
+  <p class="lede">%(lede)s</p>
 </header>
 <div class="layout">
 <nav class="fixes" aria-label="The fixes">
@@ -217,17 +228,19 @@ figcaption code { background: none; padding: 0; }
   <ol>
 %(toc)s
   </ol>
-  <p class="count">%(nfig)d pictures &middot; source <code>tests/fork/fillet/models/Fillet.md</code></p>
+  <p class="count">%(nfig)d pictures &middot; source <code>tests/fork/%(suite)s/models/%(doc)s</code></p>
 </nav>
 <article>
 %(body)s
-<p class="source">Rendered from <code>tests/fork/fillet/models/Fillet.md</code> in the OCCT fork; the suite is
-<code>tests/fork/fillet/run_tests.py</code>, the pictures come from <code>tests/fork/fillet/pictures/make_pictures.sh</code>.</p>
+<p class="source">Rendered from <code>tests/fork/%(suite)s/models/%(doc)s</code> in the OCCT fork; the suite is
+<code>tests/fork/%(suite)s/run_tests.py</code>, the pictures come from <code>tests/fork/%(suite)s/pictures/make_pictures.sh</code>.</p>
 </article>
 </div>
 </div>
 """
-for key, value in (("%(title)s", html.escape(title)), ("%(toc)s", toc), ("%(nfig)d", str(nfig)),
+for key, value in (("%(pagetitle)s", PAGE_TITLE), ("%(toolkit)s", TOOLKIT), ("%(lede)s", LEDE),
+                   ("%(suite)s", SUITE), ("%(doc)s", DOC),
+                   ("%(title)s", html.escape(title)), ("%(toc)s", toc), ("%(nfig)d", str(nfig)),
                    ("%(body)s", out)):
     page = page.replace(key, value)
 
