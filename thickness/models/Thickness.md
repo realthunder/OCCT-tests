@@ -41,9 +41,10 @@ this page that fixed it.
 Four columns:
 
 - **the shape given** -- the input, the removed face or faces in magenta.
-- **upstream OCCT 8.0.1** -- upstream's eleven files of the fix chain at the
-  fork's base (`91be8c4c71`), compiled into scratch `TKBool`/`TKOffset`
-  libraries and preloaded, the rest of the fork as it is.
+- **upstream OCCT 8.0.1** -- upstream's files of the fix chain's two packages,
+  `BRepAlgo` and `BRepOffset`, at the fork's base (`91be8c4c71`), compiled
+  into scratch `TKBool`/`TKOffset` libraries and preloaded, the rest of the
+  fork as it is.
 - **fork before** -- the fork's `TKBool`/`TKOffset` sources at the commit just
   before the fix (named in the heading), the same way.
 - **fork after** -- the fork now.
@@ -116,14 +117,15 @@ a mode: 204. From that section on the sweep is also run with every solid
 under a location and with its geometry turned in space (`SWEEP_PLACE`): the
 same 928 volumes, all right.
 
-Of the 146 pictured cases, 39 are ones upstream gets right and the fork had
+Of the 169 pictured cases, 40 are ones upstream gets right and the fork had
 broken -- the chain's casualties (sec 2, 3, part of 4, the holed
 cone's top with intersection on, sec 10, a short box's and a box's bottom
 alone, sec 11 and 12, a pocket's open shell, sec 13, the
 input left inside out, sec 14, the faces closed at a pole, sec
 16, half of a cap turned in space, its sphere removed, sec 20,
-a dome with its rim in two arcs, sec 21, and an edge in pieces, sec 22).
-The other 107 fail upstream too: the fork
+a dome with its rim in two arcs, sec 21, an edge in pieces, sec 22, and a
+seam in pieces, sec 24).
+The other 129 fail upstream too: the fork
 now does better than upstream there.
 
 Nothing in the suite fails. Half a ball cut through both its poles, which
@@ -132,7 +134,9 @@ leaves it, or with its sphere in two faces, in sec 21, which marks
 eight cases known broken: ball wedges on more than half a turn with the
 sphere removed, and a dome's half flat with the Intersection join. Sec 22
 answers the eight, and an edge in pieces, which broke the faces beside it
-in 361 of 824 runs. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
+in 361 of 824 runs; sec 24 and sec 26 answer what a wider survey of that
+still found, and sec 26 the order of a solid's faces, asked about there for
+the first time. Every run of the sweep in scope is right. Out of scope, sec 11 answers the faces left in pieces where each
 piece is a plain plate or disc, with either join (sec 12), and sec 13
 the pieces that are pockets and bosses: every one checks by hand. The one
 refusal left in the sweep is the torus's face, and it is right: with its one
@@ -1465,6 +1469,387 @@ join and is a tube round the edge with the Arc join (sec 6, and
 value is either. The seam crossing at a negative parameter that sec 21
 worked round is still worked round.
 
+### Sec 23: two faces of one sphere, one removed
+
+The half ball with its sphere in two faces that meet along a tangent edge --
+two domes (the edge half the equator) or two lunes (a meridian) -- and one
+of them removed: refused every way since sec 22, and wrong or refused before
+it. The removed face lies on the kept face's own sphere, and the kept
+face's offset, a sphere of R + t or R - t, never meets it. Sec 22 left the
+rule open; it is settled here as the one for two faces in one plane
+(sec 9, sec 18), carried onto the sphere.
+
+**The rule** (`sweep/onedome.py`). With the Intersection join the kept face
+runs on round the sphere a thickness -- an arc of t -- into the removed one,
+to a wall square to the sphere there: the cone from the sphere's centre at
+latitude t / R from the edge. With the Arc join a tube round the edge,
+turning into the removed face until it meets it, and outward a ball round
+each end of the edge. Elsewhere the rules of `sweep/polehand.py`; in
+particular the flat's slab beside the removed dome is cut by the sphere
+extended. The half ball turned a quarter about the flat's normal takes the
+domes onto the lunes, and the flat's split along the axis changes nothing,
+so both give one set of values: with the Intersection join 91.1786 outward
+and 74.1857 inward, with the Arc join 89.1638 and 73.5777.
+
+**The wall on a sphere** (`dcd80b8727`, `BRepOffset_Analyse`,
+`TreatTangentCaps`). The closure of a tangent edge between coplanar faces
+(sec 9) takes a circle between two faces of one sphere too: the kept face
+is its own strip, as a plane is, its offset runs on to the wall's far edge,
+and the wall is a cone (`SphereCapWall`). That far edge lies off the kept
+face's sphere and has no pcurve on it; its type is worked out from the
+sphere's normal (`SphereCapWallEdgeType`). The cone needed four things the
+plane did not:
+
+- *Grown to its apex* (`BRepOffset_Inter3d`, `KeepWallInItsBand`). Grown as
+  any face is, the cone runs on to its apex, and the flat side of the lunes
+  cut it there too, along a hyperbola that leaves the wall's band at one
+  end and comes back into it at the other. The section ran the length of
+  the shape; the flat's offset took it for an edge and the kept lune's
+  offset was left hanging -- a valid solid of 162.28 for 74.1857. The wall
+  is grown across its band by a tenth of it.
+- *One face at both ends*. Both ends of the lunes' wall meet the same half
+  of the flat, and the section of the two was asked for once: one end got
+  its piece, the other none. Each end takes its own.
+- *A face that meets the kept one at a vertex only*. That half of the flat
+  meets the kept lune at the poles alone. Faces meeting at a vertex alone
+  are intersected there on planar shapes only, and the flat half would
+  "carry on" the other half, which meets the kept lune along the rim; at the
+  ends of such a wall, on any shape, the face takes the kept face's section
+  from the half it carries on.
+- *A crossing on the sphere* (`BRepAlgo_Loop`). Outward the wall meets the
+  removed face along a circle that runs out through the rim. A crossing of
+  two edges gets a vertex of its own on a plane (sec 17), and now on a
+  sphere: without it the removed face's piece was the whole face with a
+  hole running out of it.
+
+![eqball_sphere1_join_out](pictures/eqball_sphere1_join_out.png)
+
+![eqball_sphere1_join_in](pictures/eqball_sphere1_join_in.png)
+
+![luneball_sphere1_join_out](pictures/luneball_sphere1_join_out.png)
+
+![luneball_sphere1_join_in](pictures/luneball_sphere1_join_in.png)
+
+**A cone and a sphere** (`43b4128193`, TKGeomBase, `IntAna_QuadQuadGeo`).
+The domes outward came out of all this refused still: the wall met the
+removed face in B-splines walked point by point, cut in odd places. A cone
+with its apex at a sphere's centre meets it in circles, and the analytic
+intersection took the sphere's own axis -- any line through its centre --
+for the test, asking it to meet the cone's axis exactly at the centre (a
+distance `== 0.0`). Rounding answered as the sphere happened to be turned,
+and the offset algorithm turns spheres off their poles. The cylinder and
+sphere had the same test. Both now ask the one thing that matters: the
+centre lies on the axis. That let a second fault through: the circles were
+placed along the line from the cone's apex to the sphere's centre, which is
+no direction where the two are a rounding apart -- under a location the apex
+lay 1e-15 off, the circles went off along that, the section was empty and
+the half ball placed or turned was refused with one face of the two
+removed. They go along the cone's axis.
+
+![turned_eqball_sphere2_join_in](pictures/turned_eqball_sphere2_join_in.png)
+
+![placed_luneball_sphere2_join_out](pictures/placed_luneball_sphere2_join_out.png)
+
+**The tube's edge on the removed face** (`68ce8cb746`,
+`TangentTubeEdgeOnCap`). With the Arc join, the tube round the equator met
+the removed dome along an edge built point by point, a B-spline, and
+extended with the removed face it ran off to 1e16 -- the -1.3e100 of sec 22.
+A circle edge whose points all land at one height on its axis and one
+distance from it gives that circle.
+
+**Still refused: the Arc join**, all eight runs, marked `XFAIL` with the
+volumes above. Two things are in the way. The flat's offset is stretched to
+the removed face before anything else (`ToContext`, `ExtentFace`): its rim
+on the removed side becomes the sphere's section, and its rim on the kept
+side -- the raw offset of the edge, to be cut later -- is stretched to meet
+it. Here the two are circles about one centre in one plane, of radius 4.975
+and 5, that never meet, and the flat's offset is left with no wire. And the
+tube round the equator ends at the flat itself, where inward it should end
+at the flat's offset. Outward the exact answer has one more face at each
+end of the tube, a sliver in the tube's end plane between the flat's
+offset, the sphere and the ball (0.025 long, about 1e-5 in area): the flat's
+slab is cut by the sphere above the equator and not below it, and the
+sphere bends away from the flat's offset by t^2 / 2R. Whether the Arc join
+should keep that, or round it away, is left to be ruled on before it is
+built. (Ruled and built: sec 25.)
+
+The seam crossing at a negative parameter that sec 21 worked round is still
+worked round.
+
+### Sec 24: a seam in pieces, and the crossing at a negative parameter
+
+Sec 22's survey put a vertex at the middle of each edge of twelve shapes in
+turn and asked that nothing change. Widened to twenty-five shapes -- the
+half ball in domes and in lunes, the filleted box, the box fused of two,
+the dome on a cylinder, the cap, the holed cone, the L, the refined and the
+cut half ball -- it found four that still change.
+
+**The crossing at a negative parameter** (`013502003c`, `BRepAlgo_Loop`). The loop projects
+each vertex on the other edges to find where they cross, and the projection
+answers in the curve's first period; an edge whose range runs below it --
+stretched back past its start -- has the answer wrapped into its range
+(sec 19). A stretched edge's curve is a trimmed circle, and a trimmed curve
+says it is not periodic: the wrap never ran, and a crossing just below the
+start, at 2 pi less a little, was skipped as off the edge. This is the root
+sec 21 worked round by starting the turned half sphere's seam at 2 pi, as a
+primitive's does: started at 0, stretched below the rim, its crossing with
+the section of the removed face was lost. The wrap now takes the period of
+the curve the trimmed one is cut from.
+
+**A seam in pieces** (`5004f3e2ee`, `BRepOffset_MakeOffset`,
+`PutJoinedEdgesOnIsos`). An
+edge in pieces is joined first (sec 22), and a seam joined comes back on a
+circle or line of its own, parameterised from 0 -- no primitive's seam, which
+is its surface's iso line, its parameter the surface's own. Stretched below
+its start it went negative, into the fault above, and other steps count on
+the surface's parameter too. A joined seam is put back on the iso line, its
+pcurves lines of the same parameter, its pcurves on planes dropped to be
+worked out again; only where it runs the way the line does, and on no face
+but such ones and planes. Seams only: a meridian between two faces -- the
+lunes' -- is right as joined, and was broken by it. The cap above latitude
+30 with its seam in two, its sphere removed outward with the Arc join, was
+an invalid solid of 105.98 for 31.285, and refused three other ways; the
+dome on a cylinder with the cylinder's seam in two, an invalid 808.26 for
+152.629, and wrong eight other ways. All right now.
+
+![capsplit_sphere_out](pictures/capsplit_sphere_out.png)
+
+![bulletsplit_flat_out](pictures/bulletsplit_flat_out.png)
+
+![bulletsplit_sphere_in](pictures/bulletsplit_sphere_in.png)
+
+**Sec 23's crossings on a sphere** (`73d91e0d06`, `BRepAlgo_Loop`). The crossing vertices
+sec 23 gave a sphere were given between any two edges, and an edge stretched
+over the pole comes down the far side and crosses edges there that bound
+nothing of it: three quarters of a dome with a vertex on an edge, a flat side
+removed outward with the Arc join, was invalid or refused three ways, where
+before sec 23 it was right. A stretched edge -- its own ends INTERNAL --
+gets no crossing vertex on a sphere.
+
+![dome270split_side_out](pictures/dome270split_side_out.png)
+
+**Found, not fixed.** The half ball cut from a ball by a box, one face its
+sphere: with a vertex on its rim it is refused four ways (placed or
+turned it is right); the edge join gives
+a valid solid of the pieces joined, and the thick solid is made of the solid
+as given all the same -- not chased. The half ball in two lunes with a vertex
+on the meridian between them, or on the rim beside the removed lune: refused
+three ways with the Intersection join. The flat's half beside the removed
+lune takes the whole section circle from the other half (sec 23) and builds
+the other half's face again from it; on the plain shape the shell drops one
+of the two copies, here neither, and the solid is not valid. A copy of a
+coplanar neighbour's face needs a rule of its own.
+
+### Sec 25: the Arc join between two faces of one sphere
+
+Sec 23 left the Arc join refused, all eight ways, and one thing to be ruled
+on. Outward, the exact answer -- built here from primitives, a valid solid
+of 89.1639 for the hand value 89.1638 -- has a sliver face at each end of
+the tangent edge:
+
+![arc_join_sliver](pictures/arc_join_sliver.png)
+
+The flat's slab is cut by the removed dome's sphere above the equator, where
+its offset reaches a radius of 4.975, and below it runs out to 5, where the
+tube round its rim touches it. The step between the two, t^2 / 2R long, lies
+under the ball round the edge's end, and the ball, touching the flat's
+offset in one point, does not cover it: a face in the plane z = 0, 0.025
+long and 0.0006 wide, 5.2e-6 in area, two of its three edges tangent at its
+tip. Filling it runs on along the whole upper rim and carving it away along
+the whole lower one; there is no exact answer without it.
+
+**Ruled (2026-10-03): round it away.** The sliver is not built. The ball
+and the flat's offset share the step, an edge of tolerance t^3 / 8R^2 --
+6.6e-4 here -- and the result has one face fewer at each end. The kernel's
+own repair says the same of the exact solid: `ShapeFix_FixSmallFace` takes
+its two strips out and leaves a valid solid of ten faces at a tolerance of
+6.3e-4. A setting to drop faces under some area after the fact was
+considered and is not needed for this: the face is never made.
+
+**The step** (`31440694cb`, `BRepOffset_Tool::ExtentFace`). The flat's
+offset is stretched to the removed face before anything else: its rim on
+the removed side becomes the section with the sphere, and the edges beside
+it are stretched to cross it. The section and the offset of the flat's own
+rim are circles about one centre in one plane that never cross, and the
+face was left without a wire. Where a section and its neighbour do not
+cross they are joined by a step, straight in the face's parameters, from
+the vertex -- which stays the neighbour's end -- to the nearest point of
+the section. The neighbour, both its vertices kept, stays the edge it was:
+a copy is an edge the tube round the flat's rim, which is not stretched,
+does not have, and the shell came out open along it.
+
+**The ball's fourth edge** (`BRepOffset_MakeOffset::ToContext`). The ball
+round the edge's end had three edges -- the end of the tube round the
+tangent edge, the end of the tube round the flat's rim, and an arc on the
+removed face between them, which was made to end where the rim's tube does:
+0.025 off the sphere. It has the step for a fourth, and its arc on the
+removed face runs to the section's end. Outward only, where the edge the
+step starts from is one that stays. Inward nothing stays there -- the tube
+is cut by the flat's offset, as the intersection finds it -- and the step
+only says where the section ends.
+
+**A section stops at a step** (`BRepOffset_Inter3d::ContextIntByArc`).
+Every section on a removed face is stretched both ways before the faces are
+made, to be cut by whatever crosses it. Past a step nothing does, and the
+circle ran on inside its own face and cut it in two, a disc and a ring 0.025
+wide. A section is not stretched past an end at a step; the vertex is
+marked by having the step for its image.
+
+**In two lunes** the tangent edge ends on the flat's rim, at the poles, and
+the gap falls along the line between the flat's two halves. The half beside
+the removed lune has that line cut short at the section; the other half
+touches the removed face in the poles only, is not stretched, and had the
+line whole; each then cut a copy of its own and the shell was open along
+it. An edge `ExtentFace` has cut is given, cut, to the face on its other
+side, and outward the piece between the section's end and the rim tube's is
+the ball's step.
+
+89.1637 outward and 73.5776 inward, in domes and in lunes, either face,
+plain, placed and turned, frozen and unfrozen: thirteen faces outward in
+domes and twelve in lunes, eight inward, the smallest a ball's.
+
+![eqball_sphere1_out](pictures/eqball_sphere1_out.png)
+
+![eqball_sphere1_in](pictures/eqball_sphere1_in.png)
+
+![luneball_sphere1_out](pictures/luneball_sphere1_out.png)
+
+![luneball_sphere1_in](pictures/luneball_sphere1_in.png)
+
+![turned_eqball_sphere2_in](pictures/turned_eqball_sphere2_in.png)
+
+![placed_luneball_sphere2_in](pictures/placed_luneball_sphere2_in.png)
+
+Sec 24's two found and not fixed are as they were.
+
+### Sec 26: a seam that is none, and a face beyond its tangent edge
+
+The two sec 24 found and left.
+
+**A seam the face runs along once** (`54d2c02774`, `BRepOffset_MakeOffset`,
+`HasSplitEdge`). Half a ball cut from a ball by a box has the ball's seam
+for half of its rim: the cutting plane passes through it. The edge keeps
+both of the pcurves it had on the sphere, and `BRep_Tool::IsClosed` says it
+is closed on the face -- which runs along it once, half a turn from pole to
+pole. An edge in pieces is joined first (sec 22), and what tells an edge in
+pieces from a seam in pieces asked just that: with a vertex on that half of
+the rim the two pieces were a seam's of a face with none, between two faces
+and not one, and nothing was joined. The sphere, its outline in five edges
+where the half ball's has four, was then not turned onto its middle either
+(sec 21), and the thick solid was made of the solid as it came: the sphere
+removed outward, `Standard_ConstructionError` with the Arc join and refused
+with the Intersection join, for 39.1390; the disc removed with the
+Intersection join, refused both ways, for 86.6556 and 70.9476. Placed or
+turned it was right -- a copy has the one pcurve. A seam is told by
+`BRepTools::IsReallyClosed`, which looks for the edge twice in the face,
+there and wherever else the cut and the joins ask.
+
+![cutballsplit_sphere_out](pictures/cutballsplit_sphere_out.png)
+
+![cutballsplit_disc_join_out](pictures/cutballsplit_disc_join_out.png)
+
+![cutballsplit_disc_join_in](pictures/cutballsplit_disc_join_in.png)
+
+**The order of the faces.** The half ball in two lunes with a vertex on the
+meridian between them, or on the rim beside the removed lune, was refused
+three ways with the Intersection join. The vertex has nothing to do with
+it. Joined away, it leaves the solid sec 23 gets right -- with its faces in
+another order, both halves of the flat before the lunes, and in that order
+the plain solid is wrong too, and not refused: an invalid solid of 87.4583
+for 91.1786 outward and 72.4404 for 74.1857 inward. A second survey asks
+that the order of a solid's faces change nothing (`sweep/survey.sh order`:
+every rotation of the face list and its reverse, the 25 shapes of the
+vertex survey): 10 runs of 2038 changed, all of them this solid's, and 32 of
+368 over all 24 orders of its four faces -- every order with both halves of
+the flat before the lune that stays.
+
+**A cell beyond a tangent edge** (`d0c9abd649`, `BRepOffset_MakeOffset`,
+`DropCellsBeyondTangentEdges`). The offset of the lune that stays cuts both
+halves of the flat along one circle: a section three faces share, cut for
+all of them, each keeping the pieces the others take (sec 18). The loops
+make a face of every cell their edges close, whichever way an edge is run
+(sec 7). So the half beside the removed lune, holding the arc that bounds
+the other half, closed it with the line between the halves: the other
+half's face a second time, under the wrong face. With the lune first the
+shell dropped one of the two as hanging; with the halves first it kept
+both.
+
+An offset face does not reach across the offset of an edge it shares with a
+face tangent to it: what lies beyond is the neighbour's. Once the loops are
+made, a cell is dropped that lies -- of the image of such an edge -- on the
+side the face does not lie of the edge itself. The side is the surface's
+normal crossed with the edge's direction, taken in the cell and in the
+face; a face's last cell stays.
+
+![luneball_flatsfirst_sphere1_join_out](pictures/luneball_flatsfirst_sphere1_join_out.png)
+
+![luneball_flatsfirst_sphere2_join_in](pictures/luneball_flatsfirst_sphere2_join_in.png)
+
+![luneballsplit_sphere1_join_out](pictures/luneballsplit_sphere1_join_out.png)
+
+![luneballsplit_sphere1_join_in](pictures/luneballsplit_sphere1_join_in.png)
+
+Both surveys now change nothing, plain, placed and turned: a vertex on an
+edge in 3696 runs, the order of the faces in 2038. Neither counts a run the
+shape as made has no valid answer for -- the torus's one face -- and the
+order survey takes all the orders of one solid only.
+
+## Where the chase stands (2026-10-04)
+
+It stops here for now, with nothing known broken.
+
+**What holds**, on the fork at `d0c9abd649`, with shape values frozen and
+not:
+
+- The suite: 377 cases pass, none marked `XFAIL`.
+- The sweep: 928 runs of 928 right -- 24 solids, every face, +/-1,
+  intersection off and on, both joins -- plain, under a location, and turned
+  in space at three placements.
+- The surveys (`sweep/survey.sh`), over 25 shapes, plain, placed and turned:
+  a vertex at the middle of an edge changes nothing in 3696 runs, the
+  order of the solid's faces nothing in 2038.
+- 169 cases pictured; upstream is right on 40 of them, all of which the
+  fork had broken and has back.
+- FreeCAD on this fork: its Python suite 2992 OK and its C++ tests 856 of
+  856, both ways; 26 of its regression tests are thickness cases from
+  these sections (`src/Mod/Part/parttests/regression_tests.py`,
+  `test_thickness_*`).
+
+**What is refused, and right to be:** a solid with every face removed (sec
+15), the torus's one face among them. **What was declined:** a setting to
+drop faces under some area (sec 25); the one sliver that raised it is never
+built.
+
+**Where the next fault is likeliest**, by what has not been asked. Every
+fault since sec 19 came from a question the suite and the sweep did not
+put, not from a case they held:
+
+- The order of the faces, every permutation. Only the half ball in lunes
+  had all 24 of its orders tried (`PERM=1`); the other shapes had the
+  rotations of the face list and its reverse.
+- Two faces removed, and more. The sweep and both surveys remove one face
+  at a time; the suite has a handful of sets (both lunes, both domes, a
+  box's four sides, a cylinder down to one cap).
+- Other thicknesses. The surveys run at +/-0.5 and the sweep at +/-1, on
+  shapes 5 to 10 across, and the suite at one or the other: three of its
+  cases are a dome's at twice the 0.5 its others have. The rules
+  that reach a thickness into a removed face (sec 9, 23, 25) and the
+  tolerances beside them have been met at those sizes only.
+- A thickness of its own on a face (`SetOffsetOnFace`). Nothing in the
+  sweep or the surveys sets one.
+- Shapes the surveys do not have: a torus beyond the whole one, whose one
+  face leaves no run to compare, a spline or a swept surface (the four
+  captured models are the only ones in the suite), and a cone or cylinder
+  cut across its seam.
+
+**To take it up again.** `sweep/survey.sh split|order` says which run of
+which shape differs; `sweep/probe.py` runs that one run and lists what the
+fork's `SHOW_TOPO_SHAPE` dumps show of its way there, by source file and
+name; a fix goes through `run_tests.py`, `sweep/sweep.sh` six ways, both
+surveys, and FreeCAD's two suites, each frozen and not; its cases are
+pictured (`pictures/cases.py`, a stage for the commit before the fix) and
+written up here as the next section, sec 27.
+
 ## The captured models
 
 The suite's four document cases (realthunder/OCCT#1-#4: an elliptic pad, a
@@ -1478,7 +1863,7 @@ have no before-and-after here.
 ten minutes on the dev box, most of it building libraries:
 
 1. `mkold.sh` builds scratch `TKBool`/`TKOffset` libraries -- upstream's
-   eleven chain files at `91be8c4c71`, and the fork's sources at each
+   `BRepAlgo` and `BRepOffset` files at `91be8c4c71`, and the fork's sources at each
    stage's "before" commit (`STAGES` in `cases.py`) -- from the build tree's
    own compile commands (`oldbuild.py`).
 2. `compute.py` runs every case of `cases.py` under `FreeCADCmd`, once per
@@ -1488,7 +1873,10 @@ ten minutes on the dev box, most of it building libraries:
 3. `mkjobs.py` and `render.py` draw the panels in the FreeCAD GUI under
    `xvfb-run` -- the shape given with its removed faces in magenta, then
    each result -- and `compose.py` lays them out (Pillow, from the FreeCAD
-   conda env).
+   conda env). The viewer is started afresh for every hundred panels, under
+   a limit on its address space: it kept memory for every panel drawn, and
+   all 1248 in one run took the machine down (`render.py` has the numbers
+   and the two causes, both fixed since).
 
 A case added to `cases.py` with its stage gets its picture on the next run.
 `mkpage.py OUTDIR` then builds the "Thickness Before and After" page from

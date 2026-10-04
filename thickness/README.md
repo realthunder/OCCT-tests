@@ -411,6 +411,55 @@ eight.
 | `ball270split_sphere_*`, `turned_ball270split_sphere_join_in` | the 270 degree ball wedge with a vertex on a meridian | 36.6474, 41.0978, 41.6307; wrong every way |
 | `axiswedge270_*`, `axiswedge240_*`, `axiswedge150_*` | a ball made on an axis through the middle of its face, cut by the wedge that is missing | the ball wedge's volumes; wrong every way, inward with the Intersection join a valid solid of 264.29 for 41.6307 |
 
+## Two faces of one sphere, one removed (2026-10-03, sec 23)
+
+`models/Thickness.md`, "Sec 23", has the causes and the rule; the hand
+values are `sweep/onedome.py`. The Arc join's eight cases were marked `XFAIL`
+here and pass since sec 25.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `eqball_sphere1_join_*`, `eqball_sphere2_join_*`, `placed_eqball_sphere2_join_out`, `turned_eqball_sphere2_join_in` | the half ball with its sphere in two domes, one removed, Intersection join | 91.1786 outward, 74.1857 inward; refused. The kept dome runs on a thickness round the sphere to a wall, a cone from its centre |
+| `luneball_sphere1_join_*`, `luneball_sphere2_join_*`, `placed_luneball_sphere2_join_in`, `turned_luneball_sphere2_join_out` | the same in two lunes | the same volumes: the half ball turned a quarter about its flat's normal; refused |
+| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `luneball_sphere1_out/in`, `luneball_sphere2_out/in` | the same, Arc join | 89.1638 outward, 73.5777 inward; refused until sec 25 |
+
+## A seam in pieces, and the crossing at a negative parameter (2026-10-03, sec 24)
+
+`models/Thickness.md`, "Sec 24", has the causes. No case is marked `XFAIL`.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `capsplit_seam_*`, `placed_capsplit_seam_f1_out` | the cap above latitude 30 with a vertex at the middle of its seam | the cap's 31.285 and 27.358; an invalid 105.98, or refused. The joined seam is put back on its iso line |
+| `bulletsplit_seam_*` | a dome on a cylinder with a vertex on the cylinder's seam | the bullet's 97.2749, 69.8169, 152.629, 130.6379, and its side removed two solids, 93.0859 or 76.8543 and 39.2699; invalid (808.26) or refused |
+| `dome270split_e4/e6/e7_f3_out` | three quarters of a dome with a vertex on an edge, a flat side removed outward, Arc join | 111.7391; invalid or refused after sec 23's crossings on a sphere |
+
+## The Arc join between two faces of one sphere (2026-10-03, sec 25)
+
+`models/Thickness.md`, "Sec 25", has the causes, the ruling on the sliver
+face and its picture (`pictures/sliver/make_sliver.sh` makes it again). No
+case is marked `XFAIL`.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `eqball_sphere1_out/in`, `eqball_sphere2_out/in`, `placed_eqball_sphere2_out`, `turned_eqball_sphere2_in` | the half ball with its sphere in two domes, one removed, Arc join | 89.1638 outward, 73.5777 inward; refused. The flat's offset is closed by a step between two circles that never meet, an edge of the ball round the tangent edge's end; no sliver face |
+| `luneball_sphere1_out/in`, `luneball_sphere2_out/in`, `placed_luneball_sphere2_in`, `turned_luneball_sphere2_out` | the same in two lunes | the same volumes; refused. The line between the flat's halves is cut at the section and both halves have it cut |
+
+## A seam that is none, and a face beyond its tangent edge (2026-10-03, sec 26)
+
+`models/Thickness.md`, "Sec 26", has the causes: the two sec 24 found and
+left. No case is marked `XFAIL`. `sweep/survey.sh` runs the two surveys
+behind sec 22, 24 and 26 -- a vertex on an edge (`split`) and the solid's
+faces in another order (`order`) must change nothing -- over 25 shapes,
+plain, `placed` or `turned`; both are clean. `sweep/probe.py` runs one of
+their runs and lists the fork's dumps on the way; `models/Thickness.md`,
+"Where the chase stands", says what holds and what has not been asked.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `cutballsplit_rim_*` | half a ball cut from a ball by a box, a vertex on the half of its rim that was the ball's seam | 39.1390, 86.6556, 70.9476; refused. The edge has two pcurves on the sphere and the face runs along it once: no seam, and its pieces are joined |
+| `luneball_flatsfirst_sphere1/2_join_out/in`, `turned_luneball_flatsfirst_sphere1_join_out` | the half ball in two lunes, its faces in the order flat, flat, lune, lune; one lune removed, Intersection join | 91.1786 outward, 74.1857 inward; an invalid 87.4583 and 72.4404. The flat's half beside the removed lune built the other half's face a second time, beyond the line between them |
+| `luneballsplit_meridian_*`, `luneballsplit_rim_*`, `placed_luneballsplit_meridian_f1_join_in` | the same solid as made, a vertex on the meridian between the lunes or on the rim beside the removed one | the same volumes; refused. Joined, it is the solid in that order |
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
@@ -437,7 +486,7 @@ are sec 20's: a third and half of a ball from pole to pole.
 
 ```
 sweep/sweep.sh out.txt            # the fork as built; about three minutes
-sweep/sweep.sh up.txt <libdir>    # another build's TKBool/TKOffset (and TKTopAlgo) preloaded
+sweep/sweep.sh up.txt <libdir>    # another build's TKBool/TKOffset (and TKTopAlgo, TKGeomBase) preloaded
 python3 sweep/check.py out.txt    # exit 1 unless every run is right
 SWEEP_PLACE=placed sweep/sweep.sh placed.txt   # every solid under a location
 SWEEP_PLACE=baked sweep/sweep.sh baked.txt     # every solid's geometry turned and moved
@@ -497,5 +546,8 @@ tests/fork/thickness/
     Thickness.md     the fixes, before and after, in pictures
     pictures/        before and after, one PNG per fixed case
   pictures/          the tools that make them (make_pictures.sh)
-  sweep/             the 928-run sweep, its reference and its hand values
+    sliver/          the Arc join's sliver face, a figure of its own (sec 25)
+  sweep/             the 928-run sweep, its reference and its hand values,
+                     the two surveys (survey.sh), and one run looked into
+                     (probe.py)
 ```

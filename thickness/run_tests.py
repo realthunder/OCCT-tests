@@ -1138,6 +1138,92 @@ for _ang, _tilt, _runs in ((270, 0, [(+0.5, 0, 36.6474), (+0.5, 2, 36.6474), (-0
                                                       "out" if _off > 0 else "in"),
                        _w, sphere_index(_w), _off, "pass", _vol, False, _join)
 
+# Sec 23. The half ball with its sphere in two domes or two lunes, ONE of
+# them removed: refused every way. The removed face lies on the kept face's
+# own sphere, and the kept face's offset never meets it. With the
+# Intersection join the kept face runs on round the sphere a thickness into
+# the removed one, to a wall square to the sphere there -- a cone from its
+# centre: 91.1786 outward, 74.1857 inward (sweep/onedome.py). The Arc join,
+# a tube round the edge and outward a ball round each of its ends: 89.1638
+# outward, 73.5777 inward (sec 25). The flat's offset is cut by the sphere
+# beside the removed face and not beside the kept one, two circles about one
+# centre t^2 / 2R apart; the step between them is an edge of the ball, and
+# the sliver the exact answer has there (0.025 by 0.0006) is not built.
+for _tag, _s in (("eqball", _domes), ("luneball", _lunes)):
+    for _fi in (1, 2):
+        thickness_case("%s_sphere%d_join_out" % (_tag, _fi), _s, _fi, +0.5, "pass", 91.1786, False, 2)
+        thickness_case("%s_sphere%d_join_in" % (_tag, _fi), _s, _fi, -0.5, "pass", 74.1857, False, 2)
+        thickness_case("%s_sphere%d_out" % (_tag, _fi), _s, _fi, +0.5, "pass", 89.1638)
+        thickness_case("%s_sphere%d_in" % (_tag, _fi), _s, _fi, -0.5, "pass", 73.5777)
+thickness_case("placed_eqball_sphere2_join_out",   placed(_domes), 2, +0.5, "pass", 91.1786, False, 2)
+thickness_case("turned_eqball_sphere2_join_in",    turned(_domes), 2, -0.5, "pass", 74.1857, False, 2)
+thickness_case("placed_luneball_sphere2_join_in",  placed(_lunes), 2, -0.5, "pass", 74.1857, False, 2)
+thickness_case("turned_luneball_sphere2_join_out", turned(_lunes), 2, +0.5, "pass", 91.1786, False, 2)
+thickness_case("placed_eqball_sphere2_out",   placed(_domes), 2, +0.5, "pass", 89.1638)
+thickness_case("turned_eqball_sphere2_in",    turned(_domes), 2, -0.5, "pass", 73.5777)
+thickness_case("placed_luneball_sphere2_in",  placed(_lunes), 2, -0.5, "pass", 73.5777)
+thickness_case("turned_luneball_sphere2_out", turned(_lunes), 2, +0.5, "pass", 89.1638)
+
+# Sec 24. A seam in two pieces, joined, came back on a curve of its own
+# parameterised from 0 -- no primitive's seam -- and stretched below its
+# start its crossings fell at negative parameters, where the loop's periodic
+# wrap never looked (a stretched edge's curve is a trimmed circle, which says
+# it is not periodic): the cap with its seam split, its sphere removed
+# outward, an invalid 105.98 for 31.285; the dome on a cylinder with the
+# cylinder's seam split, an invalid 808.26 for 152.629. And sec 23's crossing
+# vertices on a sphere crossed edges stretched over a pole: three quarters of
+# a dome with a vertex on an edge, a flat side removed, invalid.
+_cap = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 30, 90, 360)
+split_cases("capsplit_seam", _cap, 2, [(1, +0.5, 0, 31.285), (1, -0.5, 0, 27.358),
+                                       (1, +0.5, 2, 31.285), (1, -0.5, 2, 27.358)])
+split_cases("bulletsplit_seam", bullet, 2, [(2, -0.5, 0, 97.2749), (2, -0.5, 2, 69.8169),
+                                            (3, +0.5, 0, 152.629), (3, -0.5, 2, 130.6379)])
+_bulletsplit = split_at(bullet, 2)
+pieces_case("bulletsplit_seam_f1_out", _bulletsplit, [face_of(_bulletsplit, bullet, 1)], +0.5,
+            [93.0859, 39.2699])
+pieces_case("bulletsplit_seam_f1_in", _bulletsplit, [face_of(_bulletsplit, bullet, 1)], -0.5,
+            [76.8543, 39.2699])
+_dome270 = Part.makeSphere(5, App.Vector(), App.Vector(0, 0, 1), 0, 90, 270)
+for _e in (4, 6, 7):
+    split_cases("dome270split_e%d" % _e, _dome270, _e, [(3, +0.5, 0, 111.7391)])
+_capsplit = split_at(_cap, 2)
+thickness_case("placed_capsplit_seam_f1_out", placed(_capsplit), face_of(_capsplit, _cap, 1), +0.5,
+               "pass", 31.285)
+
+# Sec 26. The two the vertex survey of sec 24 left. Half a ball cut from a
+# ball by a box keeps the ball's seam for half its rim, both pcurves still on
+# it: with a vertex there the pieces were taken for a seam's, not joined, and
+# the sphere not turned onto its middle -- refused four ways. And the half
+# ball in two lunes, one removed with the Intersection join, was right or
+# wrong by the order its faces came in: the flat's half beside the removed
+# lune holds the arc that bounds the other half too, closed it with the line
+# between them, and the shell had the other half's face twice -- an invalid
+# 87.4583 for 91.1786 with both halves before the lune that stays, which is
+# the order the solid has once a vertex on the meridian or the rim is joined
+# away. An offset face does not reach across its tangent edge.
+split_cases("cutballsplit_rim", _cutball, 3, [(1, +0.5, 0, 39.1390), (1, +0.5, 2, 39.1390),
+                                              (2, +0.5, 2, 86.6556), (2, -0.5, 2, 70.9476)])
+split_cases("luneballsplit_meridian", _lunes, 1, [(1, +0.5, 2, 91.1786), (1, -0.5, 2, 74.1857)])
+split_cases("luneballsplit_rim", _lunes, 3, [(1, +0.5, 2, 91.1786)])
+
+
+def reordered(shape, order):
+    """the solid with its faces in another order (1-based indices of `shape`)"""
+    return Part.Solid(Part.Shell([shape.Faces[i - 1] for i in order]))
+
+
+_flatsfirst = reordered(_lunes, (3, 4, 1, 2))
+for _fi in (1, 2):
+    thickness_case("luneball_flatsfirst_sphere%d_join_out" % _fi, _flatsfirst, _fi + 2, +0.5,
+                   "pass", 91.1786, False, 2)
+    thickness_case("luneball_flatsfirst_sphere%d_join_in" % _fi, _flatsfirst, _fi + 2, -0.5,
+                   "pass", 74.1857, False, 2)
+thickness_case("turned_luneball_flatsfirst_sphere1_join_out", turned(_flatsfirst), 3, +0.5,
+               "pass", 91.1786, False, 2)
+_luneballsplit = split_at(_lunes, 1)
+thickness_case("placed_luneballsplit_meridian_f1_join_in", placed(_luneballsplit),
+               face_of(_luneballsplit, _lunes, 1), -0.5, "pass", 74.1857, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
