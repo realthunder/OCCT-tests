@@ -451,30 +451,77 @@ for r in (0.1, 0.6, 2.0):
     fillet_case("post_on_plate_r%g" % r, pp, side, r, "pass", pp.Volume - removed)
 
 # The post's own seam through the edge's end (the post turned three
-# quarters, its seam at (0,-3)): invalid at every radius, and too much
-# taken (12 at radius 0.6), before the fix and after alike -- open.
+# quarters, its seam at (0,-3)): the cut ends on the seam at u=2pi, and the
+# extension from there to the vertex was put at u=0, Arcprol's parameter at
+# the vertex -- the post's wire did not close in its domain, and the face
+# came out inside out, 12 taken at radius 0.6. The same volume as the post
+# turned any other way.
 pps = post_on_plate(turn=270)
-fillet_case("post_seam_on_plate_r0.6", pps, edge_between(pps, (-12, -3, 3), (0, -3, 3)), 0.6,
-            "xfail")
+for r in (0.1, 0.6, 2.0):
+    corner = Part.makeBox(12, r, r, V(-12, -3, 3 - r)).cut(
+        Part.makeCylinder(r, 12, V(-12, -3 + r, 3 - r), V(1, 0, 0)))
+    removed = corner.cut(Part.makeCylinder(3, 10, V(0, 0, -2))).Volume
+    fillet_case("post_seam_on_plate_r%g" % r, pps, edge_between(pps, (-12, -3, 3), (0, -3, 3)), r,
+                "pass", pps.Volume - removed)
 
 # The same with a drafted post (1 deg): the post's wall is a cone, the round
-# end below it a cylinder, and the fillet's end must be cut by the round
-# end's surface, not the cone's. Refused (a faulty vertex) -- open, as is
-# #876's Fillet002 below, where the corner is the same.
+# end below it a cylinder. The edge between them is sharp now, the vertex
+# has four sharp edges, and the spine's end was a break point: the walk ran
+# on along the post's base edge and the corner went to the plate, refused.
+# With the side and the round end taken as one wall, the vertex is the
+# undrafted post's corner, and the fillet is cut by the post's cone carried
+# on below its base: the corner prism outside that cone, which gives the
+# volume.
 ppd = post_on_plate(1.0)
-fillet_case("post_draft_on_plate_r0.6", ppd,
-            edge_between(ppd, (-12, -3, 3), (0, -3, 3)), 0.6, "xfail")
+for r in (0.1, 0.6, 2.0):
+    corner = Part.makeBox(12, r, r, V(-12, -3, 3 - r)).cut(
+        Part.makeCylinder(r, 12, V(-12, -3 + r, 3 - r), V(1, 0, 0)))
+    t = math.tan(math.radians(1.0))
+    removed = corner.cut(Part.makeCone(3 + 5 * t, 3, 5, V(0, 0, -2))).Volume
+    fillet_case("post_draft_on_plate_r%g" % r, ppd,
+                edge_between(ppd, (-12, -3, 3), (0, -3, 3)), r, "pass", ppd.Volume - removed)
+    # and its seam at the vertex, both at once
+    ppds = post_on_plate(1.0, 270)
+    fillet_case("post_draft_seam_on_plate_r%g" % r, ppds,
+                edge_between(ppds, (-12, -3, 3), (0, -3, 3)), r, "pass", ppds.Volume - removed)
+# steeper drafts, the corner the same
+for d in (3.0, 10.0):
+    ppd = post_on_plate(d)
+    r = 0.6
+    corner = Part.makeBox(12, r, r, V(-12, -3, 3 - r)).cut(
+        Part.makeCylinder(r, 12, V(-12, -3 + r, 3 - r), V(1, 0, 0)))
+    t = math.tan(math.radians(d))
+    removed = corner.cut(Part.makeCone(3 + 5 * t, 3, 5, V(0, 0, -2))).Volume
+    fillet_case("post_draft%g_on_plate_r%g" % (d, r), ppd,
+                edge_between(ppd, (-12, -3, 3), (0, -3, 3)), r, "pass", ppd.Volume - removed)
 
 # realthunder/FreeCAD#876's Fillet002: its input (Fillet001's result) has a
 # plate whose top outline -- two lines and an arc, one tangent chain --
 # runs at both ends into a drafted corner of the tall body, the plate's side
-# tangent to the round end below it. Invalid at every radius (the
-# drafted-post corner above, reached through PerformIntersectionAtEnd).
+# tangent to the round end below it: the drafted post's corner above. Two
+# of its walls are cones trimmed at the plate's top, which kept the cut
+# from reaching below it. The volumes are from the fix, adaptive GProp; a
+# Pappus estimate along the chain is short of them by an end loss in
+# proportion to the cut's length at both radii. At radius 1 the line on the
+# top passes the cone's base arc onto the drafted wall's plane, which the
+# cone continues tangent to: the face at the end in two pieces, open.
 p876b = Part.read(os.path.join(MODELS, "issue876_fillet002_base.brep"))
 e876b = [edge_between(p876b, (-19.238761, -15.746985, 3), (-30.167832, -3.494723, 3)),
          edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
-for r in (0.3, 0.6):
-    fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "xfail")
+for r, taken in ((0.3, 1.51537), (0.6, 5.97437)):
+    fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "pass", p876b.Volume - taken)
+fillet_case("issue876_fillet002_r1", p876b, e876b, 1.0, "xfail")
+
+# #474's Fillet001 (models/issue474_fillet001_base.brep): the edge up the
+# ramp's side ends at a vertex of four sharp edges whose face beside the
+# spine runs on, tangent, into the next -- a corner of three for the
+# drafted wall's rule above. At radius 0.3 that corner is made (the result
+# tighter: tolerance 0.013 before, 1e-4 now); at radius 1 it cannot be, and
+# the fillet is computed again with the end a break point, as before.
+p474b = Part.read(os.path.join(MODELS, "issue474_fillet001_base.brep"))
+e474b = edge_between(p474b, (-9, 0, 11), (-9, 0, 16))
+for r, taken in ((0.3, 3.56632), (1.0, 40.25303)):
+    fillet_case("issue474_f001_e12_r%g" % r, p474b, e474b, r, "pass", p474b.Volume - taken)
 
 counts = {}
 for _, verdict, _ in results:

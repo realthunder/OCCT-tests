@@ -23,6 +23,8 @@ STAGES = {
     "s962h": ("76de040ead", "692cae9e35"),
     "s523b": ("1e8eb69f6a", "efbe5c99fd"),
     "s876": ("f9d329a663", "538ce9f99a"),
+    "s876b": ("fa8d202b81", "5310ff9d59"),
+    "s876c": ("5310ff9d59", "c34722ef01"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -88,14 +90,19 @@ def _arm_on_block():
     return Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 6)).fuse(arm)
 
 
-def _post_on_plate():
+def _post_on_plate(draft=0.0, turn=90):
     # run_tests.py's post on a plate: a cylinder r3 on a stadium plate whose side y=-3 runs
-    # tangent into the plate's round end under the post. The post turned a quarter, its
-    # seam at the back: the pictures mark a seam's edge red.
+    # tangent into the plate's round end under the post, or a cone drafted <draft> deg.
+    # The post turned a quarter, its seam at the back: the pictures mark a seam's edge red.
+    # Turned three quarters, the seam runs up from the fillet's end.
+    import math
     V = App.Vector
     plate = Part.makeCylinder(3, 3).fuse(Part.makeBox(12, 6, 3, V(-12, -3, 0))).removeSplitter()
-    post = Part.makeCylinder(3, 15, V(0, 0, 3))
-    post.rotate(V(0, 0, 0), V(0, 0, 1), 90)
+    if draft:
+        post = Part.makeCone(3, 3 - 15 * math.tan(math.radians(draft)), 15, V(0, 0, 3))
+    else:
+        post = Part.makeCylinder(3, 15, V(0, 0, 3))
+    post.rotate(V(0, 0, 0), V(0, 0, 1), turn)
     return plate.fuse(post)
 
 
@@ -110,6 +117,8 @@ SHAPES = {
     "armwhole": lambda: _arm_on_tall_block(split=False),
     "p474": _brep("issue474_fillet003_base.brep"),
     "postplate": _post_on_plate,
+    "postdraft": lambda: _post_on_plate(draft=1.0),
+    "postseam": lambda: _post_on_plate(turn=270),
 }
 
 
@@ -165,6 +174,11 @@ UVFACE = {
     "p474": _plate_near(-13, 0, 13),
     # the plate's side, whose outline ran up to the top and back down
     "postplate": _plane_at("y", -3),
+    # the post's cone, carried on below its base by the cut
+    "postdraft": lambda f: f.Surface.__class__.__name__ == "Cone",
+    # the post's cylinder, whose wire jumped a period at the seam
+    "postseam": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+                 and f.BoundBox.ZMax > 10),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -196,6 +210,8 @@ NAMES = {
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
+    "postdraft": "the post on the plate drafted 1 deg, a cone on the round end's cylinder",
+    "postseam": "the post on the plate turned so that its seam runs up from the edge's end",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -209,6 +225,8 @@ VIEW = {
     "armwhole": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
     "postplate": ((-4.5, 0, 9), 20.0),
+    "postdraft": ((-4.5, 0, 9), 20.0),
+    "postseam": ((-4.5, 0, 9), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -222,6 +240,8 @@ UVLABEL = {
     "armwhole": ("the arm's top", False),
     "p474": ("the corner's plate", False),
     "postplate": ("the plate's side", False),
+    "postdraft": ("the post's cone", False),
+    "postseam": ("the post's cylinder", True),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -279,6 +299,10 @@ CASES = {
                                    2.0, None, (38.5, 27.2, -3.75), (-0.4, 1, 0.5)),
     "post_on_plate_r0.6": ("s876", "postplate", ((-12, -3, 3), (0, -3, 3)), 0.6, 681.6610,
                            (0, -3, 3), (0.5, -1, 0.7)),
+    "post_draft_on_plate_r0.6": ("s876b", "postdraft", ((-12, -3, 3), (0, -3, 3)), 0.6, 645.7228,
+                                 (0, -3, 3), (0.5, -1, 0.7)),
+    "post_seam_on_plate_r0.6": ("s876c", "postseam", ((-12, -3, 3), (0, -3, 3)), 0.6, 681.6610,
+                                (0, -3, 3), (0.5, -1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

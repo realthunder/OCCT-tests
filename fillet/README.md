@@ -642,19 +642,16 @@ volume is what the fillet removes outside the post's cylinder, computed
 from the corner prism by booleans.
 
 With the draft the post's wall is a cone, which does not hold the edge
-below it, and the vertex has four sharp edges, so it goes to
+below it, and the vertex has four sharp edges, so it went to
 `PerformIntersectionAtEnd` instead: refused on the small model, invalid on
-#876's own. The cut there has to be made by the round end's surface, not
-the cone's -- open. So is the post turned so that its own seam runs
-through the edge's end: invalid at every radius, taking far too much, in
-upstream and the fork before and after alike.
+#876's own (see "A drafted wall at the fillet's end", below). The post
+turned so that its own seam runs through the edge's end was invalid at
+every radius, taking far too much, in upstream and the fork alike (see
+"The extension on the cut's side of a seam", below).
 
 | Case | What it covers |
 |------|----------------|
 | `post_on_plate_r{0.1,0.6,2}` | the post on the plate: valid, the volume outside the post's cylinder (invalid at every radius before) |
-| `post_seam_on_plate_r0.6` | XFAIL, the post's seam through the edge's end: invalid |
-| `post_draft_on_plate_r0.6` | XFAIL, the post drafted 1 deg: refused |
-| `issue876_fillet002_r{0.3,0.6}` | XFAIL, #876's Fillet002 on its input (`models/issue876_fillet002_base.brep`, Fillet001's result): invalid, an open shell |
 
 The every-edge sweep (4431 fillets, #876's Fillet002 input and the post
 models added) turns 12 invalid results valid -- the post's two edges along
@@ -666,14 +663,120 @@ too). The vertex sweep (14274 fillets) turns 46 invalid results valid
 invalid result's volume in the fourth decimal, and nothing else. FreeCAD's
 `TestPartApp` (139) and `TestPartDesignApp` (78) pass.
 
+## A drafted wall at the fillet's end (realthunder/FreeCAD#876, 2026-10-04)
+
+The post on the plate with its post drafted 1 deg (`post_on_plate(1.0)`),
+and #876's own Fillet002, whose tall body's corners are drafted the same
+way. The post's wall is a cone now and the round end below it still a
+cylinder, so the edge between them is sharp, and the vertex at the
+fillet's end has four sharp edges: the spine, the post's base on the top,
+that cone/cylinder edge, and the side/round end edge, which the count
+takes as sharp because the plane and the cylinder are tangent but not
+G2. `PerformExtremity` gives the spine's end a status from the three
+edges of a three-edge corner only; at four it stays a break point, the
+walk runs on along the post's base edge (a second SurfData on the edge),
+and the corner goes to `PerformIntersectionAtEnd` and on to the plate,
+whose curve pieces do not run end to end: refused.
+
+But the side and the round end are one wall in two faces, tangent across
+their edge: with that edge left out the vertex is the undrafted post's
+corner of three, the fillet ending OnSame against the post. Fix
+`5310ff9d59` (`PerformExtremity`) does that when the vertex has four edges
+and four faces, and exactly one of the three edges beside the spine joins
+a face of the spine to a face it runs on into, tangent within the
+builder's angular tolerance; the end is OnSame when the other three say
+so, and `PerformFilletOnVertex` sends an OnSame end at four sharp edges to
+`PerformOneCorner`, which already finds the edge to extend through the
+tangent face. Both limits came from the sweep: with the 0.1 rad that
+`IsTangentFaces` takes by default, a 1.5 deg kink beside a spine on #474's
+helical ramp counted as one wall, and with no count of faces, a vertex of
+five on #309; their corners went to `PerformOneCorner` and failed, where
+the walk past a break point had made them (38 results valid before). And
+whether the corner of three can be made depends on the radius: on #474's
+Fillet001 it is at 0.3 and 0.8 and not at 1. Where such a corner fails,
+`Compute` runs again with that end a break point, as before, and puts the
+state back for the next computation (30 results of the vertex sweep valid
+again). The fillet is cut by the post's cone
+carried on below its base, as the undrafted post's is by its cylinder;
+the side face keeps a thin piece between the cut and the side/round end
+edge, closing to a cusp at the vertex where the side is tangent to the
+cone's base circle. The volume is the corner prism outside that cone, by
+booleans. FreeCAD's `Volume` is 1.4e-3 short of it at radius 0.6 on the
+result; adaptive GProp (`VolumeProperties` with an epsilon) agrees with
+the booleans to 3e-7 -- the default integration misses on the cusp.
+
+On #876's model the corners at y=+15.7 then pass; at y=-15.7 the post's
+wall is a `Geom_RectangularTrimmedSurface` around a cone, trimmed at the
+plate's top, and `PerformOneCorner` extends only B-spline and Bezier
+surfaces: the cut's point lies below the trim and the line/cone
+intersection found nothing ("bouchon non ecrit"). The same fix takes a
+trimmed surface's basis there. #876's whole document recomputes: Fillet002
+(0.6) valid, and the Pocket after it takes material away.
+
+At radius 1 the line on #876's top passes the end of the cone's base arc
+(41 deg of it; radius 1 needs 48) onto the base edge of the drafted wall's
+plane, which the cone continues tangent to: the face at the end comes in
+two pieces and the one reached does not hold the vertex -- open.
+
+| Case | What it covers |
+|------|----------------|
+| `post_draft_on_plate_r{0.1,0.6,2}` | the post drafted 1 deg: valid, the corner prism outside the cone (refused before) |
+| `post_draft{3,10}_on_plate_r0.6` | drafted 3 and 10 deg (refused, and invalid with 12 taken, before) |
+| `issue876_fillet002_r{0.3,0.6}` | #876's Fillet002 on its input (`models/issue876_fillet002_base.brep`, Fillet001's result): valid (invalid, an open shell, before) |
+| `issue876_fillet002_r1` | XFAIL, the face at the end in two tangent pieces |
+| `issue474_f001_e12_r{0.3,1}` | #474's Fillet001 (`models/issue474_fillet001_base.brep`), the edge up the ramp's side: the corner of three made at 0.3, and at 1, where it cannot be, the fillet computed again past a break point |
+
+The every-edge sweep (4431 fillets) turns 24 results valid -- #876's
+three models, six edges each at radius 0.3 (the plate's top chain and its
+mirror), and the drafted post's two edges along the side at every radius,
+refused before -- loses none, and tightens 32 valid results on #474's two
+models where the ramp's drafted walls end a fillet (tolerance 0.013-0.035
+down to 1e-4, volumes moving by under 0.007). On two models a tolerance
+of 1e-7 reads 1.4e-6 to 6.7e-6 for every later edge: the sweep fillets one
+input shape in turn, and a fillet that now succeeds there raises the
+tolerance of the input's own sub-shapes it shares -- the input is not left
+as it was, which the suite does not see (it checks validity and volume).
+The vertex sweep (14274 fillets) turns 96 invalid results valid and 24
+refused ones valid (#876's models and the drafted post), moves 210 valid
+results of #474's models by at most 0.0125 (tighter, as above), loses
+none, and turns 7 refused results on #876's Fillet and Fillet001 at radius
+1 into invalid ones: pairs of edges whose corners are made now, after
+which the result is garbage (volume -1e12) -- the same pairs at radius 0.6
+come out so before the fix as well; open. FreeCAD's `TestPartApp` (139)
+and `TestPartDesignApp` (78) pass.
+
+## The extension on the cut's side of a seam (2026-10-04)
+
+The undrafted post turned three quarters, so that its own seam runs up
+from the fillet's end (`post_on_plate(turn=270)`). The corner is the one
+of "A fillet's end on the edge where its side runs into a wall": the cut
+on the post's cylinder runs from the post's base, at u=5.64, round to the
+seam, ending at u=2pi on the cylinder's period there, as `ChFi3d_Recale`
+puts it beside the base's end. The extension from that end down to the
+vertex was computed from Arcprol's parameter at the vertex instead -- the
+vertex is on the seam, and Arcprol gives it u=0. The post's wire then
+jumped a period between the cut and the extension, did not close in the
+face's domain, and the face was built inside out: invalid, 12 taken at
+radius 0.6, 223 with the post drafted as well, in upstream and the fork
+alike. Fix `c34722ef01`: the extension starts where the cut ends, and the
+vertex's parameter is taken on that side. Where the vertex is on no seam
+the two are within half a period and nothing moves.
+
+| Case | What it covers |
+|------|----------------|
+| `post_seam_on_plate_r{0.1,0.6,2}` | the post's seam through the edge's end: valid, the same volume as the post turned any other way (invalid before) |
+| `post_draft_seam_on_plate_r{0.1,0.6,2}` | the same post drafted 1 deg: needs both fixes (refused, or invalid with 223 taken, before) |
+
+Neither sweep has the seam at a fillet's end (the post there is turned a
+quarter), and neither moves.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
-| `post_seam_on_plate_r0.6` | invalid, too much taken: the post's seam runs through the fillet's end (see "A fillet's end on the edge where its side runs into a wall", above) |
-| `post_draft_on_plate_r0.6`, `issue876_fillet002_r{0.3,0.6}` | the fillet's end where the plate's side runs tangent into a drafted wall: refused, or invalid (see "A fillet's end on the edge where its side runs into a wall", above) |
+| `issue876_fillet002_r1` | refused: the line on the top passes the cone's base arc onto the drafted wall's plane, the face at the end in two tangent pieces, one of them not at the vertex (see "A drafted wall at the fillet's end", above) |
 
 ## Pictures
 

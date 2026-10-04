@@ -352,9 +352,49 @@ right of the third row, before. In both "before" columns the side is drawn
 red, the face that fails; upstream fails the same way. Now that piece goes
 to the round end and the side stops at the fillet: the volume is the same,
 the shape valid. With the post drafted 1 deg (#876's own corner) the
-fillet is still refused -- open.
+fillet is still refused -- next.
 
 ![post_on_plate_r0.6](pictures/post_on_plate_r0.6.png)
+
+### A drafted wall at the fillet's end (`5310ff9d59`, realthunder/FreeCAD#876)
+
+The same post drafted 1 deg, as #876's tall body is: its wall is a cone,
+the round end under it still a cylinder, and the edge between them sharp.
+That makes four sharp edges at the fillet's end, and an end at more than
+three was a break point: the walk ran on along the post's base and the
+corner went to the plate, which refused it -- "fork before" shows the
+input. Upstream builds something, an open shell: in its zoom the faces at
+the cut are red, and the edge round the post's base. But the plate's side
+and its round end are one wall in two faces, tangent across their edge;
+leave that edge out and the corner is the undrafted post's. Now the fillet
+ends there against the post, cut by the cone carried on below its base: in
+the zoom, the fillet's end curving up into the post as before, and in the
+third row the cone's outline dipping below its base where the cut runs.
+Since the side is tangent to the cone's base circle at the vertex, the side
+face keeps a sliver between the cut and the round end, closing to a point
+at the top -- the notch under the fillet's end in the zoom. On #876's own model two of the
+drafted walls were cones trimmed at the plate's top, which kept the cut
+off them; the trim is no bound now, and #876's Fillet002 (0.6) is valid,
+the Pocket after it taking material away as it should.
+
+![post_draft_on_plate_r0.6](pictures/post_draft_on_plate_r0.6.png)
+
+### A corner's extension on the cut's side of a seam (`c34722ef01`)
+
+The undrafted post turned three quarters, so that its seam runs up from
+the fillet's end. The cut on the post's cylinder runs round from the
+post's base to the seam and ends there at u=2pi; the extension from that
+end down to the vertex was put at u=0, where the edge beside it gives the
+vertex its parameter. The post's outline jumped a period between the two
+-- in the third row, before, the cut's end at 2pi is left open, circled
+red at the bottom right -- and the face was built inside out: in both
+"before" columns the post's wall is red, and the fillet takes 12 instead
+of 0.87. Now the extension starts where the cut ends, the outline closes
+at 2pi, and the result is the post's turned any other way. (The circles
+at u=0, in all three columns, are the seam's other side: the outline draws
+the seam once.)
+
+![post_seam_on_plate_r0.6](pictures/post_seam_on_plate_r0.6.png)
 
 ## Making the pictures
 
