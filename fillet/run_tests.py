@@ -628,7 +628,8 @@ e876b = [edge_between(p876b, (-19.238761, -15.746985, 3), (-30.167832, -3.494723
          edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
 for r, taken in ((0.3, 1.51537), (0.6, 5.97437), (0.8, 10.53689), (1.0, 16.34631),
                  (1.5, 36.20076), (2.0, 63.44643), (1.2, 23.38327)):
-    fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "pass", p876b.Volume - taken)
+    fillet_case("issue876_fillet002_r%g" % r, p876b, e876b, r, "pass", p876b.Volume - taken,
+                2e-4)
 
 # #876's Fillet input again, two edges at once: the plate's top edge along its
 # side and the post's base arc on the top beside it, a convex and a concave
@@ -657,6 +658,18 @@ pair = [edge_between(p876b, (19.238761, -15.746985, 3), (20, -13.75, 3)),
         edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
 for r in (0.6, 1.0):
     sound_case("issue876_fillet002_side_and_post_r%g" % r, p876b, pair, r)
+
+# realthunder/FreeCAD#631's Fillet002 input: a chain of six edges round a
+# slanted arm, ending at (44, 36.33, 92) on the end face x = 44. The corner
+# there extends the arm's round end, a circle, past the vertex to the point
+# where the fillet's line on the round meets the end face; that point is
+# off the circle by 3.7e-7 and the circle's edge kept 1e-7, so BRepCheck,
+# finding the cut and the circle, tangent there, crossing 1.3e-3 from the
+# vertex, would not excuse it: invalid at 0.8 and 2.
+p631 = Part.read(os.path.join(MODELS, "issue631_fillet002_base.brep"))
+e631 = edge_between(p631, (-7.5, -14.823467, 15.553928), (-7.5, -15.0, 11.398326))
+for r, vol in ((0.8, 41530.1861), (2.0, 41484.0873)):
+    fillet_case("issue631_fillet002_r%g" % r, p631, e631, r, "pass", vol)
 
 # #474's Fillet001 (models/issue474_fillet001_base.brep): the edge up the
 # ramp's side ends at a vertex of four sharp edges whose face beside the

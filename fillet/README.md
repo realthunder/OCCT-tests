@@ -953,6 +953,60 @@ edge sweep is the same to the last digit.
 | `issue876_side_and_post_x-19_y-16_r1` | the pair at the corner (-19, -16): refused (inside out before) |
 | `issue876_fillet002_side_and_post_r{0.6,1}` | the pair at Fillet002's corner (19, -16): refused (inside out before) |
 
+## The cone piece's tolerance (realthunder/FreeCAD#876, 2026-10-05)
+
+The cut over a drafted wall's cone and plane (above) left #876's Fillet002
+with tolerances of 5e-4 to 1.8e-3 at the corner y = -13.75, the input's
+own being 1.7e-4. Two causes. The ruling's line between the pieces, exact
+on both faces, was stored with the larger of the pieces' tolerances, as
+were both pieces. And the cone piece itself came out loose:
+`ChFi3d_ComputeCurves` walks the intersection and approximates the walk,
+and the walk's points, a deflection of 1e-3 of the chord apart, left the
+curve up to 1.1e-3 off the surfaces between them (1e-5 at the mirror
+corner, walked with more points). It is not the cone's seam: the piece
+computed on the cone turned half a turn comes out the same to every digit.
+
+Fix `222d8da037`: each piece keeps its own tolerance, the point between
+them the largest; and a walk whose curve misses `tol3d` is walked again
+finer -- step halved, deflection a quarter -- up to three times, the
+closest kept (a walk within `tol3d` is as before). Fillet002's largest
+tolerance at 0.3 to 2 is now the input's.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_fillet002_r{0.3,...,2}` | now also no tolerance above 2e-4 (5e-4 to 1.8e-3 before) |
+
+## An extension's end off its own curve (realthunder/FreeCAD#631, 2026-10-05)
+
+#631's Fillet002 input: a chain of six edges round a slanted arm, ending
+at (44, 36.33, 92) on the end face x = 44 -- invalid at 0.8 and 2,
+"self-intersecting wire" on the end face. The corner extends the arm's
+round end, a circle, past the vertex to the point where the fillet's line
+on the round meets the end face; the cut on the end face ends there too,
+tangent to the circle (the fillet is tangent to the round along its line).
+That point is computed on the fillet's line and lies 3.7e-7 off the
+circle, whose new edge kept the circle's 1e-7. BRepCheck found the cut
+and the circle crossing 1.3e-3 from the vertex -- inevitable for two
+curves tangent there -- and excuses such a crossing only while both edges
+keep within twice their tolerance of the chord from the vertex: the
+circle's edge was 3e-7 off it, the vertex's offset alone.
+
+Fix `020c54bbbc`: after the result is built, an edge the fillet made
+whose curve ends off its vertex by more than the edge's tolerance, but
+within the vertex's, takes that distance. Edges of the input are left
+alone; the input shares them.
+
+| Case | What it covers |
+|------|----------------|
+| `issue631_fillet002_r{0.8,2}` | the chain (`models/issue631_fillet002_base.brep`): valid, the volume unchanged (invalid before) |
+
+The two fixes together, against the build before: the every-edge sweep
+turns 30 invalid results valid -- all #631's, every edge of the chains on
+its three inputs at 0.8 and 2 -- makes 299 tolerances tighter and none
+looser, and moves no volume; the vertex sweep turns 111 invalid results
+valid (#631's, all it had), loses none, and moves #876's volumes by under
+1e-4 (the cone pieces) and one #523 pair onto its mirror's value.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
