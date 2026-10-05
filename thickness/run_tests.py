@@ -527,6 +527,19 @@ thickness_case("filletbox_side_join_in",   filletbox, 6, -1.0, "pass", 254.8319,
 thickness_case("filletbox_side_join_out",  filletbox, 6, +1.0, "pass", 406.7964, False, 2)
 thickness_case("filletbox_fillet_join_in",  filletbox, 3, -1.0, "pass", 268.7129, False, 2)
 thickness_case("filletbox_fillet_join_out", filletbox, 3, +1.0, "pass", 424.7690, False, 2)
+# FreeCAD's PartDesign case 5829: a box filleted all round at 8 with a wedge
+# on its back, the box's large face removed, 1 inward. The model is the fillet
+# as the kernel made it while a corner's plate was held tangent whatever it
+# missed (ChFi3d_Builder::SetPlateG0Fallback at infinity): its corner
+# vertices carry tolerances up to 0.058, and the two walls either side of a
+# fillet's end, not yet cut back, meet 0.38 from the vertex they share.
+# BRepAlgo_Loop looked for that vertex where it stands, not where it sits on
+# the edges, took the meeting for a crossing inside both and gave them a
+# second vertex at the parameter of the first: the wall had no wire, and the
+# offset came back with no face ("command not done").
+case5829 = Part.Shape()
+case5829.importBrep(os.path.join(MODELS, "case5829_fillet.brep"))
+thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)
