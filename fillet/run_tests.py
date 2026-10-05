@@ -671,6 +671,33 @@ e631 = edge_between(p631, (-7.5, -14.823467, 15.553928), (-7.5, -15.0, 11.398326
 for r, vol in ((0.8, 41530.1861), (2.0, 41484.0873)):
     fillet_case("issue631_fillet002_r%g" % r, p631, e631, r, "pass", vol)
 
+# FreeCAD's PartDesign case 5829: a box with a wedge on its back, filleted
+# all round at 8 (models/case5829_box.brep, the Box feature's solid, and the
+# twelve edges its Fillet takes). Its corner plates, held tangent, miss their
+# boundary by 0.45-0.49% of the radius; the plate fallback at a fixed 1e-3
+# rebuilt them creased, and no thickness of the creased solid came out. A
+# miss under 1% of the smallest radius at the corner keeps the tangent plate
+# (ChFi3d_Builder::SetPlateG0FallbackRatio): the fillet is valid and its large
+# face removed, 1 inward, it thickens.
+c5829 = Part.read(os.path.join(MODELS, "case5829_box.brep"))
+e5829 = [edge_between(c5829, a, b) for a, b in (
+    ((96, 0, 0), (96, -10, 0)), ((96, 0, 0), (86, 25, 10)), ((86, 25, 116), (86, 25, 10)),
+    ((86, 25, 10), (10, 25, 10)), ((0, 0, 0), (10, 25, 10)), ((0, 0, 0), (0, -10, 0)),
+    ((10, 25, 116), (10, 25, 10)), ((0, 0, 126), (10, 25, 116)), ((86, 25, 116), (10, 25, 116)),
+    ((96, 0, 126), (96, -10, 126)), ((96, 0, 126), (86, 25, 116)), ((0, 0, 126), (0, -10, 126)))]
+fillet_case("case5829_r8", c5829, e5829, 8.0, "pass", 367718.5802)
+try:
+    f5829 = c5829.makeFillet(8.0, [c5829.Edges[i - 1] for i in e5829])
+    opening = max((x for x in f5829.Faces if isinstance(x.Surface, Part.Plane)
+                   and abs(x.CenterOfMass.y + 10.0) < 1e-7), key=lambda x: x.Area)
+    t5829 = f5829.makeThickness([opening], -1.0, 1e-3)
+    ok = t5829.isValid() and len(t5829.Solids) == 1
+    report("case5829_r8_thickness", ok, False,
+           "vol=%.4f" % t5829.Volume if ok else "invalid result, vol=%.4g" % t5829.Volume)
+except Exception as e:
+    report("case5829_r8_thickness", False, False,
+           "EXCEPTION " + str(e).strip().splitlines()[-1])
+
 # #474's Fillet001 (models/issue474_fillet001_base.brep): the edge up the
 # ramp's side ends at a vertex of four sharp edges whose face beside the
 # spine runs on, tangent, into the next -- a corner of three for the

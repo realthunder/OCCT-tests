@@ -293,7 +293,9 @@ fold. The distance is a global setting, `ChFi3d_Builder::SetPlateG0Fallback()`
 (and `ChFi3d_SetPlateG0Fallback`, extern "C", for a caller that looks it up
 at run time -- FreeCAD's Part preference `FilletPlateG0Fallback` does, so a
 FreeCAD built against upstream OCCT still loads). Default 1e-3;
-`Precision::Infinite()` keeps every tangent plate, as upstream does. Only
+`Precision::Infinite()` keeps every tangent plate, as upstream does.
+(Since 2026-10-05 a fraction of the radius decides; see "The plate
+fallback relative to the radius" below.) Only
 static functions were added: the toolkit's ABI is unchanged. Edge 56 takes 2.433 by every
 measure now (GProp's default and adaptive modes agree to 1e-4), edge 50
 2.420, tolerances 0.014 and 0.009.
@@ -1006,6 +1008,47 @@ its three inputs at 0.8 and 2 -- makes 299 tolerances tighter and none
 looser, and moves no volume; the vertex sweep turns 111 invalid results
 valid (#631's, all it had), loses none, and moves #876's volumes by under
 1e-4 (the cone pieces) and one #523 pair onto its mirror's value.
+
+## The plate fallback relative to the radius (FreeCAD case 5829, 2026-10-05)
+
+The plate fallback above took a fixed distance, 1e-3. FreeCAD's case 5829
+-- a box with a wedge on its back, filleted all round at 8 -- has corner
+plates that, held tangent, miss their boundary by 0.45-0.49% of the
+radius: tangent to well within what a fillet of 8 shows, yet over 1e-3, so
+they were rebuilt creased, and no thickness of the creased solid comes out
+(PartDesign's TestThickness 5829 tests). The same miss is a fold at one
+radius and nothing at a radius a hundred times larger; the
+`arm_on_tall_block` corner misses by 0.47% at radius 0.1, 0.3 and 0.5
+alike, and the fixed distance kept 0.1 tangent and creased 0.3. Measured
+on fcad-37 over the suite's corners: 5829 0.45-0.49%, arm_on_tall_block
+0.47%, #962's fillet at 0.8 0.78-0.92%, #474 Fillet003 e6 1.05-1.24%, #962
+e50 1.33%, then #962 e33 6.8%, #876 Fillet002 7.4-12.5%, #962 e56 11.6%.
+
+The rule now (the user's ruling: creased corner as a fallback relative to
+the radius, gated by a setting): a plate missing its boundary by more than
+`ChFi3d_Builder::PlateG0FallbackRatio()` -- default 0.01 -- times the
+smallest radius (or chamfer distance) of the stripes at the corner is
+built again at G0. `SetPlateG0FallbackRatio()` sets it, and
+`ChFi3d_SetPlateG0FallbackRatio`, extern "C", for FreeCAD's Part
+preference `FilletPlateG0FallbackRatio` (0 = off), which replaces
+`FilletPlateG0Fallback`. With the ratio at 0 the distance of
+`SetPlateG0Fallback()` decides, and its default is now
+`Precision::Infinite()`: the fallback is off, as upstream. Static
+functions only; the ABI is unchanged. At 2% two of the suite's cases
+(`issue962_e50_r0.8`, `issue474_f003_e6_r2`) keep plates whose
+approximations exceed their tolerance bound; at 1% none.
+
+| Case | What it covers |
+|------|----------------|
+| `case5829_r8` | the fillet of `models/case5829_box.brep` (the Box feature's solid, its Fillet's twelve edges): valid, the tangent plates' volume |
+| `case5829_r8_thickness` | that fillet, its large face removed, thickened 1 inward: valid (with the fixed 1e-3 the plates crease and the thickness is refused, "command not done") |
+
+Against the fixed 1e-3: the every-edge sweep changes no result's status
+and no volume; ten tolerances grow where a tangent plate is now kept (its
+approximation is allowed ten times its miss -- #962's chamfer and fillet
+at the arm's foot, e.g. 0.023 to 0.068 at radius 2, and #474 Fillet002
+E13). The vertex sweep changes no status; 197 volumes move by under 1e-4.
+The thickness suite (378, with `1e64700c94`) passes.
 
 ## Known broken (XFAIL)
 
