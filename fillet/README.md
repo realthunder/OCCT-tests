@@ -596,7 +596,7 @@ or where both edges keep within twice their tolerance of the straight line
 to it (the circle's sag alone is 4e-5 there). On the tops it does not find
 the crossing. Radius 1.999 and below is valid on all four; above 2 all
 four are refused (the fillet's end then meets the box's side as well as
-the cylinder) -- open, not covered here.
+the cylinder; see "Past the cylinder's radius", below).
 
 | Case | What it covers |
 |------|----------------|
@@ -607,6 +607,38 @@ The every-edge sweep moves those two results and nothing else (3919 the
 same to the last digit); the vertex sweep (12722 fillets, radii 0.3 and 1)
 moves nothing. FreeCAD's `TestPartApp` (139) and `TestPartDesignApp` (77)
 pass.
+
+## Past the cylinder's radius (realthunder/FreeCAD#523, 2026-10-05)
+
+#523's box and cylinder, the four box edges ending at the cylinder (the
+seam edges at the top and bottom, and their mirror images), at a radius
+above the cylinder's 2: every one is refused. The corner is `OnSame`:
+Arcpiv the seam, Fv the cylinder, Fop the top. `PerformOneCorner` cuts
+the fillet's line on the top, y = r, with the cylinder carried on,
+x^2 + y^2 = 4 -- and above 2 they do not meet. `IntersUpdateOnSame`
+returns false and the corner throws "bouchon non ecrit"
+(`Standard_NotImplemented`). Handing it to `PerformIntersectionAtEnd`
+does not help: that hands it back, or fails to find an edge.
+
+What the end should be, by a boolean -- the fillet's groove carried past
+the end, less the cylinder, cut from the shape -- which gives the fillet's
+own volume at radius 1 and 2: the cut runs over two faces meeting at a
+sharp edge, the cylinder carried into the box for y < 2 up to the edge
+x = 0, y = 2, and the box's side x = 0 from there to the top at y = r.
+The cylinder's face closes around at the top (the arc carried on over the
+whole quarter, so the face wraps the whole circle there), and the top
+splits in two: the disk and the rest of the square beyond y = r. Radius
+2.5 gives 1083.3063, 3 gives 1078.3294. None of that is in
+`PerformOneCorner`: its cut over two faces (`FvT`) needs them tangent
+across a straight edge and leaves every face in one piece. Open, tracked
+here.
+
+The cylinder's own arcs above radius 2 are refused, and rightly: a convex
+fillet on a circle of radius 2 cannot be wider than 2.
+
+| Case | What it covers |
+|------|----------------|
+| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | XFAIL, refused; the boolean's volume when they pass |
 
 ## A fillet's end on the edge where its side runs into a wall (realthunder/FreeCAD#876, 2026-10-04)
 
@@ -895,6 +927,7 @@ two, with a margin of 1e-9 of it against rounding.
 | Case | Symptom |
 |------|---------|
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
+| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | refused, "bouchon non ecrit": the end needs a cut over two faces across a sharp edge and splits the top (see "Past the cylinder's radius", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
 | `issue876_side_and_post_x{+19,-19}_r0.6` | invalid, volume -2e11 to -5e12: two stripes, a convex and a concave fillet, ending at a vertex of four sharp edges with both ends break points; `PerformMoreThreeCorner`'s plate comes out inside out (see "Two stripes at an end across a tangent split", above) |
 

@@ -214,6 +214,14 @@ fillet_case("seam_end_top_r2", bc, top, 2.0, "pass", 1087.3009)
 fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "xfail")
 fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009)
 fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "xfail")
+# Past the cylinder's radius the fillet's line on the top misses the
+# cylinder; the end has to be cut by the cylinder carried into the box for
+# y < 2 and by the box's side x = 0 beyond, and the top splits in two. The
+# volumes are the boolean's: the groove carried past the end, less the
+# cylinder, cut from the shape (it gives the fillet's at 1 and 2).
+for r, vol in ((2.5, 1083.3063), (3.0, 1078.3294)):
+    fillet_case("seam_end_top_r%g" % r, bc, top, r, "xfail", vol)
+    fillet_case("mirror_top_r%g" % r, bc, mtop, r, "xfail", vol)
 
 # Every edge at radius 1: nothing else moved.
 for i in range(1, len(bc.Edges) + 1):
