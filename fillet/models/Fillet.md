@@ -400,7 +400,7 @@ the seam once.)
 
 ### The cut over a drafted wall's cone and plane (`2a623612a8`, realthunder/FreeCAD#876)
 
-#876's tall body has its corner drafted the same way, but the corner's
+The tall body of #876 has its corner drafted the same way, but the corner's
 cone covers only 41 deg of arc on the plate's top before the drafted
 wall's plane takes over, the cone running on into the plane tangent. Made
 small: the drafted post with a straight wall tangent to its cone there --

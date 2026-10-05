@@ -612,7 +612,7 @@ pass.
 
 ## Past the cylinder's radius (realthunder/FreeCAD#523, 2026-10-05)
 
-#523's box and cylinder, the four box edges ending at the cylinder (the
+The box and cylinder of #523, the four box edges ending at the cylinder (the
 seam edges at the top and bottom, and their mirror images), at a radius
 above the cylinder's 2: every one is refused. The corner is `OnSame`:
 Arcpiv the seam, Fv the cylinder, Fop the top. `PerformOneCorner` cuts
@@ -980,7 +980,7 @@ tolerance at 0.3 to 2 is now the input's.
 
 ## An extension's end off its own curve (realthunder/FreeCAD#631, 2026-10-05)
 
-#631's Fillet002 input: a chain of six edges round a slanted arm, ending
+The Fillet002 input of #631: a chain of six edges round a slanted arm, ending
 at (44, 36.33, 92) on the end face x = 44 -- invalid at 0.8 and 2,
 "self-intersecting wire" on the end face. The corner extends the arm's
 round end, a circle, past the vertex to the point where the fillet's line
