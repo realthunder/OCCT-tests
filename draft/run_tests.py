@@ -75,7 +75,7 @@ def outcome(feature):
     return ("valid" if s.isValid() else "invalid"), s.Volume
 
 
-def judge(name, got, expect, ref_volume=None):
+def judge(name, got, expect, ref_volume=None, feature=None):
     """expect='valid': a valid solid, ref_volume when given.
     expect='refused': the draft fails with an error -- the geometry cannot
     be drafted by moving it alone -- and never hands back an invalid shape.
@@ -86,6 +86,13 @@ def judge(name, got, expect, ref_volume=None):
         detail = kind + " " + detail
     if expect == "refused":
         report(name, kind == "error", False, detail)
+        return
+    if expect.startswith("refused:"):
+        # refused, the message naming why
+        why = expect.split(":", 1)[1]
+        msg = feature.getStatusString() if feature is not None else ""
+        report(name, kind == "error" and why in msg, False,
+               detail if why in msg else detail + " (" + msg + ")")
         return
     ok = kind == "valid"
     if ok and ref_volume is not None and abs(value - ref_volume) > RELTOL * abs(ref_volume):
@@ -98,10 +105,15 @@ def judge(name, got, expect, ref_volume=None):
 # Shape cases: a Draft feature on a built shape.
 # ---------------------------------------------------------------------------
 
-def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None):
+def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None, method=None,
+               stop=True, reversed=False, neutral_shape=None):
     """Draft <face> of <shape> by <angle> degrees, the neutral plane that of
     the face <neutral> (faces picked by predicate), the pull direction its
-    normal, as PartDesign's Draft takes it with no pull direction given."""
+    normal, as PartDesign's Draft takes it with no pull direction given.
+    <face> with an attribute `many` is a function of the shape giving the
+    indices of several faces. <method>: the Draft's Method (the classic
+    draft when None), <stop> its StopAtBody. <neutral_shape>: a shape whose
+    first face is the neutral plane, instead of a face of <shape>."""
     doc = App.newDocument("draft_" + name.replace(".", "_"))
     try:
         base = doc.addObject("Part::Feature", "Base")
@@ -109,18 +121,32 @@ def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None):
         body = doc.addObject("PartDesign::Body", "Body")
         body.BaseFeature = base
         doc.recompute()
-        fi = [i for i, f in enumerate(shape.Faces, 1) if face(f)]
-        ni = [i for i, f in enumerate(shape.Faces, 1) if neutral(f)]
-        if len(fi) != 1 or len(ni) != 1:
+        many = getattr(face, "many", False)
+        fi = face(shape) if many else [i for i, f in enumerate(shape.Faces, 1) if face(f)]
+        if neutral_shape is None:
+            ni = [i for i, f in enumerate(shape.Faces, 1) if neutral(f)]
+        else:
+            ni = [1]
+        if not fi or (len(fi) != 1 and not many) or len(ni) != 1:
             report(name, False, False, "picked %d faces, %d neutral" % (len(fi), len(ni)))
             return
         d = body.newObject("PartDesign::Draft", "Draft")
-        d.Base = (body.BaseFeature, ["Face%d" % fi[0]])
-        d.NeutralPlane = (body.BaseFeature, ["Face%d" % ni[0]])
+        d.Base = (body.BaseFeature, ["Face%d" % i for i in fi])
+        if neutral_shape is None:
+            d.NeutralPlane = (body.BaseFeature, ["Face%d" % ni[0]])
+        else:
+            plane = doc.addObject("Part::Feature", "NeutralPlane")
+            plane.Shape = neutral_shape
+            d.NeutralPlane = (plane, ["Face1"])
         d.Angle = angle
-        classic(d)
+        d.Reversed = reversed
+        if method is None:
+            classic(d)
+        else:
+            d.Method = method
+            d.StopAtBody = stop
         doc.recompute()
-        judge(name, outcome(d), expect, ref_volume)
+        judge(name, outcome(d), expect, ref_volume, d)
     except Exception:
         report(name, False, False, traceback.format_exc().splitlines()[-1])
     finally:
@@ -224,7 +250,7 @@ document_drafts("issue334_draft_artifact.FCStd", [
 # angle is typed. A build without the fix takes this suite down here.
 # ---------------------------------------------------------------------------
 
-def ramp_ledge_drafts(angles):
+def ramp_ledge_drafts(angles, method=None):
     doc = App.newDocument("draft_issue474")
     try:
         shape = Part.read(os.path.join(HERE, "..", "fillet", "models",
@@ -239,12 +265,21 @@ def ramp_ledge_drafts(angles):
         d.Base = (body.BaseFeature, ["Face3"])
         d.NeutralPlane = (body.BaseFeature, ["Face10"])
         d.Angle = 1
-        classic(d)
+        if method is None:
+            classic(d)
+        else:
+            d.Method = method
         doc.recompute()
         for a in angles:
             d.Angle = a
             doc.recompute()
-            judge("issue474_ramp_ledge_a%d" % a, outcome(d), "refused")
+            if method is None:
+                judge("issue474_ramp_ledge_a%d" % a, outcome(d), "refused")
+            else:
+                # the ramp extended meets the lifted ledge again: the wedge
+                # under the 8 x 4 ledge hinged at its end, 128 tan(a)
+                judge("new_issue474_ramp_ledge_a%d" % a, outcome(d), "valid",
+                      shape.Volume + 128 * math.tan(math.radians(a)))
     except Exception:
         report("issue474_ramp_ledge", False, False, traceback.format_exc().splitlines()[-1])
     finally:
@@ -315,6 +350,103 @@ P962 = os.path.join(HERE, "..", "fillet", "models", "issue962_pocket002.brep")
 for face, neutral, a, vol in ((41, 24, 5, 11432.6957), (44, 30, 5, 11738.5401),
                               (51, 30, 15, 12057.0173)):
     brep_case("issue962_f%d_n%d_a%d" % (face, neutral, a), P962, face, neutral, a, "valid", vol)
+
+# ---------------------------------------------------------------------------
+# The new draft (FreeCAD's Part::CellDraft, docs/NewDraft.md in
+# realthunder/FreeCAD): a draft that can change topology. Through the Draft's
+# Method = New; a FreeCAD without it (no StopAtBody property) skips these.
+# The cases the classic draft refuses above come out valid at closed-form
+# volumes; StopAtBody (default on) keeps a drafted face from growing the body
+# past a plane that bounds the whole body.
+# ---------------------------------------------------------------------------
+
+def has_cell_draft():
+    doc = App.newDocument("probe")
+    try:
+        return "StopAtBody" in doc.addObject("PartDesign::Draft", "Draft").PropertiesList
+    finally:
+        App.closeDocument(doc.Name)
+
+
+def t(a):
+    return math.tan(math.radians(a))
+
+
+if has_cell_draft():
+    for a in (5, 20, 44):
+        draft_case("new_notch_ledge_a%d" % a, plain, plane_at("z", 5), plane_at("y", 5), a,
+                   "valid", 1750 + 125 * t(a), method="New")
+    # the ledge's front reaches the block's top: the notch's front edge goes
+    draft_case("new_notch_ledge_a45", plain, plane_at("z", 5), plane_at("y", 5), 45, "valid",
+               1875, method="New")
+    # past the top at 60 deg (8.66 over 5): stopped at the top's plane, which
+    # closes over the notch's front; unstopped, a fin stands 3.66 over the top
+    draft_case("new_notch_ledge_a60", plain, plane_at("z", 5), plane_at("y", 5), 60, "valid",
+               1750 + 125 * t(60) - 10 * (5 * t(60) - 5) ** 2 / (2 * t(60)), method="New")
+    draft_case("new_notch_ledge_a60_unstopped", plain, plane_at("z", 5), plane_at("y", 5), 60,
+               "valid", 1750 + 125 * t(60), method="New", stop=False)
+    # the bevel's corner gets the new edge the classic draft cannot make;
+    # stopped, the ledge rises only to the bevel's plane
+    for a, stopped in ((5, 1660.2207), (20, 1685.2363), (45, 1719.4444)):
+        draft_case("new_notch_bevel_ledge_a%d" % a, bevelled, plane_at("z", 5), plane_at("y", 5),
+                   a, "valid", stopped, method="New")
+        draft_case("new_notch_bevel_ledge_a%d_unstopped" % a, bevelled, plane_at("z", 5),
+                   plane_at("y", 5), a, "valid", 1650 + 125 * t(a), method="New", stop=False)
+    # the slot's wall breaks through the block's front at 2 / tan(a) above
+    # the floor
+    draft_case("new_slot_wall_a5", deep, plane_at("y", 2), plane_at("z", 2), 5, "valid",
+               deep.Volume - 2 * 18 * 18 * t(5), method="New")
+    for a in (15, 30):
+        h = 2 / t(a)
+        draft_case("new_slot_wall_a%d" % a, deep, plane_at("y", 2), plane_at("z", 2), a, "valid",
+                   8000 - 4 * 6 * 18 - 4 * (h * 2 / 2 + 2 * (18 - h)), method="New")
+    # the corner slides along the slanted wall to (x, (x - 10) / 2), where
+    # the drafted wall y = -(20 - x) tan(5 deg) meets it: the outline
+    # extruded 5
+    tx = (5 - 20 * t(5)) / (0.5 - t(5))
+    outline = [(0, -5), (tx, (tx - 10) / 2), (20, 0), (20, 10), (0, 10)]
+    area = abs(sum(outline[i][0] * outline[i - 1][1] - outline[i - 1][0] * outline[i][1]
+                   for i in range(len(outline)))) / 2
+    draft_case("new_split_floor_corner_a5", split, plane_at("y", 0), plane_at("x", 20), 5,
+               "valid", 5 * area, method="New")
+    # an L-shaped face (a notch through the block's whole depth): the wedge
+    # under it, 625 tan(a), either way
+    lblock = Part.makeBox(20, 10, 10).cut(Part.makeBox(10, 10, 5, V(0, 0, 5))).removeSplitter()
+    for a in (5, 20):
+        draft_case("new_l_face_a%d" % a, lblock, plane_at("y", 0), plane_at("z", 0), a, "valid",
+                   1500 - 625 * t(a), method="New")
+        draft_case("new_l_face_a%d_reversed" % a, lblock, plane_at("y", 0), plane_at("z", 0), a,
+                   "valid", 1500 + 625 * t(a), method="New", reversed=True)
+    # two adjacent walls of a boss, in both orders: the same solid as the
+    # classic draft's
+    boss = Part.makeBox(30, 30, 5).fuse(Part.makeBox(10, 10, 5, V(10, 10, 5))).removeSplitter()
+
+    def walls(order):
+        def pick(shape):
+            x10 = [i for i, f in enumerate(shape.Faces, 1) if plane_at("x", 10)(f)]
+            y10 = [i for i, f in enumerate(shape.Faces, 1) if plane_at("y", 10)(f)
+                   and f.BoundBox.ZMin > 5 - 1e-9]
+            return (x10 + y10) if order else (y10 + x10)
+        pick.many = True
+        return pick
+    for a, vol in ((5, 4978.4468), (30, 4869.5513)):
+        for order in (True, False):
+            draft_case("new_boss_walls_a%d_%s" % (a, "xy" if order else "yx"), boss, walls(order),
+                       lambda f: plane_at("z", 5)(f) and f.Area > 100, a, "valid", vol,
+                       method="New")
+    # a 0.2 wide face whose walls meet 0.2 past it, drafted outward about a
+    # plane 50 below: its new plane lies past the walls' meeting line, the
+    # face would vanish; drafted inward, it shrinks the wedge
+    wedge = Part.Face(Part.makePolygon([V(0, -5, 0), V(10, -0.1, 0), V(10, 0.1, 0),
+                                        V(0, 5, 0), V(0, -5, 0)])).extrude(V(0, 0, 10))
+    below = Part.makePlane(200, 200, V(-100, -100, -50))
+    draft_case("new_face_vanishes", wedge, plane_at("x", 10), None, 5,
+               "refused:FaceVanishes", method="New", reversed=True, neutral_shape=below)
+    ramp_ledge_drafts((5, 11, 15, 17), method="New")
+    draft_case("new_face_shrinks", wedge, plane_at("x", 10), None, 5, "valid", 386.6083,
+               method="New", neutral_shape=below)
+else:
+    emit("new draft cases skipped: this FreeCAD's Draft has no cell draft")
 
 # ---------------------------------------------------------------------------
 counts = {}

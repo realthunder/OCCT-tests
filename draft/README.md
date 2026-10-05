@@ -17,8 +17,10 @@ shape comes back.
 
 The suite sets each Draft's `Method` to `Classic` when the FreeCAD running it
 has that property (realthunder/FreeCAD `OcctFix`, 2026-10-04): its default,
-`Auto`, retries a refused draft on the refined base shape, and the cases here
-are about the kernel's draft itself. FreeCAD's `TestDraft` covers `Auto`.
+`Auto`, falls back to FreeCAD's new draft when the classic one refuses, and
+the cases here are about the kernel's draft itself. FreeCAD's `TestDraft`
+covers `Auto`. The `new_*` cases at the end (next section) are the
+exception: they run the new draft, and are skipped by a FreeCAD without it.
 
 ## Pictures
 
@@ -186,8 +188,29 @@ already have. No invalid result is left. The 3510 valid results are the
 same to the last digit (now 3549), and no refusal, exception or crash
 changes otherwise.
 
+## The new draft (FreeCAD's `Part::CellDraft`, 2026-10-05)
+
+realthunder/FreeCAD `docs/NewDraft.md`: a draft that can change topology,
+in FreeCAD's Part, behind PartDesign's `Method = New` (and `Auto`'s
+fallback). The space around the drafted face is split by the solid, the
+face's new plane and its neighbours' surfaces extended, in one general
+fuse, and the cells are chosen. The cases the classic draft refuses above
+come out valid, each at a closed-form volume:
+
+| Case | What it covers |
+|------|----------------|
+| `new_notch_ledge_a{5,20,44,45}` | the ledge: `1750 + 125 tan(a)`; at 45 the notch's front edge goes |
+| `new_notch_ledge_a60`, `_unstopped` | past the top (8.66 over 5): stopped at the top's plane by default (`StopAtBody`), a fin 3.66 over the top without |
+| `new_notch_bevel_ledge_a{5,20,45}`, `_unstopped` | the corner the bevel touches gets its new edge; stopped, the ledge rises only to the bevel's plane |
+| `new_slot_wall_a{5,15,30}` | the slot's wall breaks through the front at `2 / tan(a)` |
+| `new_split_floor_corner_a5` | the corner slides along the slanted wall, across the floor's split |
+| `new_l_face_a{5,20}`, `_reversed` | an L-shaped face, both ways: `1500 -+ 625 tan(a)` |
+| `new_boss_walls_a{5,30}_{xy,yx}` | two adjacent walls of a boss in either order: the same solid, the classic draft's |
+| `new_issue474_ramp_ledge_a{5,11,15,17}` | #474's ledge: the ramp, extended, meets the lifted ledge; the wedge `128 tan(a)` |
+| `new_face_vanishes`, `new_face_shrinks` | a 0.2 wide face whose walls meet 0.2 past it, about a plane 50 below: drafted outward it would vanish (refused, `FaceVanishes`); inward, `386.6083` |
+
 ## Known open
 
 | Case | Symptom |
 |------|---------|
-| a draft that needs a new edge | refused: a geometry-only modification cannot make it (a split wall, a face swept past a neighbour's edge). Merging coplanar pieces first (refine) avoids the split-wall ones |
+| a draft that needs a new edge | refused by the classic draft: a geometry-only modification cannot make it (a split wall, a face swept past a neighbour's edge). FreeCAD's new draft makes these (previous section) |
