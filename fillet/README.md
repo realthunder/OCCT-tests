@@ -887,7 +887,7 @@ at radius 0.6, and on two more pairs at radius 1, as it was before
 | Case | What it covers |
 |------|----------------|
 | `issue876_side_and_post_x{+19,-19}_r1` | the two edges at either corner: refused or valid, never an invalid shape (inside out before) |
-| `issue876_side_and_post_x{+19,-19}_r0.6` | XFAIL, the plate of two break points inside out (as before) |
+| `issue876_side_and_post_x{+19,-19}_r0.6` | refused or valid since the fix below (the plate of two break points inside out before) |
 
 ## The cut's end beside the cone (realthunder/FreeCAD#876, 2026-10-04)
 
@@ -922,6 +922,37 @@ two, with a margin of 1e-9 of it against rounding.
 |------|----------------|
 | `issue876_fillet002_r1.2` | valid (invalid before, the vertex off the extension by 6e-14) |
 
+## A plate's boundary on the wrong face (realthunder/FreeCAD#876, 2026-10-05)
+
+The open end of "Two stripes at an end across a tangent split": #876's
+plate top edge along its side and the post's base arc beside it, filleted
+together at radius 0.6, both ends break points -- and the same pair at the
+plate's other corners, and on Fillet002's input -- came out inside out,
+volume -2e11 to -2e13. The corner is `PerformMoreThreeCorner`'s plate, and
+one of its four boundaries, the curve from the post's fillet's end to the
+vertex on the post, was 70434 long. The two fillets are tangent at the
+vertex (`deuxconges`), which skips the search for a curve over several
+faces; the post's fillet, cut back for the plate past the end of the
+post's round end, ends 0.42 along the post's plane beside it. Its end was
+read in its pcurve on that plane -- (13.33, -8.21) -- and taken as a point
+of the round end's B-spline, whose parameters run over [0, 1.57] x [0, 1];
+the batten from there to the vertex ran off the surface.
+
+Letting the search for curves over several faces run at such a corner
+does not help: it is not written for it, and stops on a DS point never
+made. Fix `467e37b45d`: the curve between two ends is refused when a
+fillet's end lies on another face than the curve's; the corner, and the
+fillet, are refused. The vertex sweep (15122 fillets) moves 11 results,
+all from invalid to refused -- these pairs at radius 1, and the teardrop
+posts' (`mini_tear*`) pairs of the same kind; nothing valid moves, and the
+edge sweep is the same to the last digit.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_side_and_post_x{+19,-19}_r0.6` | refused (inside out before) |
+| `issue876_side_and_post_x-19_y-16_r1` | the pair at the corner (-19, -16): refused (inside out before) |
+| `issue876_fillet002_side_and_post_r{0.6,1}` | the pair at Fillet002's corner (19, -16): refused (inside out before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -929,7 +960,6 @@ two, with a margin of 1e-9 of it against rounding.
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 | `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | refused, "bouchon non ecrit": the end needs a cut over two faces across a sharp edge and splits the top (see "Past the cylinder's radius", above) |
 | `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
-| `issue876_side_and_post_x{+19,-19}_r0.6` | invalid, volume -2e11 to -5e12: two stripes, a convex and a concave fillet, ending at a vertex of four sharp edges with both ends break points; `PerformMoreThreeCorner`'s plate comes out inside out (see "Two stripes at an end across a tangent split", above) |
 
 ## Pictures
 

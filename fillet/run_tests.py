@@ -637,7 +637,11 @@ for r, taken in ((0.3, 1.51537), (0.6, 5.97437), (0.8, 10.53689), (1.0, 16.34631
 # plate of two stripes cannot take: at radius 1 the result was inside out
 # (volume -2e10), refused before that rule and now again. At 0.6 the plate is
 # made of two break points, inside out the same, before the rule as well:
-# open.
+# the two fillets are tangent at the vertex, which skips the search for a
+# plate boundary over several faces, and the post's fillet, cut back past
+# its round end onto its plane, had its end on the plane read as a point of
+# the round end's B-spline. Refused now. The same at the plate's other
+# corners, and on Fillet002's input with the drafted post.
 for a, b, c, d in (((19.238761, 15.746985, 3), (30.167832, 3.494723, 3),
                     (20, 13.750014, 3), (19.238761, 15.746985, 3)),
                    ((-30.167832, 3.494723, 3), (-19.238761, 15.746985, 3),
@@ -645,7 +649,14 @@ for a, b, c, d in (((19.238761, 15.746985, 3), (30.167832, 3.494723, 3),
     pair = [edge_between(p876, a, b), edge_between(p876, c, d)]
     tag = "x%+d" % round(a[0] if abs(a[0]) < 20 else b[0])
     sound_case("issue876_side_and_post_%s_r1" % tag, p876, pair, 1.0)
-    sound_case("issue876_side_and_post_%s_r0.6" % tag, p876, pair, 0.6, "xfail")
+    sound_case("issue876_side_and_post_%s_r0.6" % tag, p876, pair, 0.6)
+pair = [edge_between(p876, (-20, -13.75, 3), (-19.238761, -15.746985, 3)),
+        edge_between(p876, (-19.238761, -15.746985, 3), (-30.167832, -3.494723, 3))]
+sound_case("issue876_side_and_post_x-19_y-16_r1", p876, pair, 1.0)
+pair = [edge_between(p876b, (19.238761, -15.746985, 3), (20, -13.75, 3)),
+        edge_between(p876b, (30.167832, -3.494723, 3), (19.238761, -15.746985, 3))]
+for r in (0.6, 1.0):
+    sound_case("issue876_fillet002_side_and_post_r%g" % r, p876b, pair, r)
 
 # #474's Fillet001 (models/issue474_fillet001_base.brep): the edge up the
 # ramp's side ends at a vertex of four sharp edges whose face beside the
