@@ -15,6 +15,11 @@ no draft of its own. A case expects either a valid solid (with its volume
 when known) or a refusal: the feature fails with an error, and no invalid
 shape comes back.
 
+The suite sets each Draft's `Method` to `Classic` when the FreeCAD running it
+has that property (realthunder/FreeCAD `OcctFix`, 2026-10-04): its default,
+`Auto`, retries a refused draft on the refined base shape, and the cases here
+are about the kernel's draft itself. FreeCAD's `TestDraft` covers `Auto`.
+
 ## Pictures
 
 `models/Draft.md` shows each fix in pictures -- upstream, the fork before

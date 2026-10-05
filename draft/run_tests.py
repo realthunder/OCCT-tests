@@ -42,6 +42,14 @@ App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
 results = []  # (name, verdict, detail)
 
 
+def classic(draft):
+    """The kernel's own draft: a FreeCAD whose Draft has a Method retries a
+    failed draft on the refined base by default, which is not this suite's
+    subject (FreeCAD's TestDraft covers it)."""
+    if "Method" in draft.PropertiesList:
+        draft.Method = "Classic"
+
+
 def report(name, ok, expect_fail, detail):
     if ok and not expect_fail:
         verdict = "PASS"
@@ -110,6 +118,7 @@ def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None):
         d.Base = (body.BaseFeature, ["Face%d" % fi[0]])
         d.NeutralPlane = (body.BaseFeature, ["Face%d" % ni[0]])
         d.Angle = angle
+        classic(d)
         doc.recompute()
         judge(name, outcome(d), expect, ref_volume)
     except Exception:
@@ -179,6 +188,7 @@ def document_drafts(filename, cases):
         for name, obj, expect, vol in cases:
             try:
                 o = doc.getObject(obj)
+                classic(o)
                 o.touch()
                 o.recompute()
                 judge(name, outcome(o), expect, vol)
@@ -229,6 +239,7 @@ def ramp_ledge_drafts(angles):
         d.Base = (body.BaseFeature, ["Face3"])
         d.NeutralPlane = (body.BaseFeature, ["Face10"])
         d.Angle = 1
+        classic(d)
         doc.recompute()
         for a in angles:
             d.Angle = a
