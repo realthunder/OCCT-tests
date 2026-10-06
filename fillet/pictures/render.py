@@ -6,7 +6,8 @@
 # the whole shape or zoomed on the fillet's end. With "mark", edges not used
 # once each way round are drawn red and faces failing isValid() are red.
 # Faces of no area are left out. Next to each PNG a .json says what was done.
-# Optional, for the draft pictures: "facecolors" ({face index from 0: rgb})
+# Optional, for the draft pictures: "facecolors" ({face index from 0: rgb}),
+# "transparency" (0-100, to see a face through another),
 # and "extras" (more .breps drawn with the shape: brep, color, transparency,
 # linewidth).
 import json
@@ -91,8 +92,8 @@ for job in jobs["panels"]:
     vo.LineColor = (0.15, 0.15, 0.2)
     vo.LineWidth = 1.5
     vo.Deviation = 0.02
-    if ghost:
-        vo.Transparency = 60
+    if ghost or job.get("transparency"):
+        vo.Transparency = job.get("transparency", 60)
     fc = job.get("facecolors") if not meta.get("dropped") else None
     if badf or fc:
         cols = [base + (1.0,)] * len(shape.Faces)
