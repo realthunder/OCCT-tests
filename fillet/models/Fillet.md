@@ -425,6 +425,56 @@ off.
 
 ![post_draft_plane_on_plate_r1](pictures/post_draft_plane_on_plate_r1.png)
 
+### A failed corner set back (`0ff4092766`, realthunder/FreeCAD_assembly3#894)
+
+Where a fillet fails at a corner, the fork now computes it again with that
+corner set back: the fillets there stop short of the vertex along their
+edges, and the opening is closed by one patch tangent to them -- the setback
+corner of the "Blend Corner" request, used here as a fallback. It tries
+where the fillets meet first, then 1, 1.5 and 2 times the radius, and keeps
+the first result that is valid, valid again once written and read back, has
+no edge looser than the input's or a twentieth of the radius, no face of no
+area, and every fillet asked for in it; otherwise the fillet fails as it
+did. Nothing made before changes. Design and measurements: fcad's
+`docs/CornerBlending.md`, section 9; FreeCAD's Part preference
+`FilletCornerSetbackFallback` (0 turns it off).
+
+#876's first Fillet input, the four edges at the corner (17,16.75,3): the
+fork threw (`Standard_ProgramError`, a stripe's end without a point at the
+far corner, (-17,16.75,3)) and upstream refused. Now both corners are set
+back where their fillets meet. In the zoom, the vertical fillet and the
+one along the base stop short of the corner, and the patch closes it. Its
+outline is the third row: six edges -- the ends of those two fillets (1.41
+each), a curve on each of the two plane walls (1.57), and the ends of the
+other two fillets (0.0175 each), which run along edges between walls a
+degree apart and are all but flat: the cusp at the left. Those walls being
+so nearly flat, the volume moves by thousandths. The red mark by the left hole is the
+input's own: the holes' seam edges are stored once, not once each way
+round.
+
+![issue876_corner4_r1](pictures/issue876_corner4_r1.png)
+
+#523's box and cylinder past the cylinder's radius, the end refused as a
+cut over two faces ("bouchon non ecrit") by the fork before and upstream
+alike. At radius 2.5 the end is set back where the fillet meets the corner:
+the fillet stops partway along the edge, and the patch blends on into the
+cylinder's top and down the box's side. Its boundary on the side has a
+small notch near the cylinder -- the hook at the bottom of the third row --
+valid, but not as smooth as a fillet run on to the cylinder would be (that
+fillet, the boolean's, is 1083.3063; this is 1085.6014).
+
+![seam_end_top_r2.5](pictures/seam_end_top_r2.5.png)
+
+At radius 3 the nearer setbacks leave edges looser than a twentieth of the
+radius, and only twice the radius passes: 6 on an edge 8 long. What is left
+of the fillet is its last 2, at the far end; the rest is the patch, scooped
+from the cylinder's top down the box's side. Valid, and a shape where there
+was none, but more a blend than a fillet -- a user asking for this fillet
+should know that is what the fallback gives here (1072.1768, against the
+run-on fillet's 1078.3294).
+
+![seam_end_top_r3](pictures/seam_end_top_r3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

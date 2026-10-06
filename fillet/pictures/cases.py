@@ -26,6 +26,7 @@ STAGES = {
     "s876b": ("fa8d202b81", "5310ff9d59"),
     "s876c": ("5310ff9d59", "c34722ef01"),
     "s876d": ("e25bcf2525", "2a623612a8"),
+    "s894": ("5c81764cc5", "0ff4092766"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -165,6 +166,7 @@ SHAPES = {
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
     "postplane": _teardrop_post_on_plate,
+    "p876": _brep("issue876_fillet_base.brep"),
 }
 
 
@@ -229,6 +231,8 @@ UVFACE = {
     "postplane": (lambda f: f.Surface.__class__.__name__ == "Plane"
                   and abs(f.Surface.Axis.z) < 0.5 and f.BoundBox.ZMax > 10
                   and f.BoundBox.YMin < -2.0),
+    # the set back corner's plate at (17, 16.75, 3)
+    "p876": _plate_near(17, 16.75, 3, reach=1.5),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -245,6 +249,9 @@ UVFACE_CASE = {
     "issue962_e33_r0.3": _plate_near(38.5, 10.2, -3.75),
     # the block's top beside the slot (y 0..3), where the fillet ends at the top
     "slot_split_wall_r0.7001": _plane_at("z", 14, None, {"y": 3.0}),
+    # the set back corner's plate where the fillet's end was refused
+    "seam_end_top_r2.5": _plate_near(2, 0, 10, reach=7.0),
+    "seam_end_top_r3": _plate_near(2, 0, 10, reach=8.0),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -264,6 +271,7 @@ NAMES = {
     "postseam": "the post on the plate turned so that its seam runs up from the edge's end",
     "postplane": "the drafted post with a straight wall tangent to its cone 41 deg round "
                  "from the edge's end",
+    "p876": "#876's first Fillet input (a PartDesign body, its walls drafted 1 deg)",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -280,6 +288,7 @@ VIEW = {
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
     "postplane": ((-4.5, 0, 9), 20.0),
+    "p876": ((0, 0, 10), 46.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -296,10 +305,13 @@ UVLABEL = {
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
     "postplane": ("the post's wall beyond the cone", False),
+    "p876": ("the corner's plate", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
+    "seam_end_top_r2.5": ("the corner's plate", False),
+    "seam_end_top_r3": ("the corner's plate", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -359,6 +371,15 @@ CASES = {
                                 (0, -3, 3), (0.5, -1, 0.7)),
     "post_draft_plane_on_plate_r1": ("s876d", "postplane", ((-12, -3, 3), (0, -3, 3)), 1.0,
                                      754.5565, (-1, -2.5, 3), (0.3, -1, 0.7)),
+    "issue876_corner4_r1": ("s894", "p876", [((17, 16.75, 0), (17, 16.75, 3)),
+                                             ((-17, 16.75, 3), (17, 16.75, 3)),
+                                             ((19.238761, 15.746985, 3), (17, 16.75, 3)),
+                                             ((17, 16.75, 3), (17, 16.442791, 20.6))],
+                            1.0, 8665.7870, (17, 16.75, 3), (0.6, 1, 0.7)),
+    "seam_end_top_r2.5": ("s894", "boxcyl", ((2, 0, 10), (10, 0, 10)), 2.5, 1085.6014,
+                          (2, 0, 10), (0.55, -1, 0.75)),
+    "seam_end_top_r3": ("s894", "boxcyl", ((2, 0, 10), (10, 0, 10)), 3.0, 1072.1768,
+                        (2, 0, 10), (0.55, -1, 0.75)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -371,6 +392,7 @@ ZOOM = {
 EDGES = {
     "arm_on_block_foot_r0.8": "the two at the foot, x=38.5, y=27.2 and y=10.2",
     "issue962_fillet_r0.8": "the Fillet's twelve; zoomed on edge 49's foot",
+    "issue876_corner4_r1": "the four at the corner (17,16.75,3); zoomed on it",
 }
 
 
