@@ -216,12 +216,17 @@ fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009)
 fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "xfail")
 # Past the cylinder's radius the fillet's line on the top misses the
 # cylinder; the end has to be cut by the cylinder carried into the box for
-# y < 2 and by the box's side x = 0 beyond, and the top splits in two. The
-# volumes are the boolean's: the groove carried past the end, less the
-# cylinder, cut from the shape (it gives the fillet's at 1 and 2).
-for r, vol in ((2.5, 1083.3063), (3.0, 1078.3294)):
-    fillet_case("seam_end_top_r%g" % r, bc, top, r, "xfail", vol)
-    fillet_case("mirror_top_r%g" % r, bc, mtop, r, "xfail", vol)
+# y < 2 and by the box's side x = 0 beyond, and the top splits in two. That
+# end is still refused; the fillet is made by the corner setback fallback
+# (fcad docs/CornerBlending.md section 9), which cuts the fillet back from
+# the corner and closes it with one patch: at radius 2.5 where the fillet
+# meets the corner, at 3 set back to twice the radius, the nearer setbacks
+# leaving edges looser than a twentieth of it. The fillet run past the end
+# would be the boolean's, the groove carried past the end, less the
+# cylinder, cut from the shape: 1083.3063 at 2.5, 1078.3294 at 3.
+for r, vol in ((2.5, 1085.6014), (3.0, 1072.1768)):
+    fillet_case("seam_end_top_r%g" % r, bc, top, r, "pass", vol)
+    fillet_case("mirror_top_r%g" % r, bc, mtop, r, "pass", vol)
 
 # Every edge at radius 1: nothing else moved.
 for i in range(1, len(bc.Edges) + 1):
@@ -438,15 +443,47 @@ for d in (0.7, 0.70001, 0.7001):
 # realthunder/FreeCAD#876's first Fillet input: the four edges at the corner
 # (17,16.75,3). The two-stripe corner there has its common points on two
 # different edges and filled along a pivot it does not have -- a null
-# dereference that took the process down. It fails now, as it should; this
-# case is here so that the suite gets to its summary.
+# dereference that took the process down; it failed after that fix, its
+# far corner (-17,16.75,3) leaving the stripe's end without a point. The
+# corner setback fallback makes it: both corners set back where the fillets
+# meet (fcad docs/CornerBlending.md section 9). The edges run between nearly
+# coplanar drafted walls, so the fillets move the volume by thousandths.
 p876 = Part.read(os.path.join(MODELS, "issue876_fillet_base.brep"))
 c876 = [edge_between(p876, (17, 16.75, 0), (17, 16.75, 3)),
         edge_between(p876, (-17, 16.75, 3), (17, 16.75, 3)),
         edge_between(p876, (19.238761, 15.746985, 3), (17, 16.75, 3)),
         edge_between(p876, (17, 16.75, 3), (17, 16.442791, 20.6))]
-for r in (0.3, 1.0):
-    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "xfail")
+for r, vol in ((0.3, 8665.7840), (1.0, 8665.7870)):
+    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol)
+
+
+def refused_case(name, shape, edge_index, radius):
+    """The fillet is refused, and the input left as it was."""
+    before = signature(shape)
+    indices = edge_index if isinstance(edge_index, list) else [edge_index]
+    try:
+        r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
+        ok, detail = False, "made: valid=%s vol=%.4f" % (r.isValid(), r.Volume)
+    except Exception as e:
+        ok, detail = True, "refused: " + str(e).strip().splitlines()[-1]
+    if signature(shape) != before:
+        ok, detail = False, "input changed; " + detail
+    report(name, ok, False, detail)
+
+
+# With FreeCAD's Part preference FilletCornerSetbackFallback at 0 the fallback
+# is off, and the corner fails as it did.
+_part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
+_had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
+_fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
+_part_params.SetFloat("FilletCornerSetbackFallback", 0.0)
+try:
+    refused_case("issue876_corner4_r1_no_fallback", p876, c876, 1.0)
+finally:
+    if _had_fallback:
+        _part_params.SetFloat("FilletCornerSetbackFallback", _fallback)
+    else:
+        _part_params.RemFloat("FilletCornerSetbackFallback")
 
 # A post on a plate, the plate's side running tangent into its round end
 # under the post: the plate's top edge along that side ends where the top

@@ -421,7 +421,7 @@ reads 0). Fix `ce5aa60088` drops such an approximation.
 
 | Case | What it covers |
 |------|----------------|
-| `issue876_corner4_r{0.3,1}` | XFAIL, an exception: the process survives to the suite's summary (the build before `76a730386a` dies here, exit 139) |
+| `issue876_corner4_r{0.3,1}` | XFAIL then, an exception: the process survives to the suite's summary (the build before `76a730386a` dies here, exit 139); made since, see "The corner setback fallback" |
 
 ## A projection's split point with no point on the surface (realthunder/FreeCAD#876, 2026-10-03)
 
@@ -640,7 +640,7 @@ fillet on a circle of radius 2 cannot be wider than 2.
 
 | Case | What it covers |
 |------|----------------|
-| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | XFAIL, refused; the boolean's volume when they pass |
+| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | XFAIL then, refused; made since with the end set back, see "The corner setback fallback" (the boolean's volumes are those of the end run past) |
 
 ## A fillet's end on the edge where its side runs into a wall (realthunder/FreeCAD#876, 2026-10-04)
 
@@ -1050,13 +1050,42 @@ at the arm's foot, e.g. 0.023 to 0.068 at radius 2, and #474 Fillet002
 E13). The vertex sweep changes no status; 197 volumes move by under 1e-4.
 The thickness suite (378, with `1e64700c94`) passes.
 
+## The corner setback fallback (2026-10-06)
+
+Where a fillet fails at a corner, TKFillet now computes it again with the
+corner set back: the fillets there cut back along their edges and the
+opening closed by one patch tangent to them, first where the fillets meet,
+then 1, 1.5, 2 times the largest radius at the corner
+(`ChFi3d_Builder::SetCornerSetbackFallback`, default 2, 0 = off; FreeCAD's
+Part preference `FilletCornerSetbackFallback`). The design and the
+measurements are fcad's `docs/CornerBlending.md`, sections 9.1 to 9.3. A
+result is kept only if it is valid, valid again once written and read back,
+has no edge looser than the input's loosest or a twentieth of the radius,
+no face of no area, and holds every fillet asked for; otherwise the failure
+is as it was.
+
+Nothing that is made without it changes: the every-edge and vertex sweeps
+are identical for every fillet made before (2680 and 9611 results). Of the
+failures, 64 and 301 are made now.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_corner4_r{0.3,1}` | the four edges at #876's corner, refused before (`Standard_ProgramError`, a stripe's end without a point at the far corner): made, both corners set back where the fillets meet |
+| `issue876_corner4_r1_no_fallback` | the same with the preference at 0: refused, as before |
+| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | the end past the cylinder's radius, still refused as a cut over two faces: made with the end set back, at 2.5 where the fillet meets the corner, at 3 at twice the radius (nearer setbacks keep edges looser than a twentieth of it) |
+
+Two failures had no vertex to report and now do, which the fallback needs:
+a corner that keeps only a partial result, and a corner that leaves a
+stripe's end without its points. A corner that puts a null shape in the DS
+fails too: once the fallback mended another corner of the same fillet, the
+topological build read it and the process died (`issue273_Fillet001` edges
+38 and 39 at 0.3, 81 vertex-sweep cases in a first run).
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
-| `seam_end_top_r{2.5,3}`, `mirror_top_r{2.5,3}` | refused, "bouchon non ecrit": the end needs a cut over two faces across a sharp edge and splits the top (see "Past the cylinder's radius", above) |
-| `issue876_corner4_r{0.3,1}` | `Standard_ProgramError`, point 0 of the DS: `ChFi3d_FilDS` stores a stripe end with no point, after the corner (-17,16.75,3) has failed (its projected curve pieces not running end to end) |
 
 ## Pictures
 
