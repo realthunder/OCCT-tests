@@ -219,12 +219,16 @@ fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "xfail")
 # y < 2 and by the box's side x = 0 beyond, and the top splits in two. That
 # end is still refused; the fillet is made by the corner setback fallback
 # (fcad docs/CornerBlending.md section 9), which cuts the fillet back from
-# the corner and closes it with one patch: at radius 2.5 where the fillet
-# meets the corner, at 3 set back to twice the radius, the nearer setbacks
-# leaving edges looser than a twentieth of it. The fillet run past the end
-# would be the boolean's, the groove carried past the end, less the
-# cylinder, cut from the shape: 1083.3063 at 2.5, 1078.3294 at 3.
-for r, vol in ((2.5, 1085.6014), (3.0, 1072.1768)):
+# the corner and closes it with one patch, at both radii where the fillet
+# meets the corner. At 3 that took twice the radius (1072.1768, the patch
+# over most of the cylinder's top) until the patch was approximated to its
+# boundary rather than to the plate: the nearer setbacks had left edges
+# looser than a twentieth of the radius. Its curve on the box's side hooked
+# back into the stripe until the end held at right angles to its chord was
+# freed (1085.4352 at 2.5, 1082.0690 at 3 with the hook). The fillet run
+# past the end would be the boolean's, the groove carried past the end,
+# less the cylinder, cut from the shape: 1083.3063 at 2.5, 1078.3294 at 3.
+for r, vol in ((2.5, 1087.9914), (3.0, 1086.0296)):
     fillet_case("seam_end_top_r%g" % r, bc, top, r, "pass", vol)
     fillet_case("mirror_top_r%g" % r, bc, mtop, r, "pass", vol)
 
