@@ -48,7 +48,13 @@ def shot():
     fillet = body.newObject("PartDesign::Fillet", "Fillet")
     fillet.Base = (box, edges)
     fillet.Radius = 1
-    fillet.Corners = {vname: (2, {edges[0]: 3})}
+    if os.environ.get("DEPTH"):
+        # a face's depth: the corner's row current, its depth handles shown
+        top = ["Face%d" % (i + 1) for i, f in enumerate(box.Shape.Faces)
+               if any(v.isSame(corner) for v in f.Vertexes) and abs(f.Surface.Axis.z) > 0.9][0]
+        fillet.Corners = {vname: (3, {top: 1.5})}
+    else:
+        fillet.Corners = {vname: (2, {edges[0]: 3})}
     doc.recompute()
     Gui.ActiveDocument.setEdit(fillet)
     wait(1)
@@ -56,7 +62,7 @@ def shot():
             if t.isVisible()][0]
     row = [tree.topLevelItem(i) for i in range(tree.topLevelItemCount())
            if tree.topLevelItem(i).text(0) == vname][0]
-    tree.setCurrentItem(row.child(0))
+    tree.setCurrentItem(row if os.environ.get("DEPTH") else row.child(0))
     # wide enough for the Setback column
     docks = [d for d in mw.findChildren(QtWidgets.QDockWidget)
              if d.isVisible() and d.findChild(QtWidgets.QTreeWidget, "treeWidgetReferences")]

@@ -33,6 +33,8 @@ SHAPES = {"box": _box, "p876": _p876}
 # By the corner: every edge ending there, its far end named for the
 # per-edge setbacks (x, y or z for the box's three).
 BOX_EDGES = {"x": (0, 10, 10), "y": (10, 0, 10), "z": (10, 10, 0)}
+# The box's faces at the corner, by their normal, for the faces' depths
+BOX_FACES = {"fx": (1, 0, 0), "fy": (0, 1, 0), "fz": (0, 0, 1)}
 P876 = (17, 16.75, 3)
 P876_EDGES = [(17, 16.75, 0), (-17, 16.75, 3), (19.238761, 15.746985, 3), (17, 16.442791, 20.6)]
 
@@ -58,6 +60,14 @@ CASES = {
                         ("setback 4", 4, None)],
                        "Two fillets and a sharp edge",
                        "the patch cuts the sharp edge as far back as the fillets beside it"),
+    "box_depth": ("box", BOX, ["x", "y", "z"], 1.0, ((1, 0.8, 0.9), (8.6, 8.6, 8.6), 7.5),
+                  [("setback 4", 4, None),
+                   ("top face depth 0.5", (4, {"fz": 0.5}), None),
+                   ("top face depth 1", (4, {"fz": 1}), None),
+                   ("top face depth 2", (4, {"fz": 2}), None)],
+                  "A face's depth",
+                  "set back 4, the patch's boundary on the top face bowing 0.5, 1 and 2 "
+                  "from its chord"),
     "fallback_876": ("p876", P876, P876_EDGES, 1.0, ((0.6, 1, 0.7), P876, 9),
                      [("fallback off", None, 0), ("fallback on (2 x r)", None, 2)],
                      "The fallback: #876's corner (17, 16.75, 3), r 1",
@@ -69,6 +79,17 @@ CASES = {
 def _vertex(shape, p):
     import FreeCAD as App
     return [v for v in shape.Vertexes if v.Point.isEqual(App.Vector(*p), 1e-6)][0]
+
+
+def _face(shape, corner, normal):
+    import FreeCAD as App
+    P, N = App.Vector(*corner), App.Vector(*normal)
+    for f in shape.Faces:
+        if f.isInside(P, 1e-6, True):
+            u, v = f.Surface.parameter(P)
+            if f.normalAt(u, v).isEqual(N, 1e-6):
+                return f
+    raise ValueError("no face %s at %s" % (normal, corner))
 
 
 def _edge(shape, a, b):
@@ -106,7 +127,9 @@ def compute():
                 params.SetFloat("FilletCornerSetbackFallback", float(fallback))
             setting = None
             if isinstance(corners, tuple):
-                setting = {vertex: (corners[0], [(edges[k], d) for k, d in corners[1].items()])}
+                setting = {vertex: (corners[0], [(edges[k] if k in edges
+                                                  else _face(shape, corner, BOX_FACES[k]), d)
+                                                 for k, d in corners[1].items()])}
             elif corners is not None:
                 setting = {vertex: corners}
             res = {}

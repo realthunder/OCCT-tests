@@ -46,3 +46,4 @@ gui() {  # gui <script> <log> [VAR=value...]
 gui $HERE/render.py $W/render.log JOBS=$W/jobs.json
 $RUN python $HERE/corners.py $DEST
 gui $HERE/panel_shot.py $W/panel.log SHOT=$DEST/task_panel.png
+gui $HERE/panel_shot.py $W/panel_depth.log SHOT=$DEST/task_panel_depth.png DEPTH=1
