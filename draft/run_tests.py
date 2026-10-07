@@ -445,6 +445,65 @@ if has_cell_draft():
     ramp_ledge_drafts((5, 11, 15, 17), method="New")
     draft_case("new_face_shrinks", wedge, plane_at("x", 10), None, 5, "valid", 386.6083,
                method="New", neutral_shape=below)
+    # Tangent chains (phase 2): a block 20 x 10 x 10 with its vertical edges
+    # filleted 2. Drafting one wall drafts the whole chain, the walls turned
+    # and the fillets turned into cones: at height z the section is a
+    # rounded rectangle with its walls moved in by z tan(a).
+    rbox = Part.makeBox(20, 10, 10)
+    rbox = rbox.makeFillet(2, [e for e in rbox.Edges
+                               if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+
+    def rbox_volume(a, w=20, d=10, r=2, h=10):
+        k = t(a)
+        return (w * d * h - (w + d) * k * h ** 2 + 4 * k ** 2 * h ** 3 / 3
+                - (4 - math.pi) * (r ** 2 * h - r * k * h ** 2 + k ** 2 * h ** 3 / 3))
+
+    def first_fillet(shape):
+        return [[i for i, f in enumerate(shape.Faces, 1)
+                 if f.Surface.__class__.__name__ == "Cylinder"][0]]
+    first_fillet.many = True
+
+    for a in (5, -5, -15):
+        draft_case("new_chain_rbox_a%d" % a, rbox, plane_at("y", 0), plane_at("z", 0), a,
+                   "valid", rbox_volume(a), method="New")
+    # a fillet drafted itself drafts the same chain
+    draft_case("new_chain_rbox_fillet_a5", rbox, first_fillet, plane_at("z", 0), 5, "valid",
+               rbox_volume(5), method="New")
+    # inward at 15 deg the fillets' cones reach their apex at 2 / tan(15) =
+    # 7.46, under the block's top
+    draft_case("new_chain_rbox_a15", rbox, plane_at("y", 0), plane_at("z", 0), 15,
+               "refused:FaceVanishes", method="New")
+
+    # A 40 x 30 x 20 block, a 20 x 10 pocket 16 deep with its corners
+    # rounded 2, 2 behind the front: the pocket's walls drafted outward about
+    # its floor move 16 tan(a) at the top, through the front wall from 7.3
+    # deg. The solid: the block less the drafted pocket, a ruled loft
+    # between the floor's outline and the top's.
+    def rounded_rect(x0, y0, w, d, r, z):
+        c = [(x0 + w - r, y0 + r), (x0 + w - r, y0 + d - r), (x0 + r, y0 + d - r),
+             (x0 + r, y0 + r)]
+        edges = []
+        for i, (cx, cy) in enumerate(c):
+            a = (i - 1) * math.pi / 2
+            edges.append(Part.ArcOfCircle(Part.Circle(V(cx, cy, z), V(0, 0, 1), r),
+                                          a, a + math.pi / 2).toShape())
+            nx, ny = c[(i + 1) % 4]
+            b = a + math.pi / 2
+            edges.append(Part.LineSegment(V(cx + r * math.cos(b), cy + r * math.sin(b), z),
+                                          V(nx + r * math.cos(b), ny + r * math.sin(b),
+                                            z)).toShape())
+        return Part.Wire(edges)
+
+    block = Part.makeBox(40, 30, 20)
+    pocketed = block.cut(Part.Face(rounded_rect(10, 2, 20, 10, 2, 4)).extrude(V(0, 0, 16)))
+    pocketed = pocketed.removeSplitter()
+    for a in (5, 10, 20):
+        g = 16 * t(a)
+        loft = Part.makeLoft([rounded_rect(10, 2, 20, 10, 2, 4),
+                              rounded_rect(10 - g, 2 - g, 20 + 2 * g, 10 + 2 * g, 2 + g, 20)],
+                             True, True)
+        draft_case("new_chain_pocket_break_a%d" % a, pocketed, plane_at("y", 2),
+                   plane_at("z", 4), a, "valid", block.cut(loft).Volume, method="New")
 else:
     emit("new draft cases skipped: this FreeCAD's Draft has no cell draft")
 

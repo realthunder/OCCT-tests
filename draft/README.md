@@ -208,6 +208,9 @@ come out valid, each at a closed-form volume:
 | `new_boss_walls_a{5,30}_{xy,yx}` | two adjacent walls of a boss in either order: the same solid, the classic draft's |
 | `new_issue474_ramp_ledge_a{5,11,15,17}` | #474's ledge: the ramp, extended, meets the lifted ledge; the wedge `128 tan(a)` |
 | `new_face_vanishes`, `new_face_shrinks` | a 0.2 wide face whose walls meet 0.2 past it, about a plane 50 below: drafted outward it would vanish (refused, `FaceVanishes`); inward, `386.6083` |
+| `new_chain_rbox_a{5,-5,-15}`, `new_chain_rbox_fillet_a5` | tangent chains (2026-10-07): a 20 x 10 x 10 block with its vertical edges filleted 2, one wall (or a fillet) drafted about the floor: the walls and fillets all round drafted, the fillets turned into cones; the section at height z a rounded rectangle with its walls in by `z tan(a)` |
+| `new_chain_rbox_a15` | the same inward at 15 deg: the cones reach their apex at `2 / tan(15)` = 7.46, under the top (refused, `FaceVanishes`) |
+| `new_chain_pocket_break_a{5,10,20}` | a pocket with rounded corners 2 behind a block's front, its walls drafted outward all round: through the front wall from 7.3 deg (the classic draft refuses); the block less a ruled loft of the floor's and the top's outlines |
 
 ## Known open
 
