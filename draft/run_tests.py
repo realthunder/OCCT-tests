@@ -500,6 +500,16 @@ if has_cell_draft():
                "valid", obox_volume(15), method="New")
     draft_case("new_chain_open_apex_fillet_a15", obox, first_fillet, plane_at("z", 0), 15,
                "valid", obox_volume(15), method="New")
+    # #631's S-shaped ramp (its Fillet002 input): the wall face 7 drafted
+    # about face 9 drafts the chain, whose fillet ends where a cylinder and
+    # the plane tangent to it meet; the new cone crosses their line of
+    # contact, which only the coarse fuzzy fuse puts in one place. The
+    # classic draft's volumes (to 1e-7: the recorded 4 decimals).
+    p631 = Part.read(os.path.join(HERE, "..", "fillet", "models", "issue631_fillet002_base.brep"))
+    for a, vol in ((5, 39164.1931), (15, 34327.1140)):
+        draft_case("new_chain_issue631_f7_n9_a%d" % a, p631,
+                   lambda f: f.isSame(p631.Faces[6]), lambda f: f.isSame(p631.Faces[8]), a,
+                   "valid", vol, method="New")
     # Three vertical edges filleted, the one at the origin sharp: the chain
     # closes on itself there, and the two new planes meet in a new edge.
     # From the far wall and from a wall at the sharp corner; at 15 deg past
