@@ -13,6 +13,7 @@
 #      FCBUILD     a FreeCAD build
 #      RUN         the wrapper that runs a command in the build's environment
 #      PART_BEFORE the Part.so for the "before" column
+#      NEWDRAFT_ONLY the cases to make (newdraft.py's names), the rest left
 set -e
 HERE=$(cd $(dirname $0) && pwd)
 OUT=${1:?usage: make_newdraft.sh <outdir>}

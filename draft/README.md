@@ -209,8 +209,12 @@ come out valid, each at a closed-form volume:
 | `new_issue474_ramp_ledge_a{5,11,15,17}` | #474's ledge: the ramp, extended, meets the lifted ledge; the wedge `128 tan(a)` |
 | `new_face_vanishes`, `new_face_shrinks` | a 0.2 wide face whose walls meet 0.2 past it, about a plane 50 below: drafted outward it would vanish (refused, `FaceVanishes`); inward, `386.6083` |
 | `new_chain_rbox_a{5,-5,-15}`, `new_chain_rbox_fillet_a5` | tangent chains (2026-10-07): a 20 x 10 x 10 block with its vertical edges filleted 2, one wall (or a fillet) drafted about the floor: the walls and fillets all round drafted, the fillets turned into cones; the section at height z a rounded rectangle with its walls in by `z tan(a)` |
-| `new_chain_rbox_a15` | the same inward at 15 deg: the cones reach their apex at `2 / tan(15)` = 7.46, under the top (refused, `FaceVanishes`) |
+| `new_chain_rbox_a{15,20}` | the same inward: the cones reach their apex at `2 / tan(a)` (7.46 at 15 deg), under the top, and above it the walls meet in a ridge (2026-10-08; refused before) |
+| `new_chain_rbox_a30` | at 30 deg the short walls narrow to nothing at `5 / tan(30)` = 8.66, under the top (refused, `FaceVanishes`) |
+| `new_chain_open_apex_a15`, `new_chain_open_apex_fillet_a15` | one vertical edge filleted: an open chain (a wall, the fillet, the wall beyond) drafted from the wall and from the fillet, past the apex |
+| `new_chain_sharp_a{5,-5,15}`, `new_chain_sharp_corner_wall_a15` | the block with the vertical edge at the origin left sharp: the chain closes there, the two new planes meeting in a new edge; from the far wall and from a wall at the sharp corner (the classic draft refuses at 15 deg) |
 | `new_chain_pocket_break_a{5,10,20}` | a pocket with rounded corners 2 behind a block's front, its walls drafted outward all round: through the front wall from 7.3 deg (the classic draft refuses); the block less a ruled loft of the floor's and the top's outlines |
+| `new_chain_pocket_apex_a15`, `new_chain_pocket_sharp_a15` | the pocket's walls drafted inward at 15 deg: its concave corners close 7.46 over the floor and the walls meet past it; and with its corner at (10, 2) sharp |
 
 ## Known open
 

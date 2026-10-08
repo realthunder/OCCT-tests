@@ -54,6 +54,28 @@ def _step():
     return Part.makeBox(20, 10, 10).cut(Part.makeBox(20, 5, 5, V(0, 0, 5))).removeSplitter()
 
 
+def _rbox(sharp=False):
+    # TestDraft.testDraftNewTangentChain: a block, its vertical edges
+    # filleted; with sharp, the one at the origin left sharp
+    # (testDraftNewTangentChainSharpCorner)
+    import Part
+    s = Part.makeBox(20, 10, 10)
+    return s.makeFillet(2, [e for e in s.Edges if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1
+                            and (not sharp or abs(e.Vertexes[0].X) + abs(e.Vertexes[0].Y) > 1e-9)])
+
+
+def _pocket():
+    # TestDraft.testDraftAutoTangentChainBreaksThrough: a pocket with rounded
+    # corners 2 behind a block's front
+    import FreeCAD as App
+    import Part
+    V = App.Vector
+    prof = Part.makeBox(20, 10, 16, V(10, 2, 4))
+    prof = prof.makeFillet(2, [e for e in prof.Edges
+                               if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+    return Part.makeBox(40, 30, 20).cut(prof).removeSplitter()
+
+
 def _brep(*path):
     def make():
         import Part
@@ -67,9 +89,13 @@ SHAPES = {
     "issue962_pocket002": _brep("fillet", "models", "issue962_pocket002.brep"),
     "issue309_shape": _brep("draft", "models", "issue309_shape.brep"),
     "issue876_fillet": _brep("fillet", "models", "issue876_fillet_base.brep"),
+    "rbox": _rbox,
+    "rbox_sharp": lambda: _rbox(sharp=True),
+    "pocket": _pocket,
 }
 CLASSIC = ("Classic", dict(Method="Classic"), "the classic draft")
 AUTO = ("Auto", dict(Method="Auto"), "Auto (the checks, then the cell draft)")
+NEW = ("New", dict(Method="New"), "the cell draft")
 # name: shape, face, neutral, angle, reversed, columns, eye, the second row
 # ((eye or None for the case's, center, height), or "classic": the whole
 # classic result), pieces, title, note
@@ -102,7 +128,38 @@ CASES = {
                                    "#876's roof under its lid",
                                    "the cavity's roof drafted 15 deg about a wall; every face its "
                                    "own colour, to show the corner cones put back together"),
+    # section 13: tangent chains
+    "chain_rbox_a5": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 5, False, [CLASSIC, NEW],
+                      (0.7, -1.4, 0.8), (None, (19, 1, 6), 9), False,
+                      "A block with rounded corners (TestDraft)",
+                      "one wall drafted 5 deg about the floor drafts its tangent chain all "
+                      "round: the walls turn, the fillets turn into cones"),
+    "chain_pocket_break_a10": ("pocket", _plane_at("Y", 2), _plane_at("Z", 4), 10, False,
+                               [CLASSIC, AUTO], (0.6, -1.4, 1.1), (None, (20, 2, 16), 14), False,
+                               "A pocket drafted through the front (TestDraft)",
+                               "the pocket's front wall drafted out 10 deg about its floor moves "
+                               "2.82 at the top, through the 2 thick front wall"),
+    "chain_issue962_f57_n29_a5": ("issue962_pocket002", 57, 29, 5, False, [CLASSIC, NEW],
+                                  (-0.8, -1.2, 1.2), (None, (42, 22, 27), 16), False,
+                                  "#962, face 57 at 5 deg",
+                                  "the classic draft drafts the face and the fillet beside it "
+                                  "and stops; the cell draft drafts the whole chain"),
+    # section 14: past a cone's apex, a sharp corner
+    "apex_rbox_a15": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 15, False, [CLASSIC, NEW],
+                      (0.7, -1.4, 0.8), (None, (19, 1, 6), 9), False,
+                      "The block inward at 15 deg",
+                      "the fillets' cones reach their apex at 7.46, under the top: above it "
+                      "the walls meet in a ridge"),
+    "sharp_rbox_a15": ("rbox_sharp", _plane_at("Y", 10), _plane_at("Z", 0), 15, False,
+                       [CLASSIC, NEW], (-0.8, -1.4, 0.8), (None, (1, 1, 6), 9), False,
+                       "The block with a sharp corner, inward at 15 deg",
+                       "the chain closes at the sharp corner (front left): there the two new "
+                       "planes meet in a new edge"),
 }
+
+# NEWDRAFT_ONLY: the cases to make (space separated), the others left as they are
+if os.environ.get("NEWDRAFT_ONLY"):
+    CASES = {k: v for k, v in CASES.items() if k in os.environ["NEWDRAFT_ONLY"].split()}
 
 
 def compute():

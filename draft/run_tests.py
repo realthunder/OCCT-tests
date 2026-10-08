@@ -453,10 +453,13 @@ if has_cell_draft():
     rbox = rbox.makeFillet(2, [e for e in rbox.Edges
                                if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
 
-    def rbox_volume(a, w=20, d=10, r=2, h=10):
+    def rbox_volume(a, w=20, d=10, r=2, h=10, corners=4):
+        # past the cones' apex (r / tan(a), drafted inward) the walls meet
+        # in a sharp edge: no fillet to take off there
         k = t(a)
+        z = min(h, r / k) if k > 0 else h
         return (w * d * h - (w + d) * k * h ** 2 + 4 * k ** 2 * h ** 3 / 3
-                - (4 - math.pi) * (r ** 2 * h - r * k * h ** 2 + k ** 2 * h ** 3 / 3))
+                - corners * (1 - math.pi / 4) * (r ** 2 * z - r * k * z ** 2 + k ** 2 * z ** 3 / 3))
 
     def first_fillet(shape):
         return [[i for i, f in enumerate(shape.Faces, 1)
@@ -469,10 +472,47 @@ if has_cell_draft():
     # a fillet drafted itself drafts the same chain
     draft_case("new_chain_rbox_fillet_a5", rbox, first_fillet, plane_at("z", 0), 5, "valid",
                rbox_volume(5), method="New")
-    # inward at 15 deg the fillets' cones reach their apex at 2 / tan(15) =
-    # 7.46, under the block's top
-    draft_case("new_chain_rbox_a15", rbox, plane_at("y", 0), plane_at("z", 0), 15,
+    # Inward at 15 and 20 deg the fillets' cones reach their apex at 2 /
+    # tan(a) = 7.46 and 5.49, under the block's top: above it the walls meet
+    # in a sharp edge. At 30 deg the short walls narrow to nothing at 5 /
+    # tan(30) = 8.66, under the top too: refused.
+    for a in (15, 20):
+        draft_case("new_chain_rbox_a%d" % a, rbox, plane_at("y", 0), plane_at("z", 0), a,
+                   "valid", rbox_volume(a), method="New")
+    draft_case("new_chain_rbox_a30", rbox, plane_at("y", 0), plane_at("z", 0), 30,
                "refused:FaceVanishes", method="New")
+    # One vertical edge filleted: the chain is a wall, the fillet and the
+    # wall beyond, open at both ends; drafted from the wall and from the
+    # fillet, past the apex at 15 deg.
+    obox = Part.makeBox(20, 10, 10)
+    obox = obox.makeFillet(2, [e for e in obox.Edges
+                               if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1
+                               and abs(e.Vertexes[0].X - 20) < 1e-9
+                               and abs(e.Vertexes[0].Y - 10) < 1e-9])
+
+    def obox_volume(a, h=10, r=2):
+        k = t(a)
+        z = min(h, r / k)
+        return (200 * h - 30 * k * h ** 2 / 2 + k ** 2 * h ** 3 / 3
+                - (1 - math.pi / 4) * (r ** 2 * z - r * k * z ** 2 + k ** 2 * z ** 3 / 3))
+
+    draft_case("new_chain_open_apex_a15", obox, plane_at("y", 10), plane_at("z", 0), 15,
+               "valid", obox_volume(15), method="New")
+    draft_case("new_chain_open_apex_fillet_a15", obox, first_fillet, plane_at("z", 0), 15,
+               "valid", obox_volume(15), method="New")
+    # Three vertical edges filleted, the one at the origin sharp: the chain
+    # closes on itself there, and the two new planes meet in a new edge.
+    # From the far wall and from a wall at the sharp corner; at 15 deg past
+    # the cones' apex too (the classic draft refuses).
+    sbox = Part.makeBox(20, 10, 10)
+    sbox = sbox.makeFillet(2, [e for e in sbox.Edges
+                               if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1
+                               and abs(e.Vertexes[0].X) + abs(e.Vertexes[0].Y) > 1e-9])
+    for a in (5, -5, 15):
+        draft_case("new_chain_sharp_a%d" % a, sbox, plane_at("y", 10), plane_at("z", 0), a,
+                   "valid", rbox_volume(a, corners=3), method="New")
+    draft_case("new_chain_sharp_corner_wall_a15", sbox, plane_at("x", 0), plane_at("z", 0), 15,
+               "valid", rbox_volume(15, corners=3), method="New")
 
     # A 40 x 30 x 20 block, a 20 x 10 pocket 16 deep with its corners
     # rounded 2, 2 behind the front: the pocket's walls drafted outward about
@@ -504,6 +544,26 @@ if has_cell_draft():
                              True, True)
         draft_case("new_chain_pocket_break_a%d" % a, pocketed, plane_at("y", 2),
                    plane_at("z", 4), a, "valid", block.cut(loft).Volume, method="New")
+    # The pocket's walls drafted the other way, inward: at 15 deg its
+    # concave corners close to a sharp edge 2 / tan(15) = 7.46 above the
+    # floor, and the walls meet there. The pocket at height z over the floor
+    # is a rectangle in by z tan(a), less its rounded corners below that.
+    k = t(15)
+    za = 2 / k
+    pocket_volume = (200 * 16 - 30 * k * 16 ** 2 + 4 * k ** 2 * 16 ** 3 / 3
+                     - (4 - math.pi) * (4 * za - 2 * k * za ** 2 + k ** 2 * za ** 3 / 3))
+    draft_case("new_chain_pocket_apex_a15", pocketed, plane_at("y", 2), plane_at("z", 4), -15,
+               "valid", block.Volume - pocket_volume, method="New")
+    # the pocket with its corner at (10, 2) sharp: a concave sharp corner
+    prof = Part.makeBox(20, 10, 16, V(10, 2, 4))
+    prof = prof.makeFillet(2, [e for e in prof.Edges
+                               if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1
+                               and abs(e.Vertexes[0].X - 10) + abs(e.Vertexes[0].Y - 2) > 1e-9])
+    pocketed3 = block.cut(prof).removeSplitter()
+    pocket_volume3 = pocket_volume + (4 - math.pi) / 4 * (4 * za - 2 * k * za ** 2
+                                                         + k ** 2 * za ** 3 / 3)
+    draft_case("new_chain_pocket_sharp_a15", pocketed3, plane_at("y", 2), plane_at("z", 4), -15,
+               "valid", block.Volume - pocket_volume3, method="New")
 else:
     emit("new draft cases skipped: this FreeCAD's Draft has no cell draft")
 
