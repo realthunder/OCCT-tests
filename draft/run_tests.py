@@ -106,14 +106,15 @@ def judge(name, got, expect, ref_volume=None, feature=None):
 # ---------------------------------------------------------------------------
 
 def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None, method=None,
-               stop=True, reversed=False, neutral_shape=None):
+               stop=True, reversed=False, neutral_shape=None, propagate=True):
     """Draft <face> of <shape> by <angle> degrees, the neutral plane that of
     the face <neutral> (faces picked by predicate), the pull direction its
     normal, as PartDesign's Draft takes it with no pull direction given.
     <face> with an attribute `many` is a function of the shape giving the
     indices of several faces. <method>: the Draft's Method (the classic
-    draft when None), <stop> its StopAtBody. <neutral_shape>: a shape whose
-    first face is the neutral plane, instead of a face of <shape>."""
+    draft when None), <stop> its StopAtBody, <propagate> its
+    TangentPropagation. <neutral_shape>: a shape whose first face is the
+    neutral plane, instead of a face of <shape>."""
     doc = App.newDocument("draft_" + name.replace(".", "_"))
     try:
         base = doc.addObject("Part::Feature", "Base")
@@ -145,6 +146,8 @@ def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None, metho
         else:
             d.Method = method
             d.StopAtBody = stop
+            if not propagate:
+                d.TangentPropagation = False
         doc.recompute()
         judge(name, outcome(d), expect, ref_volume, d)
     except Exception:
@@ -368,6 +371,15 @@ def has_cell_draft():
         App.closeDocument(doc.Name)
 
 
+def has_propagation():
+    doc = App.newDocument("probe")
+    try:
+        return "TangentPropagation" in doc.addObject("PartDesign::Draft",
+                                                     "Draft").PropertiesList
+    finally:
+        App.closeDocument(doc.Name)
+
+
 def t(a):
     return math.tan(math.radians(a))
 
@@ -481,6 +493,21 @@ if has_cell_draft():
                    "valid", rbox_volume(a), method="New")
     draft_case("new_chain_rbox_a30", rbox, plane_at("y", 0), plane_at("z", 0), 30,
                "refused:FaceVanishes", method="New")
+    # Tangent propagation off: only the faces picked are drafted. One wall
+    # picked, the fillets beside it are not drafted, which is refused for
+    # now; every wall and fillet picked is the chain, drafted as with it on.
+    def all_walls(shape):
+        return [i for i, f in enumerate(shape.Faces, 1) if abs(f.BoundBox.ZLength - 10) < 1e-9]
+    all_walls.many = True
+
+    if has_propagation():
+        for method in ("New", "Auto"):
+            draft_case("new_nopropagate_rbox_wall_%s_a5" % method.lower(), rbox, plane_at("y", 0),
+                       plane_at("z", 0), 5, "refused:TangentNeighbour", method=method,
+                       propagate=False)
+            draft_case("new_nopropagate_rbox_all_%s_a5" % method.lower(), rbox, all_walls,
+                       plane_at("z", 0), 5, "valid", rbox_volume(5), method=method,
+                       propagate=False)
     # One vertical edge filleted: the chain is a wall, the fillet and the
     # wall beyond, open at both ends; drafted from the wall and from the
     # fillet, past the apex at 15 deg.
