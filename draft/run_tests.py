@@ -493,18 +493,22 @@ if has_cell_draft():
                    "valid", rbox_volume(a), method="New")
     draft_case("new_chain_rbox_a30", rbox, plane_at("y", 0), plane_at("z", 0), 30,
                "refused:FaceVanishes", method="New")
-    # Tangent propagation off: only the faces picked are drafted. One wall
-    # picked, the fillets beside it are not drafted, which is refused for
-    # now; every wall and fillet picked is the chain, drafted as with it on.
+    # Tangent propagation off: only the faces picked are drafted, as if
+    # drafted before the fillets. One wall picked: the fillets beside it are
+    # taken off and made again on the edges where it meets the side walls,
+    # square to it, 10 / cos(a) long. Every wall and fillet picked is the
+    # chain, drafted as with it on.
     def all_walls(shape):
         return [i for i, f in enumerate(shape.Faces, 1) if abs(f.BoundBox.ZLength - 10) < 1e-9]
     all_walls.many = True
 
     if has_propagation():
         for method in ("New", "Auto"):
+            corner = 4 * (1 - math.pi / 4)
             draft_case("new_nopropagate_rbox_wall_%s_a5" % method.lower(), rbox, plane_at("y", 0),
-                       plane_at("z", 0), 5, "refused:TangentNeighbour", method=method,
-                       propagate=False)
+                       plane_at("z", 0), 5, "valid",
+                       2000 - 1000 * t(5) - 20 * corner - 20 * corner / math.cos(math.radians(5)),
+                       method=method, propagate=False)
             draft_case("new_nopropagate_rbox_all_%s_a5" % method.lower(), rbox, all_walls,
                        plane_at("z", 0), 5, "valid", rbox_volume(5), method=method,
                        propagate=False)
