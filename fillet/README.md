@@ -1081,6 +1081,51 @@ fails too: once the fallback mended another corner of the same fillet, the
 topological build read it and the process died (`issue273_Fillet001` edges
 38 and 39 at 0.3, 81 vertex-sweep cases in a first run).
 
+## A fillet's line over a wall kept in coplanar pieces (realthunder/FreeCAD#962, 2026-10-09)
+
+The model's rib (y 17.1..20.3) has a flat top at z=32.25 that ends, at
+x=38.5, on a face sloping down (normal 0.46,0,0.89). Its side wall (y=20.3)
+is two coplanar faces, split by a vertical edge at x=39.197, where the slope
+has come down to z=31.886. The fillet on the top's edge along the wall:
+from radius 0.364 on, its line on the wall (z=32.25-r) passes under the
+slope's edge with the first piece, crosses the split, and meets the slope on
+the second piece's edge. The walk stops at the spine's end with that side
+still in the face; `PerformOneCorner` found no face at the end for its two
+points and handed the corner to `PerformIntersectionAtEnd`, whose plate was
+off by up to 0.017 at radius 0.4 to 0.7 (a chamfer 0.08, all "valid") and
+invalid from 0.8 -- the second piece kept whole under the fillet, its wire
+and the slope's open.
+
+`PerformOneCorner` now carries the line on (`LineOverSplit`, file-local):
+the side in the face is a plane, its line straight; carried on it crosses
+one edge of the face into a piece of the same plane, the same way up, and
+meets the face at the end on an edge of that piece, crossing nothing else.
+The point goes on that edge, the cut is made as on a wall in one face, and
+the line is stored in two: on the first piece to the split (where FILDS
+ends it), on the second from the split to the cut -- the two curves and
+their points put in the DS here, as for the cut over two faces. A piece
+the other way round on its surface (#962's second piece is REVERSED) has
+the line's transitions turned over.
+
+The end now matches the same fillet on the shape refined (`removeSplitter`)
+to 1e-7, the chamfer to 1e-13, at every radius from 0.3 to 0.95. The rest
+of the difference, 0.05 at 0.8, is at the edge's other end (z=14, four
+edges, the wall's line crossing the same split onto the block's top) --
+open, as before. From radius 1 that end fails.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_rib_top_r{0.5,0.8,0.95}`, `issue962_rib_top_chamfer_0.8` | the rib's top edge: 0.5 off by 6e-3 before, 0.8 and 0.95 invalid |
+| `slant_split_wall{,_mirror}_r{0.8,1.5,2}` | the rib in miniature, built: a prism whose top slopes down past x=4, its front wall split at x=5; the volume taken is the fillet's cross-section swept to the slope, closed form (0.8 off by 0.028, 1.5 and 2 invalid, before) |
+
+The fillet sweep (`sweep/`): every edge, 20 invalid results made valid --
+the rib's chain at 0.8, on the Fillet's input and on the Chamfer's -- and
+20 valid ones one face fewer, 1.4e-3 nearer the refined shape's volume (the
+other rib's chain at 0.3, whose end the plate had made); every vertex, 4
+invalid made valid and 116 the same correction. Nothing else moved, nothing
+lost. The suites (fillet, draft, thickness), FreeCAD's Part and PartDesign
+tests and the draft sweep are as before.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -1108,4 +1153,6 @@ tests/fork/fillet/
     Fillet.md        the fixes, before and after, in pictures
     pictures/        before and after, one PNG per fixed case
   pictures/          the tools that make them (make_pictures.sh)
+  sweep/             every edge and vertex of the issues' shapes, against a
+                     baseline (README.md there)
 ```

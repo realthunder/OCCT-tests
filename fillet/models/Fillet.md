@@ -439,8 +439,8 @@ did. Nothing made before changes. Design and measurements: fcad's
 `docs/CornerBlending.md`, section 9; FreeCAD's Part preference
 `FilletCornerSetbackFallback` (0 turns it off).
 
-#876's first Fillet input, the four edges at the corner (17,16.75,3): the
-fork threw (`Standard_ProgramError`, a stripe's end without a point at the
+The first Fillet input of #876, the four edges at the corner (17,16.75,3):
+the fork threw (`Standard_ProgramError`, a stripe's end without a point at the
 far corner, (-17,16.75,3)) and upstream refused. Now both corners are set
 back where their fillets meet. In the zoom, the vertical fillet and the
 one along the base stop short of the corner, and the patch closes it. Its
@@ -454,8 +454,8 @@ round.
 
 ![issue876_corner4_r1](pictures/issue876_corner4_r1.png)
 
-#523's box and cylinder past the cylinder's radius, the end refused as a
-cut over two faces ("bouchon non ecrit") by the fork before and upstream
+The box and cylinder of #523 past the cylinder's radius, the end refused as
+a cut over two faces ("bouchon non ecrit") by the fork before and upstream
 alike. At radius 2.5 the end is set back where the fillet meets the corner:
 the fillet stops partway along the edge, and the patch blends on into the
 cylinder's top and down the box's side. Its boundary on the side has a
@@ -474,6 +474,43 @@ should know that is what the fallback gives here (1072.1768, against the
 run-on fillet's 1078.3294).
 
 ![seam_end_top_r3](pictures/seam_end_top_r3.png)
+
+### A fillet's line over a wall kept in coplanar pieces (`9c44789bbb`, realthunder/FreeCAD#962)
+
+The model of #962 has a rib whose flat top ends on a face sloping down. The
+rib's side wall is two coplanar faces, split by a vertical edge where the slope
+has come down to 31.886, 0.364 under the top. The fillet on the top's edge
+along the wall: from that radius on, its line on the wall runs under the
+slope's edge with the first piece, crosses the split and meets the slope on
+the second piece. The walk stops at the edge's end with that side still in
+the face, the corner found no face at the end for its two points, and the
+end was left to the intersection at end, whose plate was a little off below
+radius 0.8 (0.017 at 0.7, "valid") and invalid from it: in the "before"
+columns the first piece and the slope are red, the second piece is kept
+whole under the fillet, and the end is a small patch.
+
+Now the line is carried on: it crosses one edge of its face into a piece
+of the same plane, the same way up, and meets the slope on an edge of that
+piece, so the end is cut as on a wall in one face, and the line is stored
+in two, on each piece. In the zoom the fillet runs on past the split line
+to the slope; the third row is the second piece, which now has the line's
+short piece along its bottom right, from the split to the slope. The end
+agrees with the same fillet on the shape refined (`removeSplitter`) to
+1e-7 at every radius from 0.3 to 0.95 (a chamfer to 1e-13). The edge's
+other end, at the rib's foot, is four edges whose wall line crosses the
+same split onto the block's top: open, as before, and from radius 1 it
+fails there.
+
+![issue962_rib_top_r0.8](pictures/issue962_rib_top_r0.8.png)
+
+The same made small: a prism whose top slopes down past x=4, its front wall
+split at x=5, filleted along the top's front edge. The volume taken is the
+fillet's cross-section swept from the far end to the slope, in closed form,
+and the result matches it at every radius tried, the edge either way round
+and the second piece either way up on its plane (#962's is upside down,
+which turns the line's transitions over).
+
+![slant_split_wall_r1.5](pictures/slant_split_wall_r1.5.png)
 
 ## Making the pictures
 

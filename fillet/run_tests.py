@@ -321,6 +321,52 @@ twelve = [edge_between(p2, a, b) for a, b in (
     ((17.356038, -9.42499, -3.75), (17.356038, -9.42499, -9.75)))]
 fillet_case("issue962_fillet_r0.8", p2, twelve, 0.8, "pass", 11552.7705)
 
+# The edge along the top of a rib (z=32.25, y=20.3, x 35.5..38.5), whose end
+# face slopes down (normal 0.46,0,0.89); the rib's wall (y=20.3) is in two
+# coplanar pieces, split at x=39.197 where the slope comes down to 31.886.
+# From r=0.364 on, the fillet's line on the wall passes under the slope's
+# edge with the wall's first piece, crosses the split and meets the slope on
+# the second: the walk stopped at the spine's end with that side in the
+# face, and the end was made by the plate of an intersection at end -- off
+# by up to 0.017 (a chamfer 0.08) at r 0.4..0.7, invalid from 0.8. The line
+# is now carried over the split. Volumes: the same fillet on the shape
+# refined (removeSplitter) agrees at this end to 1e-7; the whole differs by
+# 0.05 at r 0.8, all of it at the edge's other end (z=14, four edges, as
+# before).
+rib = edge_between(p2, (35.5, 20.3, 32.25), (38.5, 20.3, 32.25))
+fillet_case("issue962_rib_top_r0.5", p2, rib, 0.5, "pass", 11582.8966, 1e-4)
+fillet_case("issue962_rib_top_r0.8", p2, rib, 0.8, "pass", 11580.9704, 1e-4)
+fillet_case("issue962_rib_top_r0.95", p2, rib, 0.95, "pass", 11579.6797, 1e-4)
+fillet_case("issue962_rib_top_chamfer_0.8", p2, rib, 0.8, "pass", 11576.7958, 1e-4,
+            chamfer=True)
+
+
+def slant_block(mirror=False):
+    """A 12x3 prism (y 0..3) whose top is flat (z=10) for x 0..4 and slopes
+    down to z=6 at x=12; its front wall (y=0) split by a vertical edge at
+    x=5, where the slope is at z=9.5 -- the rib above in miniature."""
+    prof = Part.Face(Part.makePolygon([V(0, 0, 0), V(12, 0, 0), V(12, 0, 6), V(4, 0, 10),
+                                       V(0, 0, 10), V(0, 0, 0)]))
+    s = prof.extrude(V(0, 3, 0))
+    s = s.generalFuse([Part.LineSegment(V(5, 0, 0), V(5, 0, 9.5)).toShape()])[0].Solids[0]
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The fillet on the front top edge (y=0, z=10) at r > 0.5: its line on the
+# wall (z=10-r) crosses the split before it meets the slope, at x=4+2r. The
+# slope cuts the fillet off: the material taken is the fillet's cross-section
+# (1-pi/4)r^2 swept from x=0 to the slope, (1-pi/4)r^2 (4 + 2cr), c the
+# cross-section's centroid from the corner over r, (10-3pi)/(3(4-pi)).
+# Tolerances as on the prism in one piece: the slope's cut, an ellipse
+# approximated, ends at 1.5e-4 at r=2 there too.
+csb = (10 - 3 * math.pi) / (3 * (4 - math.pi))
+for tag, mirror in (("", False), ("_mirror", True)):
+    sb = slant_block(mirror)
+    sbe = edge_between(sb, (0, 0, 10), (-4 if mirror else 4, 0, 10))
+    for r in (0.8, 1.5, 2.0):
+        fillet_case("slant_split_wall%s_r%g" % (tag, r), sb, sbe, r, "pass",
+                    312 - (1 - math.pi / 4) * r * r * (4 + 2 * csb * r), 2e-4)
+
 
 # #474's Fillet003 input, edge 6: its corner plate missed its boundary by 1.8
 # at radius 2 -- invalid, tolerances 15 to 36, 244 too much volume at r 2.
