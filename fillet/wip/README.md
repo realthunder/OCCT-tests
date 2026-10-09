@@ -14,6 +14,9 @@ Found on #631's ramp drafted by the cell draft (fcad docs/NewDraft.md section
 20), whose output had such split edges: with the patch the end at the moving
 wall filleted at every radius (before: from r=8 up it failed). Not applied:
 fcad now joins those edges before making the fillet again, after which the
-patch changes nothing there, and it was never run on the fillet sweep
-(rebuild that first: every edge and vertex of the occ-issues shapes, before
-and after).
+patch changes nothing there.
+
+Vetted 2026-10-09 on `../sweep` (edge and vertex, 16163 cases): every result
+the same as without it -- volumes, face counts and tolerances included. It
+is neutral there; what it fixes takes split edges at a stripe's end, which
+none of the sweep's inputs has.

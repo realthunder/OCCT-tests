@@ -1,0 +1,26 @@
+# name  brep (relative to this directory): the fillet sweep's inputs
+issue273_Fillet ../../draft/sweep/shapes/issue273_Fillet.brep
+issue273_Fillet001 shapes/issue273_Fillet001.brep
+issue309_shape ../../draft/sweep/shapes/issue309_shape.brep
+issue474_Fillet ../../draft/sweep/shapes/issue474_Fillet.brep
+issue474_Fillet001 ../../draft/sweep/shapes/issue474_Fillet001.brep
+issue474_Fillet002 ../../draft/sweep/shapes/issue474_Fillet002.brep
+issue474_Fillet003 ../../draft/sweep/shapes/issue474_Fillet003.brep
+issue523_box ../../draft/sweep/shapes/issue523_box.brep
+issue631_Fillet ../../draft/sweep/shapes/issue631_Fillet.brep
+issue631_Fillet001 ../../draft/sweep/shapes/issue631_Fillet001.brep
+issue631_Fillet002 ../../draft/sweep/shapes/issue631_Fillet002.brep
+issue631_Fillet003 ../../draft/sweep/shapes/issue631_Fillet003.brep
+issue876_Fillet ../../draft/sweep/shapes/issue876_Fillet.brep
+issue876_Fillet001 shapes/issue876_Fillet001.brep
+issue962_Chamfer ../../draft/sweep/shapes/issue962_Chamfer.brep
+issue962_Fillet ../../draft/sweep/shapes/issue962_Fillet.brep
+mini_ab_r3 ../../draft/sweep/shapes/mini_ab_r3.brep
+mini_armblock2 ../../draft/sweep/shapes/mini_armblock2.brep
+mini_finbase ../../draft/sweep/shapes/mini_finbase.brep
+mini_finwall ../../draft/sweep/shapes/mini_finwall.brep
+mini_mini_wall ../../draft/sweep/shapes/mini_mini_wall.brep
+mini_slot_bothsplit ../../draft/sweep/shapes/mini_slot_bothsplit.brep
+mini_slot_opsplit ../../draft/sweep/shapes/mini_slot_opsplit.brep
+mini_slot_split ../../draft/sweep/shapes/mini_slot_split.brep
+mini_slotwall ../../draft/sweep/shapes/mini_slotwall.brep
