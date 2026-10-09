@@ -1,0 +1,79 @@
+diff --git a/src/ModelingAlgorithms/TKFillet/ChFi3d/ChFi3d_Builder_C1.cxx b/src/ModelingAlgorithms/TKFillet/ChFi3d/ChFi3d_Builder_C1.cxx
+index 327fda243f..78c61ea01b 100644
+--- a/src/ModelingAlgorithms/TKFillet/ChFi3d/ChFi3d_Builder_C1.cxx
++++ b/src/ModelingAlgorithms/TKFillet/ChFi3d/ChFi3d_Builder_C1.cxx
+@@ -2662,11 +2662,31 @@ static void cherche_face(const NCollection_List<TopoDS_Shape>& map,
+ 
+ //=======================================================================
+ // function : cherche_edge1
+-// purpose  : find common edge between faces F1 and F2
++// purpose  : find common edge between faces F1 and F2; with <V>, one
++//           through <V> if there is one: two faces may share several
++//           edges (an edge of theirs split by a vertex of a third face),
++//           and the one wanted is where they meet at <V>
+ //=======================================================================
+ 
+-static void cherche_edge1(const TopoDS_Face& F1, const TopoDS_Face& F2, TopoDS_Edge& Edge)
++static void cherche_edge1(const TopoDS_Face&   F1,
++                          const TopoDS_Face&   F2,
++                          TopoDS_Edge&         Edge,
++                          const TopoDS_Vertex& V = TopoDS_Vertex())
+ {
++  if (!V.IsNull())
++  {
++    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> MapE2;
++    TopExp::MapShapes(F2, TopAbs_EDGE, MapE2);
++    for (TopExp_Explorer ex(F1, TopAbs_EDGE); ex.More(); ex.Next())
++    {
++      const TopoDS_Edge& E = TopoDS::Edge(ex.Current());
++      if (MapE2.Contains(E) && hasVertex(E, V))
++      {
++        Edge = E;
++        return;
++      }
++    }
++  }
+   int                                                           i, j;
+   TopoDS_Edge                                                   Ecur1, Ecur2;
+   bool                                                          trouve = false;
+@@ -3436,10 +3456,18 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const int Index)
+         while (!V1.IsSame(Vtx))
+         {
+           ChFi3d_cherche_element(V1, Ei, F1, E, V2);
+-          V1 = V2;
+-          Ei = E;
++          // Face[nb - 1] and Face[nb] meet at V1
++          const TopoDS_Vertex Vc = V1;
++          V1                     = V2;
++          Ei                     = E;
+           ChFi3d_cherche_face1(myEFMap(E), F1, Face[nb]);
+-          cherche_edge1(Face[nb - 1], Face[nb], Edge[nb]);
++          if (Face[nb].IsSame(Face[nb - 1]))
++          {
++            // an edge of F1 with one face split by a vertex (of no other
++            // face): the same face goes on
++            continue;
++          }
++          cherche_edge1(Face[nb - 1], Face[nb], Edge[nb], Vc);
+           nb++;
+           if (nb >= nn)
+           {
+@@ -3476,10 +3504,15 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const int Index)
+         while (!V1.IsSame(Vfin))
+         {
+           ChFi3d_cherche_element(V1, Ei, F2, E, V2);
+-          Ei = E;
+-          V1 = V2;
++          const TopoDS_Vertex Vc = V1;
++          Ei                     = E;
++          V1                     = V2;
+           ChFi3d_cherche_face1(myEFMap(E), F2, Face[nb]);
+-          cherche_edge1(Face[nb - 1], Face[nb], Edge[nb]);
++          if (Face[nb].IsSame(Face[nb - 1]))
++          {
++            continue;
++          }
++          cherche_edge1(Face[nb - 1], Face[nb], Edge[nb], Vc);
+           nb++;
+           if (nb >= nn)
+           {
