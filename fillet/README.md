@@ -1109,13 +1109,13 @@ the line's transitions turned over.
 
 The end now matches the same fillet on the shape refined (`removeSplitter`)
 to 1e-7, the chamfer to 1e-13, at every radius from 0.3 to 0.95. The rest
-of the difference, 0.05 at 0.8, is at the edge's other end (z=14, four
-edges, the wall's line crossing the same split onto the block's top) --
-open, as before. From radius 1 that end fails.
+of the difference, 0.05 at 0.8, was at the edge's other end (z=14, four
+edges, the wall's line crossing the same split onto the block's top), and
+from radius 1 that end failed: made in the next section.
 
 | Case | What it covers |
 |------|----------------|
-| `issue962_rib_top_r{0.5,0.8,0.95}`, `issue962_rib_top_chamfer_0.8` | the rib's top edge: 0.5 off by 6e-3 before, 0.8 and 0.95 invalid |
+| `issue962_rib_top_r{0.5,0.8,0.95}`, `issue962_rib_top_chamfer_0.8` | the rib's top edge: 0.5 off by 6e-3 before, 0.8 and 0.95 invalid (the volumes, the refined shape's to 1e-5, since the foot below) |
 | `slant_split_wall{,_mirror}_r{0.8,1.5,2}` | the rib in miniature, built: a prism whose top slopes down past x=4, its front wall split at x=5; the volume taken is the fillet's cross-section swept to the slope, closed form (0.8 off by 0.028, 1.5 and 2 invalid, before) |
 
 The fillet sweep (`sweep/`): every edge, 20 invalid results made valid --
@@ -1126,10 +1126,91 @@ invalid made valid and 116 the same correction. Nothing else moved, nothing
 lost. The suites (fillet, draft, thickness), FreeCAD's Part and PartDesign
 tests and the draft sweep are as before.
 
+## The same line at a corner of four edges (realthunder/FreeCAD#962, 2026-10-09)
+
+The rib's chain runs from its top down its front, tangent, and its last
+edge -- the rib's wall (y=20.3) against the 45 deg underside of its
+overhang -- ends at the rib's foot, (38.5,20.3,14), on the block's top
+(z=14). Four edges meet there: the underside's with the block's side
+(x=38.5), the side's with the top, the top's with the wall, and the
+fillet's own. The fillet's end is cut by the block's top: its line on the
+wall comes down to it at x=38.5+1.414r, past the wall's split (x=39.197)
+from r=0.493 on; on the underside its line ends on the edge with the side.
+`PerformIntersectionAtEnd` makes such an end by cutting the fillet with the
+faces around the vertex, from one line's edge to the other's -- here from
+the underside's edge with the side, over the side, to the top's edge with
+the wall. With the wall in two pieces, that edge is two: the line ends on
+the far one, which does not reach the vertex.
+
+- From r=0.986, where the walk itself crosses the split before the end,
+  the line's end on the far edge made the face search take the corner for
+  a cap (`IntersectMoreCorner`, "cap not written"): the fillet failed.
+- At r=0.493..0.986 the exact fillet's line was cut at the split
+  (`SplitKPart`), and the walk past the end, its other side held at a point,
+  stopped there too: the end was made "valid", off by up to 0.09.
+
+Now (`ArcPastSplit`, file-local): a line ending on an edge away from the
+vertex, which carries on, across the split's foot, the edge of the vertex
+between the near piece and the block's top, is taken as if it ended on that
+edge -- the faces at the end are the same as on a wall in one face, the
+edge of the vertex left out of the search and, wholly under the fillet,
+given a point at its far end that keeps nothing of it. When the line stops
+in the near piece, the walk past the end is dropped and the exact line
+carried over the split as at the rib's top (`LineOverSplit`; its piece on
+the far piece stored by `StoreLineOverSplit`, now shared by both ends).
+
+The end now matches the refined shape to 1e-5 at every radius from 0.3 to
+3 but one (below), and the chamfer exactly from 0.3 to 0.9. Built in
+miniature, both ways round, fillet and chamfer match their closed forms.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_rib_foot_r{0.6,0.8,1,1.5,2.5}` | the foot: 0.6 and 0.8 off by 0.02 and 0.05 before, 1 to 2.5 failing; the refined shape's volumes, to 1e-5 |
+| `rib_foot_split{,_mirror}_r{0.8,1.2,1.5,2}` | the foot in miniature, built: a rib with a 45 deg underside on a block, its wall split at x=1; the volume taken is the cross-section swept between the slope's end and the block's top, closed form (0.8 and 1.2 off by 0.05 and 0.17 before, 1.5 and 2 failing) |
+| `issue962_rib_chamfer_1.2` (XFAIL) | see Known broken |
+
+Still open at this corner: a radius within 5e-4 of 0.986 (the split
+crossing the line within tolerance of the spine's end: invalid or refused,
+as before); and a radius whose walk past the end must go further than half
+the spine's length (`ChFi3d_FilBuilder::ExtentOneCorner`), which the
+miniature reaches at 2.5 -- on the refined shape too it is the exact
+fillet that carries it.
+
+The fillet sweep (`sweep/`): every edge, 60 refused made (the rib's chain
+at 0.8 and 2 on the Fillet's and the Chamfer's inputs) and 20 valid ones
+corrected by 0.049 to the refined volume (0.8); every vertex, 232 refused
+made (the same inputs, radius 1). Nothing else moved, nothing lost. The
+suites (fillet, draft, thickness), FreeCAD's Part and PartDesign tests and
+the draft sweep are as before.
+
+## A flag read before it was set (2026-10-09)
+
+`ChFi3d_ExtendSurface` extends a face's B-spline or Bezier surface once,
+and leaves it alone when the flag it is given is already set.
+`IntersectMoreCorner` passed it an `int` it never initialized, so whether
+the face at the fillet's end was extended -- and the corner's cut computed
+on it -- was whatever the stack held; `PerformIntersectionAtEnd` zeroed
+its flags only up to the last face but one, and an OnSame end reads the
+last. Both start at zero now, as every other call starts them.
+
+It showed when the change above moved #474's Fillet003 results at two
+vertices by up to 0.47 without running any of its new code: the file
+compiled with `-ftrivial-auto-var-init=pattern` gave the same, with
+`=zero` the baseline's, and `-ftrivial-auto-var-init-stop-after` bisected
+it to the one variable.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f003_e51_r{0.3,0.8}` | #474's Fillet003 input, edge 51 (the vertical at x=6.415, y=11.307), whose foot is four edges on a B-spline face: refused at every radius before; the material taken is the cross-section times the edge's length to 0.1% |
+
+In the sweep, edge 51 at 0.3 and 0.8 and 10 vertex cases with it, made;
+nothing else moved.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
+| `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there -- on the refined shape too (1 is refused on both). Refused before, at the foot, which is made now |
 | `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 
 ## Pictures

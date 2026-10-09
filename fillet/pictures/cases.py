@@ -28,6 +28,8 @@ STAGES = {
     "s876d": ("e25bcf2525", "2a623612a8"),
     "s894": ("5c81764cc5", "0ff4092766"),
     "s962i": ("b207bd4103", "9c44789bbb"),
+    "s474": ("8f861e9dea", "09c8fe6c57"),
+    "s962j": ("09c8fe6c57", "7a1fbeffb3"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -163,6 +165,17 @@ def _slant_block():
     return s.generalFuse([Part.LineSegment(V(5, 0, 0), V(5, 0, 9.5)).toShape()])[0].Solids[0]
 
 
+def _rib_foot():
+    """run_tests.py's rib_foot: a block and on it a rib whose underside
+    slopes 45 deg out from the block's edge, its front wall split at x=1."""
+    V = App.Vector
+    blk = Part.makeBox(10, 6, 4, V(0, 0, -4))
+    prof = Part.Face(Part.makePolygon([V(0, 0, 0), V(10, 0, 0), V(10, 0, 8), V(-3, 0, 8),
+                                       V(-3, 0, 3), V(0, 0, 0)]))
+    s = blk.fuse(prof.extrude(V(0, 3, 0))).removeSplitter()
+    return s.generalFuse([Part.LineSegment(V(1, 3, 0), V(1, 3, 8)).toShape()])[0].Solids[0]
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -179,6 +192,7 @@ SHAPES = {
     "postplane": _teardrop_post_on_plate,
     "p876": _brep("issue876_fillet_base.brep"),
     "slantblock": _slant_block,
+    "ribfoot": _rib_foot,
 }
 
 
@@ -247,11 +261,19 @@ UVFACE = {
     "p876": _plate_near(17, 16.75, 3, reach=1.5),
     # the wall's second piece, which the fillet's line now crosses onto
     "slantblock": _plane_at("y", 0, {"x": 5.5}),
+    # the block's top, which the fillet's end now grows into under the rib
+    "ribfoot": _plane_at("z", 0),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
     "issue962_rib_top_r0.8": _plane_at("y", 20.3, {"x": 40.0}, {"x": 50.0}),
+    # the B-spline face at edge 51's foot, which the corner extends
+    "issue474_f003_e51_r0.8": (lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
+                               and f.BoundBox.ZMin < 28.3 and f.BoundBox.ZMax < 29.8
+                               and f.BoundBox.isInside(App.Vector(6.0, 10.6, 29.0))),
+    # the block's top at the rib's foot (y 20.3..23.7, now from 18.8)
+    "issue962_rib_foot_r1.5": _plane_at("z", 14, {"x": 38.0, "y": 19.0}, {"y": 24.0}),
     # the wall y=10.2 beside e50, its piece from x=38.5 on (the hexagon's)
     "issue962_e50_r0.8": _plane_at("y", 10.2, {"x": 40.0}, {"x": 50.0}),
     # the arm's bottom, which holds the seam at x=38.5
@@ -290,6 +312,8 @@ NAMES = {
     "p876": "#876's first Fillet input (a PartDesign body, its walls drafted 1 deg)",
     "slantblock": "a 12x3x10 prism, its top sloping down past x=4, its front wall two faces "
                   "split at x=5",
+    "ribfoot": "a 10x6x4 block and on it a 3-thick rib whose underside slopes 45 deg out "
+               "from the block's edge, the rib's front wall two faces split at x=1",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -308,6 +332,7 @@ VIEW = {
     "postplane": ((-4.5, 0, 9), 20.0),
     "p876": ((0, 0, 10), 46.0),
     "slantblock": ((6, 1.5, 5), 14.0),
+    "ribfoot": ((3.5, 3, 2), 16.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -326,10 +351,13 @@ UVLABEL = {
     "postplane": ("the post's wall beyond the cone", False),
     "p876": ("the corner's plate", False),
     "slantblock": ("the wall's second piece", False),
+    "ribfoot": ("the block's top", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
+    "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
+    "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
     "seam_end_top_r2.5": ("the corner's plate", False),
     "seam_end_top_r3": ("the corner's plate", False),
@@ -402,9 +430,16 @@ CASES = {
     "seam_end_top_r3": ("s894", "boxcyl", ((2, 0, 10), (10, 0, 10)), 3.0, 1072.1768,
                         (2, 0, 10), (0.55, -1, 0.75)),
     "issue962_rib_top_r0.8": ("s962i", "p962", ((35.5, 20.3, 32.25), (38.5, 20.3, 32.25)), 0.8,
-                              11580.9704, (39.2, 20.3, 31.6), (0.6, 1, 0.7)),
+                              11580.9213, (39.2, 20.3, 31.6), (0.6, 1, 0.7)),
     "slant_split_wall_r1.5": ("s962i", "slantblock", ((0, 0, 10), (4, 0, 10)), 1.5, 309.7450,
                               (5.5, 0, 9), (0.5, -1, 0.6)),
+    "issue474_f003_e51_r0.8": ("s474", "p474", ((6.415306, 11.306805, 29.660692),
+                                                 (6.415306, 11.306805, 38.0)), 0.8, 1987.7290,
+                               (6.4, 11.3, 29.66), (-0.3, 1, 0.5)),
+    "issue962_rib_foot_r1.5": ("s962j", "p962", ((35.5, 20.3, 32.25), (38.5, 20.3, 32.25)), 1.5,
+                               11572.7267, (38.8, 20.0, 14.6), (-1, 0.6, -0.1)),
+    "rib_foot_split_r1.5": ("s962j", "ribfoot", ((0, 3, 0), (-3, 3, 3)), 1.5, 536.1279,
+                            (0.8, 3, 0.4), (0.6, 1, 0.6)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

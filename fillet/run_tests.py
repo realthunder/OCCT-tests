@@ -109,13 +109,14 @@ def document_case(name, filename, volumes=None):
 # ---------------------------------------------------------------------------
 
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
-                chamfer=False):
+                chamfer=False, vol_tol=None):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
     makeChamfer(radius, ...) with chamfer=True.
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
-                    ref_volume when given, and no edge or vertex tolerance
-                    above max_tol when given.
+                    ref_volume when given (within vol_tol when given, else
+                    RELTOL of it), and no edge or vertex tolerance above
+                    max_tol when given.
     expect='xfail': known broken (see README.md); an exception, an invalid
                     shape or an open shell counts as the expected failure.
     """
@@ -134,7 +135,8 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
         elif not r.Shells[0].isClosed():
             problems.append("open-shell")
         if not problems and ref_volume is not None:
-            if abs(r.Volume - ref_volume) > RELTOL * abs(ref_volume):
+            if abs(r.Volume - ref_volume) > (vol_tol if vol_tol is not None
+                                             else RELTOL * abs(ref_volume)):
                 problems.append("volume %.4f != %.4f" % (r.Volume, ref_volume))
         if not problems and max_tol is not None:
             tol = max([e.Tolerance for e in r.Edges] + [v.Tolerance for v in r.Vertexes])
@@ -330,15 +332,34 @@ fillet_case("issue962_fillet_r0.8", p2, twelve, 0.8, "pass", 11552.7705)
 # face, and the end was made by the plate of an intersection at end -- off
 # by up to 0.017 (a chamfer 0.08) at r 0.4..0.7, invalid from 0.8. The line
 # is now carried over the split. Volumes: the same fillet on the shape
-# refined (removeSplitter) agrees at this end to 1e-7; the whole differs by
-# 0.05 at r 0.8, all of it at the edge's other end (z=14, four edges, as
-# before).
+# refined (removeSplitter), to 1e-5 since the chain's other end (below) is
+# made too.
 rib = edge_between(p2, (35.5, 20.3, 32.25), (38.5, 20.3, 32.25))
-fillet_case("issue962_rib_top_r0.5", p2, rib, 0.5, "pass", 11582.8966, 1e-4)
-fillet_case("issue962_rib_top_r0.8", p2, rib, 0.8, "pass", 11580.9704, 1e-4)
-fillet_case("issue962_rib_top_r0.95", p2, rib, 0.95, "pass", 11579.6797, 1e-4)
-fillet_case("issue962_rib_top_chamfer_0.8", p2, rib, 0.8, "pass", 11576.7958, 1e-4,
-            chamfer=True)
+fillet_case("issue962_rib_top_r0.5", p2, rib, 0.5, "pass", 11582.884638, 1e-4, vol_tol=1e-5)
+fillet_case("issue962_rib_top_r0.8", p2, rib, 0.8, "pass", 11580.921269, 1e-4, vol_tol=1e-5)
+fillet_case("issue962_rib_top_r0.95", p2, rib, 0.95, "pass", 11579.597504, 1e-4, vol_tol=1e-5)
+fillet_case("issue962_rib_top_chamfer_0.8", p2, rib, 0.8, "pass", 11576.625155, 1e-4,
+            chamfer=True, vol_tol=1e-5)
+
+# The same chain's other end: from the top it runs down the rib's front,
+# tangent, and its last edge -- the rib's wall (y=20.3) against the 45 deg
+# underside of its overhang -- ends at the rib's foot (38.5,20.3,14) on the
+# block's top (z=14), four edges there. The wall's line comes down to the
+# block's top at x=38.5+1.414r, past the split at x=39.197 from r=0.493 on,
+# and from r=0.986 the walk itself crosses the split before the end. The
+# end was made off by up to 0.09 at r 0.5..0.98 (all "valid": the exact
+# fillet's line was cut at the split, and the walk past the end stopped
+# there), and failed from 0.99 (the line's end on the block's top edge
+# beyond the split, an edge without the corner's vertex, was taken for a
+# cap). Volumes: the refined shape's, to 1e-5.
+for r, vol in ((0.6, 11582.331352), (0.8, 11580.921269), (1.0, 11579.105436),
+               (1.5, 11572.726674), (2.5, 11552.242546)):
+    fillet_case("issue962_rib_foot_r%g" % r, p2, rib, r, "pass", vol, 2e-4, vol_tol=1e-5)
+# A chamfer on the chain from 1 on: the chain turns from the rib's top down
+# its front on an arc of radius 1, and the chamfer's line on the wall turns
+# back on itself there -- a self-intersecting wire, on the refined shape as
+# well (1 is refused on both). Refused before, at the foot; invalid now.
+fillet_case("issue962_rib_chamfer_1.2", p2, rib, 1.2, "xfail", chamfer=True)
 
 
 def slant_block(mirror=False):
@@ -368,11 +389,48 @@ for tag, mirror in (("", False), ("_mirror", True)):
                     312 - (1 - math.pi / 4) * r * r * (4 + 2 * csb * r), 2e-4)
 
 
+def rib_foot(mirror=False):
+    """#962's rib foot in miniature: a block (x 0..10, y 0..6, z -4..0) and
+    on it a rib (y 0..3, up to z=8) whose underside slopes at 45 deg from
+    the block's edge (0,0) out to x=-3, z=3; the rib's front wall (y=3)
+    split by a vertical edge at x=1."""
+    blk = Part.makeBox(10, 6, 4, V(0, 0, -4))
+    prof = Part.Face(Part.makePolygon([V(0, 0, 0), V(10, 0, 0), V(10, 0, 8), V(-3, 0, 8),
+                                       V(-3, 0, 3), V(0, 0, 0)]))
+    s = blk.fuse(prof.extrude(V(0, 3, 0))).removeSplitter()
+    s = s.generalFuse([Part.LineSegment(V(1, 3, 0), V(1, 3, 8)).toShape()])[0].Solids[0]
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The fillet on the wall's edge with the underside, (0,3,0)..(-3,3,3): at
+# the foot it ends at four edges, its line on the wall reaching the block's
+# top at x=1.414r, past the split from r=0.71 (the walk crossing it before
+# the end from r=1.41). The slope cuts the fillet off at x=-3, the block's
+# top at z=0, both planes: the material taken is the cross-section swept
+# between them through its centroid, (1-pi/4)r^2 (3sqrt2 + 2cr), c as for
+# the slant block. 0.8 and 1.2 were off by 0.05 and 0.17, 1.5 and 2 failed.
+for tag, mirror in (("", False), ("_mirror", True)):
+    rf = rib_foot(mirror)
+    rfe = edge_between(rf, (0, 3, 0), (3 if mirror else -3, 3, 3))
+    for r in (0.8, 1.2, 1.5, 2.0):
+        fillet_case("rib_foot_split%s_r%g" % (tag, r), rf, rfe, r, "pass",
+                    538.5 - (1 - math.pi / 4) * r * r * (3 * math.sqrt(2) + 2 * csb * r),
+                    2e-4, vol_tol=1e-4)
+
+
 # #474's Fillet003 input, edge 6: its corner plate missed its boundary by 1.8
 # at radius 2 -- invalid, tolerances 15 to 36, 244 too much volume at r 2.
 p474 = Part.read(os.path.join(MODELS, "issue474_fillet003_base.brep"))
 for r, vol in ((0.3, 1988.9101), (0.8, 1989.1235), (2.0, 1990.2561)):
     fillet_case("issue474_f003_e6_r%g" % r, p474, 6, r, "pass", vol, 0.05)
+# Edge 51 of the same input, the vertical (6.415, 11.307, z 29.66..38):
+# refused at every radius. IntersectMoreCorner extends the face at the
+# fillet's end through a flag it never set, and the extension is skipped
+# when the flag already reads non-zero -- whatever the stack held. The
+# material taken is the cross-section times the edge's length to 0.1%.
+e51 = edge_between(p474, (6.415306, 11.306805, 29.660692), (6.415306, 11.306805, 38.0))
+for r, vol in ((0.3, 1988.711859), (0.8, 1987.728997)):
+    fillet_case("issue474_f003_e51_r%g" % r, p474, e51, r, "pass", vol, 0.05, vol_tol=1e-5)
 
 # The same foot made small: an arm (a prism of a quadrilateral) fused to a
 # block, the seam between their bottoms running from y=27.2 to y=10.2 -- the

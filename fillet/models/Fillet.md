@@ -498,8 +498,7 @@ short piece along its bottom right, from the split to the slope. The end
 agrees with the same fillet on the shape refined (`removeSplitter`) to
 1e-7 at every radius from 0.3 to 0.95 (a chamfer to 1e-13). The edge's
 other end, at the rib's foot, is four edges whose wall line crosses the
-same split onto the block's top: open, as before, and from radius 1 it
-fails there.
+same split onto the block's top; it is the next section.
 
 ![issue962_rib_top_r0.8](pictures/issue962_rib_top_r0.8.png)
 
@@ -511,6 +510,58 @@ and the second piece either way up on its plane (#962's is upside down,
 which turns the line's transitions over).
 
 ![slant_split_wall_r1.5](pictures/slant_split_wall_r1.5.png)
+
+### The same line at a corner of four edges (`7a1fbeffb3`, realthunder/FreeCAD#962)
+
+The rib's chain ends at the rib's foot: its last edge, the wall against
+the 45 deg underside of the rib's overhang, comes down to the block's top,
+and four edges meet there -- the fillet's, the underside's with the
+block's side, the side's with the top, the top's with the wall. Such an
+end is cut by the faces around the vertex, from the edge the fillet's line
+on one side ends on to the edge its line on the other side ends on. Here
+the wall is two coplanar faces, split just past the foot: from radius
+0.493 on, the wall's line meets the block's top on the far piece's edge,
+which does not reach the vertex. The corner searched the faces at the
+vertex for that edge, found none, and took the end for a cap that is not
+written: from 0.986 the fillet failed, and below it the end was made off
+by up to 0.09 (the exact fillet's line stopped at the split, and the walk
+past the end with it).
+
+Now that edge is recognised as the one the edge of the vertex carries on
+across the split's foot, and the end is cut as on a wall in one face:
+over the block's side and on over its top, the edge of the vertex beside
+the split -- under the fillet whole -- left out. Where the line stops in
+the first piece, it is carried over the split as at the rib's top. In the
+pictures the "before" columns are the input, refused; after, the fillet
+runs down the underside's edge and its end lies flat in the block's top,
+which grows past its old edge to meet it: the third row is that face, its
+bite the end's ellipse. The end matches the refined shape to 1e-5 at every
+radius from 0.3 to 3 (but within 5e-4 of 0.986, where the split meets the
+line at the spine's end within tolerance), the chamfer exactly.
+
+![issue962_rib_foot_r1.5](pictures/issue962_rib_foot_r1.5.png)
+
+The same made small: a rib with a 45 deg underside standing on a block,
+its front wall split at x=1. The fillet's cross-section swept between the
+underside's end and the block's top, in closed form, is what it takes, at
+every radius tried, either way round; the chamfer's likewise.
+
+![rib_foot_split_r1.5](pictures/rib_foot_split_r1.5.png)
+
+### A flag read before it was set (`09c8fe6c57`, realthunder/FreeCAD#474)
+
+Where a fillet ends at four edges on a B-spline face, the corner extends
+that face's surface to cut the fillet on it -- once, and not when the flag
+it passes says the surface is extended already. The flag was never set to
+zero first: what the stack held decided whether the surface was extended.
+#474's Fillet003 input, edge 51, ends so on a B-spline face, and it was
+refused at every radius; it found the stack non-zero. It showed when the
+change above moved other results of the same input without running any of
+its own code. Now the flag starts at zero, as everywhere else. The
+material the fillet takes is its cross-section times the edge's length to
+0.1%.
+
+![issue474_f003_e51_r0.8](pictures/issue474_f003_e51_r0.8.png)
 
 ## Making the pictures
 
