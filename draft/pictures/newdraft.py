@@ -167,6 +167,24 @@ CASES = {
                        "The block with a sharp corner, inward at 15 deg",
                        "the chain closes at the sharp corner (front left): there the two new "
                        "planes meet in a new edge"),
+    # section 17: tangent propagation
+    "prop_rbox_a15": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 15, False,
+                      [("New", dict(Method="New"), "tangent propagation on"),
+                       ("off", dict(Method="New", TangentPropagation=False),
+                        "off: the fillets made again")],
+                      (0.7, -1.4, 0.8), (None, (19, 1, 6), 9), False,
+                      "One wall of the filleted block at 15 deg, tangent propagation on and off",
+                      "on, the wall's tangent chain drafts all round; off, only the wall turns, "
+                      "and the fillets beside it are made again along its slope"),
+    "prop_rbox_two_a15": ("rbox", [_plane_at("Y", 0), _plane_at("X", 0)], _plane_at("Z", 0),
+                          15, False,
+                          [("New", dict(Method="New"), "tangent propagation on"),
+                           ("off", dict(Method="New", TangentPropagation=False),
+                            "off: the fillets made again")],
+                          (-0.8, -1.4, 0.8), (None, (1, 1, 6), 9), False,
+                          "Two walls of the filleted block at 15 deg, not the fillet between them",
+                          "off, the fillet between the two walls is made again where the "
+                          "drafted walls meet, at their new angle"),
     # section 18: the roof
     "roof_rbox_a30": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 30, False, [CLASSIC, NEW],
                       (0.7, -1.4, 0.8), ((1, 0, 0), (20, 5, 5), 13), False,
@@ -211,10 +229,12 @@ def compute():
     shape = SHAPES[sk]()
     pick = lambda w: w if isinstance(w, int) else [i for i, f in enumerate(shape.Faces, 1)
                                                    if w(f)][0]
-    fi, ni = pick(face), pick(neutral)
+    # a face, or a list of them drafted together
+    fis = [pick(w) for w in face] if isinstance(face, list) else [pick(face)]
+    ni = pick(neutral)
     stem = os.path.join(out, "%s.%s" % (name, col))
     shape.exportBrep(os.path.join(out, name + ".input.brep"))
-    setup(shape, fi, ni, angle, rev, os.path.join(out, name))
+    setup(shape, fis, ni, angle, rev, os.path.join(out, name))
     doc = App.newDocument("pic")
     base = doc.addObject("Part::Feature", "Base")
     base.Shape = shape
@@ -222,7 +242,7 @@ def compute():
     body.BaseFeature = base
     doc.recompute()
     d = body.newObject("PartDesign::Draft", "Draft")
-    d.Base = (base, ["Face%d" % fi])
+    d.Base = (base, ["Face%d" % i for i in fis])
     d.NeutralPlane = (base, ["Face%d" % ni])
     d.Angle = angle
     d.Reversed = rev
@@ -271,7 +291,7 @@ def compute():
                    faces=len(r.Faces), bop=bop, made=made)
         if bop != "clean":
             res.update(crossing(r, made))
-    res.update(face=fi, neutral=ni, angle=angle, input_faces=len(shape.Faces),
+    res.update(face=fis, neutral=ni, angle=angle, input_faces=len(shape.Faces),
                classic_volume=None)
     json.dump(res, open(stem + ".json", "w"))
     os.write(1, b"DONE\n")
@@ -303,19 +323,42 @@ def crossing(r, made):
                                                       max(2.5 * box.DiagonalLength, 2.0)]}
 
 
-def setup(shape, fi, ni, angle, rev, stem):
-    """The face, the neutral face and the face turned onto its new plane,
+def setup(shape, fis, ni, angle, rev, stem):
+    """The faces, the neutral face and the faces turned onto their new planes,
     for the draft column: about the line where the face's plane meets the
     neutral plane, the way PartDesign's Draft turns it (pull direction the
     neutral face's normal; the classic draft's FindRotation, as in
     compute.py's setup())."""
     import FreeCAD as App
+    import Part
     V = App.Vector
-    f, nf = shape.Faces[fi - 1], shape.Faces[ni - 1]
+    nf = shape.Faces[ni - 1]
     pull = V(nf.Surface.Axis)
     pull.normalize()
     if rev:
         angle = -angle
+    faces, turned = [], []
+    for fi in fis:
+        f, dr = turn(shape.Faces[fi - 1], nf, pull, angle)
+        faces.append(f)
+        turned.append(dr)
+    f = Part.makeCompound(faces)
+    dr = Part.makeCompound(turned)
+    f.exportBrep(stem + ".face.brep")
+    nf.exportBrep(stem + ".neutral.brep")
+    dr.exportBrep(stem + ".drafted.brep")
+    bb = f.BoundBox
+    bb.add(dr.BoundBox)
+    b = shape.BoundBox
+    json.dump(dict(zoom=[list(bb.Center), 1.2 * bb.DiagonalLength],
+                   whole=[list(b.Center), 0.95 * b.DiagonalLength]),
+              open(stem + ".setup.json", "w"))
+
+
+def turn(f, nf, pull, angle):
+    """A face and its copy turned onto its new plane."""
+    import FreeCAD as App
+    V = App.Vector
     u0, u1, v0, v1 = f.ParameterRange
     n = f.normalAt((u0 + u1) / 2, (v0 + v1) / 2)
     hx = n.cross(pull)
@@ -334,17 +377,9 @@ def setup(shape, fi, ni, angle, rev, stem):
         theta = -th0 - phi
     while abs(theta) > math.pi:
         theta += math.pi * (1 if theta < 0 else -1)
-    f.exportBrep(stem + ".face.brep")
-    nf.exportBrep(stem + ".neutral.brep")
     dr = f.copy()
     dr.rotate(h0, hx, math.degrees(theta))
-    dr.exportBrep(stem + ".drafted.brep")
-    bb = f.BoundBox
-    bb.add(dr.BoundBox)
-    b = shape.BoundBox
-    json.dump(dict(zoom=[list(bb.Center), 1.2 * bb.DiagonalLength],
-                   whole=[list(b.Center), 0.95 * b.DiagonalLength]),
-              open(stem + ".setup.json", "w"))
+    return f, dr
 
 
 PALETTE = [(0.85, 0.37, 0.35), (0.35, 0.6, 0.85), (0.45, 0.75, 0.4), (0.9, 0.7, 0.3),
@@ -426,8 +461,10 @@ def compose(out):
         d.text((10, 34), note, font=F, fill=(60, 60, 60))
         first = json.load(open("%s.%s.json" % (r, cols[0][0])))
         d.text((10, top), "the draft", font=FB, fill=(0, 0, 0))
-        d.text((10, top + 21), "face %d, %g deg" % (first["face"], first["angle"]), font=F,
-               fill=rgb(C_FACE))
+        fs = first["face"] if isinstance(first["face"], list) else [first["face"]]
+        d.text((10, top + 21), "face%s %s, %g deg" % ("s" if len(fs) > 1 else "",
+                                                       ", ".join(map(str, fs)), first["angle"]),
+               font=F, fill=rgb(C_FACE))
         d.text((10, top + 40), "neutral face %d" % first["neutral"], font=F, fill=rgb(C_NEUTRAL))
         d.text((10, top + 59), "translucent: where it turns to", font=F, fill=rgb(C_FACE))
         for ci, (col, _, label) in enumerate(cols):
