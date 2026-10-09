@@ -297,11 +297,12 @@ ramp_ledge_drafts((11, 15, 17))
 # tolerance to cover it. See README.md.
 # ---------------------------------------------------------------------------
 
-def brep_case(name, path, face, neutral, angle, expect, ref_volume=None):
-    """draft_case on a stored shape, its faces given by index."""
+def brep_case(name, path, face, neutral, angle, expect, ref_volume=None, **kw):
+    """draft_case on a stored shape, its faces given by index; <kw> as draft_case's."""
     shape = Part.read(path)
     draft_case(name, shape, lambda f, i=face: f.isSame(shape.Faces[i - 1]),
-               lambda f, i=neutral: f.isSame(shape.Faces[i - 1]), angle, expect, ref_volume)
+               lambda f, i=neutral: f.isSame(shape.Faces[i - 1]), angle, expect, ref_volume,
+               **kw)
 
 
 def slot(depth):
@@ -673,6 +674,18 @@ if has_cell_draft():
             draft_case("new_nopropagate_rbox_all_%s_a5" % method.lower(), rbox, all_walls,
                        plane_at("z", 0), 5, "valid", rbox_volume(5), method=method,
                        propagate=False)
+    # #631's ramp (Fillet001's input), its front wall drafted about a side
+    # wall with propagation off: the r=49 fillet between wall and ramp is
+    # taken off and made again. The draft leaves the ramp's edges split
+    # where its local box cut them, and OCCT's fillet failed at the ends;
+    # made again with them joined (docs/NewDraft.md section 20). About the
+    # other side wall the fillet still fails at its start (open).
+    m631 = os.path.join(HERE, "models", "issue631_fillet001_base.brep")
+    for a, vol in ((5, 42511.3436), (15, 42964.2653)):
+        brep_case("new_nopropagate_issue631_f7_n2_a%d" % a, m631, 7, 2, a, "valid", vol,
+                  method="New", propagate=False)
+    brep_case("new_nopropagate_issue631_f7_n5_a5", m631, 7, 5, 5,
+              "refused:could not be made again at its radius", method="New", propagate=False)
     # A fillet across the pull direction (docs/NewDraft.md section 19): the
     # top edge of the end wall x=20 filleted 2, its axis along y, which no
     # draft turns into a cone. The classic draft refuses; the cell draft,

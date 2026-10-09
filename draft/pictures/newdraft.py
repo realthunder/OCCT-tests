@@ -115,6 +115,7 @@ SHAPES = {
     "pocket": _pocket,
     "chamfer": _chamfer,
     "tbox": _tbox,
+    "issue631_fillet001": _brep("draft", "models", "issue631_fillet001_base.brep"),
 }
 CLASSIC = ("Classic", dict(Method="Classic"), "the classic draft")
 AUTO = ("Auto", dict(Method="Auto"), "Auto (the checks, then the cell draft)")
@@ -231,6 +232,16 @@ CASES = {
                                     "the wall x=50 drafted about a slot's floor; the r=7 "
                                     "fillets along its top, cut by the slots, made again "
                                     "onto the sloped top"),
+    # section 20: the fillet made again on split edges
+    "refillet_issue631_f7_n2_a5": ("issue631_fillet001", 7, 2, 5, False,
+                                   [("before", dict(Method="New", TangentPropagation=False),
+                                     "propagation off, before"),
+                                    ("off", dict(Method="New", TangentPropagation=False),
+                                     "now: the split edges joined")],
+                                   (0.8, -1.4, 0.6), ((1, 0, 0), (7.5, -8, 30), 36), False,
+                                   "#631's ramp, face 7 at 5 deg, tangent propagation off",
+                                   "the front wall drafted about the left side wall; the r=49 "
+                                   "fillet onto the ramp is taken off and made again"),
 }
 
 # A result shown cut, its back half kept (a hollow inside it): axis, value. Its
