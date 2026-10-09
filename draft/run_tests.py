@@ -384,6 +384,123 @@ def t(a):
     return math.tan(math.radians(a))
 
 
+def corner_angles(poly):
+    """Interior angles of a counter-clockwise polygon, in radians."""
+    n = len(poly)
+    out = []
+    for i in range(n):
+        ax, ay = poly[i - 1]
+        bx, by = poly[i]
+        cx, cy = poly[(i + 1) % n]
+        u = (ax - bx, ay - by)
+        v = (cx - bx, cy - by)
+        a = math.atan2(v[0] * u[1] - v[1] * u[0], u[0] * v[0] + u[1] * v[1])
+        # the turn from v to u, counter-clockwise, is the interior angle
+        out.append(a if a > 0 else a + 2 * math.pi)
+    return out
+
+
+def fillet_offset_volume(poly, r, h, k):
+    """A prism on the counter-clockwise polygon <poly>, every vertical edge
+    filleted <r>, drafted inward (k > 0) or outward (k < 0) by tan(a) = |k|
+    from its bottom, to height <h>, before any event: convex corners shrink
+    to a point at r and then stay sharp, concave ones grow (inward). The
+    section at offset d has area A0 - int_0^d P, P its perimeter."""
+    al = corner_angles(poly)
+    n = len(poly)
+    side = sum(math.hypot(poly[(i + 1) % n][0] - poly[i][0], poly[(i + 1) % n][1] - poly[i][1])
+               for i in range(n))
+    area = 0.5 * sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1]
+                     for i in range(n))
+    sgn = 1 if k > 0 else -1
+    # a corner shrinks toward its point (convex inward, concave outward)
+    shrink = [a for a in al if (a < math.pi) == (sgn > 0)]
+    grow = [a for a in al if (a < math.pi) != (sgn > 0)]
+
+    def cot_half(a):
+        b = a if a < math.pi else 2 * math.pi - a
+        return 1 / math.tan(b / 2)
+
+    def bend(a):
+        return abs(math.pi - a)
+
+    # the fillets' straight parts, and the area they take or give
+    s0 = side - 2 * r * sum(cot_half(a) for a in al)
+    a0 = (area - sum((cot_half(a) - bend(a) / 2) * r * r for a in al if a < math.pi)
+          + sum((cot_half(a) - bend(a) / 2) * r * r for a in al if a > math.pi))
+
+    def perim(t):
+        p = s0 + sum(bend(a) * (r + t) for a in grow)
+        if t <= r:
+            return p + sum(bend(a) * (r - t) for a in shrink)
+        return p - 2 * sum(cot_half(a) for a in shrink) * (t - r)
+
+    def a_at(d):
+        # A(d) = a0 -/+ int_0^d perim: perim is linear on [0, r] and [r, d]
+        m = min(d, r)
+        s = (perim(0) + perim(m)) / 2 * m
+        if d > r:
+            s += (perim(r) + perim(d)) / 2 * (d - r)
+        return a0 - sgn * s
+
+    kk = abs(k)
+    nz = 4000
+    dz = h / nz
+    # A is piecewise quadratic in z: Simpson's rule on each piece is exact
+    zr = r / kk
+    pieces = [(0, min(h, zr))] + ([(zr, h)] if zr < h else [])
+    vol = 0.0
+    for z0, z1 in pieces:
+        zm = (z0 + z1) / 2
+        vol += (z1 - z0) / 6 * (a_at(z0 * kk) + 4 * a_at(zm * kk) + a_at(z1 * kk))
+    return vol
+
+
+def convex_roof_volume(poly, r, h, k, steps=20000):
+    """A prism on the convex counter-clockwise polygon <poly>, its vertical
+    edges filleted <r>, drafted inward by tan(a) = k to height <h>: the
+    section at offset d is the polygon's half-planes moved in by d (edges
+    narrowing to nothing and the outline closing over on the way), less the
+    fillets while d < r."""
+    n = len(poly)
+    half = []
+    for i in range(n):
+        (px, py), (qx, qy) = poly[i], poly[(i + 1) % n]
+        ex, ey = qx - px, qy - py
+        L = math.hypot(ex, ey)
+        nx, ny = ey / L, -ex / L
+        half.append((nx, ny, nx * px + ny * py))
+    al = corner_angles(poly)
+    loss = sum(1 / math.tan(a / 2) - (math.pi - a) / 2 for a in al)
+
+    def clip(pts, a, b, c):
+        out = []
+        for i in range(len(pts)):
+            p, q = pts[i], pts[(i + 1) % len(pts)]
+            fp = a * p[0] + b * p[1] - c
+            fq = a * q[0] + b * q[1] - c
+            if fp <= 0:
+                out.append(p)
+            if fp * fq < 0:
+                t = fp / (fp - fq)
+                out.append((p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])))
+        return out
+
+    def a_at(d):
+        big = 1e6
+        pts = [(-big, -big), (big, -big), (big, big), (-big, big)]
+        for a, b, c in half:
+            pts = clip(pts, a, b, c - d)
+            if len(pts) < 3:
+                return 0.0
+        s = 0.5 * abs(sum(pts[i][0] * pts[(i + 1) % len(pts)][1]
+                          - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts))))
+        return s - (loss * (r - d) ** 2 if d < r else 0.0)
+
+    dz = h / steps
+    return sum(a_at((i + 0.5) * dz * k) for i in range(steps)) * dz
+
+
 if has_cell_draft():
     for a in (5, 20, 44):
         draft_case("new_notch_ledge_a%d" % a, plain, plane_at("z", 5), plane_at("y", 5), a,
@@ -467,9 +584,11 @@ if has_cell_draft():
 
     def rbox_volume(a, w=20, d=10, r=2, h=10, corners=4):
         # past the cones' apex (r / tan(a), drafted inward) the walls meet
-        # in a sharp edge: no fillet to take off there
+        # in a sharp edge: no fillet to take off there; past d / 2 / tan(a)
+        # the walls meet over the block (the roof), and the top is gone
         k = t(a)
         z = min(h, r / k) if k > 0 else h
+        h = min(h, d / 2 / k) if k > 0 else h
         return (w * d * h - (w + d) * k * h ** 2 + 4 * k ** 2 * h ** 3 / 3
                 - corners * (1 - math.pi / 4) * (r ** 2 * z - r * k * z ** 2 + k ** 2 * z ** 3 / 3))
 
@@ -487,12 +606,54 @@ if has_cell_draft():
     # Inward at 15 and 20 deg the fillets' cones reach their apex at 2 /
     # tan(a) = 7.46 and 5.49, under the block's top: above it the walls meet
     # in a sharp edge. At 30 deg the short walls narrow to nothing at 5 /
-    # tan(30) = 8.66, under the top too: refused.
-    for a in (15, 20):
+    # tan(30) = 8.66, under the top too, and the long walls meet between
+    # them: a hipped roof, the top gone (section 18 of NewDraft.md). At 45
+    # deg the same at 5. At 26 deg the fillets' tops lie past the apex (3.95
+    # up): the cones' faces went round the wrong way and the draft came out
+    # valid, 69 short.
+    for a in (15, 20, 26, 30, 45):
         draft_case("new_chain_rbox_a%d" % a, rbox, plane_at("y", 0), plane_at("z", 0), a,
                    "valid", rbox_volume(a), method="New")
-    draft_case("new_chain_rbox_a30", rbox, plane_at("y", 0), plane_at("z", 0), 30,
-               "refused:FaceVanishes", method="New")
+    # The block with its corner (20, 10) cut by a 45 deg wall of 6 x 6, the
+    # five vertical edges filleted 1: the end wall x = 20 narrows to nothing
+    # at an offset of 2.83 and the chain closes over at 5. At 20 and 25 deg
+    # the first is under the top (7.77, 6.07), the second over it: a roof
+    # partway, the top kept.
+    chamf_pts = [(0, 0), (20, 0), (20, 4), (14, 10), (0, 10)]
+    chamf = Part.Face(Part.makePolygon([V(x, y, 0) for x, y in chamf_pts + chamf_pts[:1]]))
+    chamf = chamf.extrude(V(0, 0, 10))
+    chamf = chamf.makeFillet(1, [e for e in chamf.Edges
+                                 if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+    for a in (20, 25):
+        draft_case("new_roof_chamfer_a%d" % a, chamf, plane_at("y", 0), plane_at("z", 0), a,
+                   "valid", convex_roof_volume(chamf_pts, 1, 10, t(a)), method="New")
+    # An L, its six vertical edges filleted 1 (the inner one concave). Its
+    # bottom faces down here: a positive angle drafts it outward, and below
+    # the bottom the chain shrinks, its arms closing over -- past the body,
+    # where the sheet stops. Inward at 30 deg the arms close over at 8.66
+    # while the corner between them does not: refused.
+    L_pts = [(0, 0), (30, 0), (30, 10), (10, 10), (10, 25), (0, 25)]
+    Lb = Part.makeBox(30, 10, 10).fuse(Part.makeBox(10, 25, 10)).removeSplitter()
+    Lb = Lb.makeFillet(1, [e for e in Lb.Edges if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+    for a in (10, 30, -10, -20):
+        draft_case("new_roof_L_a%d" % a, Lb, plane_at("y", 0), plane_at("z", 0), a, "valid",
+                   fillet_offset_volume(L_pts, 1, 10, t(-a)), method="New")
+    draft_case("new_roof_L_a-30", Lb, plane_at("y", 0), plane_at("z", 0), -30,
+               "refused:closes over along part of its outline only", method="New")
+    # A block with a V notch from its top, the edges filleted 0.5: drafted
+    # inward, the notch's concave fillet grows down onto the bottom wall
+    # (a split, not built) at an offset of 2.14. At 10 deg that lies over the
+    # top and the sheet stops short of it; at 15 deg under it: refused.
+    notch_pts = [(0, 0), (30, 0), (30, 11), (20, 11), (15, 4), (10, 10), (0, 10)]
+    vnotch = Part.Face(Part.makePolygon([V(x, y, 0) for x, y in notch_pts + notch_pts[:1]]))
+    vnotch = vnotch.extrude(V(0, 0, 10))
+    vnotch = vnotch.makeFillet(0.5, [e for e in vnotch.Edges
+                                     if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+    for a in (10, -10):
+        draft_case("new_roof_notch_a%d" % a, vnotch, plane_at("y", 0), plane_at("z", 0), a,
+                   "valid", fillet_offset_volume(notch_pts, 0.5, 10, t(a)), method="New")
+    draft_case("new_roof_notch_a15", vnotch, plane_at("y", 0), plane_at("z", 0), 15,
+               "refused:runs into itself", method="New")
     # Tangent propagation off: only the faces picked are drafted, as if
     # drafted before the fillets. One wall picked: the fillets beside it are
     # taken off and made again on the edges where it meets the side walls,
@@ -595,6 +756,12 @@ if has_cell_draft():
                      - (4 - math.pi) * (4 * za - 2 * k * za ** 2 + k ** 2 * za ** 3 / 3))
     draft_case("new_chain_pocket_apex_a15", pocketed, plane_at("y", 2), plane_at("z", 4), -15,
                "valid", block.Volume - pocket_volume, method="New")
+    # Steeper, the walls meet over the floor at 5 / tan(a), under the top
+    # (16 up) from 17.4 deg: the pocket closes over into a hollow inside the
+    # block, roofed like the block of new_chain_rbox_a30.
+    for a in (20, 30):
+        draft_case("new_chain_pocket_roof_a%d" % a, pocketed, plane_at("y", 2), plane_at("z", 4),
+                   -a, "valid", block.Volume - rbox_volume(a, 20, 10, 2, 16), method="New")
     # the pocket with its corner at (10, 2) sharp: a concave sharp corner
     prof = Part.makeBox(20, 10, 16, V(10, 2, 4))
     prof = prof.makeFillet(2, [e for e in prof.Edges
