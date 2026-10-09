@@ -608,7 +608,7 @@ if has_cell_draft():
     # in a sharp edge. At 30 deg the short walls narrow to nothing at 5 /
     # tan(30) = 8.66, under the top too, and the long walls meet between
     # them: a hipped roof, the top gone (section 18 of NewDraft.md). At 45
-    # deg the same at 5. At 26 deg the fillets' tops lie past the apex (3.95
+    # deg the same at 5. At 26 deg the fillets' tops lie past the apex (4.10
     # up): the cones' faces went round the wrong way and the draft came out
     # valid, 69 short.
     for a in (15, 20, 26, 30, 45):

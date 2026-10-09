@@ -76,6 +76,17 @@ def _pocket():
     return Part.makeBox(40, 30, 20).cut(prof).removeSplitter()
 
 
+def _chamfer():
+    # the suite's new_roof_chamfer_*: the block with its corner (20, 10) cut
+    # by a 45 deg wall of 6 x 6, the five vertical edges filleted 1
+    import FreeCAD as App
+    import Part
+    V = App.Vector
+    pts = [V(0, 0, 0), V(20, 0, 0), V(20, 4, 0), V(14, 10, 0), V(0, 10, 0), V(0, 0, 0)]
+    s = Part.Face(Part.makePolygon(pts)).extrude(V(0, 0, 10))
+    return s.makeFillet(1, [e for e in s.Edges if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
+
+
 def _brep(*path):
     def make():
         import Part
@@ -92,6 +103,7 @@ SHAPES = {
     "rbox": _rbox,
     "rbox_sharp": lambda: _rbox(sharp=True),
     "pocket": _pocket,
+    "chamfer": _chamfer,
 }
 CLASSIC = ("Classic", dict(Method="Classic"), "the classic draft")
 AUTO = ("Auto", dict(Method="Auto"), "Auto (the checks, then the cell draft)")
@@ -155,7 +167,34 @@ CASES = {
                        "The block with a sharp corner, inward at 15 deg",
                        "the chain closes at the sharp corner (front left): there the two new "
                        "planes meet in a new edge"),
+    # section 18: the roof
+    "roof_rbox_a30": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 30, False, [CLASSIC, NEW],
+                      (0.7, -1.4, 0.8), ((1, 0, 0), (20, 5, 5), 13), False,
+                      "The block inward at 30 deg: a hipped roof",
+                      "the short walls narrow to nothing at 8.66, under the top at 10, and the "
+                      "long walls meet between them; the top is gone"),
+    "roof_chamfer_a20": ("chamfer", _plane_at("Y", 0), _plane_at("Z", 0), 20, False,
+                         [CLASSIC, NEW], (0.7, -1.4, 0.8), ((0, 0, 1), (10, 5, 5), 24), False,
+                         "A block with a corner wall, inward at 20 deg: a roof partway",
+                         "the end wall right narrows to nothing at 7.77 and the corner wall "
+                         "meets the front wall from there; the top stays, smaller"),
+    "roof_pocket_a30": ("pocket", _plane_at("Y", 2), _plane_at("Z", 4), -30, False,
+                        [CLASSIC, NEW], (0.6, -1.4, 1.1), ((0, -1, 0), (20, 7, 12), 20), False,
+                        "The pocket's walls inward at 30 deg: a hollow (results cut at y = 7)",
+                        "the walls meet 8.66 over the floor, under the top: the pocket closes "
+                        "over into a hollow inside the block"),
+    "roof_rbox_a26": ("rbox", _plane_at("Y", 0), _plane_at("Z", 0), 26, False,
+                      [("before", dict(Method="New"), "the cell draft, before"),
+                       ("New", dict(Method="New"), "the cell draft, fixed")],
+                      (0.7, -1.4, 0.8), (None, (18, 2, 4), 9), False,
+                      "The block inward at 26 deg: the cones the wrong way round",
+                      "the fillets' tops lie past their apex (4.10); before, each cone face "
+                      "went round the long way and the body came out valid, 69 short"),
 }
+
+# A result shown cut, its back half kept (a hollow inside it): axis, value. Its
+# volume and checks are the whole result's.
+CUT = {"roof_pocket_a30": ("y", 7)}
 
 # NEWDRAFT_ONLY: the cases to make (space separated), the others left as they are
 if os.environ.get("NEWDRAFT_ONLY"):
@@ -212,6 +251,20 @@ def compute():
                     round(c.y, 5), round(c.z, 5))
         keys = {key(f) for f in shape.Faces}
         made = [i for i, f in enumerate(r.Faces) if key(f) not in keys]
+        if name in CUT:
+            # the back half; its faces on a face the draft made are made
+            axis, at = CUT[name]
+            b = r.BoundBox
+            lo = [b.XMin - 1, b.YMin - 1, b.ZMin - 1]
+            size = [b.XLength + 2, b.YLength + 2, b.ZLength + 2]
+            k = "xyz".index(axis)
+            size[k] -= at - lo[k]
+            lo[k] = at
+            half = r.common(Part.makeBox(size[0], size[1], size[2], App.Vector(*lo)))
+            half.exportBrep(stem + ".brep")
+            made = [i for i, f in enumerate(half.Faces)
+                    if any(f.common(r.Faces[m]).Area > 0.5 * f.Area for m in made)]
+            res.update(shown_faces=len(half.Faces))
         b = r.BoundBox
         res.update(center=list(b.Center), height=0.95 * b.DiagonalLength)
         res.update(kind="valid" if r.isValid() else "invalid", volume=r.Volume,
