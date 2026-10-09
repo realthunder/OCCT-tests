@@ -673,6 +673,27 @@ if has_cell_draft():
             draft_case("new_nopropagate_rbox_all_%s_a5" % method.lower(), rbox, all_walls,
                        plane_at("z", 0), 5, "valid", rbox_volume(5), method=method,
                        propagate=False)
+    # A fillet across the pull direction (docs/NewDraft.md section 19): the
+    # top edge of the end wall x=20 filleted 2, its axis along y, which no
+    # draft turns into a cone. The classic draft refuses; the cell draft,
+    # propagation on, takes it off, drafts the wall and makes it again at its
+    # radius where the wall now meets the top. The profile in xz: the
+    # trapezoid less the fillet's corner at phi, the wall's angle with the
+    # top (a > 0 leans the wall in).
+    tbox = Part.makeBox(20, 10, 10)
+    tbox = tbox.makeFillet(2, [e for e in tbox.Edges
+                               if abs(e.BoundBox.XMin - 20) < 1e-9
+                               and abs(e.BoundBox.XMax - 20) < 1e-9
+                               and abs(e.BoundBox.ZMin - 10) < 1e-9])
+
+    def tbox_volume(a, r=2):
+        phi = math.pi / 2 + math.radians(a)
+        return 10 * (200 - 50 * t(a) - r * r * (1 / math.tan(phi / 2) - (math.pi - phi) / 2))
+
+    draft_case("across_pull_tbox_a5", tbox, plane_at("x", 20), plane_at("z", 0), 5, "refused")
+    for method, a in (("New", 5), ("New", -15), ("Auto", 15), ("Auto", -5)):
+        draft_case("new_across_pull_tbox_%s_a%d" % (method.lower(), a), tbox, plane_at("x", 20),
+                   plane_at("z", 0), a, "valid", tbox_volume(a), method=method)
     # One vertical edge filleted: the chain is a wall, the fillet and the
     # wall beyond, open at both ends; drafted from the wall and from the
     # fillet, past the apex at 15 deg.

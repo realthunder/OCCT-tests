@@ -87,6 +87,16 @@ def _chamfer():
     return s.makeFillet(1, [e for e in s.Edges if abs(e.Vertexes[0].Z - e.Vertexes[1].Z) > 1])
 
 
+def _tbox():
+    # TestDraft.testDraftFilletAcrossPull: a block, the top edge of its end
+    # wall x=20 filleted 2
+    import Part
+    s = Part.makeBox(20, 10, 10)
+    return s.makeFillet(2, [e for e in s.Edges if abs(e.BoundBox.XMin - 20) < 1e-9
+                            and abs(e.BoundBox.XMax - 20) < 1e-9
+                            and abs(e.BoundBox.ZMin - 10) < 1e-9])
+
+
 def _brep(*path):
     def make():
         import Part
@@ -104,6 +114,7 @@ SHAPES = {
     "rbox_sharp": lambda: _rbox(sharp=True),
     "pocket": _pocket,
     "chamfer": _chamfer,
+    "tbox": _tbox,
 }
 CLASSIC = ("Classic", dict(Method="Classic"), "the classic draft")
 AUTO = ("Auto", dict(Method="Auto"), "Auto (the checks, then the cell draft)")
@@ -208,6 +219,18 @@ CASES = {
                       "The block inward at 26 deg: the cones the wrong way round",
                       "the fillets' tops lie past their apex (4.10); before, each cone face "
                       "went round the long way and the body came out valid, 69 short"),
+    # section 19: a fillet across the pull direction
+    "across_tbox_a15": ("tbox", _plane_at("X", 20), _plane_at("Z", 0), 15, False,
+                        [CLASSIC, NEW], (0.9, -1.4, 0.7), ((0, -1, 0), (18, 5, 8), 8), False,
+                        "A fillet across the pull direction (TestDraft)",
+                        "the end wall drafted 15 deg about the floor; its top edge's fillet, "
+                        "along y, is taken off and made again where the wall meets the top"),
+    "across_issue962_f30_n25_a15": ("issue962_pocket002", 30, 25, 15, False, [CLASSIC, NEW],
+                                    (1, -1.2, 0.9), ((1, -0.6, 0.5), (47, 18.7, 24), 20), False,
+                                    "#962, face 30 at 15 deg",
+                                    "the wall x=50 drafted about a slot's floor; the r=7 "
+                                    "fillets along its top, cut by the slots, made again "
+                                    "onto the sloped top"),
 }
 
 # A result shown cut, its back half kept (a hollow inside it): axis, value. Its
