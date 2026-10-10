@@ -445,33 +445,35 @@ far corner, (-17,16.75,3)) and upstream refused. Now both corners are set
 back where their fillets meet. In the zoom, the vertical fillet and the
 one along the base stop short of the corner, and the patch closes it. Its
 outline is the third row: six edges -- the ends of those two fillets (1.41
-each), a curve on each of the two plane walls (1.57), and the ends of the
-other two fillets (0.0175 each), which run along edges between walls a
-degree apart and are all but flat: the cusp at the left. Those walls being
-so nearly flat, the volume moves by thousandths. The red mark by the left hole is the
-input's own: the holes' seam edges are stored once, not once each way
-round.
+and 1.46), a curve on each of the two plane walls (1.50), and the ends of
+the other two fillets (0.0175 each), which run along edges between walls a
+degree apart and are all but flat: the outline's left end, where they meet.
+Those walls being so nearly flat, the volume moves by thousandths. The red
+mark by the left hole is the input's own: the holes' seam edges are stored
+once, not once each way round.
 
 ![issue876_corner4_r1](pictures/issue876_corner4_r1.png)
 
 The box and cylinder of #523 past the cylinder's radius, the end refused as
 a cut over two faces ("bouchon non ecrit") by the fork before and upstream
-alike. At radius 2.5 the end is set back where the fillet meets the corner:
-the fillet stops partway along the edge, and the patch blends on into the
-cylinder's top and down the box's side. Its boundary on the side has a
-small notch near the cylinder -- the hook at the bottom of the third row --
-valid, but not as smooth as a fillet run on to the cylinder would be (that
-fillet, the boolean's, is 1083.3063; this is 1085.6014).
+alike. At radius 2.5 the fillet stops one radius short of the corner (at
+x = 4.5), and the patch blends on into the cylinder's top and down the
+box's side: four edges, the fillet's end (its quarter circle), a curve on
+the top, one on the side and the cylinder's. Valid, and close to the fillet
+run on to the cylinder (that fillet, the boolean's, is 1083.3063; this is
+1087.9914).
 
 ![seam_end_top_r2.5](pictures/seam_end_top_r2.5.png)
 
-At radius 3 the nearer setbacks leave edges looser than a twentieth of the
-radius, and only twice the radius passes: 6 on an edge 8 long. What is left
-of the fillet is its last 2, at the far end; the rest is the patch, scooped
-from the cylinder's top down the box's side. Valid, and a shape where there
-was none, but more a blend than a fillet -- a user asking for this fillet
-should know that is what the fallback gives here (1072.1768, against the
-run-on fillet's 1078.3294).
+At radius 3 the same, the fillet stopping at x = 5 (1086.0296, against the
+run-on fillet's 1078.3294). Both pictures were drawn again after later
+changes to the fallback moved them -- the patch approximated to its own
+boundary rather than to the plate, and the end of its curve on the box's
+side freed from a right angle to its chord (`../README.md`). Before those,
+radius 2.5 had a notch in the patch's curve on the side (1085.6014), and at
+radius 3 the nearer setbacks left edges too loose and only twice the radius
+passed: what was left of the fillet was its last 2 of 8, the rest a patch
+scooped from the cylinder's top down the box's side (1072.1768).
 
 ![seam_end_top_r3](pictures/seam_end_top_r3.png)
 
