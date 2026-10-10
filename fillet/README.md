@@ -1247,10 +1247,18 @@ Still open: at radius 2 all four results, tops and bottoms, before and
 after, have two vertices at the far vertex's point, 4e-15 apart -- the
 fillet's line on the top (bottom) ends at the cylinder's far vertex and the
 corner makes a new vertex there. BRepCheck lets it be; BOP's argument check
-reports it (vertex self-interference). Taking the existing vertex for the
-end in the OnSame update, with the three sites in `PerformOneCorner` that
-read the end as a DS point told it is a vertex, made the shell
-unorientable; not taken.
+reports it (vertex self-interference). The vertex is a pinch: at radius 2
+the top (bottom) is the box's face beyond the fillet's line and the
+cylinder's whole disc -- the cap takes the cylinder round past 2 pi -- and
+the line is tangent to the circle at that point, so the face is two
+regions touching at one point, its one wire through the point twice.
+Taking the existing vertex for the end in the OnSame update (with the
+three sites in `PerformOneCorner` that read the end as a DS point told it
+is a vertex) builds just that, and BRepCheck finds the face unorientable
+(`BadOrientationOfSubshape` on its wire); the 4e-15 between the two
+vertices is what lets it pass now. The right shape is two faces sharing
+the vertex, which means splitting the rebuilt face, its history with it;
+not taken, for a case at exactly the cylinder's radius.
 
 | Case | What it covers |
 |------|----------------|
