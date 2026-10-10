@@ -109,14 +109,15 @@ def document_case(name, filename, volumes=None):
 # ---------------------------------------------------------------------------
 
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
-                chamfer=False, vol_tol=None):
+                chamfer=False, vol_tol=None, bop=False):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
     makeChamfer(radius, ...) with chamfer=True.
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
                     ref_volume when given (within vol_tol when given, else
                     RELTOL of it), and no edge or vertex tolerance above
-                    max_tol when given.
+                    max_tol when given; with bop=True, nothing BOP's argument
+                    check (Shape.check(True)) reports.
     expect='xfail': known broken (see README.md); an exception, an invalid
                     shape or an open shell counts as the expected failure.
     """
@@ -142,6 +143,11 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
             tol = max([e.Tolerance for e in r.Edges] + [v.Tolerance for v in r.Vertexes])
             if tol > max_tol:
                 problems.append("tolerance %.3g > %.3g" % (tol, max_tol))
+        if not problems and bop:
+            try:
+                r.check(True)
+            except Exception as e:
+                problems.append("bop: " + " ".join(str(e).split())[:80])
         ok = not problems
         detail = "; ".join(problems) if problems else "vol=%.4f" % r.Volume
     except Exception as e:
@@ -211,11 +217,16 @@ for r, vol in ((0.5, 1093.8183), (1.0, 1092.5263)):
 # The corner's curve on the cylinder leaves the face's circle at fourth
 # order, and its approximation ran a rounding error past it: on the bottoms
 # BRepCheck saw the wire cross itself. The curve is now kept on the face,
-# leaving the circle at an angle (README.md).
-fillet_case("seam_end_top_r2", bc, top, 2.0, "pass", 1087.3009)
-fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "pass", 1087.3009)
-fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009)
-fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "pass", 1087.3009)
+# leaving the circle at an angle (README.md). What is left of the top
+# (bottom) is the box's rectangle and the cylinder's disc, touching at that
+# vertex: two faces sharing it, which BOP's check passes (one face through
+# two vertices there 4e-15 apart, before).
+fillet_case("seam_end_top_r2", bc, top, 2.0, "pass", 1087.3009, bop=True)
+fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "pass", 1087.3009, bop=True)
+fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009, bop=True)
+fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "pass", 1087.3009, bop=True)
+# The same as the picture of the split top (pictures/cases.py).
+fillet_case("pinch_top_r2", bc, top, 2.0, "pass", 1087.3009, bop=True)
 # Past the cylinder's radius the fillet's line on the top misses the
 # cylinder; the end has to be cut by the cylinder carried into the box for
 # y < 2 and by the box's side x = 0 beyond, and the top splits in two. That

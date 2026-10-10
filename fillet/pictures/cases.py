@@ -32,6 +32,8 @@ STAGES = {
     "s962j": ("09c8fe6c57", "7a1fbeffb3"),
     "s523c": ("83ee729ead", "8704591b60"),
     "s962k": ("2382ef56c9", "fff5d20907"),
+    "s962l": ("e6227d4943", "b9e95d0e71"),
+    "s523d": ("0589170f82", "40ba54dcdf"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -292,6 +294,11 @@ UVFACE_CASE = {
     # the set back corner's plate where the fillet's end was refused
     "seam_end_top_r2.5": _plate_near(2, 0, 10, reach=7.0),
     "seam_end_top_r3": _plate_near(2, 0, 10, reach=8.0),
+    # the block's top at the rib's foot, as at 1.5
+    "issue962_rib_foot_r0.9865": _plane_at("z", 14, {"x": 38.0, "y": 19.0}, {"y": 24.0}),
+    # the top: the whole of it before, the box's rectangle after (the disc
+    # its own face)
+    "pinch_top_r2": _plane_at("z", 10, {"x": 3.0}),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -363,6 +370,8 @@ UVLABEL_CASE = {
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
     "seam_end_top_r2.5": ("the corner's plate", False),
     "seam_end_top_r3": ("the corner's plate", False),
+    "issue962_rib_foot_r0.9865": ("the block's top at the rib's foot", False),
+    "pinch_top_r2": ("the top, the box's part", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -448,6 +457,10 @@ CASES = {
                             (0.8, 3, 0.4), (0.6, 1, 0.6)),
     "mirror_bottom_r2": ("s523c", "boxcyl", ((0, 2, 0), (0, 10, 0)), 2.0, 1087.3009,
                          (0, 2, 0), (-1, 0.55, -0.75)),
+    "issue962_rib_foot_r0.9865": ("s962l", "p962", ((35.5, 20.3, 32.25), (38.5, 20.3, 32.25)),
+                                  0.9865, 11579.2408, (38.8, 20.0, 14.6), (-1, 0.6, -0.1)),
+    "pinch_top_r2": ("s523d", "boxcyl", ((2, 0, 10), (10, 0, 10)), 2.0, 1087.3009,
+                     (0, 2, 10), (-1, 0.55, 0.75)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

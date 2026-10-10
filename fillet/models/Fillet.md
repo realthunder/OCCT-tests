@@ -603,6 +603,55 @@ diagonal, a refusal. Both bottoms are valid at the tops' volume.
 ![seam_end_bottom_r2](pictures/seam_end_bottom_r2.png)
 ![mirror_bottom_r2](pictures/mirror_bottom_r2.png)
 
+### A split a sliver inside the line's end (`b9e95d0e71`, realthunder/FreeCAD#962)
+
+The rib's foot of "The same line at a corner of four edges", at radii just
+above 0.98571, where the wall's line at the edge's end lies on the split.
+The exact fillet along the underside's edge is cut where its line on the
+wall meets the split, and there that is inside the edge, 4.4e-5 to 6.4e-4
+short of its end: a sliver of the exact fillet, then a walk from the cut
+back past the end. The underside's line leaves its face exactly at the end,
+so the walk began within its tolerance of that face's edge: at 0.9862 and
+0.9863 it could not take a first step (refused), and from 0.9865 to 0.9868
+it reached the edge and went on past it at a fifth of the sliver's length,
+a step under the walk's own idea of two points being one: it stopped at
+once, and the end was made of what there was. At 0.9865, the picture's
+radius, upstream refuses the fillet (its column shows the input); the
+fork's before is invalid, two shells and a face of no area -- in the zoom
+the wedge at the fillet's foot is red, and the block's top in the third row
+is left open where the fillet's end should bite into it. Now, at the
+spine's end, a line is not cut
+at a split of its wall that close to where the other line's piece ends: it
+runs on over the coplanar piece, as where the split is past the end, and is
+carried over the split at the end. Every radius from 0.985 to 1 matches the
+refined shape to 3e-6.
+
+![issue962_rib_foot_r0.9865](pictures/issue962_rib_foot_r0.9865.png)
+
+### A face that is two regions touching at a point (`40ba54dcdf`, realthunder/FreeCAD#523)
+
+The box and cylinder at radius 2 once more, the fillet's line on the top
+tangent to the cylinder's circle at its far vertex. What is left of the top
+is the box's rectangle and the cylinder's whole disc, which touch at that
+vertex alone; the corner put a vertex of its own there, 4e-15 from the
+cylinder's, and the top was one face whose wire passed through the point
+twice, once at each. BRepCheck took it; BOP's argument check called both
+vertices self-intersecting -- a boolean on the result could fail on it --
+and made one vertex, the wire is unorientable. The result is now touched
+after the build: where a face's one wire passes a point twice at two
+vertices, one of them the input's, at one point of its parameters, and each
+loop from there bounds a region, the corner's vertex is replaced by the
+input's and the face split into the two regions, its history -- what the
+input's top became, and each face the fillet made -- carried to the pieces.
+The cylinder's face holds the same two vertices a period apart in u, as at a
+seam, and is only given the one vertex. The views look the same in all three
+columns (upstream's cylinder is red for the old seam fault); the third row
+is the top: before, one outline, the rectangle with the disc hanging from
+its corner; after, the rectangle alone, the disc a face of its own. The volume does not move, and
+all four r=2 results, tops and bottoms, pass BOP's check.
+
+![pinch_top_r2](pictures/pinch_top_r2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

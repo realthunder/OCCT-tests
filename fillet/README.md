@@ -1378,6 +1378,46 @@ rib at 0.3 -- `issue962_Fillet` E111/E113, `issue962_Chamfer` E100/E102 --
 
 The sweeps (edge, vertex): nothing moves.
 
+## A face that is two regions touching at a point (realthunder/FreeCAD#523, 2026-10-10)
+
+The duplicate vertex left open in "A corner's curve kept on its face": at
+radius 2 the top (bottom) of #523's box and cylinder is the box's rectangle
+and the cylinder's whole disc, touching only at the cylinder's far vertex,
+where the fillet's line is tangent to the circle; the corner made a vertex
+of its own there, 4e-15 from the input's, and the face's one wire passed
+through the point twice, once at each. BRepCheck took it, BOP's argument
+check reported both vertices self-intersecting, and one vertex in that wire
+is unorientable.
+
+`ChFi3d_SplitPinchedFaces` now touches the result after the topological
+build. A face qualifies when its one wire passes a point twice, at two
+vertices with no edge between them, one of them the input's; at one point
+of the face's parameters (on a closed surface the wire can pass a point
+twice a period apart, as at a seam -- #523's cylinder face does, and is not
+split); and when each loop of the wire from there bounds a region (a loop
+round a hole touching the outer one does not). For those, and only those,
+the corner's vertex is replaced by the input's everywhere (the edges at it
+keep their parameters), and the face is split into one face per loop. The
+builder's history -- the split lists `BRepFilletAPI` reads for Modified, and
+the new faces Generated reads -- is mapped onto the result in place, a split
+face to its pieces; no class changes size (FreeCAD holds the API objects by
+value).
+
+A first version merged the vertices wherever a face held such a pair and
+split only where it could: it turned #474's Fillet003 E18 (r 0.8, 2 and three
+vertex cases at 1) from BAD to ok -- BRepCheck no longer saw the
+self-intersecting wire, but BOP's check still found vertex and edge
+self-intersections, at tolerances up to 1.28. Not a fix; the merge now
+waits for a face to split.
+
+| Case | What it covers |
+|------|----------------|
+| `seam_end_{top,bottom}_r2`, `mirror_{top,bottom}_r2` | now with BOP's check (`bop=True`): the top (bottom) in two faces sharing the vertex |
+| `pinch_top_r2` | the same as the picture's case |
+
+The sweeps: edge, the four #523 r=2 results 8 -> 9 faces at the same volume,
+nothing else; vertex, nothing moves.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
