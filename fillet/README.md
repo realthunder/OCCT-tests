@@ -1175,7 +1175,8 @@ crossing the line within tolerance of the spine's end: invalid or refused,
 as before); and a radius whose walk past the end must go further than half
 the spine's length (`ChFi3d_FilBuilder::ExtentOneCorner`), which the
 miniature reaches at 2.5 -- on the refined shape too it is the exact
-fillet that carries it.
+fillet that carries it. (Both since: "A spine extended past a corner by
+the radius" and "The split within tolerance of the line's end", below.)
 
 The fillet sweep (`sweep/`): every edge, 60 refused made (the rib's chain
 at 0.8 and 2 on the Fillet's and the Chamfer's inputs) and 20 valid ones
@@ -1304,6 +1305,39 @@ The sweeps: edge, nothing moves; vertex, 20 EXC -> ok and nothing else --
 #876's Fillet and Fillet001 at radius 1, edges 42 and 53 (71 and 83),
 2.5 long, alone and with a neighbour, made with the longer extension and
 the corner set back.
+
+## The split within tolerance of the line's end (realthunder/FreeCAD#962, 2026-10-10)
+
+#962's rib foot where the wall's line at the spine's end meets the split,
+r = 0.98571 (x = 38.5 + 0.7071 r = 39.197). Measured against the refined
+shape: from 0.9852 to 0.9858 the end was made 0.09 off (the old error, the
+line cut at the split), at 0.986 invalid, 0.9862 refused, 0.9865 and
+0.9868 invalid; 0.985 and 0.987 right.
+
+Below the coincidence the walk past the end stops on the split 6.6e-4 or
+less past the line's end, and `LineOverSplit` looked for the crossing only
+from 2e-3 (twice its tolerance) past that end: it found none, and the old
+path cut the line at the split. At 0.986 the crossing is 1.6e-4 before the
+end -- the walk reached the split without seeing it -- and was not looked
+for either. Now the search starts 2e-3 before the end: the line is
+straight, and cut where the split crosses it within the tolerance of its
+end, on either side, it runs on over the far piece as it does beyond. It
+still takes exactly one crossing, so nothing else is taken by it. 0.9852
+to 0.986 match the refined shape to 2e-6.
+
+Still open: 0.9862 to 0.9868. There the walk crosses the split 1e-3 or less
+before the spine's end and leaves a piece on the far face 3e-4 to 6e-4
+long, which stops at the spine's end instead of running on into the
+extension as it does from 0.9869 (to the block's top's edge); the corner
+then has nothing at the end to cut. The stop is decided in the walk's
+targeting (`PerformSetOfSurfOnElSpine`), not by its end test; not taken
+further for a window 6e-4 wide.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_rib_foot_r{0.9855,0.986}` | the refined shape's volume to 1e-5 (0.09 off, invalid before) |
+
+The sweeps (edge, vertex) and the draft sweep: nothing moves.
 
 ## Known broken (XFAIL)
 
