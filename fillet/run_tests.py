@@ -358,10 +358,12 @@ for r, vol in ((0.6, 11582.331352), (0.8, 11580.921269), (1.0, 11579.105436),
 # Where the wall's line at the spine's end lies within 1e-3 of the split
 # (r = 0.98571): the crossing was looked for only from 2e-3 past the line's
 # end, and below the coincidence the end was made off by 0.09 (0.9852 to
-# 0.9858) or invalid (0.986). Just above it, 0.9862 to 0.9868, the walk
-# crosses the split 1e-3 or less before the end and stops there: still
-# invalid or refused (README.md).
-for r, vol in ((0.9855, 11579.250754), (0.986, 11579.245778)):
+# 0.9858) or invalid (0.986). Just above it the exact fillet's line is cut
+# at the split 1e-3 or less inside the edge, and the walk from there failed
+# (0.9862, 0.9863) or stopped at the underside's edge (0.9865 to 0.9868,
+# invalid); the line now runs on over the split (README.md).
+for r, vol in ((0.9855, 11579.250754), (0.986, 11579.245778), (0.9862, 11579.243788),
+               (0.9865, 11579.240801), (0.9868, 11579.237813)):
     fillet_case("issue962_rib_foot_r%g" % r, p2, rib, r, "pass", vol, 2e-4, vol_tol=1e-5)
 # A chamfer on the chain from 1 on: the chain turns from the rib's top down
 # its front on an arc of radius 1, and the chamfer's line on the wall turns

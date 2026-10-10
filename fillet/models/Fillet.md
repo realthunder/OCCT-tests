@@ -536,9 +536,10 @@ pictures the "before" columns are the input, refused; after, the fillet
 runs down the underside's edge and its end lies flat in the block's top,
 which grows past its old edge to meet it: the third row is that face, its
 bite the end's ellipse. The end matches the refined shape to 1e-5 at every
-radius from 0.3 to 3 (but from 0.9862 to 0.9868, where the walk crosses
-the split within tolerance of the spine's end -- 0.9852 to 0.986 since
-`bdaa69edc6`), the chamfer exactly.
+radius from 0.3 to 3 -- through 0.9852 to 0.9868 as well, where the
+split crosses the line within 1e-3 of the spine's end (since `bdaa69edc6`
+on the far side of the end, and since the split no longer cuts a sliver
+off the line on the near side) -- the chamfer exactly.
 
 ![issue962_rib_foot_r1.5](pictures/issue962_rib_foot_r1.5.png)
 

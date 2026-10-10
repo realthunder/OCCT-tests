@@ -1331,13 +1331,52 @@ long, which stops at the spine's end instead of running on into the
 extension as it does from 0.9869 (to the block's top's edge); the corner
 then has nothing at the end to cut. The stop is decided in the walk's
 targeting (`PerformSetOfSurfOnElSpine`), not by its end test; not taken
-further for a window 6e-4 wide.
+further for a window 6e-4 wide. (Closed in the next section -- and the stop
+was not in the targeting.)
 
 | Case | What it covers |
 |------|----------------|
 | `issue962_rib_foot_r{0.9855,0.986}` | the refined shape's volume to 1e-5 (0.09 off, invalid before) |
 
 The sweeps (edge, vertex) and the draft sweep: nothing moves.
+
+## A split a sliver inside the line's end (realthunder/FreeCAD#962, 2026-10-10)
+
+The window left open above, #962's rib foot at r 0.9862 to 0.9868, was not
+a stop in the walk's targeting. The exact fillet along the foot's edge is
+cut where its line on the wall meets the split (`SplitKPart`), and there
+the cut falls inside the edge, 4.4e-5 (0.9862) to 6.4e-4 (0.9868) from its
+end: a sliver of the exact fillet, then a walk from the cut back past the
+end. The underside's line leaves its face exactly at the end (on the block's
+top), and the walk starts 3e-5 to 4.5e-4 from that edge:
+
+- 0.9862, 0.9863: no first step lands with both lines in their faces before
+  the step falls under the guide's tolerance -- refused.
+- 0.9865 to 0.9868: the walk reaches the underside's edge and is continued
+  past it, the underside unclassified, at the largest step `ComputeData`
+  allowed for the sliver -- a fifth of it, 1.3e-4. The continuation's strict
+  2D check calls a step under 1e-4 in both u and v the same point, and the
+  walk stops at once: invalid. From 0.9869 the step is 1.5e-4 and the walk
+  goes on, 6600 sections to the block's top -- right, by a hair.
+
+Now `SplitKPart`, at the spine's end, does not cut a line at a split of its
+wall (the face across the edge a coplanar piece, the same way up) when the
+cut is within 10 tolapp3d of where the other line's piece ends: the line
+runs on over the split, as where the split is past the end, and the end
+carries it over the split (`LineOverSplit`, which looks for the crossing
+within that of the end, on either side). 0.9862 to 0.9868 then go as 0.9861
+does; every radius tried from 0.985 to 1 matches the refined shape to 3e-6.
+
+Tried and dropped: continuing the walk at the stripe's largest step rather
+than the sliver's. It made 0.9865 to 0.9868 as well, but moved #962's other
+rib at 0.3 -- `issue962_Fillet` E111/E113, `issue962_Chamfer` E100/E102 --
+0.0031 off the refined shape (3e-5 before), its tolerance 1e-4 -> 1.6e-4.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_rib_foot_r{0.9862,0.9865,0.9868}` | the refined shape's volume to 1e-5 (refused, invalid, invalid before) |
+
+The sweeps (edge, vertex): nothing moves.
 
 ## Known broken (XFAIL)
 
