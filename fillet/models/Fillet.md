@@ -73,9 +73,9 @@ does not end on a seam (1092.5263 at radius 1).
 
 At radius 2, the cylinder's own radius, the cap reaches the face's far end
 as well (u = 5 pi/2, which is pi/2 a period on). The top is right now; the
-bottom, its mirror image, is still invalid (`seam_end_bottom_r2`, XFAIL):
-not for its geometry, which is the top's, but for a crossing of 2e-9 that
-BRepCheck sees on one and not the other (see `../README.md`).
+bottom, its mirror image, stayed invalid -- not for its geometry, which is
+the top's, but for a crossing of 2e-9 that BRepCheck saw on one and not the
+other -- until "A corner's curve kept on its face", below.
 
 ![seam_end_top_r2](pictures/seam_end_top_r2.png)
 
@@ -554,7 +554,7 @@ Where a fillet ends at four edges on a B-spline face, the corner extends
 that face's surface to cut the fillet on it -- once, and not when the flag
 it passes says the surface is extended already. The flag was never set to
 zero first: what the stack held decided whether the surface was extended.
-#474's Fillet003 input, edge 51, ends so on a B-spline face, and it was
+The Fillet003 input of #474, edge 51, ends so on a B-spline face, and it was
 refused at every radius; it found the stack non-zero. It showed when the
 change above moved other results of the same input without running any of
 its own code. Now the flag starts at zero, as everywhere else. The
@@ -562,6 +562,25 @@ material the fillet takes is its cross-section times the edge's length to
 0.1%.
 
 ![issue474_f003_e51_r0.8](pictures/issue474_f003_e51_r0.8.png)
+
+### A corner's curve kept on its face (`8704591b60`, realthunder/FreeCAD#523)
+
+The bottom edges of the box and cylinder at radius 2, the one ending on the
+seam and its mirror image. The corner's curve on the cylinder ends at the
+cylinder's far vertex, tangent to the bottom circle, and leaves it at fourth
+order; its approximation ran up to 1.6e-9 below the face there, a pole
+1.1e-6 past the circle, and BRepCheck found the wire crossing itself (the
+tops did the same; BRepCheck happened not to see it). The curve is now
+refined towards that end and its poles past the circle put on it, the one
+next to the end 1e-8 inside: within the hull of its poles it stays on the
+face, and leaves the circle at an angle. The shape does not move -- it was
+right, its wire was not: the fork's "before" column is the same shape with
+the cylinder face red, and its (u, v) outline the same. Upstream's column
+is the seam case's old result (1070.5458, invalid) and, across the
+diagonal, a refusal. Both bottoms are valid at the tops' volume.
+
+![seam_end_bottom_r2](pictures/seam_end_bottom_r2.png)
+![mirror_bottom_r2](pictures/mirror_bottom_r2.png)
 
 ## Making the pictures
 

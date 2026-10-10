@@ -49,7 +49,7 @@ edge not taken from the face itself. Upstream master has the same code.
 | Case | What it covers |
 |------|----------------|
 | `issue523_document` | the captured model recomputes, its Fillet valid at 1092.5263 |
-| `seam_end_top_r*`, `seam_end_bottom_r*` | the fillet on the box edge ending on the seam, top and bottom, radius 0.5 and 1 (and 2 on top) |
+| `seam_end_top_r*`, `seam_end_bottom_r*` | the fillet on the box edge ending on the seam, top and bottom, radius 0.5, 1 and 2 |
 | `mirror_*` | the same fillet on the edge across the box's diagonal, which does not end on a seam: the seam cases must give its volumes |
 | `every_edge_r1_e*` | every edge of the shape at radius 1: nothing else moved |
 
@@ -598,12 +598,13 @@ or where both edges keep within twice their tolerance of the straight line
 to it (the circle's sag alone is 4e-5 there). On the tops it does not find
 the crossing. Radius 1.999 and below is valid on all four; above 2 all
 four are refused (the fillet's end then meets the box's side as well as
-the cylinder; see "Past the cylinder's radius", below).
+the cylinder; see "Past the cylinder's radius", below). The bottoms are
+valid since: "A corner's curve kept on its face", below.
 
 | Case | What it covers |
 |------|----------------|
 | `mirror_top_r2` | the edge across the diagonal at radius 2: valid, the seam case's volume |
-| `mirror_bottom_r2` | XFAIL, as `seam_end_bottom_r2` |
+| `mirror_bottom_r2` | XFAIL then, as `seam_end_bottom_r2`; valid since, see "A corner's curve kept on its face" |
 
 The every-edge sweep moves those two results and nothing else (3919 the
 same to the last digit); the vertex sweep (12722 fillets, radii 0.3 and 1)
@@ -1206,12 +1207,67 @@ it to the one variable.
 In the sweep, edge 51 at 0.3 and 0.8 and 10 vertex cases with it, made;
 nothing else moved.
 
+## A corner's curve kept on its face (realthunder/FreeCAD#523, 2026-10-10)
+
+The bottoms at radius 2 of "An end point a rounding error past the line",
+above. The corner's curve on the cylinder ends at the far vertex, tangent
+to the circle the bottom cuts there, and leaves it at fourth order
+(z = x^4/64). Its pcurve, degree 7 with 38 poles, has its last pole on the
+circle's line (v = 0, v = -z) and the one before 1.1e-6 past it, so the
+curve runs up to 1.6e-9 past the face over its last 1% -- where BRepCheck
+found the wire crossing itself. The tops' curves do the same (the
+crossing found there or not by chance).
+
+Putting the curve on the face's side is not enough. The true curve lies
+within 1e-10 of the circle for 0.009 from the vertex, so a curve that only
+keeps to its side still touches the circle as BRepCheck's 2D intersection
+(1e-10) sees it, farther from the vertex than the vertex's tolerance
+(1.3e-7) and where the circle's sag is too much for its excuse along the
+chord. The curve has to leave the circle at an angle.
+
+`KeepCurveOnFace` (`PerformOneCorner`, on the curve on Fv and on FvT): a
+B-spline curve whose end lies on an iso-line bounding the face, not a
+periodic one, with poles past it, is refined towards that end with simple
+knots until its poles close in on the curve; the poles past the line go
+onto it, and the one next to the end 1e-8 inside. Within the hull of its
+poles, the curve is then inside the face but at its end, and leaves the
+line at an angle: any touch the intersection finds lies within the chord's
+excuse. The refinement that moves the curve least is taken, once within
+twice the margin; never one moving it more than `Precision::Confusion()`,
+and the move is added to the curve's tolerance. Here it is the margin,
+1e-8; the tops are kept on their face as well.
+
+A first try made the end span a Bezier piece (one knot of full
+multiplicity) and clamped its poles: the bottoms were valid, but the
+pcurve was only C0 at the knot and #876's Fillet002 edges came out at
+3.9e-4 for 1e-4 (the suite's cap is 2e-4), the curve moved by 2e-11. With
+simple knots the curve keeps its continuity and those tolerances stay.
+
+Still open: at radius 2 all four results, tops and bottoms, before and
+after, have two vertices at the far vertex's point, 4e-15 apart -- the
+fillet's line on the top (bottom) ends at the cylinder's far vertex and the
+corner makes a new vertex there. BRepCheck lets it be; BOP's argument check
+reports it (vertex self-interference). Taking the existing vertex for the
+end in the OnSame update, with the three sites in `PerformOneCorner` that
+read the end as a DS point told it is a vertex, made the shell
+unorientable; not taken.
+
+| Case | What it covers |
+|------|----------------|
+| `seam_end_bottom_r2`, `mirror_bottom_r2` | valid, at the tops' volume 1087.3009 (XFAIL before) |
+
+The sweeps: edge, the two bottoms BAD -> ok and nothing else changes
+status; vertex, no status changes. No tolerance moves by a factor of two.
+Volumes move on #273's and #962's shapes, by up to 1.9e-3 (1.6e-7 of
+them): GProp's default integration, which the curves' added knots move --
+at 1e-10 the old and new results of #962's E20 and E21 at radius 2 agree to
+the sixth decimal (11580.489655, 11581.563369).
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there -- on the refined shape too (1 is refused on both). Refused before, at the foot, which is made now |
-| `seam_end_bottom_r2`, `mirror_bottom_r2` | "Self-intersecting wire" on the cylinder, where the tops, built the same, pass: the corner's curve meets the face's circle at fourth order and an approximation within 2e-9 of the true curve crosses it (see "An end point a rounding error past the line", above) |
 
 ## Pictures
 

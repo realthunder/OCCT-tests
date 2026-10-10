@@ -208,14 +208,14 @@ for r, vol in ((0.5, 1093.8183), (1.0, 1092.5263)):
 # cylinder's face as well: the fillet's line on the top (bottom) is tangent
 # to the cylinder there, at the line's very end. The mirror cases found
 # that point a rounding error past the line's end and refused the corner.
-# The bottoms are built as the tops are, but the corner's curve on the
-# cylinder meets the face's circle at fourth order, within 2e-9 of it over
-# its last 1%, and BRepCheck's 2D intersection sees it cross (README.md);
-# on the tops it happens not to.
+# The corner's curve on the cylinder leaves the face's circle at fourth
+# order, and its approximation ran a rounding error past it: on the bottoms
+# BRepCheck saw the wire cross itself. The curve is now kept on the face,
+# leaving the circle at an angle (README.md).
 fillet_case("seam_end_top_r2", bc, top, 2.0, "pass", 1087.3009)
-fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "xfail")
+fillet_case("seam_end_bottom_r2", bc, bottom, 2.0, "pass", 1087.3009)
 fillet_case("mirror_top_r2", bc, mtop, 2.0, "pass", 1087.3009)
-fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "xfail")
+fillet_case("mirror_bottom_r2", bc, mbottom, 2.0, "pass", 1087.3009)
 # Past the cylinder's radius the fillet's line on the top misses the
 # cylinder; the end has to be cut by the cylinder carried into the box for
 # y < 2 and by the box's side x = 0 beyond, and the top splits in two. That
