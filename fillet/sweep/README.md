@@ -43,13 +43,14 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `8704591b60`, FreeCAD OcctFix `493032cbaf`,
-2026-10-10: edge 2509 ok, 40 BAD, 1372 EXC; vertex 9089 ok, 291 BAD, 2862
+`baseline/` is OCCT LinkVibe-801 `fff5d20907`, FreeCAD OcctFix `493032cbaf`,
+2026-10-10: edge 2509 ok, 40 BAD, 1372 EXC; vertex 9109 ok, 291 BAD, 2842
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
-2445 / 42 / 1434, vertex 8847 / 291 / 3104) and `7a1fbeffb3` (edge 2507 /
-42 / 1372, vertex 9089 / 291 / 2862), are in this file's history.
+2445 / 42 / 1434, vertex 8847 / 291 / 3104), `7a1fbeffb3` (edge 2507 /
+42 / 1372, vertex 9089 / 291 / 2862) and `8704591b60` (edge 2509 / 40 /
+1372, vertex 9089 / 291 / 2862), are in this file's history.
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".

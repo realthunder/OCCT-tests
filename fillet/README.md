@@ -1271,6 +1271,40 @@ them): GProp's default integration, which the curves' added knots move --
 at 1e-10 the old and new results of #962's E20 and E21 at radius 2 agree to
 the sixth decimal (11580.489655, 11581.563369).
 
+## A spine extended past a corner by the radius (2026-10-10)
+
+`ExtentOneCorner` extends a fillet's spine past an end at a corner by half
+its length, for the walk to run on past the vertex and the corner to cut
+it back. On an edge short for its radius that is not far enough: the rib
+foot in miniature (`rib_foot`, the edge 4.24 long) needs the wall's line
+carried over the split to the block's top, which takes the walk past the
+vertex by the radius -- from 2.25 on, more than 2.12, and the corner at
+the foot was refused (`ChFi3d_cherche_edge`). The refined shape, whose
+line needs no walk past the split, is made up to 2.8; at 3 the
+underside's line is on its far edge and neither starts.
+
+Extending every such spine by 1.5 radius, as `ExtentTwoCorner` does,
+makes these, but moves results made before: the sweep lost four #876
+vertex cases and moved #876's E50 at 2 by 0.24 and #474 Fillet002's V1
+pair by 0.47. So it is a fallback, `ComputeLongExtension`: when the
+computation has failed and the setback fallback found nothing, and a
+fillet stripe has an end at a corner with half its length under 1.5
+radius, the computation is tried again with those ends extended 1.5
+radius (`ChFi3d_LongSpineExtension()`, read by `ExtentOneCorner`); failing
+at a vertex, with the setback fallback over that. The result is kept on
+the setback fallback's terms (valid, valid read back, every fillet made, no
+edge looser than the input's or a twentieth of the radius); otherwise the
+computation as it was, its failure with it. Nothing made before changes.
+
+| Case | What it covers |
+|------|----------------|
+| `rib_foot_split{,_mirror}_r{2.3,2.5,2.8}` | refused before; the closed form's volume |
+
+The sweeps: edge, nothing moves; vertex, 20 EXC -> ok and nothing else --
+#876's Fillet and Fillet001 at radius 1, edges 42 and 53 (71 and 83),
+2.5 long, alone and with a neighbour, made with the longer extension and
+the corner set back.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

@@ -409,10 +409,13 @@ def rib_foot(mirror=False):
 # top at z=0, both planes: the material taken is the cross-section swept
 # between them through its centroid, (1-pi/4)r^2 (3sqrt2 + 2cr), c as for
 # the slant block. 0.8 and 1.2 were off by 0.05 and 0.17, 1.5 and 2 failed.
+# From 2.25 the line needs the walk past the vertex by more than half the
+# edge (4.24), all the spine is extended by: refused, until the computation
+# tried again with it extended 1.5 radius (ComputeLongExtension).
 for tag, mirror in (("", False), ("_mirror", True)):
     rf = rib_foot(mirror)
     rfe = edge_between(rf, (0, 3, 0), (3 if mirror else -3, 3, 3))
-    for r in (0.8, 1.2, 1.5, 2.0):
+    for r in (0.8, 1.2, 1.5, 2.0, 2.3, 2.5, 2.8):
         fillet_case("rib_foot_split%s_r%g" % (tag, r), rf, rfe, r, "pass",
                     538.5 - (1 - math.pi / 4) * r * r * (3 * math.sqrt(2) + 2 * csb * r),
                     2e-4, vol_tol=1e-4)

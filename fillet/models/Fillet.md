@@ -563,6 +563,25 @@ material the fillet takes is its cross-section times the edge's length to
 
 ![issue474_f003_e51_r0.8](pictures/issue474_f003_e51_r0.8.png)
 
+### A spine extended past a corner by the radius (`fff5d20907`)
+
+The rib foot in miniature of the section before last, at radius 2.5. A
+fillet's walk runs on past the vertex at its end, and the corner cuts it
+back; the spine is extended for that by half its length. This edge is 4.24
+long, and the wall's line, carried over the split to the block's top, needs
+the walk past the vertex by the radius: from 2.25 on it fell short, and
+the corner at the foot was refused, upstream and in the fork alike -- both
+"before" columns show the input. Extending every such spine further moved
+results made before, so it is a fallback: a fillet that failed, with an
+end at a corner on edges short for its radius, is computed again with
+those ends extended 1.5 radius, and kept only if valid with every fillet
+made; nothing made before changes. In the zoom the fillet runs the whole
+underside and its foot lies in the block's top past the split; the third
+row is the top, the end's ellipse cut into its corner. The volume is the
+closed form's, at 2.3 and 2.8 as well.
+
+![rib_foot_split_r2.5](pictures/rib_foot_split_r2.5.png)
+
 ### A corner's curve kept on its face (`8704591b60`, realthunder/FreeCAD#523)
 
 The bottom edges of the box and cylinder at radius 2, the one ending on the
