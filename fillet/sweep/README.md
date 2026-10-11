@@ -59,8 +59,30 @@ The invalid results, each tried again on the shape refined
 and E38 at 2, `Fillet001` E16 and E55 at 2; #309's E9; #474's `Fillet002`
 E4 at 2 and E11, `Fillet003` E2, E18, E49, E52, E56; #962's `Fillet` E6
 -- upstream's behaviour on that geometry, not the pieces'. The eight that
-were invalid only in pieces are fixed (../README.md, 2026-10-11). The
-vertex sweep's 290 are not sorted yet.
+were invalid only in pieces are fixed (../README.md, 2026-10-11).
+
+The vertex sweep's 290 (`triage.py`, at `f7464716c0`): 181 invalid on the
+refined shape as well -- #273 (36), #309 (14), #474 (93), #631 (2), #962
+(36); 23 with an edge that is a split itself, gone from the refined shape;
+and 86 valid there, invalid only in pieces:
+
+| Shape | Vertices (cases) |
+|-------|------------------|
+| `issue962_Fillet` | V48, V49 (6 each: the pocket mouth's edge with its neighbours, two stripes at the pocket's corner, one with its line on the far piece); V2, V17, V35, V40 (2 each) |
+| `issue962_Chamfer` | V1, V2 (4 each); V12, V33, V38 (2 each) |
+| `issue309_shape` | V8 (2) |
+| `mini_ab_r3` | V1, V2 (4 each); V12 (1) |
+| `mini_armblock2` | V4 (6); V5, V6 (4 each) |
+| `mini_finbase` | V3, V11 (6 each) |
+| `mini_finwall` | V3 (6); V11 (4) |
+| `mini_slot_opsplit`, `mini_slot_bothsplit` | V11 (4); V13 (1) |
+
+    grep " BAD" baseline/vertex.txt > /tmp/bad.lst
+    SHAPE=issue962_Fillet LIST=/tmp/bad.lst FreeCADCmd triage.py
+
+"Valid" on the refined shape is BRepCheck's; two of the 86 fail Part's
+`check(True)` there (`ok(bop)`). #474's `Fillet002` E2 was such a case
+on the edge sweep: a spike BRepCheck passed.
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".
