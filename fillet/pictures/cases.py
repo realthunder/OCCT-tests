@@ -34,6 +34,10 @@ STAGES = {
     "s962k": ("2382ef56c9", "fff5d20907"),
     "s962l": ("e6227d4943", "b9e95d0e71"),
     "s523d": ("0589170f82", "40ba54dcdf"),
+    "s962m": ("b5ff91ba64", "63c8218a86"),
+    "s474b": ("63c8218a86", "356bfb48a7"),
+    "s962n": ("356bfb48a7", "29d7d4d038"),
+    "s962o": ("29d7d4d038", "f7464716c0"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -180,6 +184,34 @@ def _rib_foot():
     return s.generalFuse([Part.LineSegment(V(1, 3, 0), V(1, 3, 8)).toShape()])[0].Solids[0]
 
 
+def _ledge():
+    """run_tests.py's ledge: a base whose outline turns at (6,3) and on it a
+    block, the block's side y=3 and the base's below it one plane in two."""
+    V = App.Vector
+    base = Part.Face(Part.makePolygon([V(0, 10, -4), V(0, 0, -4), V(6, 3, -4), V(10, 3, -4),
+                                       V(10, 10, -4), V(0, 10, -4)])).extrude(V(0, 0, 4))
+    return base.fuse(Part.makeBox(4, 7, 5, V(6, 3, 0)))
+
+
+def _pocket_by_split():
+    """run_tests.py's pocket_by_split: a box whose front is split at x=5, a
+    pocket in it 0.3 from the split."""
+    V = App.Vector
+    s = Part.makeBox(10, 6, 10)
+    s = s.generalFuse([Part.LineSegment(V(5, 0, 0), V(5, 0, 10)).toShape()])[0].Solids[0]
+    return s.cut(Part.makeBox(2.7, 2, 4, V(5.3, 0, 3)))
+
+
+def _strip_box():
+    """run_tests.py's strip_box: a box whose bottom and end faces are split
+    2 from the side x=0."""
+    V = App.Vector
+    cuts = [Part.LineSegment(V(2, 0, 0), V(2, 10, 0)).toShape(),
+            Part.LineSegment(V(2, 0, 0), V(2, 0, 4)).toShape(),
+            Part.LineSegment(V(2, 10, 0), V(2, 10, 4)).toShape()]
+    return Part.makeBox(10, 10, 4).generalFuse(cuts)[0].Solids[0]
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -197,6 +229,10 @@ SHAPES = {
     "p876": _brep("issue876_fillet_base.brep"),
     "slantblock": _slant_block,
     "ribfoot": _rib_foot,
+    "ledge": _ledge,
+    "p474b": _brep("issue474_fillet002_base.brep"),
+    "pocketsplit": _pocket_by_split,
+    "stripbox": _strip_box,
 }
 
 
@@ -267,6 +303,15 @@ UVFACE = {
     "slantblock": _plane_at("y", 0, {"x": 5.5}),
     # the block's top, which the fillet's end now grows into under the rib
     "ribfoot": _plane_at("z", 0),
+    # the base's side under the block's (y=3, below the top), whose wire crossed itself
+    "ledge": _plane_at("y", 3, None, {"z": -1.0}),
+    # the ramp's face that reaches down to z=11.1, one of the two meeting in the long edge
+    "p474b": (lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
+              and f.BoundBox.ZMin < 12.0 and f.BoundBox.ZMax > 17.5),
+    # the front's far piece (x 0..5), which the fillet's line lies on
+    "pocketsplit": _plane_at("y", 0, None, {"x": 4.0}),
+    # the end face's near piece (y=0, x 0..2), which the corner cuts
+    "stripbox": _plane_at("y", 0, None, {"x": 1.9}),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -299,6 +344,10 @@ UVFACE_CASE = {
     # the top: the whole of it before, the box's rectangle after (the disc
     # its own face)
     "pinch_top_r2": _plane_at("z", 10, {"x": 3.0}),
+    # the block's side y=10.2 below the arm's top (z -9.75..-3.75)
+    "issue962_top_wall_r0.8": _plane_at("y", 10.2, {"x": 40.0}, {"z": -5.0}),
+    # the same side's piece beside the pocket, the rib's (x 34.5..38.5, z from 14)
+    "issue962_hex_mouth_r0.8": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -323,6 +372,12 @@ NAMES = {
                   "split at x=5",
     "ribfoot": "a 10x6x4 block and on it a 3-thick rib whose underside slopes 45 deg out "
                "from the block's edge, the rib's front wall two faces split at x=1",
+    "ledge": "a 4-thick base whose outline turns at (6,3) and on it a 4x7x5 block, the "
+             "block's side y=3 and the base's below it one plane in two faces",
+    "p474b": "#474's Fillet002 input (a PartDesign body, a helical ramp round a hub)",
+    "pocketsplit": "a 10x6x10 box, its front two faces split at x=5, with a pocket in it "
+                   "0.3 from the split",
+    "stripbox": "a 10x10x4 box, its bottom and its end faces split 2 from the side x=0",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -342,6 +397,10 @@ VIEW = {
     "p876": ((0, 0, 10), 46.0),
     "slantblock": ((6, 1.5, 5), 14.0),
     "ribfoot": ((3.5, 3, 2), 16.0),
+    "ledge": ((5, 5, 0.5), 16.0),
+    "p474b": ((0, 0, 9), 34.0),
+    "pocketsplit": ((5, 3, 5), 17.0),
+    "stripbox": ((5, 5, 2), 17.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -361,6 +420,10 @@ UVLABEL = {
     "p876": ("the corner's plate", False),
     "slantblock": ("the wall's second piece", False),
     "ribfoot": ("the block's top", False),
+    "ledge": ("the base's side below the block's", False),
+    "p474b": ("the ramp's face beside the long edge", False),
+    "pocketsplit": ("the front's far piece", False),
+    "stripbox": ("the end face's near piece", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -372,6 +435,8 @@ UVLABEL_CASE = {
     "seam_end_top_r3": ("the corner's plate", False),
     "issue962_rib_foot_r0.9865": ("the block's top at the rib's foot", False),
     "pinch_top_r2": ("the top, the box's part", False),
+    "issue962_top_wall_r0.8": ("the block's side below the arm's top", False),
+    "issue962_hex_mouth_r0.8": ("the side's piece beside the pocket's", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -461,6 +526,22 @@ CASES = {
                                   0.9865, 11579.2408, (38.8, 20.0, 14.6), (-1, 0.6, -0.1)),
     "pinch_top_r2": ("s523d", "boxcyl", ((2, 0, 10), (10, 0, 10)), 2.0, 1087.3009,
                      (0, 2, 10), (-1, 0.55, 0.75)),
+    "issue962_top_wall_r0.8": ("s962m", "p962", ((38.5, 10.2, -3.75), (38.5, 27.2, -3.75)), 0.8,
+                               11586.4880, (38.5, 10.2, -3.75), (-0.5, -1, 0.6)),
+    "ledge_wall_r0.8": ("s962m", "ledge", ((6, 3, 0), (6, 10, 0)), 0.8, 456.9737,
+                        (6, 3, 0), (-0.5, -1, 0.6)),
+    "issue474_f002_ramp_end_r0.3": ("s474b", "p474b", ((-5.4940374, 11.7820012, 13.0),
+                                                        (-5.4940374, 11.7820012, 11.0)), 0.3,
+                                    1939.2160, (-5.494, 11.782, 13.0), (0.35, 1, 0.5)),
+    "issue962_hex_mouth_r0.8": ("s962n", "p962", ((38.8, 10.2, 24.4248711),
+                                                   (38.8, 10.2, 19.5751289)), 0.8, 11583.5022,
+                                (38.6, 10.2, 22.0), (-0.3, -1, 0.25)),
+    "pocket_by_split_r0.8": ("s962n", "pocketsplit", ((5.3, 0, 3), (5.3, 0, 7)), 0.8, 577.8506,
+                             (5.1, 0, 5), (-0.3, -1, 0.25)),
+    "pocket_by_split_r0.3": ("s962o", "pocketsplit", ((5.3, 0, 3), (5.3, 0, 7)), 0.3, 578.3227,
+                             (5.1, 0, 5), (-0.3, -1, 0.25)),
+    "strip_box_r2": ("s962o", "stripbox", ((0, 0, 0), (0, 10, 0)), 2.0, 391.4159,
+                     (0, 0, 0), (-1, -0.8, -0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

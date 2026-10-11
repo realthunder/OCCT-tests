@@ -43,14 +43,24 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `fff5d20907`, FreeCAD OcctFix `493032cbaf`,
-2026-10-10: edge 2509 ok, 40 BAD, 1372 EXC; vertex 9109 ok, 291 BAD, 2842
+`baseline/` is OCCT LinkVibe-801 `f7464716c0`, FreeCAD OcctFix `493032cbaf`,
+2026-10-11: edge 2519 ok, 32 BAD, 1370 EXC; vertex 9118 ok, 290 BAD, 2834
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
 2445 / 42 / 1434, vertex 8847 / 291 / 3104), `7a1fbeffb3` (edge 2507 /
-42 / 1372, vertex 9089 / 291 / 2862) and `8704591b60` (edge 2509 / 40 /
-1372, vertex 9089 / 291 / 2862), are in this file's history.
+42 / 1372, vertex 9089 / 291 / 2862), `8704591b60` (edge 2509 / 40 /
+1372, vertex 9089 / 291 / 2862) and `fff5d20907` (edge 2509 / 40 / 1372,
+vertex 9109 / 291 / 2842), are in this file's history.
+
+The invalid results, each tried again on the shape refined
+(`removeSplitter`, the edge found again by its middle): the edge sweep's
+32 are invalid there too -- #273's `Fillet` E11, E15 (every radius), E20
+and E38 at 2, `Fillet001` E16 and E55 at 2; #309's E9; #474's `Fillet002`
+E4 at 2 and E11, `Fillet003` E2, E18, E49, E52, E56; #962's `Fillet` E6
+-- upstream's behaviour on that geometry, not the pieces'. The eight that
+were invalid only in pieces are fixed (../README.md, 2026-10-11). The
+vertex sweep's 290 are not sorted yet.
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".

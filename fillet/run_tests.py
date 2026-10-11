@@ -382,6 +382,50 @@ for r, vol in ((0.9855, 11579.250754), (0.986, 11579.245778), (0.9862, 11579.243
 # well (1 is refused on both). Refused before, at the foot; invalid now.
 fillet_case("issue962_rib_chamfer_1.2", p2, rib, 1.2, "xfail", chamfer=True)
 
+# The arm's top (z=-3.75) against the block's wall x=38.5, and the top's
+# edge with the arm's slanting side (e33 above): both end at
+# (38.5,10.2,-3.75), five edges there -- the block's side (y=10.2) and the
+# arm's foot below the top are one plane in two faces, split along the top's
+# level, and the edges on either side of the two, the wall's and the
+# slanting side's, are one line. On the shape refined that is a corner of
+# four edges, two of them in line, where the fillet cuts only the face that
+# is not between the two. In pieces each face was cut for itself: the
+# fillet's section in the pieces' plane came out twice, there and back, and
+# the lower piece's wire crossed itself (0.8, and 2 on the slanting side),
+# or the end failed and the corner setback fallback made it, tolerances to
+# 0.12 (0.3, 2). The other end of the wall's edge, at y=27.2, is the same.
+# Volumes: the refined shape's (on the slanting side this shape's own: the
+# two results cut from each other leave nothing, while their volumes read
+# 3e-3 apart at r=2, an ellipse and a circle's arc at the far end
+# integrated differently).
+ewall = edge_between(p2, (38.5, 10.2, -3.75), (38.5, 27.2, -3.75))
+for r, vol in ((0.3, 11584.468959), (0.8, 11586.488030), (2.0, 11598.939732)):
+    fillet_case("issue962_top_wall_r%g" % r, p2, ewall, r, "pass", vol, 1e-4, vol_tol=1e-5,
+                bop=True)
+for r, vol in ((0.8, 11580.223860), (2.0, 11559.992535)):
+    fillet_case("issue962_top_slant_r%g" % r, p2, e33, r, "pass", vol, 1e-4, vol_tol=1e-5,
+                bop=True)
+for r, vol in ((0.8, 11589.625952), (2.0, 11618.859178)):
+    fillet_case("issue962_top_wall_chamfer_%g" % r, p2, ewall, r, "pass", vol, 1e-4,
+                chamfer=True, vol_tol=1e-5, bop=True)
+
+# The mouth of the hexagonal pocket in the block's side (y=10.2), its edge
+# at x=38.8, 0.3 from the split of that side at x=38.5 (the block's piece
+# and the rib's above it, one plane). From r=0.3 the fillet's line on the
+# side lies on the rib's piece, and the edge that closes the fillet's end --
+# the pocket's next wall carried on from the corner to the line -- starts
+# in the block's piece and crosses the split. It was put on the rib's piece
+# whole, which left that face an open wire and the block's piece without
+# its end: invalid from 0.301 to 1.2. At 0.3 the line runs along the split
+# itself, and the walk did not start: the split was not taken for one on
+# faces REVERSED in the shell (the miniature below has more of that
+# coincidence). Volumes: the refined shape's.
+ehex = edge_between(p2, (38.8, 10.2, 24.4248711), (38.8, 10.2, 19.5751289))
+for r, vol in ((0.3, 11584.047745), (0.5, 11583.886647), (0.8, 11583.502170),
+               (1.2, 11582.736864)):
+    fillet_case("issue962_hex_mouth_r%g" % r, p2, ehex, r, "pass", vol, 2e-4, vol_tol=1e-5,
+                bop=True)
+
 
 def slant_block(mirror=False):
     """A 12x3 prism (y 0..3) whose top is flat (z=10) for x 0..4 and slopes
@@ -442,6 +486,131 @@ for tag, mirror in (("", False), ("_mirror", True)):
                     2e-4, vol_tol=1e-4)
 
 
+def ledge(mirror=False):
+    """#962's arm and block in miniature: a base (z -4..0) whose outline
+    runs (0,0) to (6,3) and on along y=3 to x=10, and on it a block (x 6..10,
+    y 3..10, up to z=5). The block's side y=3 and the base's below it are one
+    plane in two faces; at (6,3,0) the base's top meets the block's wall
+    (x=6), the base's slanting side and those two, five edges."""
+    base = Part.Face(Part.makePolygon([V(0, 10, -4), V(0, 0, -4), V(6, 3, -4), V(10, 3, -4),
+                                       V(10, 10, -4), V(0, 10, -4)])).extrude(V(0, 0, 4))
+    s = base.fuse(Part.makeBox(4, 7, 5, V(6, 3, 0)))
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The fillet between the base's top and the wall (concave) runs on past the
+# wall's end at y=3 to the slanting side, which cuts it off: the material
+# added is the cross-section (1-pi/4)r^2 over the edge's 7 and, past its
+# end, over half the cross-section's centroid distance from the wall, c r
+# (the side slopes 1 in 2). A chamfer's cross-section is r^2/2, its centroid
+# r/3 from the wall. The fillet on the top's edge with the slanting side
+# (convex) is cut by the wall's plane x=6 and the base's side x=0, parallel:
+# what it takes is the cross-section over the edge's length sqrt(45). Before:
+# as on #962 above -- 0.3 and 0.8 on the wall made by the fallback, off by
+# 2e-4 and 5e-3, the rest invalid.
+for tag, mirror in (("", False), ("_mirror", True)):
+    lg = ledge(mirror)
+    sg = -1 if mirror else 1
+    lw = edge_between(lg, (sg * 6, 3, 0), (sg * 6, 10, 0))
+    ls = edge_between(lg, (0, 0, 0), (sg * 6, 3, 0))
+    # a shape of its own for each case: a fillet made raises the tolerances
+    # of what its result shares with the input
+    for r in (0.3, 0.8, 2.0):
+        fillet_case("ledge_wall%s_r%g" % (tag, r), ledge(mirror), lw, r, "pass",
+                    456 + (1 - math.pi / 4) * r * r * (7 + csb * r / 2), 1e-4, vol_tol=1e-5,
+                    bop=True)
+        fillet_case("ledge_slant%s_r%g" % (tag, r), ledge(mirror), ls, r, "pass",
+                    456 - (1 - math.pi / 4) * r * r * math.sqrt(45), 1e-4, vol_tol=1e-5,
+                    bop=True)
+    for r in (0.5, 1.0):
+        fillet_case("ledge_wall_chamfer%s_%g" % (tag, r), ledge(mirror), lw, r, "pass",
+                    456 + 0.5 * r * r * (7 + r / 6), 1e-4, chamfer=True, vol_tol=1e-5,
+                    bop=True)
+
+
+def strip_box(mirror=False, ends=True):
+    """A 10x10x4 box whose bottom (z=0) is split along x=2, 2 from its edge
+    with the side x=0; with ends, the two end faces (y=0, y=10) are split
+    along x=2 as well."""
+    cuts = [Part.LineSegment(V(2, 0, 0), V(2, 10, 0)).toShape()]
+    if ends:
+        cuts += [Part.LineSegment(V(2, 0, 0), V(2, 0, 4)).toShape(),
+                 Part.LineSegment(V(2, 10, 0), V(2, 10, 4)).toShape()]
+    s = Part.makeBox(10, 10, 4).generalFuse(cuts)[0].Solids[0]
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The fillet on the bottom's edge with the side, at the width of the bottom's
+# piece (2) and up to 1e-4 over it: its line on the bottom runs along the
+# split, the piece goes under the fillet whole, and the line ends on the
+# split's end vertices. It takes the cross-section over the edge's 10.
+# With the end faces in one piece each: refused at 2 and 2.00005 on the box
+# as built -- the split was not taken for one on faces REVERSED in the shell
+# -- and made on its mirror image. With the end faces split too, the walk,
+# on the far piece, ended on that piece's own edge at the vertex, not an
+# edge of the corner: refused, or invalid with 12 of volume too much (2.0001);
+# now the corner is that of the near pieces, the edge between them under
+# the fillet. Further out the line lies on the far piece, and with the ends
+# split the cut of the corner crosses their split: still refused
+# (README.md). A shape of its own for each case.
+for ends, etag in ((True, ""), (False, "_plain_ends")):
+    for tag, mirror in (("", False), ("_mirror", True)):
+        se = edge_between(strip_box(mirror, ends), (0, 0, 0), (0, 10, 0))
+        for r in (2.0, 2.00005, 2.0001):
+            fillet_case("strip_box%s%s_r%g" % (etag, tag, r), strip_box(mirror, ends), se, r,
+                        "pass", 400 - (1 - math.pi / 4) * r * r * 10, 1e-3, vol_tol=1e-5,
+                        bop=True)
+        fillet_case("strip_box%s%s_chamfer_2" % (etag, tag), strip_box(mirror, ends), se, 2.0,
+                    "pass", 380.0, 1e-3, chamfer=True, vol_tol=1e-5, bop=True)
+        if ends:
+            fillet_case("strip_box%s_r2.5" % tag, strip_box(mirror, ends), se, 2.5, "xfail")
+        else:
+            for r in (2.001, 2.5):
+                fillet_case("strip_box_plain_ends%s_r%g" % (tag, r), strip_box(mirror, ends),
+                            se, r, "pass", 400 - (1 - math.pi / 4) * r * r * 10, 1e-4,
+                            vol_tol=1e-5, bop=True)
+
+# #309's shape is all of that: its bottom, its side and its end faces in
+# strips 2 wide. Edge 17 (x=2, z=-2, y -50..50) at 2: refused before; the
+# refined shape's volume.
+p309 = Part.read(os.path.join(HERE, "..", "draft", "models", "issue309_shape.brep"))
+e309 = edge_between(p309, (2, 50, -2), (2, -50, -2))
+fillet_case("issue309_e17_r2", p309, e309, 2.0, "pass", 12677.526391, 1e-3, vol_tol=1e-5,
+            bop=True)
+
+
+def pocket_by_split(mirror=False):
+    """#962's pocket mouth in miniature: a 10x6x10 box whose front (y=0) is
+    split by a vertical edge at x=5, and in the front a pocket (x 5.3..8,
+    z 3..7, 2 deep) 0.3 from the split."""
+    s = Part.makeBox(10, 6, 10)
+    s = s.generalFuse([Part.LineSegment(V(5, 0, 0), V(5, 0, 10)).toShape()])[0].Solids[0]
+    s = s.cut(Part.makeBox(2.7, 2, 4, V(5.3, 0, 3)))
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The fillet on the pocket's mouth at x=5.3: from r=0.3 its line on the front
+# lies on the other piece. It takes the cross-section over the edge's 4, the
+# pocket's floor and ceiling square to it. Invalid from 0.301 to 1.2, 25 or
+# 6 of volume off; at 0.3, the line along the split, refused on the box as
+# built (its faces REVERSED in the shell) and invalid on its mirror image.
+# Up to 0.3003 the line's end and the
+# split's are one vertex, of that tolerance (the corner's cut, tangent to
+# the wall at the line's end, passes the split within 4e-7 there); from
+# 0.3005 the closing edge is in two, 5e-4 of it on the far piece. A shape of
+# its own for each case.
+for tag, mirror in (("", False), ("_mirror", True)):
+    pk = pocket_by_split(mirror)
+    sg = -1 if mirror else 1
+    pe = edge_between(pk, (sg * 5.3, 0, 3), (sg * 5.3, 0, 7))
+    for r in (0.3, 0.30005, 0.3003, 0.3005, 0.303, 0.5, 0.8, 1.2):
+        fillet_case("pocket_by_split%s_r%g" % (tag, r), pocket_by_split(mirror), pe, r, "pass",
+                    578.4 - (1 - math.pi / 4) * r * r * 4, 1e-3 if r < 0.3005 else 2e-4,
+                    vol_tol=1e-5, bop=True)
+    fillet_case("pocket_by_split_chamfer%s_0.5" % tag, pocket_by_split(mirror), pe, 0.5, "pass",
+                578.4 - 0.5 * 0.25 * 4, 2e-4, chamfer=True, vol_tol=1e-5, bop=True)
+
+
 # #474's Fillet003 input, edge 6: its corner plate missed its boundary by 1.8
 # at radius 2 -- invalid, tolerances 15 to 36, 244 too much volume at r 2.
 p474 = Part.read(os.path.join(MODELS, "issue474_fillet003_base.brep"))
@@ -455,6 +624,25 @@ for r, vol in ((0.3, 1988.9101), (0.8, 1989.1235), (2.0, 1990.2561)):
 e51 = edge_between(p474, (6.415306, 11.306805, 29.660692), (6.415306, 11.306805, 38.0))
 for r, vol in ((0.3, 1988.711859), (0.8, 1987.728997)):
     fillet_case("issue474_f003_e51_r%g" % r, p474, e51, r, "pass", vol, 0.05, vol_tol=1e-5)
+
+# #474's Fillet002 input, the vertical edge at (-5.494, 11.782) from z=13
+# down (two edges in line, 2 and 11 long, the wall beside them in two
+# coplanar pieces): at its top it ends where two faces of the helical ramp
+# meet in an edge that winds 82 round the axis, five edges at the vertex.
+# The fillet crosses that edge 0.07 to 0.4 from the vertex (r 0.1 to 0.5),
+# and the intersection of the whole edge with the fillet did not show it:
+# the two ramp faces were intersected anew and the piece of their line from
+# the vertex added on top of the edge, which stayed whole -- a spike both
+# faces ran up and down, "valid" for BRepCheck from 0.3 and self-intersecting
+# for BOP's check, on the shape refined as well. On this shape, the edge in
+# two, the piece kept of the new line was the rest of it, a turn of the ramp
+# away: invalid, 707 of volume too much. Volumes: the refined shape's, now
+# without the spike.
+p474b = Part.read(os.path.join(MODELS, "issue474_fillet002_base.brep"))
+e2 = edge_between(p474b, (-5.4940374, 11.7820012, 13.0), (-5.4940374, 11.7820012, 11.0))
+for r, vol in ((0.1, 1939.439298), (0.3, 1939.216039), (0.5, 1938.769398)):
+    fillet_case("issue474_f002_ramp_end_r%g" % r, p474b, e2, r, "pass", vol, 1e-4,
+                vol_tol=1e-5, bop=True)
 
 # The same foot made small: an arm (a prism of a quadrilateral) fused to a
 # block, the seam between their bottoms running from y=27.2 to y=10.2 -- the

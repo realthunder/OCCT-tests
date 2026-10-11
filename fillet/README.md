@@ -1418,11 +1418,202 @@ waits for a face to split.
 The sweeps: edge, the four #523 r=2 results 8 -> 9 faces at the same volume,
 nothing else; vertex, nothing moves.
 
+## A corner of five edges, two of them in line (realthunder/FreeCAD#962, 2026-10-11)
+
+The sweep's invalid results, each tried again on the shape refined
+(`removeSplitter`): 40 on single edges, 32 of them invalid on the refined
+shape as well -- upstream's behaviour on that geometry, see the sweep's
+README -- and 8 only on the shape in pieces. Six of the eight are #962's.
+
+Five are one corner: (38.5,10.2,-3.75) and its twin at y=27.2, where the
+arm's top meets the block's wall. The block's side (y=10.2) and the arm's
+foot below the top are one plane in two faces, split along the top's level;
+the edge up the wall and the edge down the arm's slanting side are one line,
+on either side of the two. Five edges; on the refined shape four, two of
+them in line, which `PerformIntersectionAtEnd` knows: "if two consecutive
+edges are G1 there is only one face of intersection" -- the fillet cuts the
+face that is not between the two, and the face between them takes only the
+piece of that line from the vertex to the fillet's end.
+
+In pieces, each of the three faces at the end was cut for itself. The
+fillet's section in the pieces' plane came out twice, there and back -- on
+the lower piece from the line up the wall down to the top's level, on the
+upper one back again -- the lower piece's wire crossed itself, and the
+fillet's face carried a tongue of no area: "Self-intersecting wire" at 0.8
+on the wall's edge (fillet and chamfer), at 0.8 and 2 on the slanting
+side's. At the other radii of the sweep the end failed outright and the
+corner setback fallback made it, valid, at tolerances of 0.007 to 0.12.
+
+Now the rule holds for the pieces: when the faces at the end past the first
+(or before the last) are coplanar pieces, the same way up, and the edges on
+either side of them are in line at the vertex (within 0.01 rad, the rule's
+own measure), the fillet cuts the remaining face only. The piece that the
+line's own edge borders takes the edge from the vertex to the line's end --
+its pcurve there a projection, the piece a plane; the pieces between and
+their splits stay as they are.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_top_wall_r{0.3,0.8,2}` | the top against the block's wall, ending at that corner at both ends: the refined shape's volume to 1e-5, no tolerance above 1e-4, BOP's check (invalid at 0.8 before; 0.3 and 2 by the fallback, tolerances 0.018 and 0.12) |
+| `issue962_top_slant_r{0.8,2}` | the top's edge with the slanting side, edge 33 (invalid before); `issue962_e33_r{0.1,0.3}` above are made exactly now, too |
+| `issue962_top_wall_chamfer_{0.8,2}` | a chamfer on the wall's edge (invalid before, at every size) |
+| `ledge_wall{,_mirror}_r{0.3,0.8,2}`, `ledge_wall_chamfer{,_mirror}_{0.5,1}` | the corner in miniature, built: a block on a base whose outline turns at the block's corner. The fillet runs on past the wall's end to the base's slanting side: the closed form's volume |
+| `ledge_slant{,_mirror}_r{0.3,0.8,2}` | the base's top against its slanting side: the cross-section over the edge's length |
+
+The sweeps: edge, the 6 invalid results valid, 12 results of the fallback
+now made exactly (the tolerances above down to 1e-5, the volumes moving to
+the refined shape's, by up to 0.14); #309's edge 8 at 0.3 and 0.8, the same
+corner on another shape, one face fewer at the same volume -- a plate of
+0.038, 0.013 out of flat, where the corner's face is now the plane itself.
+## A long edge crossed close to the corner (realthunder/FreeCAD#474, 2026-10-11)
+
+The seventh: #474's Fillet002 input, the vertical edge at (-5.494, 11.782)
+from z=13 down, at 0.3 -- invalid, 707 of volume too much. Its top is a
+vertex of five edges where two faces of the helical ramp meet in an edge
+that winds 82 round the axis (16 turns of it). The fillet crosses that edge
+0.07 to 0.4 from the vertex (r 0.1 to 0.5), and `PerformIntersectionAtEnd`
+looked for the crossing by intersecting the edge's whole curve with the
+fillet: the curve is sampled for that, 82 of it too coarsely to show a
+crossing in its first half unit. Without the point the edge was taken for
+one the fillet misses: the two ramp faces were intersected anew, and the
+piece of their line from the vertex to the fillet laid on top of the edge,
+which stayed whole.
+
+On the refined shape that was a spike -- both faces ran up the new piece and
+down the old edge -- valid for BRepCheck from 0.3, self-intersecting for
+BOP's check, invalid at 0.1 and 0.2: the "refined is valid" of the triage
+was BRepCheck's alone. On the shape in pieces (the edge under the fillet two
+edges in line, the wall beside it split) the piece kept of the new line was
+the wrong one: the vertex was located on it by the first extremum
+`Extrema_ExtPC` returned, which on a curve winding round an axis can be a
+turn away -- here 5 up -- and the rest of the curve, 81 long, was kept.
+
+Two changes. When the whole curve shows no crossing, the intersection is
+tried again on the piece of it within ten times the fillet's width of the
+vertex; the edge is then cut where the fillet crosses it, as any edge is.
+And where a piece of a curve is added from the vertex, the vertex is at the
+nearest of the curve's points, not the first found. With the first change
+nothing in the suite or the sweeps reaches the second any more.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f002_ramp_end_r{0.1,0.3,0.5}` | the edge (`models/issue474_fillet002_base.brep`): valid, BOP's check, the refined shape's volume (0.1: invalid on both shapes before; 0.3 and 0.5: invalid, 707 too much, and on the refined shape the spike) |
+
+## The closing edge of a corner over a split (realthunder/FreeCAD#962, 2026-10-11)
+
+The eighth: the mouth of the hexagonal pocket in #962's block, its edge at
+x=38.8 on the block's side (y=10.2), 0.3 from the split of that side at
+x=38.5 (the block's piece and the rib's above it, one plane). At 0.8 the
+fillet's line on the side lies on the rib's piece, 0.5 past the split. The
+corner at either end is `PerformOneCorner`'s, OnSame: the pocket's next wall
+cuts the fillet, and the edge between that wall and the side is carried on
+from the corner to the line's end -- the extension, which closes the
+fillet's end. It starts in the block's piece, where the pocket is, and
+crosses the split on its way. It was put on the line's face whole: the
+rib's piece got an open wire of three edges, the block's piece kept the
+split entire and lost nothing, "Unorientable shape".
+
+Now, when the edge carried on belongs to a coplanar piece beside the line's
+face, the extension is looked at against the edges of both
+(`ExtensionOverSplit`): if it crosses one edge of the two, inside it, and no
+other, it is stored in two parts, each on its piece, and the split is cut
+at the crossing -- of its two sides there the one the spine leaves the
+corner toward is under the fillet. The parts keep the tolerance the
+extension really has (1e-7 for two planes) rather than the 1e-4 asked of
+the intersection: the corner's cut leaves the line's end tangent to the
+wall, and runs within d^2/2r of the first part where the crossing is d from
+the end -- with both at 1e-4 BOP's check called that a self-intersection up
+to d = 8e-3.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_r{0.5,0.8,1.2}` | the pocket's mouth: the refined shape's volume to 1e-5, BOP's check (invalid from 0.301 before) |
+| `pocket_by_split{,_mirror}_r{0.3005,0.303,0.5,0.8,1.2}`, `pocket_by_split_chamfer{,_mirror}_0.5` | the mouth in miniature, built: a box whose front is split at x=5, a pocket in it 0.3 from the split. The cross-section over the edge's 4 (invalid before, 25 or 6 of volume off) |
+
+## A fillet as wide as its piece, once more (realthunder/FreeCAD#962, #309, 2026-10-11)
+
+"A fillet as wide as the piece of a split wall" (2026-10-03) made the walk
+take a point on the split for a point of the far piece. Three things were
+left of it, found on the pocket's mouth at 0.3, where the line runs along
+the split, and on #309, a body all in strips 2 wide.
+
+- The split was not seen on faces REVERSED in the shell. The walk's domain
+  holds its face FORWARD, and `ChFi3d_SplitPieceOfSpine` asked whether that
+  face and the one across the edge, as the shell has it, are tangent --
+  which `ChFi3d::IsTangentFaces` denies of two faces REVERSED in the shell
+  when one of them is turned. A box made by `Part.makeBox` has its bottom,
+  front and left that way: the miniatures of 2026-10-03 happened to stand
+  on the other three. The face is now taken as the shell has it. The
+  mouth at 0.3 and the strip box at 2 were refused on the box as built and
+  made (or made wrong) on its mirror image.
+- The extension ending on the split: with the line along the split, the
+  extension lies in the spine's piece whole and meets the split at its end.
+  It is stored there, and the split cut at the line's end
+  (`ExtensionOverSplit`, at end). The same where the crossing is so close
+  to the end that the corner's cut passes it within the parts' tolerance
+  (to d = 3e-4 at radius 0.3): the line's end and the split's are then one
+  vertex, of tolerance d.
+- A line's end on a vertex, by an edge that is not the corner's. Where the
+  end face is in pieces too, the walk on the far piece ends at the split's
+  end vertex on that piece's own edge with the end face's far piece, and
+  `FindFace` found no face holding both sides' edges: the corner went to
+  `PerformIntersectionAtEnd`, which cut the near end piece and left its
+  edge under the fillet in place -- invalid, 12 too much on the strip box,
+  1600 on #309. The side's end is now put on the corner's own edge to that
+  vertex, at its far end, nothing of it kept; the corner is then the one
+  the unsplit end face has, and the split under the line goes with its
+  piece as before.
+
+- A stripe that stops short. With the split seen, #309's edge 3 at 2 -- a
+  circle's arc and, tangent to it, a 2-long edge down the body's end, the
+  faces beside both 2 wide -- could start its walk, on the short edge's far
+  piece, and ended it at the vertex between the two edges: the next edge's
+  face, the cylinder's strip, as wide as the fillet with a sharp edge
+  beyond, gives it no line. `PerformSetOfSurfOnElSpine` takes a walk on a
+  guide that reaches the spine's end for finished wherever it stops, and
+  the corner at the arc's far end, 56 away, was made of that surface. As
+  long as the corner at the near end failed, the fillet was refused; with
+  the third change it came out invalid, a face of tolerance 30.
+  `PerformSetOfSurf` now refuses a stripe whose surfaces stop short of an
+  end of its spine by more than ten times their width there and more than
+  half the spine's edge they stop on (an end face on a slant stops them a
+  width or two before the vertex). The refined shape refuses that fillet
+  as well: its radius is the width of the cylinder's strip.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_r0.3` | the line along the split: the refined shape's volume (refused before) |
+| `pocket_by_split{,_mirror}_r{0.3,0.30005,0.3003}` | the same in miniature, to 3e-4 past the split: the closed form, BOP's check, the end vertices' tolerance under 1e-3 (refused or invalid before) |
+| `strip_box{,_mirror}_r{2,2.00005,2.0001}`, `strip_box{,_mirror}_chamfer_2` | a box whose bottom is split 2 from its edge and whose end faces are split there too: the cross-section over the edge's 10 (refused, or invalid with 12 too much) |
+| `strip_box_plain_ends{,_mirror}_r{2,2.00005,2.0001,2.001,2.5}`, `..._chamfer_2` | the same with the end faces whole (2 and 2.00005 refused on the box as built) |
+| `issue309_e17_r2` | #309's edge 17 at the width of its strips: the refined shape's volume (refused before) |
+| `strip_box{,_mirror}_r2.5` (XFAIL) | see Known broken |
+
+The sweeps, the four sections together. Edge: the 8 results invalid only
+in pieces are valid; 2 refused are made (#962's pocket mouth at 0.3, #309's
+edge 17 at 2); 12 results of the corner setback fallback at #962's corner
+are made exactly, their tolerances from 0.007..0.12 down to 1e-5, their
+volumes moving to the refined shape's by up to 0.14; #309's edge 8 has a
+face fewer at the same volume, a plate of 0.038 that was 0.013 out of flat
+now the plane itself; nothing else moves. 2519 valid, 32 invalid -- on the
+refined shape as well, all 32 -- and 1370 refused. Vertex: 7 invalid
+results valid and 2 refused made, the same edges alone at their ends; 106
+valid results at the corners of five edges of #962 and #309 made exactly,
+as on the edges; and 6 from refused to invalid -- the pocket mouth's edge
+together with the mouth's next edge or the pocket's corner edge, at 0.3.
+Two stripes meet at the pocket's corner there, one with its line on the
+far piece of the side, and the corner of two does not take them for
+sharing a face: at 1 those cases were invalid before as well; at 0.3 the
+split was not seen and the fillet refused before it came to that. The
+refined shape makes them all. Open, with the rest of the vertex sweep's
+invalid results (290).
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
+| `strip_box{,_mirror}_r2.5` | Refused. A box whose bottom is split 2 from its edge and whose end faces are split there too, the fillet wider than the bottom's piece: its line lies on the far piece, and the cut of the corner by the end face runs over that face's two pieces, crossing their split. The corner takes a cut on one face; with the end faces whole (`strip_box_plain_ends_r2.5`) it is made. #309's edge 17 from 2.01 up is the same. Refused before as well |
 
 ## Pictures
 

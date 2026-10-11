@@ -654,6 +654,127 @@ all four r=2 results, tops and bottoms, pass BOP's check.
 
 ![pinch_top_r2](pictures/pinch_top_r2.png)
 
+### A corner of five edges, two of them in line (`63c8218a86`, realthunder/FreeCAD#962)
+
+The sweep's invalid results were sorted by one question: is the same
+fillet invalid on the shape refined? For 32 of the 40 on single edges it
+is -- upstream's behaviour on that geometry. Eight are invalid only on the
+shape in pieces, and five of them are one corner of #962: where the arm's
+top meets the block's wall, at (38.5,10.2,-3.75). The block's side and the
+arm's foot below the top are one plane in two faces, split along the top's
+level; the edge up the wall and the edge down the arm's slanting side are
+one line, on either side of the two. That makes five edges at the vertex.
+On the refined shape there are four, two of them in line, and the corner's
+code knows that case: the fillet cuts only the face that is not between
+the two, and the face between them takes the piece of that line from the
+vertex to the fillet's end.
+
+In pieces, each face at the end was cut for itself, and the fillet's
+section in the pieces' plane came out twice, there and back.
+In the picture (radius 0.8, the wall's edge) upstream and the fork before
+agree: the volume is right and the solid invalid, the fillet and the
+block's side below the arm's top red. The zoom is on the vertex: a black
+sliver where the fillet's face runs down the section's arc and up again.
+The third row is that lower piece of the side: its rectangle with a tab on
+its corner, the arc and the line up the wall, where its wire crosses
+itself. After, the fillet runs past the wall's end to the arm's slanting
+side and is cut by it, and the lower piece is its rectangle.
+Now coplanar pieces between two edges in line count as the one face.
+
+![issue962_top_wall_r0.8](pictures/issue962_top_wall_r0.8.png)
+
+The corner in miniature: a block on a base whose outline turns at the
+block's corner. The fillet runs on past the wall's end to the base's
+slanting side, which cuts it off, and the volume has a closed form.
+Upstream, at 0.8, makes a valid solid 0.094 too large with a dent beside
+the vertex. The fork before refused that end and made it with the corner
+setback fallback -- a small patch, 5e-3 too much, edges at a tolerance of
+0.023; at 2 it was invalid as on #962. After: the fillet cut by the
+slanting side, the volume the closed form's.
+
+![ledge_wall_r0.8](pictures/ledge_wall_r0.8.png)
+
+### A long edge crossed close to the corner (`356bfb48a7`, realthunder/FreeCAD#474)
+
+The input of #474's Fillet002, the vertical edge beside the helical ramp.
+At its top two faces of the ramp meet in an edge that winds 82 round the axis, and
+the fillet crosses that edge a quarter of a unit from the vertex. The
+corner looked for the crossing on the edge's whole curve, which is sampled
+too coarsely for it, and took the edge for one the fillet misses: the two
+ramp faces were intersected anew and the piece of their line from the
+vertex to the fillet laid on top of the edge, which stayed whole. On the
+refined shape that was a spike both faces ran up and down, valid for
+BRepCheck and self-intersecting for BOP's check. With the edge under the
+fillet in two pieces the piece kept of the new line was the wrong one --
+the vertex was found on it a turn of the ramp away -- and the rest of the
+line, 81 long, was kept.
+Before, the ramp's two faces are red, 707 of volume too much, and in the
+zoom their edges fan out from the vertex over the ramp's underside; the
+third row marks the vertex where the ramp face's outline fails.
+Now, when the whole curve shows no crossing, the piece of it near the
+vertex is tried, and the edge is cut where the fillet crosses it.
+
+![issue474_f002_ramp_end_r0.3](pictures/issue474_f002_ramp_end_r0.3.png)
+
+### The closing edge of a corner over a split (`29d7d4d038`, realthunder/FreeCAD#962)
+
+The mouth of the hexagonal pocket in #962's block: its edge lies 0.3 from
+the split of the block's side in two coplanar pieces, and at radius 0.8 the
+fillet's line on the side lies on the piece beyond the split. At either end
+the pocket's next wall cuts the fillet, and the edge between that wall and
+the side is carried on from the corner to the line's end -- the edge that
+closes the fillet's end. It starts in the pocket's piece and crosses the
+split, and was put on the line's piece whole.
+Before, the shell is open: the side's piece beside the pocket's is red, and
+in the third row its outline has a notch whose two short edges stop in the
+air (the circles) -- they belong, half each, to the pocket's piece. The
+zoom shows the fillet's strip torn along the split.
+It is now stored in two parts, each on its piece, and the split is cut
+where it crosses.
+
+![issue962_hex_mouth_r0.8](pictures/issue962_hex_mouth_r0.8.png)
+
+The mouth in miniature, a pocket 0.3 from a split of a box's front:
+the front's far piece red, its notch open in the third row, 5.8 of volume
+too much; after, the fillet across the split, the far piece's notch closed
+and the split cut where the closing edges cross it.
+
+![pocket_by_split_r0.8](pictures/pocket_by_split_r0.8.png)
+
+### A fillet as wide as its piece, once more (`c6e2cb496f`, `839d7b46cb`, `f7464716c0`)
+
+At radius 0.3 the fillet's line on the pocket's front runs along the split
+itself. The walk takes a point on a split for a point of the far piece
+(above, "A fillet as wide as the piece of a split wall") -- but did not
+see the split on faces REVERSED in the shell, and a box's front is one: the
+fillet was refused on the box as built, and made, wrong, on its mirror
+image. With the split seen, the closing edge lies in the pocket's piece
+whole and ends on the split, which is cut there.
+Before the fillet is refused (the input is shown); after, the fillet's edge
+on the front is the split itself, and the far piece, in the third row, is
+left whole.
+
+![pocket_by_split_r0.3](pictures/pocket_by_split_r0.3.png)
+
+A box whose bottom is split 2 from its edge, the end faces split there
+too, filleted at 2: the bottom's piece goes under the fillet whole. The
+walk, on the far piece, ended at the split's end vertex on that piece's own
+edge, which is no edge of the corner, and the corner was made by the wrong
+routine: the near end piece cut, its edge under the fillet left in place.
+The line's end is now put on the corner's own edge to that vertex.
+Refused before; after, the bottom's strip and the side's edge are gone
+under the fillet, and the end face's near piece, in the third row, keeps
+what the fillet's arc leaves of it.
+
+![strip_box_r2](pictures/strip_box_r2.png)
+
+One more thing came with these. A stripe whose walk stops where its face
+ends, short of the spine's end, was taken for whole, and the corner at the
+far end made of it; such a fillet was refused only when another corner
+failed first. A stripe that stops short by more than ten times its width
+and half the spine's edge it stops on is now refused outright (#309's edge
+3 at radius 2, which the refined shape refuses as well).
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
