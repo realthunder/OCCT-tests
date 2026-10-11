@@ -1066,6 +1066,104 @@ e474b = edge_between(p474b, (-9, 0, 11), (-9, 0, 16))
 for r, taken in ((0.3, 3.56632), (1.0, 40.25303)):
     fillet_case("issue474_f001_e12_r%g" % r, p474b, e474b, r, "pass", p474b.Volume - taken)
 
+# Two edges filleted together at a vertex where a split of a wall kept in
+# coplanar pieces ends (bodies without Refine): the vertex sweep's results
+# invalid only in pieces (sweep/README.md), each on a shape built here. The
+# volume is that of the same two edges on the shape refined.
+def pair_case(name, make, ends, radius, expect="pass", vol_tol=1e-3):
+    """The edges given by their ends, filleted together on make(): a valid
+    solid of the volume the same fillet has on make() refined
+    (removeSplitter), within vol_tol, no tolerance above 1e-3, and nothing
+    for BOP's argument check to report."""
+    try:
+        ref = make().removeSplitter()
+        vol = ref.makeFillet(radius, [ref.Edges[edge_between(ref, a, b) - 1]
+                                      for a, b in ends]).Volume
+    except Exception as e:
+        report(name, False, expect == "xfail",
+               "EXCEPTION on the refined shape: " + str(e).strip().splitlines()[-1])
+        return
+    s = make()
+    fillet_case(name, s, [edge_between(s, a, b) for a, b in ends], radius, expect, vol,
+                max_tol=1e-3, vol_tol=vol_tol, bop=True)
+
+
+# The slotted block, its outer face (x=10) split by the spine's line below
+# the floor: at (10,3,5) the slot's concave edge, the wall's edge on the
+# outer face and the floor's. Two of them of opposite concavity: the corner
+# between the two fillets has an edge in the outer face's plane, from the
+# one fillet's line on its piece to the edge the other ends on -- an edge of
+# the other piece. It was put on the first piece alone, which did not
+# close. The wall's and the floor's edges together: the outer face is the
+# one the two fillets share, in two pieces -- no face in common, refused.
+floor = ((0, 3, 5), (10, 3, 5))
+up = ((10, 3, 5), (10, 3, 14))
+along = ((10, 3, 5), (10, 6, 5))
+for r in (0.3, 1.0):
+    pair_case("slot_split_outer_floor_and_wall_r%g" % r, lambda: slotted(outer=True),
+              [floor, up], r)
+    pair_case("slot_split_outer_floor_and_end_r%g" % r, lambda: slotted(outer=True),
+              [floor, along], r)
+    pair_case("slot_split_outer_wall_and_end_r%g" % r, lambda: slotted(outer=True),
+              [up, along], r)
+
+# The fin on the block, flush with its side: the side is an L in two faces,
+# the split ending at the L's inner corner, (x,3,5). The block's top edge
+# and the fin's upright edge there, on the two pieces: the two fillets had
+# no face in common and the corner was a plate, inside out. Either of them
+# with the concave edge between fin and block: the corner of opposite
+# concavity, as on the slot.
+for x in (0, 10):
+    top = ((x, 3, 5), (x, 10, 5))
+    inner = ((0, 3, 5), (10, 3, 5))
+    upright = ((x, 3, 5), (x, 3, 14))
+    for r in (0.3, 1.0):
+        pair_case("fin_on_block_x%d_top_and_upright_r%g" % (x, r), fin_on_block,
+                  [top, upright], r)
+        pair_case("fin_on_block_x%d_top_and_inner_r%g" % (x, r), fin_on_block, [top, inner], r)
+        pair_case("fin_on_block_x%d_inner_and_upright_r%g" % (x, r), fin_on_block,
+                  [inner, upright], r)
+# and the fin's wall split 0.7 from the side as well: at radius 1 the
+# upright edge's fillet is wider than the wall's piece and walked, its
+# surface a B-spline that is not carried on past its end -- the plate still
+pair_case("fin_on_block_wall_top_and_upright_r0.3", lambda: fin_on_block(wall=True),
+          [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 0.3)
+pair_case("fin_on_block_wall_top_and_upright_r1", lambda: fin_on_block(wall=True),
+          [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0, "xfail")
+
+# The arm on the block: at (38.5,10.2,z) the arm's side meets the block's
+# at 137 degrees, top and bottom in two pieces each. The upright edge with
+# the block's edge or the arm's: there the corner's edge on the top (the
+# bottom) crosses the split itself, and is cut in two at it, a part on each
+# piece. The filling of the corner depends on the way its face's surface is
+# parametrized, on the shape refined as well (its two ends, mirror images,
+# differ by 4.4e-3 at radius 1): the volume within 1e-2 there.
+for z, zo in ((-9.75, -3.75), (-3.75, -9.75)):
+    upright = ((38.5, 10.2, z), (38.5, 10.2, zo))
+    block = ((38.5, 10.2, z), (50, 10.2, z))
+    arm = ((38.5, 10.2, z), (17.356, -9.425, z))
+    for r, vt in ((0.3, 1e-3), (1.0, 1e-2)):
+        pair_case("arm_on_block_z%g_upright_and_block_r%g" % (z, r), arm_on_block,
+                  [upright, block], r, vol_tol=vt)
+        pair_case("arm_on_block_z%g_upright_and_arm_r%g" % (z, r), arm_on_block,
+                  [upright, arm], r, vol_tol=vt)
+# The block's far corner, (50,27.2,-9.75): the bottom edge's fillet is in
+# two surfaces (it ends over the split of the bottom, at the arm), and the
+# corner at that end read the surfaces of the first fillet made instead of
+# its own -- the upright edge's here: valid, 3.6e-3 and 0.13 too large.
+for r in (0.3, 1.0):
+    pair_case("arm_on_block_corner_upright_and_bottom_r%g" % r, arm_on_block,
+              [((50, 27.2, -3.75), (50, 27.2, -9.75)), ((38.5, 27.2, -9.75), (50, 27.2, -9.75))],
+              r)
+# The arm's far end, its two top edges: the second fillet is walked (its
+# line on the top crosses the split) and meets the first, a cylinder, in a
+# curve that starts on the cylinder's seam; the curve's line on the cylinder
+# came out a turn away there, the edge 0.9 and 2.8 off its surfaces.
+for r in (0.3, 1.0):
+    pair_case("arm_on_block_far_top_edges_r%g" % r, arm_on_block,
+              [((17.356, -9.425, -3.75), (10.898, 16.471, -3.75)),
+               ((10.898, 16.471, -3.75), (38.5, 27.2, -3.75))], r)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

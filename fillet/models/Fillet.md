@@ -775,6 +775,83 @@ failed first. A stripe that stops short by more than ten times its width
 and half the spine's edge it stops on is now refused outright (#309's edge
 3 at radius 2, which the refined shape refuses as well).
 
+### Two fillets of opposite concavity where a split ends (`93759f6d56`)
+
+Two edges filleted together at a vertex where a split of the wall ends, the
+one concave, the other convex. The corner between the two fillets is a
+three-sided patch, and one of its sides lies in the plane of the face
+across the convex fillet -- from that fillet's line on the face to the
+point where the concave one ends on an edge of it. With that face in two
+pieces, the edge it ends on belongs to the other piece, and the patch's
+side was put on the first piece alone.
+
+The slotted block, its outer face split below the slot's floor: the slot's
+floor edge and its wall's edge on the outer face. Before, the outer face's
+piece below the wall is red, the shell open; the third row shows its
+outline running out at two ends (the circles) -- along the wall's old edge,
+which the fillet has taken, and down past the split, where the patch's side
+stops on the floor's edge, no edge of this piece.
+The patch's side passes the split by, through what the concave fillet
+adds. The piece of the floor's edge from the vertex to the patch is now
+an edge between the two pieces, and the first piece closes along it.
+
+![slot_split_outer_floor_and_wall_r1](pictures/slot_split_outer_floor_and_wall_r1.png)
+
+The arm on the block, where they meet at 137 degrees and their tops are
+two pieces: the upright edge between them and the block's top edge. Here
+the patch's side crosses the split itself. Before, the block's top is red
+and its outline open at both ends of the patch's side. The side is now cut
+where it crosses, a part on each piece, and the split is cut there.
+
+![arm_on_block_z-3.75_upright_and_block_r1](pictures/arm_on_block_z-3.75_upright_and_block_r1.png)
+
+### Two fillets on the two pieces of a wall (`6c4e2bc29f`)
+
+The fin flush with its block's side: the side is an L in two faces, split
+from its inner corner. The block's top edge and the fin's upright edge
+there have one piece each for their face on the side -- no face in common,
+for the corner of two fillets, and the corner was made a plate.
+Before, the plate is inside out: the red spikes in the zoom, the side's
+lower piece red, and the fin's face, in the third row, drawn out to a
+point.
+On the side in one face the two fillets' lines meet below the split, on
+the block's piece, and the fillets are cut by one another along the curve
+from there to the concave edge. That is done now: the upright fillet's
+line, which stops on the split, is carried on to the meeting point while
+the two are intersected, and its piece past the split is put on the
+block's piece. After, the two fillets meet in a mitre, and the fin's face
+is the rectangle the fillet leaves of it.
+
+![fin_on_block_x10_top_and_upright_r1](pictures/fin_on_block_x10_top_and_upright_r1.png)
+
+### A corner that read another fillet's surfaces (`74a9a42df4`)
+
+The block's upright edge at its far corner and its bottom edge from there
+to the arm. The bottom edge's fillet ends over the split of the bottom, in
+two surfaces, and the routine that makes such an end read the surfaces of
+the first fillet made -- the upright edge's here -- instead of its own.
+Upstream refuses the pair. Before, the result is valid and wrong: the
+fillet ends in a round nose on the block's bottom, 0.13 of volume too much,
+and the arm's bottom, in the third row, is untouched. After, the fillet
+runs out on the arm's bottom, which has its corner cut.
+
+![arm_on_block_corner_upright_and_bottom_r1](pictures/arm_on_block_corner_upright_and_bottom_r1.png)
+
+### An intersection curve a turn away on a closed surface (`f8a25381c2`)
+
+The arm's two top edges at its far end. The second fillet is walked (its
+line on the top crosses the split) and cuts the first, a cylinder, in a
+curve that starts on the cylinder's seam. The intersection gave that
+curve's line on the cylinder a full turn away at its start, and it was
+kept, the edge 2.8 off its surfaces.
+Before, the first fillet's strip is narrowed by a second line along it,
+and its outline in the third row runs from the strip (0 to pi/2) far out
+to the left, open at both ends. A line that far off its surfaces is now
+walked again; after, the two fillets meet in a mitre and the outline is
+the strip.
+
+![arm_on_block_far_top_edges_r1](pictures/arm_on_block_far_top_edges_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

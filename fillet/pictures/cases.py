@@ -38,6 +38,10 @@ STAGES = {
     "s474b": ("63c8218a86", "356bfb48a7"),
     "s962n": ("356bfb48a7", "29d7d4d038"),
     "s962o": ("29d7d4d038", "f7464716c0"),
+    "s962r": ("f7464716c0", "74a9a42df4"),
+    "s962s": ("74a9a42df4", "f8a25381c2"),
+    "s962p": ("f8a25381c2", "93759f6d56"),
+    "s962q": ("93759f6d56", "6c4e2bc29f"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -64,6 +68,13 @@ def _slot_wall():
     V = App.Vector
     s = Part.makeBox(10, 10, 14).cut(Part.makeBox(12, 3, 10, V(-1, 3, 5)))
     return s.generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
+
+
+def _slot_outer():
+    # run_tests.py's slotted block, its outer face split along y=3 below the slot's floor
+    V = App.Vector
+    s = Part.makeBox(10, 10, 14).cut(Part.makeBox(12, 3, 10, V(-1, 3, 5)))
+    return s.generalFuse([Part.LineSegment(V(10, 3, 0), V(10, 3, 5)).toShape()])[0].Solids[0]
 
 
 def _fin():
@@ -233,6 +244,7 @@ SHAPES = {
     "p474b": _brep("issue474_fillet002_base.brep"),
     "pocketsplit": _pocket_by_split,
     "stripbox": _strip_box,
+    "slotouter": _slot_outer,
 }
 
 
@@ -312,6 +324,8 @@ UVFACE = {
     "pocketsplit": _plane_at("y", 0, None, {"x": 4.0}),
     # the end face's near piece (y=0, x 0..2), which the corner cuts
     "stripbox": _plane_at("y", 0, None, {"x": 1.9}),
+    # the outer face's piece below the slot's wall (x=10, y 0..3), which the corner's edge is on
+    "slotouter": _plane_at("x", 10, None, {"y": 2.99}),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -348,6 +362,11 @@ UVFACE_CASE = {
     "issue962_top_wall_r0.8": _plane_at("y", 10.2, {"x": 40.0}, {"z": -5.0}),
     # the same side's piece beside the pocket, the rib's (x 34.5..38.5, z from 14)
     "issue962_hex_mouth_r0.8": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
+    # the block's top (z=-3.75, x from 38.5), which the corner's edge starts on
+    "arm_on_block_z-3.75_upright_and_block_r1": _plane_at("z", -3.75, {"x": 40.0}),
+    # the first edge's fillet, a cylinder along (-0.242, 0.970, 0), which the second cuts
+    "arm_on_block_far_top_edges_r1": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+                                      and abs(abs(f.Surface.Axis.y) - 0.970) < 0.01),
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
@@ -378,6 +397,8 @@ NAMES = {
     "pocketsplit": "a 10x6x10 box, its front two faces split at x=5, with a pocket in it "
                    "0.3 from the split",
     "stripbox": "a 10x10x4 box, its bottom and its end faces split 2 from the side x=0",
+    "slotouter": "10x10x14 block, a slot down to z=5, the outer face x=10 two faces split "
+                 "along y=3 below the slot's floor",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -401,6 +422,7 @@ VIEW = {
     "p474b": ((0, 0, 9), 34.0),
     "pocketsplit": ((5, 3, 5), 17.0),
     "stripbox": ((5, 5, 2), 17.0),
+    "slotouter": ((5, 5, 7), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -424,6 +446,7 @@ UVLABEL = {
     "p474b": ("the ramp's face beside the long edge", False),
     "pocketsplit": ("the front's far piece", False),
     "stripbox": ("the end face's near piece", False),
+    "slotouter": ("the outer face's piece below the wall", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -437,6 +460,8 @@ UVLABEL_CASE = {
     "pinch_top_r2": ("the top, the box's part", False),
     "issue962_top_wall_r0.8": ("the block's side below the arm's top", False),
     "issue962_hex_mouth_r0.8": ("the side's piece beside the pocket's", False),
+    "arm_on_block_z-3.75_upright_and_block_r1": ("the block's top", False),
+    "arm_on_block_far_top_edges_r1": ("the first edge's fillet", True),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -542,6 +567,24 @@ CASES = {
                              (5.1, 0, 5), (-0.3, -1, 0.25)),
     "strip_box_r2": ("s962o", "stripbox", ((0, 0, 0), (0, 10, 0)), 2.0, 391.4159,
                      (0, 0, 0), (-1, -0.8, -0.7)),
+    "arm_on_block_corner_upright_and_bottom_r1": (
+        "s962r", "armfoot", [((50, 27.2, -3.75), (50, 27.2, -9.75)),
+                             ((38.5, 27.2, -9.75), (50, 27.2, -9.75))], 1.0, 4599.7689,
+        (38.5, 27.2, -9.75), (0.3, 1, -0.8)),
+    "arm_on_block_far_top_edges_r1": (
+        "s962s", "armfoot", [((17.356, -9.425, -3.75), (10.898, 16.471, -3.75)),
+                             ((10.898, 16.471, -3.75), (38.5, 27.2, -3.75))], 1.0, 4591.4566,
+        (10.898, 16.471, -3.75), (-1, 0.4, 0.8)),
+    "slot_split_outer_floor_and_wall_r1": (
+        "s962p", "slotouter", [((0, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 3, 14))], 1.0,
+        1130.3068, (10, 3, 5), (1, 0.9, 0.8)),
+    "arm_on_block_z-3.75_upright_and_block_r1": (
+        "s962p", "armfoot", [((38.5, 10.2, -3.75), (38.5, 10.2, -9.75)),
+                             ((38.5, 10.2, -3.75), (50, 10.2, -3.75))], 1.0, 4601.2153,
+        (38.5, 10.2, -3.75), (-0.2, -1, 0.9)),
+    "fin_on_block_x10_top_and_upright_r1": (
+        "s962q", "fin", [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0, 766.4705,
+        (10, 3, 5), (1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -555,6 +598,16 @@ EDGES = {
     "arm_on_block_foot_r0.8": "the two at the foot, x=38.5, y=27.2 and y=10.2",
     "issue962_fillet_r0.8": "the Fillet's twelve; zoomed on edge 49's foot",
     "issue876_corner4_r1": "the four at the corner (17,16.75,3); zoomed on it",
+    "arm_on_block_corner_upright_and_bottom_r1": "the block's upright edge at (50,27.2) and "
+                                                 "its bottom edge to the arm; zoomed on "
+                                                 "that edge's far end",
+    "arm_on_block_far_top_edges_r1": "the arm's two top edges at its far end",
+    "slot_split_outer_floor_and_wall_r1": "the slot's floor edge and its wall's edge on "
+                                          "the outer face",
+    "arm_on_block_z-3.75_upright_and_block_r1": "the upright edge where arm and block meet "
+                                                "and the block's top edge from it",
+    "fin_on_block_x10_top_and_upright_r1": "the block's top edge and the fin's upright edge "
+                                           "on the side x=10",
 }
 
 

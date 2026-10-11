@@ -1608,12 +1608,172 @@ split was not seen and the fillet refused before it came to that. The
 refined shape makes them all. Open, with the rest of the vertex sweep's
 invalid results (290).
 
+## Two fillets of opposite concavity where a split ends (2026-10-12)
+
+The vertex sweep's invalid results, each tried again on the shape refined
+(`sweep/triage.py`): 290, of them 181 invalid there as well, 23 on a split
+itself, and 86 invalid only in pieces -- all of them two or three edges
+filleted together. 55 of the 86 are one corner: two edges at a vertex where
+a split of a wall kept in coplanar pieces ends, the one concave and the
+other convex. A slot's floor edge with its wall's edge on the outer face,
+the outer face split below the floor; the concave edge between a fin and
+its block with either edge of the L-shaped side they share; on #962, the
+corners where the arm meets the block.
+
+The corner of two fillets of opposite concavity (`PerformTwoCorner`) is a
+three-sided patch: a section of the one fillet (`OnSame`), a section of the
+other (`OnDiff`), and an edge in the plane of the face across the first --
+from that fillet's line on the face to the point where the second ends on
+an edge of it. With that face in two pieces, the split between them ending
+at the vertex, the edge the second fillet ends on bounds the other piece.
+The patch's edge was put on the first piece alone: the piece did not close
+("Self-intersecting wire", or an open wire), the edge the second fillet
+cut was cut for one of its two faces, and the first fillet's spine was
+left in the piece's outline. Up to 300 of volume off.
+
+Two cases, by where the patch's edge runs:
+
+- **Past the split, outside both pieces.** The wall has a reflex corner at
+  the vertex -- 270 degrees on the slot -- and the edge crosses what the
+  fillets take away or add. On the wall in one face the cut edge's piece
+  from the vertex is gone, the face closing along the patch. In pieces
+  that piece of the edge stays, an edge between the two: the first piece
+  closes along the patch, that edge and the split, and the other keeps its
+  outline. The vertex stays, and the first fillet's spine, an edge of the
+  first piece, is removed from it.
+- **Across the split** (the arm meets the block at 137 degrees, their tops
+  and bottoms two pieces each): the patch's edge is cut where it crosses, a
+  part on each piece -- two edges of the patch -- and the split is cut
+  there, its piece from the vertex gone with the vertex.
+
+An edge through an end of the split, or crossing it twice, is refused.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_split_outer_floor_and_wall_r{0.3,1}`, `slot_split_outer_floor_and_end_r{0.3,1}` | the slotted block, its outer face split below the floor: the floor's concave edge with the wall's edge on the outer face, and with the floor's -- the refined shape's volume to 1e-3, no tolerance above 1e-3, BOP's check (invalid before, at every radius) |
+| `fin_on_block_x{0,10}_top_and_inner_r{0.3,1}`, `fin_on_block_x{0,10}_inner_and_upright_r{0.3,1}` | the fin flush with its block's side, the side an L in two faces: the concave edge between them with the block's top edge and with the fin's upright edge, at either side (invalid before, 51 of volume too much on the first) |
+| `arm_on_block_z{-9.75,-3.75}_upright_and_block_r{0.3,1}`, `..._upright_and_arm_r{0.3,1}` | the arm on the block, the edge crossing the split: the upright edge where they meet with the block's edge and with the arm's, top and bottom (invalid before). The corner's filling depends on the way its face's surface is parametrized, on the refined shape too -- its two ends, mirror images, differ by 4.4e-3 at radius 1: the volume to 1e-2 there |
+
+The picture cases: `slot_split_outer_floor_and_wall_r1`,
+`arm_on_block_z-3.75_upright_and_block_r1`.
+
+## Two fillets on the two pieces of a wall (2026-10-12)
+
+10 more: the two convex edges at the inner corner of an L-shaped wall made
+of two faces, the split ending at the corner -- the fin flush with its
+block's side; two pads side by side, the second shorter. Each fillet has
+one of the pieces for its face. They have no face in common,
+`PerformTwoCorner` found none (`ChFi3d_IsInFront`) and made the corner a
+plate (`PerformMoreThreeCorner`), which came out inside out: invalid, 0.35
+of volume too much on the fin at radius 0.3, 1.1 at 1.
+
+On the wall in one face the two fillets' lines on it meet past the corner,
+on one of the pieces, and the fillets are cut by one another, along the
+curve from there to the corner's concave edge
+(`PerformTwoCornerbyInter`). The same is done now. The line of the one
+fillet stops on the split; while the two are intersected it has the
+other's piece for its face and is carried on past the meeting point, as it
+runs on the wall in one face. Then it ends on the split again, and its
+piece from there to the meeting point is put on the other piece and on its
+own fillet (`StoreLineOverSplit`, which does the same for one fillet's
+line over a split wall); the split is cut where the line crosses it.
+
+Done where both fillets end `OnSame`, at one point of one edge on their
+other sides; the two pieces lie the same way round on their surface; the
+two lines are straight; and the fillet that stops on the split is a
+cylinder or a plane, a surface that goes on past its end as it is. 7 of
+the 10. Two of the others are #962's corner at a circle's edge; the third
+has a fillet that is walked there (a B-spline), left to the plate as
+before (`fin_on_block_wall_top_and_upright_r1`, see Known broken).
+
+Made as well: the slot's wall edge and floor edge on the outer face, both
+on its pieces (`slot_split_outer_wall_and_end`) -- refused before.
+
+| Case | What it covers |
+|------|----------------|
+| `fin_on_block_x{0,10}_top_and_upright_r{0.3,1}` | the block's top edge and the fin's upright edge at the L's inner corner, at either side: the refined shape's volume to 1e-6, tolerance 6e-7 (invalid before) |
+| `fin_on_block_wall_top_and_upright_r0.3` | the same with the fin's wall split 0.7 from the side as well (invalid before) |
+| `slot_split_outer_wall_and_end_r{0.3,1}` | the slot's two edges on the outer face in pieces (refused before) |
+| `fin_on_block_wall_top_and_upright_r1` (XFAIL) | see Known broken |
+
+The picture case: `fin_on_block_x10_top_and_upright_r1`.
+
+## A corner that read another fillet's surfaces (2026-10-12)
+
+`PerformMoreSurfdata` makes the corner at an end where the face the fillet
+ends on holds two of the fillet's surfaces -- a fillet whose line crosses a
+split of its face just before the end. It took the face of the
+neighbouring surface from `myListStripe.First()`, the first fillet made,
+not from the corner's own. With one fillet they are the same; upstream's,
+never met with one face per wall.
+
+With two edges filleted, the second ending that way, the corner was made
+on a face of the first fillet. On the arm fused to a block, the block's
+upright edge and then its bottom edge to the arm: valid, with 3.6e-3 of
+volume too much at radius 0.3 and 0.13 at 1, the fillet's end a round nose
+on the block's bottom where it runs out on the arm's. On the sweep's
+shapes: invalid, a face of tolerance 21 (6 of the 86).
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_block_corner_upright_and_bottom_r{0.3,1}` | the block's far corner, the upright edge first: the refined shape's volume to 1e-3 (valid, 3.6e-3 and 0.13 too large before) |
+
+The picture case: `arm_on_block_corner_upright_and_bottom_r1`.
+
+## An intersection curve a turn away on a closed surface (2026-10-12)
+
+One of the 86, and a result the sweep took for valid. Two top edges at the
+arm's far end: the second fillet is walked -- its line on the top crosses
+the split -- and cuts the first, a cylinder, in a curve that starts on the
+cylinder's seam. `ChFi3d_ComputeCurves` takes the first line of
+`GeomInt_IntSS` whose ends are the expected ones, however far it lies from
+the surfaces. Here the line's pcurve on the cylinder started at 2 pi where
+the curve starts at 0, and ran straight from there to its other end,
+across three quarters of the cylinder; it was moved to its expected start
+and kept. The edge lay 2.8 off its surfaces at radius 1 (invalid) and 0.9
+at 0.3 -- valid for BRepCheck, which measures no edge against its
+tolerance's size, not for BOP's check.
+
+A line more than ten times the tolerance off is now kept aside and the
+path walked (`IntWalk_PWalking`, as where `GeomInt` finds no line); the
+closest of them is kept.
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_block_far_top_edges_r{0.3,1}` | the arm's two top edges at its far end: the refined shape's volume, no tolerance above 1e-3, BOP's check (tolerance 0.9 and 2.8 before, the second invalid) |
+
+The picture case: `arm_on_block_far_top_edges_r1`.
+
+The sweeps, the four sections together. Edge: no result changes its
+state and no valid one moves (nine invalid ones of #273, invalid on the
+refined shape as well, have another volume -- the intersection line).
+Vertex: 69 invalid results valid, at the refined shape's volume -- 55 the
+corner of opposite concavity, 7 the two pieces of a wall, 6 the corner
+that read another fillet, 1 the intersection line; 3 refused results made,
+the slot's two edges on its outer face in pieces; and 76 valid results
+moved. 12 of those were made on the wrong fillet's face, 0.13 of volume
+too much at radius 1; 8 were plates, between two fillets on two pieces,
+and are exact now, a face fewer, their tolerance down from 1e-3..4e-3
+to under 3e-5;
+56 have an intersection line walked again, on the issues' own shapes as
+well (#273, #474, #631) -- where that edge held the largest tolerance, it
+is down from 1e-3..6e-3 to about 1e-4, and one of #631's no longer fails
+BOP's check. Nothing worse: 9190 valid, 221 invalid, 2831 refused.
+
+Of the 86, 17 are left: 12 at the two corners of the hexagonal pocket's
+mouth on #962, where the mouth's edge has its fillet's line along the
+split of the block's side; 2 at #962's corner on a circle's edge; 2 at
+a vertex of four sharp edges on #309; and the fin's wall split, at radius
+1 (Known broken).
+
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `strip_box{,_mirror}_r2.5` | Refused. A box whose bottom is split 2 from its edge and whose end faces are split there too, the fillet wider than the bottom's piece: its line lies on the far piece, and the cut of the corner by the end face runs over that face's two pieces, crossing their split. The corner takes a cut on one face; with the end faces whole (`strip_box_plain_ends_r2.5`) it is made. #309's edge 17 from 2.01 up is the same. Refused before as well |
+| `fin_on_block_wall_top_and_upright_r1` | Invalid, a plate inside out. The fin flush with its block's side, its wall split 0.7 from the side as well: the block's top edge and the fin's upright edge at the L's inner corner, the two pieces of the side their faces (see "Two fillets on the two pieces of a wall"). At radius 1 the upright edge's fillet is wider than the wall's piece and walked, a B-spline, which is not carried on past its end to the point where the two lines meet. Made at 0.3; invalid before as well |
 
 ## Pictures
 

@@ -43,15 +43,16 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `f7464716c0`, FreeCAD OcctFix `493032cbaf`,
-2026-10-11: edge 2519 ok, 32 BAD, 1370 EXC; vertex 9118 ok, 290 BAD, 2834
+`baseline/` is OCCT LinkVibe-801 `6c4e2bc29f`, FreeCAD OcctFix `493032cbaf`,
+2026-10-12: edge 2519 ok, 32 BAD, 1370 EXC; vertex 9190 ok, 221 BAD, 2831
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
 2445 / 42 / 1434, vertex 8847 / 291 / 3104), `7a1fbeffb3` (edge 2507 /
 42 / 1372, vertex 9089 / 291 / 2862), `8704591b60` (edge 2509 / 40 /
-1372, vertex 9089 / 291 / 2862) and `fff5d20907` (edge 2509 / 40 / 1372,
-vertex 9109 / 291 / 2842), are in this file's history.
+1372, vertex 9089 / 291 / 2862), `fff5d20907` (edge 2509 / 40 / 1372,
+vertex 9109 / 291 / 2842) and `f7464716c0` (edge 2519 / 32 / 1370, vertex
+9118 / 290 / 2834), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -61,21 +62,17 @@ E4 at 2 and E11, `Fillet003` E2, E18, E49, E52, E56; #962's `Fillet` E6
 -- upstream's behaviour on that geometry, not the pieces'. The eight that
 were invalid only in pieces are fixed (../README.md, 2026-10-11).
 
-The vertex sweep's 290 (`triage.py`, at `f7464716c0`): 181 invalid on the
+The vertex sweep's 290 at `f7464716c0` (`triage.py`): 181 invalid on the
 refined shape as well -- #273 (36), #309 (14), #474 (93), #631 (2), #962
 (36); 23 with an edge that is a split itself, gone from the refined shape;
-and 86 valid there, invalid only in pieces:
+and 86 valid there, invalid only in pieces. 69 of the 86 are fixed
+(../README.md, 2026-10-12); the 17 left, of the 221 at `6c4e2bc29f`:
 
 | Shape | Vertices (cases) |
 |-------|------------------|
-| `issue962_Fillet` | V48, V49 (6 each: the pocket mouth's edge with its neighbours, two stripes at the pocket's corner, one with its line on the far piece); V2, V17, V35, V40 (2 each) |
-| `issue962_Chamfer` | V1, V2 (4 each); V12, V33, V38 (2 each) |
-| `issue309_shape` | V8 (2) |
-| `mini_ab_r3` | V1, V2 (4 each); V12 (1) |
-| `mini_armblock2` | V4 (6); V5, V6 (4 each) |
-| `mini_finbase` | V3, V11 (6 each) |
-| `mini_finwall` | V3 (6); V11 (4) |
-| `mini_slot_opsplit`, `mini_slot_bothsplit` | V11 (4); V13 (1) |
+| `issue962_Fillet` | V48, V49 (6 each: the pocket mouth's edge with its neighbours, its fillet's line along the split of the block's side -- two or three fillets at the pocket's corner, one on the far piece); V2 (2: two fillets on the two pieces of a wall, one edge a circle) |
+| `issue309_shape` | V8 (2: a vertex of four sharp edges) |
+| `mini_finwall` | V11 (1: two fillets on the two pieces of a wall, one of them walked) |
 
     grep " BAD" baseline/vertex.txt > /tmp/bad.lst
     SHAPE=issue962_Fillet LIST=/tmp/bad.lst FreeCADCmd triage.py
