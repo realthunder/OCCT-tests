@@ -2398,4 +2398,173 @@ setback, on the floor's short edge here sharp, `exceeds an edge`) and
 with the floor's (`Failed to find edge`), at radius 1. Of the 237 vertex
 results, 52 are left refused and one invalid.
 
+## A set back corner on a wall in pieces (realthunder/FreeCAD#962, 2026-10-13)
+
+What the last section left open at the slot's corner, and the next
+miniature's pair. Five faults, each of them where a corner made of
+several fillets, or one set back, meets a face kept in coplanar pieces.
+
+The slope's edge with the floor's, `Failed to find edge`. The corner reads
+its edges and faces round the vertex, starting from the first fillet's
+face. The slope's fillet is wider than the wall's piece at the corner and
+ends on the next one, a face the vertex is not on: given first, it had
+nowhere to start; given second, the corner was made. Fix `5b0741a75e`: the
+reading starts from a fillet whose face holds the vertex.
+
+The slope's edge with the block's side's under it, `a corner's setback
+exceeds an edge`. Their corner fails whole or in pieces and is made set
+back. The first setback tried is where the fillets meet, 0.41 from the
+vertex, short of the piece's 0.7; the result was thrown away as invalid.
+The face beside the floor's edge -- sharp here -- was still the far
+piece, put there for the slope's fillet when that ended on it; the fillet
+is cut back onto the near piece now, and the curve from its cut to the
+floor's edge was drawn as one over two faces, the wall's near piece left
+open. Fix `5e364dd15b`: the face beside a sharp edge is the piece that holds
+the edge. At the next setbacks, a radius and more, the floor's edge was
+cut farther from the vertex than its piece is long. The edge beyond the
+split's foot carries it on: the cut is made on that one, the piece goes
+whole, and the curve to the next cut crosses the split -- between two
+sharp edges as between a fillet and one.
+
+The floor's edge with the block's side's, valid and loose (the last
+section's open end). A curve over several faces is held tangent to its
+faces; one on a single face, from a fillet to a sharp edge, by its
+position alone. Neither is right everywhere: the slot's patch, its other
+curves held by position, came out 0.014 off its boundary at 0.8 for the
+tangency of its wall's two pieces, and the fin's patch (`mini_finwall`
+`V11:13,15`), its other curves tangent, is 9e-3 off without it and 6e-4
+with. Fix `0892d3e167`: the patch of a set back corner with such a curve is
+built both ways, and the one nearer its boundary is kept.
+
+The slot's mouth on the block with both its wall and its outer face
+split (`mini_slot_bothsplit` `V13:15,18`): the floor's edge along the
+wall with the floor's on the outer face, `No intersection pc pc` at 0.3
+and an invalid result at 1. The second fillet's line on the outer face
+runs on past the vertex over the face's other piece, with nothing beside
+it on the floor: its last surface has a face on one side only. The
+corner of one fillet removes such a surface before it starts (upstream's
+"the surplus is removed"); the corners of several, and the set back one,
+took it for the fillet's end. Fix `e3c46a01d7`: they remove it too.
+
+At 1 that pair's fillets no longer meet on the floor -- the one along the
+wall is wider than the wall's piece -- and the corner is made set back.
+The outer face's split below the vertex is in line with the wall's edge
+above it, and two fillets beside two sharp edges in line are a case of
+their own, its curves ending on the vertex; a set back corner, which never
+reaches the vertex, took the case all the same and asked a single face
+for a curve over the wall's two pieces (`a fillet ends off the face of
+the curve to the next`). Fix `2ff60f1efd`: set back, the two edges in line
+are cut like any other.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_by_slope{,_mirror}_slope_floor{,_reversed}_r1` | the slope's edge and the floor's, in either order and mirrored: the refined shape's volume within 0.01 (`Failed to find edge`; given floor first, made) |
+| `slot_by_slope{,_mirror}_inline_slope{,_reversed}_r1` | the slope's edge and the block's side's: the refined shape's volume within 2e-3, no tolerance above 0.01 (refused) |
+| `slot_by_slope_floor_inline_r{0.75,0.8,0.85,0.9,1,1.2}` | the floor's and the block's side's: within 0.06 of the refined shape's volume, no tolerance above 2e-3, BOP's check (0.014 to 0.028 loose and a self-intersection for BOP from 0.75 to 0.9 and at 1.2) |
+| `slot_split_both_floor_and_end_r0.3` | the slot's mouth, wall and outer face both split: the refined shape's volume (refused) |
+| `slot_split_both_floor_and_end_r1` | the same set back: within 0.15 of the refined shape's exact corner, no tolerance above 2e-3 (invalid, 6 of volume off) |
+
+The picture cases: `slot_by_slope_inline_slope_r1`,
+`slot_by_slope_slope_floor_r1`, `slot_split_both_floor_and_end_r1`; and
+`slot_by_slope_floor_inline_r1` drawn again, its volume moved.
+
+The carried edge is not reached by these: where the fillets meet is
+short of the piece, and that first setback is valid now. It was measured
+on a box with one wall split 0.7 from a corner, an edge of the corner
+filleted at radius 1 and the corner set back by hand
+(`BRepFilletAPI_MakeFillet::SetSetback`, which the suite has no way to):
+at 0.5, 1.5 and 2 a valid solid within 0.03, 0.07 and 0.14 of the box in
+one piece, refused before; at 3 the patch is not built and the corner is
+still refused.
+
+The sweeps. Edge: nothing moved. Vertex, at `2ff60f1efd`: 23 refused
+results made and one invalid made valid, every one refused or invalid only
+in pieces, and nothing lost -- 9435 valid, 200 invalid, 2607 refused. On
+the two inputs of #962, at the four floor corners, the slope's edge with
+each of its neighbours and with the spine's (`V36:51,74`, `V36:52,74`,
+`V36:74,80` and the like, 18; tolerances 0.006 to 0.025, the slope's with
+the floor's 0.105 as on the refined shape) and, at the rib's top corner,
+the slanted edge with the top's (`V45:65,110`, 4, exact); and the
+miniature's mouth pair at both radii.
+
+45 valid results moved, none looser than the refined shape's. 24 are
+corners of two fillets that had taken a surplus surface for a fillet's
+end and were closed by a patch: the two fillets cut each other now, 1e-4
+where the patch had 5e-4 to 0.02 and a face fewer in 16 -- on #631 (4,
+0.16 of volume at radius 1), #962 (16) and `mini_armblock2` (4), whose
+two mirrored corners differed by 0.005 and agree now. The 8 pairs of the
+floor's edge with the block's side's at #962's floor corners are 0.02
+nearer the refined shape's volume, 4.4e-4 like it; the 8 mouth pairs
+there (`V56:76,77` and the like) and 5 of the miniatures' are tighter,
+1.5e-3 to 5e-3 before and 6e-4 to 7e-4 now.
+
+Open. The carried edge at three radii, above. The slope's edge with the
+floor's is as loose as on the refined shape, 0.1. Of the 237
+vertex results refused only in pieces 35 are left, and none invalid: most
+are the next section's.
+
+## Two fillets past their wall's piece, and the surfaces a corner removes (realthunder/FreeCAD#962, 2026-10-13)
+
+Two more families of the vertex sweep's pairs refused only in pieces.
+
+Two fillets at a vertex, both wider than the piece of the wall between
+their edges: a box's corner with the wall in two faces, 0.7 of it at the
+corner, each on a plane of its own (two bodies fused leave it so; with one
+plane cut in two the corner is made as it stands), the two edges of that
+piece filleted at radius 1. Each fillet ends on the piece
+beyond the split, and the two face each other there, on a face the vertex
+is not on. As a corner of two fillets that is refused (`fillets face to
+face on a face off the vertex`, a wrong patch before that); set back, the
+curve between the two cuts was asked of the piece at the vertex, `a fillet
+ends off the face of the curve to the next`. Fix `2bc692bfc4`: set back, both
+cuts are on the far piece and so is the curve -- the face between two
+fillets is the one both end on. The corner is a patch where the refined
+shape's is the exact one of two fillets on one face: 0.14 of volume apart
+at radius 1.
+
+The rib's top corner on #962, (38.5,10.2,32.25): the wall under the top's
+edge is in two pieces, split by the edge that comes up to the vertex, 18
+long. The fillet of the top's edge along that wall is a chain round the
+wall's piece, six surfaces, and comes back to the long edge at its foot.
+Before it makes a corner, `PerformMoreThreeCorner` removes from each
+fillet the surfaces it will not use, the fillet run on past the vertex:
+it keeps the last surface that has a point on an edge beside the fillet's
+at the vertex -- looked for over all of them. The chain's first surface,
+at its other end, has such a point; it was kept, the five others were
+removed, and the corner went on to look for the edge between two faces
+that share none (`Failed to find edge`). Upstream's fault, met here for
+the long split. Fix `c4bb6a9cf4`: only the surfaces on the spine's edge at
+the vertex, and past it, are looked at. (Narrower rules lost results: the
+surface kept may start short of the spine's end, as #474's does at a
+break point, and a sliver before it is rightly removed, as on #273.)
+
+| Case | What it covers |
+|------|----------------|
+| `box_wall_two_faces_upright_and_bottom_r1` | the box's corner (the sweep's `mini_mini_wall`), the two edges of the wall's 0.7 piece: a valid solid within 0.2 of the refined shape's volume, no tolerance above 2e-3, BOP's check (refused) |
+| `slot_split_{wall,both}_top_and_upright_r1` | the slotted block's wall, its piece's top edge and its upright one (refused) |
+| `fin_on_block_wall_piece_{top,foot}_and_upright_r1` | the fin's wall, its piece's top edge and the edge at its foot, each with its upright one; the second without BOP's check, see Open (refused) |
+| `issue962_mouth_y{17.1,20.3}_floor_and_upright_r1` | #962's slots' mouths: the floor's edge along the rib with the rib's upright edge (refused) |
+| `issue962_rib_top_corner_r{0.3,1}` | the top's two edges at the rib's corner: within 0.06 of the refined shape's volume, no tolerance above 2e-3 (refused) |
+
+The picture cases: `slot_split_wall_top_and_upright_r1`,
+`issue962_rib_top_corner_r1`.
+
+The sweeps. Edge, at `2bc692bfc4`: 4 refused results made -- #273's
+`Fillet001`, edges 3 and 9 at 0.3 and 0.8, the surface kept there too at
+the wrong end of a chain; that input has no pieces, and the results are
+the refined shape's. Vertex: 28 refused results made, nothing else moved
+-- 9435 valid, 200 invalid, 2579 refused. The rib's top corners on #962's
+two inputs (`V45:110,114`, `V72:173,177` and the chamfer's, 8;
+tolerances 4e-4 and 1.2e-3) and five results of #273's `Fillet001` by the
+second fix; by the first, the mouths' pairs on #962 (`V56:76,102` and the
+like, 8) and the miniatures' (7), 4e-4 to 6e-4.
+
+Open. Of the 237 vertex results refused only in pieces 12 are left, all
+on #962: its edge 0.05 long, alone and with a neighbour (`Fillet` `V1`,
+`V2`, 6), and the chamfer's edge 6 at radius 1, longer than the edge (6).
+The fin's wall pair `V11:15,26` is made valid and fails BOP's check: an
+edge of its patch lies 3% farther from the patch than its tolerance says
+(`BOPAlgo_InvalidCurveOnSurface`); the pair at the piece's top,
+`V16:23,26`, passes it.
+
 ## Known broken (XFAIL)

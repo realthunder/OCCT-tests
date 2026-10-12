@@ -54,6 +54,8 @@ STAGES = {
     "s962zc": ("5635c27fba", "3ba0c94072"),
     "s962zd": ("ce0ac05245", "726d9533c6"),
     "s962ze": ("61f18d7958", "f446ee4591"),
+    "s962zf": ("3fb6fdcac3", "2ff60f1efd"),
+    "s962zg": ("2ff60f1efd", "2bc692bfc4"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -374,6 +376,10 @@ UVFACE_CASE = {
     "slot_split_wall_mouth_r0.8": _plane_at("y", 3, {"x": 9.4}),
     # the block's side (y=10.2), its piece past the rib's, from x=38.5 on
     "issue962_e72_r0.8": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}, {"x": 50.0}),
+    # the slot's wall, its piece at the mouth
+    "slot_split_wall_top_and_upright_r1": _plane_at("y", 3, {"x": 9.4}),
+    # the rib's wall (y=10.2) under the top's edge, its piece up to x=38.5
+    "issue962_rib_top_corner_r1": _plane_at("y", 10.2, {"z": 20.0}, {"x": 38.4}),
     # the rib's wall (y=13.7), its piece at the floor's corner, up to x=38.96
     "issue962_e52_r0.8": _plane_at("y", 13.7, None, {"x": 38.0}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
@@ -514,6 +520,8 @@ UVLABEL_CASE = {
     "slot_split_wall_mouth_r0.8": ("the slot's wall, its piece at the mouth", False),
     "issue962_e72_r0.8": ("the block's side past the rib's piece", False),
     "issue962_e52_r0.8": ("the rib's wall, its piece at the floor", False),
+    "slot_split_wall_top_and_upright_r1": ("the slot's wall, its piece at the mouth", False),
+    "issue962_rib_top_corner_r1": ("the rib's wall under the top's edge", False),
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
@@ -695,7 +703,23 @@ CASES = {
         1.0, 937.5870, (0, 4, 5), (-1, 0.9, 0.8)),
     "slot_by_slope_floor_inline_r1": (
         "s962ze", "slotslope", [((0, 0, 5), (0, 4, 5)), ((0, 4, 5), (0.7, 4, 5))],
-        1.0, 939.5295, (0, 4, 5), (-1, 0.9, 0.8)),
+        1.0, 939.5563, (0, 4, 5), (-1, 0.9, 0.8)),
+    "slot_by_slope_inline_slope_r1": (
+        "s962zf", "slotslope", [((0, 0, 5), (0, 4, 5)), ((0, 4, 5), (-5, 4, 10))],
+        1.0, 935.9822, (0, 4, 5), (-1, 0.9, 0.8)),
+    "slot_by_slope_slope_floor_r1": (
+        "s962zf", "slotslope", [((0, 4, 5), (-5, 4, 10)), ((0, 4, 5), (0.7, 4, 5))],
+        1.0, 938.1564, (0, 4, 5), (-1, 0.9, 0.8)),
+    "slot_split_both_floor_and_end_r1": (
+        "s962zf", "slotboth", [((9.3, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 6, 5))],
+        1.0, 1131.4815, (10, 3, 5), (1, 0.9, 0.8)),
+    "slot_split_wall_top_and_upright_r1": (
+        "s962zg", "slotwall", [((9.3, 3, 14), (10, 3, 14)), ((10, 3, 5), (10, 3, 14))],
+        1.0, 1125.8785, (10, 3, 14), (1, 0.9, 0.8)),
+    "issue962_rib_top_corner_r1": (
+        "s962zg", "p962", [((35.5, 10.2, 32.25), (38.5, 10.2, 32.25)),
+                           ((38.5, 13.7, 32.25), (38.5, 10.2, 32.25))],
+        1.0, 11579.2314, (38.5, 10.2, 32.25), (0.5, -1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -707,6 +731,12 @@ ZOOM = {
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
     "slot_by_slope_floor_inline_r1": "the floor's on the wall, the side's under the slope",
+    "slot_by_slope_inline_slope_r1": "the side's under the slope, the slope's on the wall",
+    "slot_by_slope_slope_floor_r1": "the slope's on the wall, the floor's on the wall",
+    "slot_split_both_floor_and_end_r1": "the floor's along the wall, the floor's on the outer "
+                                        "face",
+    "slot_split_wall_top_and_upright_r1": "the wall's piece's top edge and its upright one",
+    "issue962_rib_top_corner_r1": "the top's two edges at the rib's corner, (38.5, 10.2, 32.25)",
     "slot_by_slope_all_four_r1": "the four at the slot's corner, (0, 4, 5)",
     "arm_on_block_foot_r0.8": "the two at the foot, x=38.5, y=27.2 and y=10.2",
     "issue962_fillet_r0.8": "the Fillet's twelve; zoomed on edge 49's foot",

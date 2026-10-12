@@ -1112,8 +1112,72 @@ the corner and the patch joins them over the slope's edge and the wall.
 
 ![slot_by_slope_floor_inline_r1](pictures/slot_by_slope_floor_inline_r1.png)
 
-At other radii (0.8, say) the patch comes out looser than on the body
-refined; that is open.
+At other radii (0.8, say) the patch came out looser than on the body
+refined, until the next fix.
+
+### A set back corner on a wall in pieces (`5b0741a75e`, `5e364dd15b`, `0892d3e167`, `e3c46a01d7`, `2ff60f1efd`, realthunder/FreeCAD#962)
+
+The same corner, other pairs of its four edges. The slope's fillet is
+wider than the wall's piece and ends on the piece beyond the split.
+
+With the block's side's edge under the slope: the two fillets do not
+touch, and their corner is made set back -- on the wall in one face. In
+pieces it was refused. The floor's edge, sharp here, is the wall's piece,
+0.7 long; the corner still had the far piece down as the face beside it,
+from when the slope's fillet ended there, and the patch's edge on the wall
+was drawn over two faces though it lies on one. (Set back farther, past
+the piece's end, the cut on the floor's edge is carried on to the edge
+beyond the split.)
+
+![slot_by_slope_inline_slope_r1](pictures/slot_by_slope_inline_slope_r1.png)
+
+With the floor's edge: the corner reads the edges round its vertex
+starting from the first fillet's face, and the slope's fillet, given
+first, has the far piece there -- a face the vertex is not on. Given the
+other way round the corner was made.
+
+![slot_by_slope_slope_floor_r1](pictures/slot_by_slope_slope_floor_r1.png)
+
+The floor's edge with the block's side's, above, was made but loose away
+from radius 1. A patch's edge that crosses the split was held tangent to
+the wall, where the one edge of a wall in one face is held by its
+position alone; at this corner that pulled the patch 0.014 off its
+boundary. At another -- a fin's wall in two -- tangency is what keeps the
+patch on its boundary. The patch is built both ways now and the nearer
+one kept: 4e-4 here, as on the body refined.
+
+Two more of the kind at the slot's mouth of a block whose outer face is
+split as well, below the vertex: a fillet's leftover surface past the
+vertex, with a face on one side only, was taken for its end where two
+fillets meet; and set back, the outer face's split, in line with the
+wall's edge above it, sent the corner down a path meant for two sharp
+edges in line.
+
+![slot_split_both_floor_and_end_r1](pictures/slot_split_both_floor_and_end_r1.png)
+
+### Two fillets past their wall's piece (`2bc692bfc4`)
+
+The slot's wall again, its piece at the mouth 0.7 wide: its top edge and
+its upright edge on the outer face, filleted together at radius 1. Both
+fillets are wider than the piece and end on the wall beyond the split,
+facing each other on a face their vertex is not on. Their corner is made
+set back, and the patch's edge between the two cuts lies on that far
+piece; it was asked of the piece at the vertex.
+
+![slot_split_wall_top_and_upright_r1](pictures/slot_split_wall_top_and_upright_r1.png)
+
+### The surfaces a corner removes (`c4bb6a9cf4`, realthunder/FreeCAD#962)
+
+The rib's top corner. The wall under the top's edge is in two pieces,
+split by the long edge that comes up to the vertex; the fillet along that
+wall is a chain of edges round the wall's piece and touches the long edge
+again at its foot, 18 below. Before making a corner the builder drops the
+part of each fillet that runs on past the vertex, keeping the surface that
+touches an edge beside the fillet's -- and took the one at the foot for
+it: of the fillet's six surfaces five were dropped. An upstream fault; any
+fillet that comes back to such an edge would meet it.
+
+![issue962_rib_top_corner_r1](pictures/issue962_rib_top_corner_r1.png)
 
 ## Making the pictures
 

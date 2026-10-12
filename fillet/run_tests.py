@@ -742,21 +742,24 @@ def edges_at(shape, point, along=None):
     return found
 
 
-def corner_case(name, shape, point, radius, vol_tol, max_tol, along=None, bop=True):
+def corner_case(name, shape, point, radius, vol_tol, max_tol, along=None, bop=True,
+                reverse=False):
     """Every edge at `point` (or those `along` the given directions)
     filleted together: a valid solid of the volume the same corner has on
     the shape refined (removeSplitter), within vol_tol -- a plate either
     way, not the same one --, no tolerance above max_tol, nothing for BOP's
-    argument check to report (bop)."""
+    argument check to report (bop). The edges are given in the shape's
+    order, or with `reverse` the other way round."""
+    step = -1 if reverse else 1
     try:
         ref = shape.removeSplitter()
-        vol = ref.makeFillet(radius,
-                             [ref.Edges[i - 1] for i in edges_at(ref, point, along)]).Volume
+        vol = ref.makeFillet(radius, [ref.Edges[i - 1]
+                                      for i in edges_at(ref, point, along)[::step]]).Volume
     except Exception as e:
         report(name, False, False,
                "EXCEPTION on the refined shape: " + str(e).strip().splitlines()[-1])
         return
-    fillet_case(name, shape, edges_at(shape, point, along), radius, "pass", vol,
+    fillet_case(name, shape, edges_at(shape, point, along)[::step], radius, "pass", vol,
                 max_tol=max_tol, vol_tol=vol_tol, bop=bop)
 
 
@@ -785,18 +788,46 @@ for y in (13.7, 17.1, 20.3, 23.7):
 # "runs past the stripe"); and a result made was thrown away as one without
 # its fillets, the short edge's midpoint being under the corner's patch
 # where a fillet would have moved the surface away from it.
-# At 0.8 the patch's edge on the wall is in two, 0.1 of it past the split,
-# and the patch comes out loose, 0.014 on all its edges (4e-4 at 1): valid,
-# but a self-intersection for BOP's check, from 0.75 to 0.9 and at 1.2. Open.
+# From 0.75 to 0.9 and at 1.2 the patch's edge on the wall is in two, a
+# short piece of it past the split. Each piece was held tangent to the wall
+# (a curve over several faces always was), where the one curve of a wall in
+# one face, from a fillet to a sharp edge, is held by its position alone:
+# the patch came out loose, 0.014 on all its edges at 0.8, and was a
+# self-intersection for BOP's check. Held by position it is as tight as on
+# the shape refined.
 _floor, _inline, _slope = (1, 0, 0), (0, -1, 0), (-0.7071068, 0, 0.7071068)
-for tag, along, radii in (("floor_inline", (_floor, _inline), (0.8, 1.0)),
-                          ("floor_inline_slope", (_floor, _inline, _slope), (1.0,))):
-    for r in radii:
-        corner_case("slot_by_slope_%s_r%g" % (tag, r), slot_by_slope(), (0, 4, 5), r, 0.15, 0.03,
-                    along=along, bop=r != 0.8)
+for r in (0.75, 0.8, 0.85, 0.9, 1.0, 1.2):
+    corner_case("slot_by_slope_floor_inline_r%g" % r, slot_by_slope(), (0, 4, 5), r, 0.06, 2e-3,
+                along=(_floor, _inline))
+corner_case("slot_by_slope_floor_inline_slope_r1", slot_by_slope(), (0, 4, 5), 1.0, 0.15, 0.03,
+            along=(_floor, _inline, _slope))
 for y, inl in ((13.7, _inline), (17.1, (0, 1, 0))):
     corner_case("issue962_floor_corner_y%g_floor_inline_r1" % y, p2, (38.5, y, 14), 1.0, 0.15,
                 0.03, along=(_floor, inl))
+
+# The slope's edge with one of its neighbours, at radius 1: the slope's
+# fillet is wider than the wall's piece and ends on the far one.
+# With the floor's: the corner reads its edges and faces round the vertex
+# starting from the first fillet's face, and the slope's fillet, given
+# first, has the far piece there, a face the vertex is not on ("Failed to
+# find edge"; given second it was made). Both orders, and mirrored: the
+# refined shape's patch is as loose, 0.1.
+# With the block's side's under the slope: set back, the floor's edge is a
+# sharp one to cut a radius from the vertex, and the wall's piece of it is
+# 0.7 long ("a corner's setback exceeds an edge") -- and before that, where
+# the fillets meet, the face beside that edge was still the far piece, put
+# there for the slope's fillet, which is cut back onto the near one.
+for tag, kw in (("", {}), ("_mirror", {"mirror": True})):
+    sg = -1 if kw.get("mirror") else 1
+    flip = lambda d: (d[0], sg * d[1], d[2])
+    for rev in (False, True):
+        order = "_reversed" if rev else ""
+        corner_case("slot_by_slope%s_slope_floor%s_r1" % (tag, order), slot_by_slope(**kw),
+                    (0, sg * 4, 5), 1.0, 0.01, 0.15, along=(flip(_slope), flip(_floor)),
+                    reverse=rev)
+        corner_case("slot_by_slope%s_inline_slope%s_r1" % (tag, order), slot_by_slope(**kw),
+                    (0, sg * 4, 5), 1.0, 2e-3, 0.01, along=(flip(_inline), flip(_slope)),
+                    reverse=rev)
 
 
 def pocket_by_split(mirror=False):
@@ -1342,6 +1373,71 @@ for r in (0.3, 1.0):
               [floor, along], r)
     pair_case("slot_split_outer_wall_and_end_r%g" % r, lambda: slotted(outer=True),
               [up, along], r)
+
+# The same block with the slot's wall split as well, 0.7 from the outer face:
+# the floor's edge along the wall with the floor's on the outer face. That
+# one's line on the outer face runs on past the vertex over the face's other
+# piece, with nothing beside it on the floor: a last surface with a face on
+# one side only, which the corner of one fillet removes before it starts. The
+# corner of two took it for the fillet's end -- no face in common with the
+# other fillet, refused ("No intersection pc pc").
+corner_case("slot_split_both_floor_and_end_r0.3", slotted(wall=True, outer=True), (10, 3, 5),
+            0.3, 1e-3, 1e-3, along=((-1, 0, 0), (0, 1, 0)))
+# At 1 the fillet along the wall is wider than the wall's piece, the two no
+# longer meet on the floor and the corner is made set back. It was refused
+# there: the outer face's split below the vertex is in line with the wall's
+# edge above it, and two sharp edges in line beside two fillets are a case
+# of their own, its curves ending on the vertex -- which a setback corner
+# never reaches. Set back, the split is cut like any other edge. (The
+# refined shape's corner is the exact one, its floor's edge in one.)
+corner_case("slot_split_both_floor_and_end_r1", slotted(wall=True, outer=True), (10, 3, 5),
+            1.0, 0.15, 2e-3, along=((-1, 0, 0), (0, 1, 0)))
+
+
+# Two fillets at a vertex, both wider than the piece of the wall between
+# their edges: each ends on the piece beyond the split, and they face each
+# other there, on a face the vertex is not on. As a corner of two that is
+# refused; set back, the curve between their cuts was asked of the piece at
+# the vertex ("a fillet ends off the face of the curve to the next"). Both
+# cuts are on the far piece, and so is the curve. The refined shape's
+# corner is the exact one, of two fillets on one face.
+# (The box is the sweep's: a 10x10x10 box whose wall y=0 is two faces, 0.7
+# of it at the corner edge x=10, each on a plane of its own -- as two
+# bodies fused leave it. With the wall one plane cut in two the corner of
+# two fillets is made as it stands.)
+box2 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                          "mini_mini_wall.brep"))
+corner_case("box_wall_two_faces_upright_and_bottom_r1", box2, (10, 0, 0), 1.0, 0.2, 2e-3,
+            along=((0, 0, 1), (-1, 0, 0)))
+for tag, kw in (("wall", {"wall": True}), ("both", {"wall": True, "outer": True})):
+    corner_case("slot_split_%s_top_and_upright_r1" % tag, slotted(**kw), (10, 3, 14), 1.0, 0.2,
+                2e-3, along=((-1, 0, 0), (0, 0, -1)))
+# The fin's wall, its piece at the block's side: the piece's top edge with
+# its upright one, and the edge at its foot with it. The second's patch is
+# valid and one of its edges lies 3% farther from it than the edge's
+# tolerance says (BOPAlgo_InvalidCurveOnSurface): without BOP's check.
+corner_case("fin_on_block_wall_piece_top_and_upright_r1", fin_on_block(wall=True),
+            (10, 3, 14), 1.0, 0.2, 2e-3, along=((-1, 0, 0), (0, 0, -1)))
+corner_case("fin_on_block_wall_piece_foot_and_upright_r1", fin_on_block(wall=True),
+            (10, 3, 5), 1.0, 0.2, 2e-3, along=((-1, 0, 0), (0, 0, 1)), bop=False)
+# #962's slots' mouths: the floor's edge along the rib, the rib's piece 0.69
+# long, with the rib's upright edge.
+for y in (17.1, 20.3):
+    corner_case("issue962_mouth_y%g_floor_and_upright_r1" % y, p2, (50, y, 14), 1.0, 0.2, 2e-3,
+                along=((-1, 0, 0), (0, 0, 1)))
+
+# #962's rib, its top corner at (38.5,10.2,32.25): the wall under the top's
+# edge is in two pieces, split by the 18 long edge that comes up to the
+# vertex. The top's two edges there. The fillet along the wall is a chain
+# round the wall's piece and comes back to that long edge at its foot; of
+# the fillet's six surfaces the corner kept the one there, at the chain's
+# other end, for the one at the vertex, and removed the rest ("Failed to
+# find edge", of two faces that share none). The corner is a patch, its
+# edge on the wall over the two pieces; the refined shape's is the exact
+# corner of two fillets.
+for r in (0.3, 1.0):
+    corner_case("issue962_rib_top_corner_r%g" % r, p2, (38.5, 10.2, 32.25), r, 0.06, 2e-3,
+                along=((-1, 0, 0), (0, 1, 0)))
 
 # The fin on the block, flush with its side: the side is an L in two faces,
 # the split ending at the L's inner corner, (x,3,5). The block's top edge
