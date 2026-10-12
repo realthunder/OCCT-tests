@@ -351,6 +351,19 @@ fillet_case("issue962_rib_top_r0.8", p2, rib, 0.8, "pass", 11580.921269, 1e-4, v
 fillet_case("issue962_rib_top_r0.95", p2, rib, 0.95, "pass", 11579.597504, 1e-4, vol_tol=1e-5)
 fillet_case("issue962_rib_top_chamfer_0.8", p2, rib, 0.8, "pass", 11576.625155, 1e-4,
             chamfer=True, vol_tol=1e-5)
+# The outer ribs' tops (y=10.2 and 27.2) end at x=38.5 on the same slope,
+# and there the block's side is split at x=38.5 exactly: the wall's piece
+# ends with the edge, the fillet's line on it stops on the split (the slant
+# block split at its slope's start, below). The chain runs from the arm's
+# 45 deg underside up the rib's front to its top, its surfaces not one to
+# an edge; there the split, a regular edge beside the fillet's end, sent the
+# end to a plate, which failed: refused at every radius. Volumes: the
+# refined shape's.
+for name, y in (("e72", 10.2), ("e94", 27.2)):
+    und = edge_between(p2, (38.5, y, 14), (35.470838, y, 17.029162))
+    for r, vol in ((0.3, 11583.691087), (0.8, 11580.970356), (2.0, 11564.542048)):
+        fillet_case("issue962_%s_r%g" % (name, r), p2, und, r, "pass", vol, 2e-4, vol_tol=1e-4,
+                    bop=True)
 
 # The same chain's other end: from the top it runs down the rib's front,
 # tangent, and its last edge -- the rib's wall (y=20.3) against the 45 deg
@@ -427,14 +440,15 @@ for r, vol in ((0.3, 11584.047745), (0.5, 11583.886647), (0.8, 11583.502170),
                 bop=True)
 
 
-def slant_block(mirror=False):
+def slant_block(mirror=False, at=5.0):
     """A 12x3 prism (y 0..3) whose top is flat (z=10) for x 0..4 and slopes
     down to z=6 at x=12; its front wall (y=0) split by a vertical edge at
-    x=5, where the slope is at z=9.5 -- the rib above in miniature."""
+    x=`at` (5, where the slope is at z=9.5 -- the rib above in miniature)."""
     prof = Part.Face(Part.makePolygon([V(0, 0, 0), V(12, 0, 0), V(12, 0, 6), V(4, 0, 10),
                                        V(0, 0, 10), V(0, 0, 0)]))
     s = prof.extrude(V(0, 3, 0))
-    s = s.generalFuse([Part.LineSegment(V(5, 0, 0), V(5, 0, 9.5)).toShape()])[0].Solids[0]
+    cut = Part.LineSegment(V(at, 0, 0), V(at, 0, 10 - (at - 4) / 2.0)).toShape()
+    s = s.generalFuse([cut])[0].Solids[0]
     return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
 
 
@@ -452,6 +466,21 @@ for tag, mirror in (("", False), ("_mirror", True)):
     for r in (0.8, 1.5, 2.0):
         fillet_case("slant_split_wall%s_r%g" % (tag, r), sb, sbe, r, "pass",
                     312 - (1 - math.pi / 4) * r * r * (4 + 2 * csb * r), 2e-4)
+    # The wall split at x=4, where the top's edge ends and the slope starts:
+    # the wall's piece under the edge ends with it, and the fillet's line on
+    # it stops on the split, an edge of the corner's vertex. The line is
+    # carried over the split as one that stopped in its face before it (see
+    # issue962_e72 below, where that end was refused: here, one fillet on
+    # one edge, the loop over the faces at the end made it before, and the
+    # result is the same). The same volumes; a chamfer takes
+    # r^2/2 (4 + 2r/3).
+    sbe = edge_between(slant_block(mirror, 4.0), (0, 0, 10), (-4 if mirror else 4, 0, 10))
+    for r in (0.3, 0.8, 2.0):
+        fillet_case("slant_split_at_slope%s_r%g" % (tag, r), slant_block(mirror, 4.0), sbe, r,
+                    "pass", 312 - (1 - math.pi / 4) * r * r * (4 + 2 * csb * r), 2e-4,
+                    vol_tol=1e-4, bop=True)
+    fillet_case("slant_split_at_slope_chamfer%s_0.8" % tag, slant_block(mirror, 4.0), sbe, 0.8,
+                "pass", 312 - 0.32 * (4 + 1.6 / 3), 2e-4, chamfer=True, vol_tol=1e-4, bop=True)
 
 
 def rib_foot(mirror=False):
@@ -551,8 +580,9 @@ def strip_box(mirror=False, ends=True):
 # edge of the corner: refused, or invalid with 12 of volume too much (2.0001);
 # now the corner is that of the near pieces, the edge between them under
 # the fillet. Further out the line lies on the far piece, and with the ends
-# split the cut of the corner crosses their split: still refused
-# (README.md). A shape of its own for each case.
+# split the cut of the corner crosses their split: refused, until the corner
+# took a cut over the end face's two pieces (below). A shape of its own for
+# each case.
 for ends, etag in ((True, ""), (False, "_plain_ends")):
     for tag, mirror in (("", False), ("_mirror", True)):
         se = edge_between(strip_box(mirror, ends), (0, 0, 0), (0, 10, 0))
@@ -562,13 +592,12 @@ for ends, etag in ((True, ""), (False, "_plain_ends")):
                         bop=True)
         fillet_case("strip_box%s%s_chamfer_2" % (etag, tag), strip_box(mirror, ends), se, 2.0,
                     "pass", 380.0, 1e-3, chamfer=True, vol_tol=1e-5, bop=True)
-        if ends:
-            fillet_case("strip_box%s_r2.5" % tag, strip_box(mirror, ends), se, 2.5, "xfail")
-        else:
-            for r in (2.001, 2.5):
-                fillet_case("strip_box_plain_ends%s_r%g" % (tag, r), strip_box(mirror, ends),
-                            se, r, "pass", 400 - (1 - math.pi / 4) * r * r * 10, 1e-4,
-                            vol_tol=1e-5, bop=True)
+        # further out, the cut of the corner over the end face's two pieces
+        # (below)
+        for r in ((2.0002, 2.001, 2.005, 2.5, 3.9) if ends else (2.001, 2.5)):
+            fillet_case("strip_box%s%s_r%g" % (etag, tag, r), strip_box(mirror, ends), se, r,
+                        "pass", 400 - (1 - math.pi / 4) * r * r * 10, 1e-4, vol_tol=1e-5,
+                        bop=True)
 
 # #309's shape is all of that: its bottom, its side and its end faces in
 # strips 2 wide. Edge 17 (x=2, z=-2, y -50..50) at 2: refused before; the
@@ -577,6 +606,67 @@ p309 = Part.read(os.path.join(HERE, "..", "draft", "models", "issue309_shape.bre
 e309 = edge_between(p309, (2, 50, -2), (2, -50, -2))
 fillet_case("issue309_e17_r2", p309, e309, 2.0, "pass", 12677.526391, 1e-3, vol_tol=1e-5,
             bop=True)
+
+
+# The face at the fillet's end kept in two coplanar pieces, the one at the
+# vertex narrower than the fillet: one side of the fillet ends on an edge of
+# the far piece, past the vertex where the split between the two starts, and
+# the cut of the corner runs over both pieces.
+#
+# At a corner of three edges alike (the strip box above, convex; a blind
+# pocket's floor against its wall, concave) both sides end on edges, and the
+# corner wanted them on one face. The cut crosses the split itself, which is
+# cut there; the edge of the near piece from the split's foot to the corner
+# is under the fillet. The strip box was refused. The pocket was made, by the
+# loop over the faces at an end of several (PerformIntersectionAtEnd), which
+# takes an arc past a split's foot; it is the corner's own cut now, to the
+# same result.
+def blind_pocket(mirror=False):
+    """A 10x10x10 block with a blind pocket (x, y 2..8) from z=4 up, whose
+    wall y=2 is split by a vertical edge at x=2.7, 0.7 from the wall x=2."""
+    s = Part.makeBox(10, 10, 10).cut(Part.makeBox(6, 6, 6, V(2, 2, 4)))
+    s = s.generalFuse([Part.LineSegment(V(2.7, 2, 4), V(2.7, 2, 10)).toShape()])[0].Solids[0]
+    return s.mirror(V(0, 0, 0), V(1, 0, 0)) if mirror else s
+
+
+# The floor's edge with the wall x=2: the fillet adds its cross-section over
+# the edge's 6. From 0.7 on its line on the floor ends on the wall's far
+# piece, and just over 0.7 the cut crosses the split a hair above its foot
+# (7e-7 at 0.701).
+for tag, mirror in (("", False), ("_mirror", True)):
+    sg = -1 if mirror else 1
+    be = edge_between(blind_pocket(mirror), (sg * 2, 2, 4), (sg * 2, 8, 4))
+    for r in (0.5, 0.7, 0.7001, 0.701, 0.705, 0.8, 2.0):
+        fillet_case("blind_pocket_split_wall%s_r%g" % (tag, r), blind_pocket(mirror), be, r,
+                    "pass", 784 + (1 - math.pi / 4) * r * r * 6, 1e-4, vol_tol=1e-5, bop=True)
+
+# At an end OnSame -- the slotted block's floor against the outer face
+# (x=10), ending at the slot's wall, whose piece there is 0.7 wide; the top
+# of the fin's block against the same face, ending under the fin's wall --
+# the other side of the fillet runs on in its face, and the cut over a wall
+# in two faces was there (#876's drafted wall). But that side's line, on a
+# face that goes on past the vertex, ends on the face's far edge, and with
+# neither end on an edge of the vertex the corner turned to that one for its
+# face at end before it looked for the wall in two: refused from 0.7 on. Just
+# over 0.7 the cut crosses the split's line within 1e-5 of its foot, where
+# the new edge between the two pieces would be that short (7e-7 at 0.701,
+# which BOP's check takes for no edge at all): the split starts at the
+# crossing point instead. The fillet takes its cross-section over the
+# edge's 3 (7 on the fin's block, further down).
+for r in (0.5, 0.7, 0.7001, 0.701, 0.705, 0.8, 2.0):
+    s = slotted(wall=True)
+    fillet_case("slot_split_wall_mouth_r%g" % r, s, edge_between(s, (10, 3, 5), (10, 6, 5)), r,
+                "pass", 1130 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
+# With the outer face split too, by the spine's own line below the floor,
+# both sides stop on edges at the spine's end, the floor's on the far piece's:
+# an edge that does not reach the vertex was an obstacle to walk along, and
+# the walk failed. It reaches the vertex through the wall's pieces, as the
+# wall's edge in one would, and is the end -- for the walk and for the
+# corner, which took the outer face's split for its face at end otherwise.
+for r in (0.7001, 0.8, 2.0):
+    s = slotted(wall=True, outer=True)
+    fillet_case("slot_split_both_mouth_r%g" % r, s, edge_between(s, (10, 3, 5), (10, 6, 5)), r,
+                "pass", 1130 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
 
 
 def pocket_by_split(mirror=False):
@@ -753,6 +843,13 @@ for r in (0.7, 0.70001, 0.7001):
                    ("fin_on_block_wall", fin)):
         fillet_case("%s_r%g" % (tag, r), s, edge_between(s, (10, 3, 5), (10, 3, 14)), r, "pass",
                     s.Volume - taken)
+# the block's top against its side (x=10), ending under the fin's wall, the
+# wall's piece there 0.7 wide: the cut over the wall's two pieces (above,
+# the slot's mouth)
+for r in (0.7001, 0.8, 2.0):
+    s = fin_on_block(wall=True)
+    fillet_case("fin_on_block_wall_top_r%g" % r, s, edge_between(s, (10, 3, 5), (10, 10, 5)), r,
+                "pass", 770 - (1 - math.pi / 4) * r * r * 7, 2e-4, vol_tol=1e-5, bop=True)
 # and a chamfer of that size, which walks the same way: a triangle of d^2/2
 # over the spine's 9
 for d in (0.7, 0.70001, 0.7001):

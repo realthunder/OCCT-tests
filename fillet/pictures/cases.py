@@ -48,6 +48,9 @@ STAGES = {
     "s962w": ("6593a88daa", "3f7ddd4bcc"),
     "s962x": ("3f7ddd4bcc", "904a86b6c0"),
     "s962y": ("904a86b6c0", "479cc80ecb"),
+    "s962z": ("b9a309b7fb", "74c8a201e0"),
+    "s962za": ("74c8a201e0", "247fc423f1"),
+    "s962zb": ("247fc423f1", "faf4f72ee0"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -229,6 +232,13 @@ def _strip_box():
     return Part.makeBox(10, 10, 4).generalFuse(cuts)[0].Solids[0]
 
 
+def _slot_both():
+    # run_tests.py's slotted block, its slot's wall and its outer face both split
+    V = App.Vector
+    s = _slot_outer()
+    return s.generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -251,6 +261,7 @@ SHAPES = {
     "pocketsplit": _pocket_by_split,
     "stripbox": _strip_box,
     "slotouter": _slot_outer,
+    "slotboth": _slot_both,
 }
 
 
@@ -332,9 +343,15 @@ UVFACE = {
     "stripbox": _plane_at("y", 0, None, {"x": 1.9}),
     # the outer face's piece below the slot's wall (x=10, y 0..3), which the corner's edge is on
     "slotouter": _plane_at("x", 10, None, {"y": 2.99}),
+    # the slot's wall, its piece at the mouth (y=3, x 9.3..10), which the cut grows downward
+    "slotboth": _plane_at("y", 3, {"x": 9.4}),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the slot's wall, its piece at the mouth, as on the block split twice
+    "slot_split_wall_mouth_r0.8": _plane_at("y", 3, {"x": 9.4}),
+    # the block's side (y=10.2), its piece past the rib's, from x=38.5 on
+    "issue962_e72_r0.8": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}, {"x": 50.0}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
     "issue962_rib_top_r0.8": _plane_at("y", 20.3, {"x": 40.0}, {"x": 50.0}),
     # the B-spline face at edge 51's foot, which the corner extends
@@ -411,6 +428,8 @@ NAMES = {
     "stripbox": "a 10x10x4 box, its bottom and its end faces split 2 from the side x=0",
     "slotouter": "10x10x14 block, a slot down to z=5, the outer face x=10 two faces split "
                  "along y=3 below the slot's floor",
+    "slotboth": "10x10x14 block, a slot down to z=5, its wall split 0.7 from the outer face "
+                "and the outer face split along y=3 below the floor",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -435,6 +454,7 @@ VIEW = {
     "pocketsplit": ((5, 3, 5), 17.0),
     "stripbox": ((5, 5, 2), 17.0),
     "slotouter": ((5, 5, 7), 20.0),
+    "slotboth": ((5, 5, 7), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -459,9 +479,12 @@ UVLABEL = {
     "pocketsplit": ("the front's far piece", False),
     "stripbox": ("the end face's near piece", False),
     "slotouter": ("the outer face's piece below the wall", False),
+    "slotboth": ("the slot's wall, its piece at the mouth", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "slot_split_wall_mouth_r0.8": ("the slot's wall, its piece at the mouth", False),
+    "issue962_e72_r0.8": ("the block's side past the rib's piece", False),
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
@@ -625,6 +648,14 @@ CASES = {
     "fin_on_block_x10_all_three_r1": (
         "s962y", "fin", [((10, 3, 5), (10, 10, 5)), ((0, 3, 5), (10, 3, 5)),
                          ((10, 3, 5), (10, 3, 14))], 1.0, 768.7292, (10, 3, 5), (1, 0.9, 0.8)),
+    "strip_box_r2.5": ("s962z", "stripbox", ((0, 0, 0), (0, 10, 0)), 2.5, 386.5874,
+                       (0, 0, 0), (-1, -0.8, -0.7)),
+    "slot_split_wall_mouth_r0.8": ("s962z", "slotwall", ((10, 3, 5), (10, 6, 5)), 0.8,
+                                   1129.5880, (10, 3, 5), (1, 0.9, 0.8)),
+    "slot_split_both_mouth_r0.8": ("s962za", "slotboth", ((10, 3, 5), (10, 6, 5)), 0.8,
+                                   1129.5880, (10, 3, 5), (1, 0.9, 0.8)),
+    "issue962_e72_r0.8": ("s962zb", "p962", ((38.5, 10.2, 14), (35.470838, 10.2, 17.029162)),
+                          0.8, 11580.9704, (38.8, 10.2, 31.9), (0.5, -1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

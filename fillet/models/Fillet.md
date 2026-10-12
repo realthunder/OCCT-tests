@@ -970,6 +970,78 @@ cut by that line as far as the split.
 
 ![fin_on_block_x10_all_three_r1](pictures/fin_on_block_x10_all_three_r1.png)
 
+### A corner's cut over an end face in two pieces (`74c8a201e0`, realthunder/FreeCAD#962, #309)
+
+The fillets the sweeps saw refused were tried on the refined shape, as the
+invalid ones had been: of 1370 on single edges, 50 are refused only for
+the body being in pieces. Most of them are one situation -- the face the
+fillet ends on is in two coplanar pieces, and the piece at the corner is
+narrower than the fillet. One side of the fillet then ends on an edge of
+the far piece, and the curve the fillet ends in has to run over both
+pieces, across the split between them.
+
+The box whose bottom and end faces are split 2 from its side, filleted at
+2.5 (at 2 it is "A fillet as wide as its piece, once more", above). Three
+convex edges at the corner: both sides of the fillet end on edges, the one
+on the end face's far piece, and the corner asked for both on one face.
+Refused before, and upstream; after, the fillet runs the edge's length,
+and on the end face the split comes down to the fillet's arc and stops
+there. The near piece, in the third row, is closed by the arc, which
+reaches the split 0.05 above its foot: what was below is cut away, with
+the piece's bottom edge.
+
+![strip_box_r2.5](pictures/strip_box_r2.5.png)
+
+The slotted block, the slot's wall split 0.7 from the outer face: the
+edge of the slot's floor on the outer face, at 0.8. Here the fillet runs
+on in the outer face past the corner, and its end is a cap in the wall's
+plane, below the floor. The corner had the cut for that -- "The cut over a
+drafted wall's cone and plane", above, two curves meeting on the line
+between the two faces -- but looked for it too late: with neither side on
+an edge of the vertex it took the outer face's far edge, where the
+fillet's line ends, for its face at end.
+Refused before; after, the fillet's end at the slot's wall is a rounded
+cap, and the split in the wall comes down to it. The wall's piece at the
+mouth, third row, has grown by the cap at its lower end: the short edge
+there is new, the split's line carried on below the floor as far as the
+arc.
+
+![slot_split_wall_mouth_r0.8](pictures/slot_split_wall_mouth_r0.8.png)
+
+Just over the piece's width that new edge would be shorter than an edge
+can be -- 7e-7 at radius 0.701 -- and the split starts at the arc instead.
+
+### An edge that reaches the vertex through the end face's pieces (`247fc423f1`)
+
+The same block with the outer face split as well, by the edge's own line
+below the floor. Now both sides of the fillet stop on edges at the
+corner, the floor's side on the edge of the wall's far piece -- an edge
+that does not touch the corner's vertex, which the walk took for an
+obstacle to run along, and failed. Through the wall's pieces that edge
+does reach the vertex, as the wall's edge in one face would: it is the
+fillet's end.
+Refused before; after, the same cap as above, and the outer face's split
+runs up to the cap's lower end.
+
+![slot_split_both_mouth_r0.8](pictures/slot_split_both_mouth_r0.8.png)
+
+### A line stopped on a split that ends at the vertex (`faf4f72ee0`, realthunder/FreeCAD#962)
+
+The top of #962's outer rib ends on a slope, and the block's side below
+it is split exactly there: the piece of the side under the top's edge
+ends with the edge. The fillet's line on that piece stops on the split.
+A line that stops in its face a little before a split is carried on over
+it ("A fillet's line over a wall kept in coplanar pieces", above); one
+that stops on the split, an edge of the corner's vertex, was not.
+The fillet here is a chain from the arm's underside up the rib's front
+to its top. Refused before, and upstream; after, the fillet runs along
+the top to the slope, which cuts it off, and its lower line crosses the
+split on the side and ends on the slope's edge. The side's piece past
+the split, third row, has that corner rounded off by the line and the
+slope's cut.
+
+![issue962_e72_r0.8](pictures/issue962_e72_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

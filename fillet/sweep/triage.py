@@ -15,7 +15,8 @@
 # splits were among the case's); "ref:noedge" when none is left. A fresh
 # copy of the input for each fillet.
 import os, sys, Part, FreeCAD as App
-def w(*a): os.write(1,(" ".join(str(x) for x in a)+"\n").encode())
+# (on a line of its own: the BREP reader's progress text ends without one)
+def w(*a): os.write(1,("\n"+" ".join(str(x) for x in a)+"\n").encode())
 HERE=os.path.dirname(os.path.abspath(__file__))
 paths={}
 for l in open(os.path.join(HERE,"shapes.lst")):

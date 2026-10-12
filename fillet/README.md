@@ -1587,7 +1587,7 @@ the split, and on #309, a body all in strips 2 wide.
 | `strip_box{,_mirror}_r{2,2.00005,2.0001}`, `strip_box{,_mirror}_chamfer_2` | a box whose bottom is split 2 from its edge and whose end faces are split there too: the cross-section over the edge's 10 (refused, or invalid with 12 too much) |
 | `strip_box_plain_ends{,_mirror}_r{2,2.00005,2.0001,2.001,2.5}`, `..._chamfer_2` | the same with the end faces whole (2 and 2.00005 refused on the box as built) |
 | `issue309_e17_r2` | #309's edge 17 at the width of its strips: the refined shape's volume (refused before) |
-| `strip_box{,_mirror}_r2.5` (XFAIL) | see Known broken |
+| `strip_box{,_mirror}_r2.5` | refused then; made since, see "A corner's cut over an end face in two pieces" |
 
 The sweeps, the four sections together. Edge: the 8 results invalid only
 in pieces are valid; 2 refused are made (#962's pocket mouth at 0.3, #309's
@@ -2052,36 +2052,154 @@ broken) -- with the concave edge as well it is made.
 Of the 23 set aside for a split among their edges, 8 are left, #309's
 edge 9 in each.
 
+## The refused results, sorted by the refined shape (2026-10-12)
+
+The sweeps' refused results had never been tried against the shape
+refined, as the invalid ones were (`sweep/triage.py`). The edge sweep's
+1370: 1045 are refused on the refined shape as well, 261 are on an edge
+that is a split itself, 14 would be invalid there, and 50 -- 26 edges, on
+#962's two inputs and four miniatures -- are refused only for the body
+being in pieces. The vertex sweep's 2823: 2248 refused there too, 248 on
+splits alone, 90 invalid there, and 237 refused only in pieces. The three
+sections below make 36 of the 50 and 143 of the 237.
+
+## A corner's cut over an end face in two pieces (realthunder/FreeCAD#962, #309, 2026-10-12)
+
+Most of the 50 are one situation. The face the fillet ends on is kept in
+two coplanar pieces, and the piece at the corner is narrower than the
+fillet: one side of the fillet ends on an edge of the far piece, past the
+vertex where the split between the two starts (its foot). The corner's cut
+-- the curve the fillet ends in -- has to run over both pieces.
+
+`PerformOneCorner` had that cut already, for an end `OnSame` on a wall in
+two tangent faces ("The cut over a drafted wall's cone and plane", #876):
+two curves meeting on the line of the edge between the faces, carried on
+past its end, and a new edge along that line. It did not come to it here.
+At an end `OnSame` one side of the fillet ends on an edge and the other
+runs on in its face; that other side's line, on a face that goes on past
+the vertex, ends on the face's far edge, wherever that is. With neither
+end on an edge of the vertex the corner turned to that far edge for its
+face at end before it looked for the wall in two, found no edge of the
+vertex to extend, and failed. The slotted block's floor against the outer
+face, the fin's block against the same, #962's four slots (edges 77 and 87
+on the Fillet's input): refused from the width of the piece on.
+
+At a corner of three edges alike -- all convex, all concave -- both sides
+end on edges and the corner wants them on one face (`FindFace`). The strip
+box past its strip's width (Known broken until now) is that: the line on
+the bottom's far piece ends on the far end piece's edge, the other side on
+the near end piece's.
+
+Fix `74c8a201e0`, in `PerformOneCorner`:
+
+- the wall in two faces is looked for before the other side's edge is
+  tried for the face at end;
+- an end that is not `OnSame`, one side on an edge of the vertex and the
+  other on an edge of the piece beyond: the same cut in two curves, which
+  here crosses the split itself rather than its line carried on. The split
+  is cut at the crossing, and the edge of the near piece from the split's
+  foot to the vertex goes under the fillet;
+- the crossing within 1e-5 of the split's foot, at an end `OnSame` (a
+  radius up to a thousandth or so over the piece's width): the new edge
+  along the split's line would be that short -- 7e-7 at 0.701 on the slot,
+  which BOP's check takes for no edge at all. The split starts at the
+  crossing point instead, which takes the foot's place;
+- the two curves end at the crossing point. `ChFi3d_ComputeCurves` takes a
+  line's own end for the one asked when the two are within half a percent
+  of the chord, so a piece could run on past the point by that much (the
+  strip box at 2.005: "valid", tolerances of 0.0075, refused by BOP's
+  check); each piece is cut at the point, and of two pieces on one plane
+  each is the whole cut's curve, cut there, where that fits better.
+
+| Case | What it covers |
+|------|----------------|
+| `strip_box{,_mirror}_r{2.0002,2.001,2.005,2.5,3.9}` | the strip box past its strip's width: the cross-section over the edge's 10, no tolerance above 1e-4, BOP's check (refused; XFAIL at 2.5 before) |
+| `slot_split_wall_mouth_r{0.5,0.7,0.7001,0.701,0.705,0.8,2}` | the slotted block's floor against the outer face, the slot's wall split 0.7 from it: the cross-section over the edge's 3, BOP's check (refused from 0.7001 on) |
+| `fin_on_block_wall_top_r{0.7001,0.8,2}` | the block's top against its side, ending under the fin's wall split 0.7 from the side (refused) |
+| `blind_pocket_split_wall{,_mirror}_r{0.5,0.7,0.7001,0.701,0.705,0.8,2}` | a blind pocket's floor against its wall, the next wall split 0.7 from the corner, all three edges concave. Made before as well, by the loop over the faces at an end of several (`PerformIntersectionAtEnd`), which takes an arc past a split's foot; the corner's own cut now, to the same result |
+
+The picture cases: `strip_box_r2.5`, `slot_split_wall_mouth_r0.8`.
+
+## An edge that reaches the vertex through the end face's pieces (2026-10-12)
+
+The slotted block with its outer face split as well, by the spine's own
+line below the floor. Both sides of the fillet stop on edges at the
+spine's end now: the outer face's on the split, an edge of the vertex,
+and the floor's on the edge of the wall's far piece. `StartSol` took the
+second for an obstacle -- an edge the fillet has to run along, the floor
+against the wall -- and the walk along it failed.
+
+"The fin on a split wall" (above) had the same question for the face the
+fillet is on: an edge that reaches the vertex through that face's pieces
+is where the fillet ends (`ChFi3d_EdgeOnSplitToVertex`). Fix `247fc423f1`: it
+is asked the other way round as well, for the face the edge bounds on its
+far side -- the wall, here -- by `StartSol` and by `PerformOneCorner`,
+which chose the outer face's split for its face at end otherwise.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_split_both_mouth_r{0.7001,0.8,2}` | the slot's floor against the outer face, wall and outer face both split: the cross-section over the edge's 3, BOP's check (refused) |
+
+The picture case: `slot_split_both_mouth_r0.8`.
+
+## A line stopped on a split that ends at the vertex (realthunder/FreeCAD#962, 2026-10-12)
+
+The tops of #962's outer ribs end at x=38.5 on a slope, and the block's
+side below them is split at x=38.5 exactly: the piece of the side the
+top's edge is on ends with the edge. The fillet's line on that piece stops
+on the split, an edge of the corner's vertex; the other side ends on the
+slope's edge with the top. Two edges that share no face.
+
+"A fillet's line over a wall kept in coplanar pieces" (above) carries a
+line that stopped in its face on over the split to the face at end, and
+finds the crossing even where the split is within tolerance of the line's
+end -- but was asked only for a side that is not on an edge. Fix `faf4f72ee0`:
+a side on an edge of the vertex that is a split between its face and a
+coplanar piece is taken as that.
+
+On #962 the fillet is a chain from the arm's 45 degree underside up the
+rib's front to its top (edge 72, or 94 and 171 on the other rib), and the
+end went from the loop over the faces at an end to a plate
+(`PerformMoreThreeCorner`), which failed: refused at every radius.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_e{72,94}_r{0.3,0.8,2}` | the chain of either outer rib: the refined shape's volume to 1e-4, no tolerance above 2e-4, BOP's check (refused) |
+| `slant_split_at_slope{,_mirror}_r{0.3,0.8,2}`, `..._chamfer_0.8` | the slant block split where its slope starts, one fillet on one edge: made before, by the loop over the faces at the end; the same volumes by the line carried over |
+
+The picture case: `issue962_e72_r0.8`.
+
+The sweeps, these three sections together. Edge: 36 refused results made
+-- #962's slots (edges 77, 87 and the Chamfer input's 69, 79 at 0.8 and
+2), its outer ribs' chains (72, 94, 171; 64, 86, 152 on the Chamfer
+input, every radius), the arc at its arm's far end at 2 (17; 23), and the
+miniatures' floor and top edges at 0.8 and 2; 16 valid results moved, one
+chain of #962 at 2 (edges 57 to 97; 54 to 89 on the Chamfer input) whose
+end at a slot's wall was the corner setback fallback's plate, tolerances
+to 0.02 and 0.48 of volume off, now the refined shape's volume at 1e-4;
+two more by 7e-6. Nothing lost: 2555 valid, 32 invalid, 1334 refused.
+Vertex: 143 refused results made, each at the refined shape's volume --
+the same edges alone at their ends and with the other edges there, on
+#962 and the miniatures; 12 valid results on one miniature moved by 1e-5;
+and one refused result invalid, below. Nothing lost: 9370 valid, 193
+invalid, 2679 refused.
+
+The one that turned invalid: the slotted block split twice, the floor's
+edge on the outer face together with the floor's short edge on the wall's
+piece at the mouth, at radius 1 (`mini_slot_bothsplit` V13:15,18). The
+walk for the first failed before (the section above); it passes now, and
+the corner of the two fillets, of opposite concavity, the one on the far
+piece of the wall, comes out a patch with tolerances of 0.18 and the outer
+face's wire crossed. The same pair on the block with its outer face whole
+is refused at the vertex, as before; the refined shape makes it. Open.
+
+Of the 50 edge results refused only in pieces, 14 are left: #962's edges
+52 and 54 (49 and 51 on the Chamfer input) at 0.8 and 2, where the wall in
+two pieces stands at a vertex of four sharp edges -- the loop over the
+faces at such an end (`PerformIntersectionAtEnd`) has no cut over two
+pieces; on the Fillet's input, edge 1, 0.05 long, at every radius and
+edge 14 at 2; on the Chamfer's, edges 6 and 21 at 2. Of the 237 vertex
+results, 93: 76 on #962's two inputs, 36 of them at those vertices of four
+sharp edges, and 17 on the miniatures, pairs of edges.
 
 ## Known broken (XFAIL)
-
-| Case | Symptom |
-|------|---------|
-| `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
-| `strip_box{,_mirror}_r2.5` | Refused. A box whose bottom is split 2 from its edge and whose end faces are split there too, the fillet wider than the bottom's piece: its line lies on the far piece, and the cut of the corner by the end face runs over that face's two pieces, crossing their split. The corner takes a cut on one face; with the end faces whole (`strip_box_plain_ends_r2.5`) it is made. #309's edge 17 from 2.01 up is the same. Refused before as well |
-| `fin_on_block_wall_top_and_upright_r1` | Invalid, a plate inside out. The fin flush with its block's side, its wall split 0.7 from the side as well: the block's top edge and the fin's upright edge at the L's inner corner, the two pieces of the side their faces (see "Two fillets on the two pieces of a wall"). At radius 1 the upright edge's fillet is wider than the wall's piece and walked, a B-spline, which is not carried on past its end to the point where the two lines meet. Made at 0.3; invalid before as well |
-
-## Pictures
-
-`models/pictures/<case>.png` shows, for each case a fix turned from failing
-to passing, three results side by side -- upstream's `TKFillet` files at the
-fork's base (`91be8c4c71`), with the files of other toolkits a fix changed
-(`UPSTREAM_EXTRA` in `pictures/cases.py`), the fork just before the fix, the
-fork now --
-each whole and zoomed on the fillet's end. `models/Fillet.md` walks
-through them. `pictures/make_pictures.sh` makes them again, on Linux or
-macOS; add a case to `pictures/cases.py`, with its stage, to picture it.
-
-## Layout
-
-```
-tests/fork/fillet/
-  README.md          this file
-  run_tests.py       the suite (FreeCADCmd script)
-  models/            captured models and shapes
-    Fillet.md        the fixes, before and after, in pictures
-    pictures/        before and after, one PNG per fixed case
-  pictures/          the tools that make them (make_pictures.sh)
-  sweep/             every edge and vertex of the issues' shapes, against a
-                     baseline (README.md there)
-```
