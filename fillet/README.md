@@ -2202,4 +2202,89 @@ edge 14 at 2; on the Chamfer's, edges 6 and 21 at 2. Of the 237 vertex
 results, 93: 76 on #962's two inputs, 36 of them at those vertices of four
 sharp edges, and 17 on the miniatures, pairs of edges.
 
+## The cut over two pieces at a vertex of four edges (realthunder/FreeCAD#962, 2026-10-12)
+
+The floors of #962's inner slots against the block's side (edges 52 and
+54). At either end of the floor's edge stands a rib's wall, in two pieces,
+the one at the floor's corner 0.4606 wide (0.6973 on edge 54) -- the
+situation of "A corner's cut over an end face in two pieces" (above), but
+the vertex has four sharp edges: the spine; the block's side going on under
+the rib's 45 degree underside, in line with the spine; the underside's edge
+with the wall; and the wall's with the floor.
+
+With the wall in one face `PerformIntersectionAtEnd` has that end: one side
+of the fillet on an edge of the vertex (the wall's with the floor), the
+other running on in a face that goes on past the vertex
+(`IntersectMoreCorner` -- the wall extended to the fillet, as at an end
+`OnSame` of three edges, and an edge from the vertex along the wall's plane
+to the fillet's line, between the cap and the block's side). In two pieces,
+from the piece's width on, the floor's side ends on the far piece's edge:
+neither side on an edge of the vertex, and the loop over the faces at the
+end, starting from an edge that is not there, found none (`Failed to find
+edge`). Refused.
+
+Fix `3ba0c94072`: the end is recognised -- neither side on an edge of the
+vertex, one of them on an edge that carries an edge of the vertex on past
+the foot of a split of the wall (`ArcPastSplit`, asked for the wall) -- and
+made by `PerformOneCorner`, which has the cut over two faces. One thing
+differs at four edges: the edge from the vertex to the fillet's line carries
+on, in the face that runs on, that face's other edge at the vertex (the
+block's side under the underside), not the edge it carries on in the wall.
+
+A miniature (the slot beside a slope, `slot_by_slope`) showed two more
+things in the cut over two faces, both there since `74c8a201e0` (fixes
+`bc752200fe` and `5635c27fba`):
+
+- a face that carries a location (a prism moved into place, fused): the
+  cut took the face's surface from its adaptor, which holds it without the
+  location, and found the split's line off the surface (`the wall's tangent
+  edge does not carry on`). Every case until now had its faces in place --
+  or was refused by that alone: #474's bar at a radius just over its side's
+  width (edges 21 and 26 at 2). Its walk leaves the side, too narrow, for
+  the face beyond where there is one, and makes the last seventh of the
+  edge; the corner there, a cut over the end face and a ramp tangent to it,
+  failed on a face's location, and with that put right the fillet of a
+  seventh came out, invalid. `PerformSetOfSurf` has the test for a surface
+  that stops short of its spine's end -- by ten widths and half its edge;
+  it takes three widths and three quarters of the edge as well (`4e97a46b0d`);
+- where the cut crosses the split's line within 1e-5 of its foot the split
+  starts at the crossing point, and its end stayed at the foot: the two
+  faces' wires were open there by that distance, a vertex of tolerance 1e-5
+  over it. Valid, and nothing for BOP's check, but on #962, 39 from the
+  origin, 3e-5 of volume off. A straight split is now carried on to the
+  point itself: tolerance 1e-7 there, the refined shape's volume to the
+  last digit.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_e52_r{0.4625,0.4635,0.465,0.8,2}`, `issue962_e54_r{0.8,2}` | the slots' floors on #962: the refined shape's volume to 1e-5, no tolerance above 2e-4, BOP's check (refused from the piece's width on) |
+| `slot_by_slope{,_mirror,_both}_r{0.7001,0.701,0.705,0.8,2,3}` | the slot beside a slope, one wall or both split 0.7 from the block's side: the cross-section over the edge's 3 to 1e-5, BOP's check (refused) |
+| `slot_by_slope{,_mirror,_both}_r{0.5,0.7}`, `slot_by_slope_one_r*` | the same narrower than the piece, and with the walls in one face: made before, coverage of the end at four edges |
+| `issue474_f001_e{21,26}_r2` | #474's bar at a radius over its side's width: refused, or a valid solid (invalid for a moment, with the cut on a located face put right and a surface over a seventh of its edge let through) |
+
+The picture cases: `slot_by_slope_r0.8`, `issue962_e52_r0.8`.
+
+The sweeps. Edge: 8 refused results made -- #962's edges 52 and 54, and
+49 and 51 on the Chamfer's input, at 0.8 and 2 -- each at the refined
+shape's volume, tolerance 1e-4. Nothing else moved: 2563 valid, 32
+invalid, 1326 refused. Vertex: the same edges alone at either end, at
+radius 1, 8 made; and 12 refused results invalid. None of the 12 is this
+corner's making: each is edge 52 or 54 (49, 51) filleted with other edges
+at one of its ends, and was refused for the edge's other end alone. Eight
+are the edge with the wall's short edge at the floor (`V36:52,80` and the
+like) -- two fillets of opposite concavity at a vertex of four edges, a
+plate; the same pairs are invalid at 0.3 already, and on the refined
+shape at 1. Four are all four edges at the floor's corner
+(`V36:51,52,74,80`, `V38:53,54,84,90`; `V34`, `V36` on the Chamfer's
+input): valid at 0.3, made on the refined shape at 1, and in pieces the
+corner's plate and the wall's two pieces come out invalid, tolerances to
+0.008. Open. 9378 valid, 205 invalid, 2659 refused.
+
+Of the 50 edge results refused only in pieces, 6 are left: on the
+Fillet's input, edge 1, 0.05 long, at every radius and edge 14 at 2; on
+the Chamfer's, edges 6 and 21 at 2. Of the 237 vertex results, 85: 81
+refused -- 64 on #962's two inputs, 24 of them at the vertices of four
+sharp edges above (pairs that leave edge 52 or 54 out, and all four edges
+at its other end), and 17 on the miniatures -- and the four made invalid.
+
 ## Known broken (XFAIL)

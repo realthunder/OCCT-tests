@@ -51,6 +51,7 @@ STAGES = {
     "s962z": ("b9a309b7fb", "74c8a201e0"),
     "s962za": ("74c8a201e0", "247fc423f1"),
     "s962zb": ("247fc423f1", "faf4f72ee0"),
+    "s962zc": ("5635c27fba", "3ba0c94072"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -239,6 +240,22 @@ def _slot_both():
     return s.generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
 
 
+def _slot_by_slope():
+    """run_tests.py's slot_by_slope: a block and on it two walls with a slot
+    between them, overhanging the block's side x=0 by a 45 deg slope; the
+    slot's wall y=4 split 0.7 from that side."""
+    V = App.Vector
+    s = Part.makeBox(10, 10, 5)
+    side = Part.Face(Part.makePolygon([V(0, 0, 5), V(10, 0, 5), V(10, 0, 10), V(-5, 0, 10),
+                                       V(0, 0, 5)]))
+    for y, d in ((0, 4), (7, 3)):
+        p = side.copy()
+        p.translate(V(0, y, 0))
+        s = s.fuse(p.extrude(V(0, d, 0)))
+    s = s.removeSplitter()
+    return s.generalFuse([Part.LineSegment(V(0.7, 4, 5), V(0.7, 4, 10)).toShape()])[0].Solids[0]
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -262,6 +279,7 @@ SHAPES = {
     "stripbox": _strip_box,
     "slotouter": _slot_outer,
     "slotboth": _slot_both,
+    "slotslope": _slot_by_slope,
 }
 
 
@@ -345,6 +363,8 @@ UVFACE = {
     "slotouter": _plane_at("x", 10, None, {"y": 2.99}),
     # the slot's wall, its piece at the mouth (y=3, x 9.3..10), which the cut grows downward
     "slotboth": _plane_at("y", 3, {"x": 9.4}),
+    # the slot's wall, its piece at the block's side (y=4, x -5..0.7), which the cut grows downward
+    "slotslope": _plane_at("y", 4, None, {"x": 0.0}),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -352,6 +372,8 @@ UVFACE_CASE = {
     "slot_split_wall_mouth_r0.8": _plane_at("y", 3, {"x": 9.4}),
     # the block's side (y=10.2), its piece past the rib's, from x=38.5 on
     "issue962_e72_r0.8": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}, {"x": 50.0}),
+    # the rib's wall (y=13.7), its piece at the floor's corner, up to x=38.96
+    "issue962_e52_r0.8": _plane_at("y", 13.7, None, {"x": 38.0}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
     "issue962_rib_top_r0.8": _plane_at("y", 20.3, {"x": 40.0}, {"x": 50.0}),
     # the B-spline face at edge 51's foot, which the corner extends
@@ -430,6 +452,8 @@ NAMES = {
                  "along y=3 below the slot's floor",
     "slotboth": "10x10x14 block, a slot down to z=5, its wall split 0.7 from the outer face "
                 "and the outer face split along y=3 below the floor",
+    "slotslope": "10x10x5 block, on it two walls and a slot between, the walls overhanging "
+                 "the side x=0 by a 45 deg slope; the slot's wall y=4 split 0.7 from the side",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -455,6 +479,7 @@ VIEW = {
     "stripbox": ((5, 5, 2), 17.0),
     "slotouter": ((5, 5, 7), 20.0),
     "slotboth": ((5, 5, 7), 20.0),
+    "slotslope": ((3, 5, 5), 20.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -480,11 +505,13 @@ UVLABEL = {
     "stripbox": ("the end face's near piece", False),
     "slotouter": ("the outer face's piece below the wall", False),
     "slotboth": ("the slot's wall, its piece at the mouth", False),
+    "slotslope": ("the wall's piece at the block's side", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "slot_split_wall_mouth_r0.8": ("the slot's wall, its piece at the mouth", False),
     "issue962_e72_r0.8": ("the block's side past the rib's piece", False),
+    "issue962_e52_r0.8": ("the rib's wall, its piece at the floor", False),
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
@@ -656,6 +683,10 @@ CASES = {
                                    1129.5880, (10, 3, 5), (1, 0.9, 0.8)),
     "issue962_e72_r0.8": ("s962zb", "p962", ((38.5, 10.2, 14), (35.470838, 10.2, 17.029162)),
                           0.8, 11580.9704, (38.8, 10.2, 31.9), (0.5, -1, 0.7)),
+    "slot_by_slope_r0.8": ("s962zc", "slotslope", ((0, 4, 5), (0, 7, 5)), 0.8, 937.0880,
+                           (0, 4, 5), (-1, 0.9, 0.8)),
+    "issue962_e52_r0.8": ("s962zc", "p962", ((38.5, 13.7, 14), (38.5, 17.1, 14)), 0.8,
+                          11583.6729, (38.5, 13.7, 14), (-1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

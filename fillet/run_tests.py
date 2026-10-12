@@ -365,6 +365,26 @@ for name, y in (("e72", 10.2), ("e94", 27.2)):
         fillet_case("issue962_%s_r%g" % (name, r), p2, und, r, "pass", vol, 2e-4, vol_tol=1e-4,
                     bop=True)
 
+# The inner slots' floors (z=14) against the block's side (x=38.5), edges 52
+# and 54: at either end stands a rib's wall, in two pieces, the one at the
+# floor's corner 0.4606 wide (0.6973 on edge 54), and the corner has four
+# edges -- the spine, the block's side going on under the rib's 45 deg
+# underside in line with it, the underside's edge with the wall and the
+# wall's with the floor. The fillet's line on the side runs on in its face
+# to the far edge, the one on the floor ends on the wall's far piece: neither
+# on an edge of the vertex, and the loop over the faces at such an end found
+# no way round: refused from the piece's width on. Volumes: the refined
+# shape's; a hair over the width (0.4625, 0.4635) the cut crosses the split's
+# line within 1e-5 of its foot.
+for name, y, radii in (("e52", 13.7, ((0.4625, 11583.983843), (0.4635, 11583.983168),
+                                    (0.465, 11583.982151), (0.8, 11583.672945),
+                                    (2.0, 11581.221334))),
+                       ("e54", 20.3, ((0.8, 11583.672945), (2.0, 11581.221334)))):
+    flo = edge_between(p2, (38.5, y, 14), (38.5, y + 3.4, 14))
+    for r, vol in radii:
+        fillet_case("issue962_%s_r%g" % (name, r), p2, flo, r, "pass", vol, 2e-4, vol_tol=1e-5,
+                    bop=True)
+
 # The same chain's other end: from the top it runs down the rib's front,
 # tangent, and its last edge -- the rib's wall (y=20.3) against the 45 deg
 # underside of its overhang -- ends at the rib's foot (38.5,20.3,14) on the
@@ -667,6 +687,44 @@ for r in (0.7001, 0.8, 2.0):
     s = slotted(wall=True, outer=True)
     fillet_case("slot_split_both_mouth_r%g" % r, s, edge_between(s, (10, 3, 5), (10, 6, 5)), r,
                 "pass", 1130 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
+
+
+def slot_by_slope(near=True, far=False, mirror=False):
+    """#962's slot floor in miniature: a 10x10x5 block and on it two walls
+    (y 0..4 and 7..10, up to z=10), a slot between them; the walls overhang
+    the block's side x=0 by a 45 deg slope from its top edge. `near` and
+    `far` split the slot's walls (y=4, y=7) by a vertical edge 0.7 from x=0."""
+    s = Part.makeBox(10, 10, 5)
+    side = Part.Face(Part.makePolygon([V(0, 0, 5), V(10, 0, 5), V(10, 0, 10), V(-5, 0, 10),
+                                       V(0, 0, 5)]))
+    for y, d in ((0, 4), (7, 3)):
+        p = side.copy()
+        p.translate(V(0, y, 0))
+        s = s.fuse(p.extrude(V(0, d, 0)))
+    s = s.removeSplitter()
+    for on, y in ((near, 4), (far, 7)):
+        if on:
+            cut = Part.LineSegment(V(0.7, y, 5), V(0.7, y, 10)).toShape()
+            s = s.generalFuse([cut])[0].Solids[0]
+    return s.mirror(V(0, 0, 0), V(0, 1, 0)) if mirror else s
+
+
+# The slot's floor against the block's side: four edges at either end, the
+# block's side going on under the slope in line with the spine. With the
+# wall in one face the end is that of four edges, one in line with the
+# fillet's (IntersectMoreCorner); in two, from the piece's 0.7 on, the line
+# on the floor ends on the far piece and neither side is on an edge of the
+# vertex: refused. The fillet takes its cross-section over the edge's 3.
+# (The walls' faces carry a location here, from the prism moved into place:
+# the cut over two faces took a face's surface without it.)
+for tag, kw in (("", {}), ("_mirror", {"mirror": True}), ("_both", {"far": True}),
+                ("_one", {"near": False})):
+    sg = -1 if kw.get("mirror") else 1
+    for r in (0.5, 0.7, 0.7001, 0.701, 0.705, 0.8, 2.0, 3.0):
+        s = slot_by_slope(**kw)
+        fillet_case("slot_by_slope%s_r%g" % (tag, r), s,
+                    edge_between(s, (0, sg * 4, 5), (0, sg * 7, 5)), r, "pass",
+                    937.5 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
 
 
 def pocket_by_split(mirror=False):
@@ -1162,6 +1220,15 @@ p474b = Part.read(os.path.join(MODELS, "issue474_fillet001_base.brep"))
 e474b = edge_between(p474b, (-9, 0, 11), (-9, 0, 16))
 for r, taken in ((0.3, 3.56632), (1.0, 40.25303)):
     fillet_case("issue474_f001_e12_r%g" % r, p474b, e474b, r, "pass", p474b.Volume - taken)
+# The bar's long edges (21 and 26) at 2, a hair over its side's 1.9922: the
+# walk leaves the side, too narrow, for the face beyond where there is one,
+# and makes the edge's last seventh (z 11..13 of -0.18..12.82). A surface
+# that stops so far short of its spine's end is no fillet of the edge:
+# refused. The corner at the made end -- its cut over the end face and the
+# ramp tangent to it -- failed on a face's location and so hid it; with the
+# cut put right, the fillet of a seventh came out, invalid.
+for i in (21, 26):
+    sound_case("issue474_f001_e%d_r2" % i, p474b, i, 2.0)
 
 # Two edges filleted together at a vertex where a split of a wall kept in
 # coplanar pieces ends (bodies without Refine): the vertex sweep's results

@@ -1042,6 +1042,42 @@ slope's cut.
 
 ![issue962_e72_r0.8](pictures/issue962_e72_r0.8.png)
 
+### The cut over two pieces at a vertex of four edges (`3ba0c94072`, realthunder/FreeCAD#962)
+
+A slot between two walls on a block, the walls overhanging the block's
+side by a slope; the slot's wall is split 0.7 from that side. The edge of
+the slot's floor on the block's side, at 0.8: the cap of "A corner's cut
+over an end face in two pieces" (above), below the floor in the wall's
+plane, over the wall's two pieces. But four edges meet at this corner, not
+three -- the block's side goes on past it under the slope, in line with
+the edge filleted -- and such corners are made another way, which had no
+cut over two pieces: with the fillet wider than the piece neither of its
+sides ends on an edge of the corner, and that way found nowhere to start.
+Refused before, and upstream; after, the fillet ends at the wall in a
+rounded cap, and the split in the wall comes down to it. The wall's piece
+at the block's side, third row, has grown by the cap at the corner where
+the slope's edge ends: a new edge runs on from that corner in the plane of
+the block's side as far as the fillet's line, and the arc from there back
+up to the split.
+
+![slot_by_slope_r0.8](pictures/slot_by_slope_r0.8.png)
+
+On #962 this is the floor of either inner slot against the block's side,
+a rib's wall at each end of it, the wall's piece at the floor 0.46 wide.
+
+![issue962_e52_r0.8](pictures/issue962_e52_r0.8.png)
+
+The miniature's walls are prisms moved into place, and their faces carry
+that move with them; the cut over two faces read such a face's surface
+where it was made, not where it lies, and gave up (`bc752200fe`). That
+failure had been hiding another: on #474's bar, at a radius a hair over
+the width of the bar's side, the fillet's surface covers only the last
+seventh of its edge, and with the corner there made the result was
+invalid. A surface that stops so far short of its edge's end is refused
+(`4e97a46b0d`). And where the cut meets the split's line within 1e-5 of the
+split's end, the split is now drawn on to the meeting point itself rather
+than left that far short of it (`5635c27fba`).
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
