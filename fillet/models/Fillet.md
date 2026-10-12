@@ -902,9 +902,9 @@ again, and a plate: valid since the fix above, and not the corner two
 fillets have.
 Before, the upright fillet ends below the corner in a slanting facet, and
 the notch has the corner at that end cut off by the plate's edge, 0.035 of
-volume missing. On the front in one face the two lines meet on the far piece and
-the fillets are cut by one another; that is done now for a split that
-passes the vertex by, as it was for one that ends at it. After, the two
+volume missing. On the front in one face the two lines meet on the far
+piece and the fillets are cut by one another; that is done now for a split
+that passes the vertex by, as it was for one that ends at it. After, the two
 fillets meet in a mitre down to where their lines cross, and the notch is
 square: the bottom fillet's line crosses the split and ends the upright
 one's.
@@ -929,6 +929,46 @@ into the concave one, and the hexagon in the outline has its corner cut by
 the patch's edge.
 
 ![issue962_hex_mouth_top_side_and_inner_r1](pictures/issue962_hex_mouth_top_side_and_inner_r1.png)
+
+### An exact fillet cut by its end face before a split (`904a86b6c0`, realthunder/FreeCAD#962)
+
+The hexagon's edge second from the split, alone, at radius 1. Its fillet
+is a cylinder whose line on the side crosses the split 0.23 before the
+corner. An exact fillet is cut where either of its lines leaves its face,
+and the rest of the edge is walked: two surfaces, the last a sliver on the
+far piece. But the pocket's next wall cuts the fillet 0.58 before the
+corner on that side -- the hexagon's corner is 120 degrees -- so of the
+sliver only a corner is left, which the curve the fillet ends in crosses.
+That end is made on one surface, failed, and the corner setback fallback
+took over. Upstream refuses the fillet.
+Before, the result is valid and not the fillet asked for: it stops short
+of the corner in a rounded cap, and the hexagon in the outline of the
+side's piece, third row, has a bump at that corner; 0.025 of volume too
+much. Where the end face cuts the line before the split, the exact fillet
+now runs on to the spine's end in one surface. After, the fillet is cut
+square by the next wall, as on the side in one face.
+
+![issue962_hex_mouth_top_side_r1](pictures/issue962_hex_mouth_top_side_r1.png)
+
+### Three fillets at a vertex where a split ends (`479cc80ecb`)
+
+The fin flush with its block's side once more, all three edges at the
+L's inner corner: the block's top edge, the fin's upright edge and the
+concave edge between fin and block. The two convex fillets run on the
+side, one on each of its pieces, and the corner of three fillets asks for
+a face in common of every two: a plate was made instead.
+Before (and upstream), the plate is red and a spike of it lies along the
+block's side; the fin's outer face, in the third row, is drawn out to a
+point below its corner.
+While the corner is made, the upright fillet's line is now shown on the
+block's piece, and the corner is the one the side in one face has: a
+torus carrying the concave fillet round between the two convex ones. Its
+line on the side runs from one fillet's line to the other's across the
+split, and is put on the two pieces, cut at the split. After, the torus
+is in place, and the fin's outer face is the rectangle with its corner
+cut by that line as far as the split.
+
+![fin_on_block_x10_all_three_r1](pictures/fin_on_block_x10_all_three_r1.png)
 
 ## Making the pictures
 

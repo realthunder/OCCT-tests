@@ -1207,6 +1207,56 @@ for tag, z, zo, zs in (("top", 24.4248711, 19.5751289, 26.8497422),
                  (38.8, 10.2, zo), (43, 10.2, zs), (38.8, 11.7, z), 5e-2,
                  no_bop=("issue962_hex_mouth_top_side_and_inner_r0.3",))
 
+# The hexagon's side edge alone at radius 1: its fillet's line crosses the
+# split 0.23 before the corner, where the pocket's next wall cuts the fillet
+# already 0.58 before it -- the hexagon's 120 degrees. The fillet was cut at
+# the split and walked on from there in a second surface, which the end's
+# curve ran over a corner of; that end failed, and the corner setback
+# fallback made it, a plate 0.025 of volume off. One exact surface now, to
+# the end, as on the side in one face.
+for tag, z, zs in (("top", 24.4248711, 26.8497422), ("bottom", 19.5751289, 17.1502578)):
+    pair_case("issue962_hex_mouth_%s_side_r1" % tag, lambda: p2.copy(),
+              [((38.8, 10.2, z), (43, 10.2, zs))], 1.0, vol_tol=1e-5, max_tol=2e-4)
+
+# All three edges at a vertex where a split ends: the slot's corner on its
+# outer face in pieces, the fin's on its block's side, the arm's on the
+# block. Two of the three fillets run on the wall in two pieces, one on each
+# -- no face in common, where the corner of three fillets asks for one of
+# every two: a plate, inside out or 0.1 to 0.7 of volume off (tolerances to
+# 2.6). The corner the wall in one face has, a torus or a filling, with its
+# line on the wall in two at the split.
+for r in (0.3, 1.0):
+    pair_case("slot_split_outer_all_three_r%g" % r, lambda: slotted(outer=True),
+              [floor, up, along], r)
+    for x in (0, 10):
+        pair_case("fin_on_block_x%d_all_three_r%g" % (x, r), fin_on_block,
+                  [((x, 3, 5), (x, 10, 5)), ((0, 3, 5), (10, 3, 5)), ((x, 3, 5), (x, 3, 14))], r)
+    # the fin's wall split as well, the upright edge's fillet walked at 1;
+    # the concave edge is in two there, its piece at the corner given
+    ref = fin_on_block().removeSplitter()
+    vol = ref.makeFillet(r, [ref.Edges[edge_between(ref, a, b) - 1] for a, b in (
+        ((10, 3, 5), (10, 10, 5)), ((0, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 3, 14)))]).Volume
+    fin = fin_on_block(wall=True)
+    fillet_case("fin_on_block_wall_all_three_r%g" % r, fin,
+                [edge_between(fin, a, b) for a, b in (
+                    ((10, 3, 5), (10, 10, 5)), ((9.3, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 3, 14)))],
+                r, "pass", vol, max_tol=1e-3, vol_tol=1e-3, bop=True)
+    for z, zo in ((-9.75, -3.75), (-3.75, -9.75)):
+        pair_case("arm_on_block_z%g_all_three_r%g" % (z, r), arm_on_block,
+                  [((38.5, 10.2, z), (38.5, 10.2, zo)), ((38.5, 10.2, z), (50, 10.2, z)),
+                   ((38.5, 10.2, z), (17.356, -9.425, z))], r, vol_tol=1e-2 if r == 1.0 else 1e-3)
+
+# #962's corner at (-15.89,5.29,-7): an edge 0.05 long and the upright edge
+# below it, on the two pieces of a wall whose split ends there. Both fillets
+# end on the circle's edge behind, 0.005 apart -- one runs on a plane, the
+# other on a cylinder. The corner of two fillets on two pieces took them
+# only at one point of that edge; a plate otherwise, inside out.
+_v2 = (-15.892693841, 5.2900645058, -7.0)
+for r in (0.3, 1.0):
+    pair_case("issue962_short_edge_and_upright_r%g" % r, lambda: p2.copy(),
+              [(_v2, (-15.8452529639, 5.2742732685, -7.0)),
+               (_v2, (-15.892693841, 5.2900645058, -9.75))], r)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

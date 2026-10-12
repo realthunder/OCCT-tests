@@ -9,8 +9,11 @@
 # One line per case: T <shape> <case> split:<status> ref:<status>, a status
 # being ok:<volume>, ok(bop):<volume> (valid, but Part's check(True) reports
 # something), BAD:<volume> or EXC. The refined shape's edges are found by the
-# middles of the case's; "ref:noedge" when one is gone -- an edge that was a
-# split itself. A fresh copy of the input for each fillet.
+# middles of the case's. One that is gone was a split itself -- the builder
+# leaves it out of the fillet, and the refined shape is filleted on the
+# edges it has, "(n edges)" after its status ("(n edges, split k)" when
+# splits were among the case's); "ref:noedge" when none is left. A fresh
+# copy of the input for each fillet.
 import os, sys, Part, FreeCAD as App
 def w(*a): os.write(1,(" ".join(str(x) for x in a)+"\n").encode())
 HERE=os.path.dirname(os.path.abspath(__file__))
@@ -37,14 +40,15 @@ for c in cases:
     try: out.append("split:"+stat(s.makeFillet(r,[s.Edges[i-1] for i in eis])))
     except Exception: out.append("split:EXC")
     ref=Part.read(paths[name]).removeSplitter()
-    red=[]; note=""
+    red=[]; gone=0
     for m in mids:
         c2=[k for k,x in enumerate(ref.Edges) if x.distToShape(Part.Vertex(m))[0]<1e-6]
-        if not c2: note="noedge"; break
+        if not c2: gone+=1; continue
         if c2[0] not in red: red.append(c2[0])
-    if note: out.append("ref:"+note)
+    if not red: out.append("ref:noedge")
     else:
-        try: out.append("ref:"+stat(ref.makeFillet(r,[ref.Edges[k] for k in red]))+("" if len(red)==len(eis) else "(%d edges)"%len(red)))
-        except Exception: out.append("ref:EXC")
+        note="" if len(red)==len(eis) else "(%d edges%s)"%(len(red),", split %d"%gone if gone else "")
+        try: out.append("ref:"+stat(ref.makeFillet(r,[ref.Edges[k] for k in red]))+note)
+        except Exception: out.append("ref:EXC"+note)
     w("T",name,c," ".join(out))
 w("DONE")

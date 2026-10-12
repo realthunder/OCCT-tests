@@ -46,6 +46,8 @@ STAGES = {
     "s962u": ("fbff94bd8b", "d62136427b"),
     "s962v": ("d62136427b", "6593a88daa"),
     "s962w": ("6593a88daa", "3f7ddd4bcc"),
+    "s962x": ("3f7ddd4bcc", "904a86b6c0"),
+    "s962y": ("904a86b6c0", "479cc80ecb"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -373,6 +375,7 @@ UVFACE_CASE = {
     "issue962_hex_mouth_top_all_three_r1": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
     # the side's piece the pocket is in (x from 38.5, z -3.75..32.25)
     "issue962_hex_mouth_top_side_and_inner_r1": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}),
+    "issue962_hex_mouth_top_side_r1": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}),
     # the first edge's fillet, a cylinder along (-0.242, 0.970, 0), which the second cuts
     "arm_on_block_far_top_edges_r1": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
                                       and abs(abs(f.Surface.Axis.y) - 0.970) < 0.01),
@@ -474,6 +477,7 @@ UVLABEL_CASE = {
     "issue962_hex_mouth_top_mouth_and_side_r0.3": ("the side's piece beside the pocket's", False),
     "issue962_hex_mouth_top_all_three_r1": ("the side's piece beside the pocket's", False),
     "issue962_hex_mouth_top_side_and_inner_r1": ("the side's piece the pocket is in", False),
+    "issue962_hex_mouth_top_side_r1": ("the side's piece the pocket is in", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -615,6 +619,12 @@ CASES = {
         "s962w", "p962", [_HEXV + ((43, 10.2, 26.8497422),),
                           _HEXV + ((38.8, 11.7, 24.4248711),)], 1.0, 11583.2438,
         (38.8, 10.2, 24.42), (-0.3, -1, 0.25)),
+    "issue962_hex_mouth_top_side_r1": (
+        "s962x", "p962", _HEXV + ((43, 10.2, 26.8497422),), 1.0, 11583.1545,
+        (38.8, 10.2, 24.42), (-0.3, -1, 0.25)),
+    "fin_on_block_x10_all_three_r1": (
+        "s962y", "fin", [((10, 3, 5), (10, 10, 5)), ((0, 3, 5), (10, 3, 5)),
+                         ((10, 3, 5), (10, 3, 14))], 1.0, 768.7292, (10, 3, 5), (1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -645,6 +655,8 @@ EDGES = {
                                                 "bottom edge",
     "issue962_hex_mouth_top_side_and_inner_r1": "the mouth's second edge from the split and "
                                                 "the pocket's inner edge, at the top corner",
+    "fin_on_block_x10_all_three_r1": "the block's top edge, the fin's upright edge and the "
+                                     "concave edge between fin and block, at (10,3,5)",
 }
 
 
