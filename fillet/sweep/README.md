@@ -43,8 +43,8 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `726d9533c6`, FreeCAD OcctFix `493032cbaf`,
-2026-10-12: edge 2563 ok, 32 BAD, 1326 EXC; vertex 9386 ok, 201 BAD, 2655
+`baseline/` is OCCT LinkVibe-801 `f446ee4591`, FreeCAD OcctFix `493032cbaf`,
+2026-10-12: edge 2563 ok, 32 BAD, 1326 EXC; vertex 9411 ok, 201 BAD, 2630
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
@@ -55,9 +55,10 @@ vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
 9118 / 290 / 2834), `6c4e2bc29f` (edge 2519 / 32 / 1370, vertex 9190 /
 221 / 2831), `3f7ddd4bcc` (edge the same, vertex 9204 / 209 / 2829),
 `97f346ff4a` (edge 2519 / 32 / 1370, vertex 9227 / 192 / 2823),
-`faf4f72ee0` (edge 2555 / 32 / 1334, vertex 9370 / 193 / 2679) and
-`3ba0c94072` (edge 2563 / 32 / 1326, vertex 9378 / 205 / 2659), are in
-this file's history.
+`faf4f72ee0` (edge 2555 / 32 / 1334, vertex 9370 / 193 / 2679),
+`3ba0c94072` (edge 2563 / 32 / 1326, vertex 9378 / 205 / 2659) and
+`726d9533c6` (edge the same, vertex 9386 / 201 / 2655), are in this
+file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -107,14 +108,12 @@ miniatures. 36 of the 50 are made at `faf4f72ee0` and 8 more at
 
 Vertex, 2823: 2248 refused there too (24 of them with a split among their
 edges), 248 `noedge`, 90 invalid there, and 237 refused only in pieces.
-159 of the 237 are made; 77 are left -- 60 on #962's two inputs, 20 of
-them pairs at the floors' corners of four sharp edges (V36 to V39; V34 to
-V37 on the Chamfer's input), and 17 pairs on the miniatures -- and one is
-made invalid: `mini_slot_bothsplit` V13:15,18 at 1. All four edges at a
-floor's corner at 1, invalid at `3ba0c94072`, are made at `726d9533c6`.
-Eight of the refused turned invalid at `3ba0c94072`, pairs that are invalid
-on the refined shape as well (V36:52,80 and the like): 201 invalid results
-in all (../README.md).
+184 of the 237 are made; 52 are left, and one is made invalid:
+`mini_slot_bothsplit` V13:15,18 at 1. All four edges at a floor's corner
+at 1, invalid at `3ba0c94072`, are made at `726d9533c6`, and 25 pairs at
+`f446ee4591`. Eight of the refused turned invalid at `3ba0c94072`, pairs
+that are invalid on the refined shape as well (V36:52,80 and the like):
+201 invalid results in all (../README.md).
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".

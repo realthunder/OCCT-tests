@@ -727,26 +727,37 @@ for tag, kw in (("", {}), ("_mirror", {"mirror": True}), ("_both", {"far": True}
                     937.5 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
 
 
-def edges_at(shape, point):
-    """The 1-based indices of the edges of `shape` with an end at `point`."""
-    return [i for i, e in enumerate(shape.Edges, 1)
-            if any((v.Point - V(*point)).Length < 1e-6 for v in e.Vertexes)]
+def edges_at(shape, point, along=None):
+    """The 1-based indices of the edges of `shape` with an end at `point`;
+    with `along`, those leaving it in one of these directions."""
+    found = []
+    for i, e in enumerate(shape.Edges, 1):
+        ends = [v.Point for v in e.Vertexes]
+        if len(ends) != 2 or not any((q - V(*point)).Length < 1e-6 for q in ends):
+            continue
+        d = ends[1] - ends[0] if (ends[0] - V(*point)).Length < 1e-6 else ends[0] - ends[1]
+        d.normalize()
+        if along is None or any((d - V(*a)).Length < 1e-3 for a in along):
+            found.append(i)
+    return found
 
 
-def corner_case(name, shape, point, radius, vol_tol, max_tol):
-    """Every edge at `point` filleted together: a valid solid of the volume
-    the same corner has on the shape refined (removeSplitter), within
-    vol_tol -- a plate either way, not the same one --, no tolerance above
-    max_tol, nothing for BOP's argument check to report."""
+def corner_case(name, shape, point, radius, vol_tol, max_tol, along=None, bop=True):
+    """Every edge at `point` (or those `along` the given directions)
+    filleted together: a valid solid of the volume the same corner has on
+    the shape refined (removeSplitter), within vol_tol -- a plate either
+    way, not the same one --, no tolerance above max_tol, nothing for BOP's
+    argument check to report (bop)."""
     try:
         ref = shape.removeSplitter()
-        vol = ref.makeFillet(radius, [ref.Edges[i - 1] for i in edges_at(ref, point)]).Volume
+        vol = ref.makeFillet(radius,
+                             [ref.Edges[i - 1] for i in edges_at(ref, point, along)]).Volume
     except Exception as e:
         report(name, False, False,
                "EXCEPTION on the refined shape: " + str(e).strip().splitlines()[-1])
         return
-    fillet_case(name, shape, edges_at(shape, point), radius, "pass", vol, max_tol=max_tol,
-                vol_tol=vol_tol, bop=True)
+    fillet_case(name, shape, edges_at(shape, point, along), radius, "pass", vol,
+                max_tol=max_tol, vol_tol=vol_tol, bop=bop)
 
 
 # All four edges at the slot's corner, (0,4,5). The floor's fillet along the
@@ -763,6 +774,29 @@ for r in (0.3, 0.8, 1.0, 1.5):
 # #962's slot floors' corners, the wall's piece 0.4606 and 0.6973 long.
 for y in (13.7, 17.1, 20.3, 23.7):
     corner_case("issue962_floor_corner_y%g_all_four_r1" % y, p2, (38.5, y, 14), 1.0, 0.1, 0.01)
+
+# Some of the four: the floor's edge along the wall with the block's side's
+# under the slope, and those two with the slope's. The corner of two fillets
+# apart round the vertex fails here whole or in pieces (a curve between
+# them held to an edge's pcurve past its end), and is made set back, each
+# fillet cut a radius from the vertex -- but not in pieces: the floor's
+# fillet is a chain whose first edge, the wall's piece, is shorter than the
+# setback, and the distance was measured along that edge alone (the setback
+# "runs past the stripe"); and a result made was thrown away as one without
+# its fillets, the short edge's midpoint being under the corner's patch
+# where a fillet would have moved the surface away from it.
+# At 0.8 the patch's edge on the wall is in two, 0.1 of it past the split,
+# and the patch comes out loose, 0.014 on all its edges (4e-4 at 1): valid,
+# but a self-intersection for BOP's check, from 0.75 to 0.9 and at 1.2. Open.
+_floor, _inline, _slope = (1, 0, 0), (0, -1, 0), (-0.7071068, 0, 0.7071068)
+for tag, along, radii in (("floor_inline", (_floor, _inline), (0.8, 1.0)),
+                          ("floor_inline_slope", (_floor, _inline, _slope), (1.0,))):
+    for r in radii:
+        corner_case("slot_by_slope_%s_r%g" % (tag, r), slot_by_slope(), (0, 4, 5), r, 0.15, 0.03,
+                    along=along, bop=r != 0.8)
+for y, inl in ((13.7, _inline), (17.1, (0, 1, 0))):
+    corner_case("issue962_floor_corner_y%g_floor_inline_r1" % y, p2, (38.5, y, 14), 1.0, 0.15,
+                0.03, along=(_floor, inl))
 
 
 def pocket_by_split(mirror=False):

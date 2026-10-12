@@ -1096,6 +1096,25 @@ the corner, third row, is closed.
 
 ![slot_by_slope_all_four_r1](pictures/slot_by_slope_all_four_r1.png)
 
+### A set back corner on a fillet whose first edge is short (`543ba5a661`, `f446ee4591`, realthunder/FreeCAD#962)
+
+Two of the corner's four edges: the floor's along the wall, and the
+block's side's under the slope. Their fillets do not touch, and the
+corner between them is made by cutting each back a radius from the
+vertex and closing the opening with one patch. The cut is measured along
+the fillet's edge -- and the floor's edge, here, is the wall's piece, 0.7
+long: a radius along it was never reached, though the fillet runs on past
+it. And once it was measured along the whole fillet, the result was
+rejected by a check that every fillet asked for is there, the 0.7 piece
+being under the patch and not under a fillet.
+Refused before, and upstream; after, the two fillets end a radius from
+the corner and the patch joins them over the slope's edge and the wall.
+
+![slot_by_slope_floor_inline_r1](pictures/slot_by_slope_floor_inline_r1.png)
+
+At other radii (0.8, say) the patch comes out looser than on the body
+refined; that is open.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

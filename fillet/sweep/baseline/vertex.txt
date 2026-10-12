@@ -7485,7 +7485,7 @@ issue962_Chamfer V34:48,49@1 EXC
 issue962_Chamfer V34:48,66@0.3 ok:11697.38532:0.0024:71
 issue962_Chamfer V34:48,66@1 EXC
 issue962_Chamfer V34:48,72@0.3 ok:11698.0571:0.000135:69
-issue962_Chamfer V34:48,72@1 EXC
+issue962_Chamfer V34:48,72@1 ok:11700.17999:0.000416:68
 issue962_Chamfer V34:49,66@0.3 BAD:11683.09869:7.1:73
 issue962_Chamfer V34:49,66@1 EXC
 issue962_Chamfer V34:49,72@0.3 BAD:11699.23573:0.262:69
@@ -7509,7 +7509,7 @@ issue962_Chamfer V35:49,73@1 BAD:11725.72522:1.71:68
 issue962_Chamfer V35:49,74@0.3 BAD:11556.71585:7.39:74
 issue962_Chamfer V35:49,74@1 EXC
 issue962_Chamfer V35:50,73@0.3 ok:11698.05652:0.000136:69
-issue962_Chamfer V35:50,73@1 EXC
+issue962_Chamfer V35:50,73@1 ok:11700.17353:0.000416:68
 issue962_Chamfer V35:50,74@0.3 ok:11697.38474:0.0024:71
 issue962_Chamfer V35:50,74@1 EXC
 issue962_Chamfer V35:73,74@0.3 ok:11697.60555:0.0315:73
@@ -7529,7 +7529,7 @@ issue962_Chamfer V36:50,51@1 EXC
 issue962_Chamfer V36:50,76@0.3 ok:11697.38475:0.0024:71
 issue962_Chamfer V36:50,76@1 EXC
 issue962_Chamfer V36:50,82@0.3 ok:11698.05652:0.000135:69
-issue962_Chamfer V36:50,82@1 EXC
+issue962_Chamfer V36:50,82@1 ok:11700.16648:0.000416:68
 issue962_Chamfer V36:51,76@0.3 BAD:11513.37758:7.39:74
 issue962_Chamfer V36:51,76@1 EXC
 issue962_Chamfer V36:51,82@0.3 BAD:11704.35859:0.978:70
@@ -7553,7 +7553,7 @@ issue962_Chamfer V37:51,83@1 BAD:11698.12579:0.454:68
 issue962_Chamfer V37:51,84@0.3 BAD:11699.41557:0.208:71
 issue962_Chamfer V37:51,84@1 EXC
 issue962_Chamfer V37:52,83@0.3 ok:11698.0571:0.000135:69
-issue962_Chamfer V37:52,83@1 EXC
+issue962_Chamfer V37:52,83@1 ok:11700.17304:0.000416:68
 issue962_Chamfer V37:52,84@0.3 ok:11697.38532:0.0024:71
 issue962_Chamfer V37:52,84@1 EXC
 issue962_Chamfer V37:83,84@0.3 ok:11697.60079:0.0315:73
@@ -7741,7 +7741,7 @@ issue962_Chamfer V48:117@1 EXC
 issue962_Chamfer V49:68,69,94@0.3 ok:11697.51892:0.0001:74
 issue962_Chamfer V49:68,69,94@1 ok:11694.36801:0.0001:71
 issue962_Chamfer V49:68,69@0.3 ok:11697.9922:0.0001:69
-issue962_Chamfer V49:68,69@1 EXC
+issue962_Chamfer V49:68,69@1 ok:11699.60113:0.00149:68
 issue962_Chamfer V49:68,94@0.3 ok:11697.58668:0.0001:73
 issue962_Chamfer V49:68,94@1 EXC
 issue962_Chamfer V49:69,94@0.3 ok:11697.29247:0.0001:70
@@ -7755,7 +7755,7 @@ issue962_Chamfer V49:94@1 ok:11692.56499:0.0001:67
 issue962_Chamfer V50:69,70,93@0.3 ok:11697.51892:0.0001:74
 issue962_Chamfer V50:69,70,93@1 ok:11694.36801:0.0001:71
 issue962_Chamfer V50:69,70@0.3 ok:11697.99298:0.0001:69
-issue962_Chamfer V50:69,70@1 EXC
+issue962_Chamfer V50:69,70@1 ok:11699.60108:0.00148:68
 issue962_Chamfer V50:69,93@0.3 ok:11697.29247:0.0001:70
 issue962_Chamfer V50:69,93@1 ok:11691.73947:0.0001:68
 issue962_Chamfer V50:70,93@0.3 ok:11697.58657:0.0001:73
@@ -7853,7 +7853,7 @@ issue962_Chamfer V56:136@1 EXC
 issue962_Chamfer V57:78,79,97@0.3 ok:11697.51892:0.0001:74
 issue962_Chamfer V57:78,79,97@1 ok:11694.36802:0.0001:71
 issue962_Chamfer V57:78,79@0.3 ok:11697.99242:0.0001:69
-issue962_Chamfer V57:78,79@1 EXC
+issue962_Chamfer V57:78,79@1 ok:11699.6096:0.00498:68
 issue962_Chamfer V57:78,97@0.3 ok:11697.58665:0.0001:73
 issue962_Chamfer V57:78,97@1 EXC
 issue962_Chamfer V57:79,97@0.3 ok:11697.29247:0.0001:70
@@ -7867,7 +7867,7 @@ issue962_Chamfer V57:97@1 ok:11692.56499:0.0001:67
 issue962_Chamfer V58:79,80,96@0.3 ok:11697.51892:0.0001:74
 issue962_Chamfer V58:79,80,96@1 ok:11694.36801:0.0001:71
 issue962_Chamfer V58:79,80@0.3 ok:11697.99276:0.0001:69
-issue962_Chamfer V58:79,80@1 EXC
+issue962_Chamfer V58:79,80@1 ok:11699.60048:0.00486:68
 issue962_Chamfer V58:79,96@0.3 ok:11697.29247:0.0001:70
 issue962_Chamfer V58:79,96@1 ok:11691.73947:0.0001:68
 issue962_Chamfer V58:80,96@0.3 ok:11697.5866:0.0001:73
@@ -8993,7 +8993,7 @@ issue962_Fillet V36:51,52@1 EXC
 issue962_Fillet V36:51,74@0.3 ok:11583.69295:0.0024:79
 issue962_Fillet V36:51,74@1 EXC
 issue962_Fillet V36:51,80@0.3 ok:11584.36472:0.000135:77
-issue962_Fillet V36:51,80@1 EXC
+issue962_Fillet V36:51,80@1 ok:11586.48761:0.000416:76
 issue962_Fillet V36:52,74@0.3 BAD:11567.06245:7.1:81
 issue962_Fillet V36:52,74@1 EXC
 issue962_Fillet V36:52,80@0.3 BAD:11585.53883:0.262:77
@@ -9017,7 +9017,7 @@ issue962_Fillet V37:52,81@1 BAD:11613.39839:1.71:76
 issue962_Fillet V37:52,82@0.3 BAD:11448.78362:7.39:82
 issue962_Fillet V37:52,82@1 EXC
 issue962_Fillet V37:53,81@0.3 ok:11584.36415:0.000136:77
-issue962_Fillet V37:53,81@1 EXC
+issue962_Fillet V37:53,81@1 ok:11586.48116:0.000416:76
 issue962_Fillet V37:53,82@0.3 ok:11583.69237:0.0024:79
 issue962_Fillet V37:53,82@1 EXC
 issue962_Fillet V37:81,82@0.3 ok:11583.91268:0.0315:81
@@ -9037,7 +9037,7 @@ issue962_Fillet V38:53,54@1 EXC
 issue962_Fillet V38:53,84@0.3 ok:11583.69237:0.0024:79
 issue962_Fillet V38:53,84@1 EXC
 issue962_Fillet V38:53,90@0.3 ok:11584.36414:0.000135:77
-issue962_Fillet V38:53,90@1 EXC
+issue962_Fillet V38:53,90@1 ok:11586.4741:0.000416:76
 issue962_Fillet V38:54,84@0.3 BAD:11406.66727:7.39:82
 issue962_Fillet V38:54,84@1 EXC
 issue962_Fillet V38:54,90@0.3 BAD:11589.90302:0.978:78
@@ -9061,7 +9061,7 @@ issue962_Fillet V39:54,91@1 BAD:11584.41057:0.454:76
 issue962_Fillet V39:54,92@0.3 BAD:11585.75146:0.208:79
 issue962_Fillet V39:54,92@1 EXC
 issue962_Fillet V39:55,91@0.3 ok:11584.36473:0.000135:77
-issue962_Fillet V39:55,91@1 EXC
+issue962_Fillet V39:55,91@1 ok:11586.48067:0.000416:76
 issue962_Fillet V39:55,92@0.3 ok:11583.69295:0.0024:79
 issue962_Fillet V39:55,92@1 EXC
 issue962_Fillet V39:91,92@0.3 ok:11583.90787:0.0315:81
@@ -9333,7 +9333,7 @@ issue962_Fillet V55:135@1 EXC
 issue962_Fillet V56:76,77,102@0.3 ok:11583.82654:0.0001:82
 issue962_Fillet V56:76,77,102@1 ok:11580.67564:0.0001:79
 issue962_Fillet V56:76,77@0.3 ok:11584.29983:0.0001:77
-issue962_Fillet V56:76,77@1 EXC
+issue962_Fillet V56:76,77@1 ok:11585.90876:0.00149:76
 issue962_Fillet V56:76,102@0.3 ok:11583.89431:0.0001:81
 issue962_Fillet V56:76,102@1 EXC
 issue962_Fillet V56:77,102@0.3 ok:11583.60009:0.0001:78
@@ -9347,7 +9347,7 @@ issue962_Fillet V56:102@1 ok:11578.87261:0.0001:75
 issue962_Fillet V57:77,78,101@0.3 ok:11583.82654:0.0001:82
 issue962_Fillet V57:77,78,101@1 ok:11580.67564:0.0001:79
 issue962_Fillet V57:77,78@0.3 ok:11584.3006:0.0001:77
-issue962_Fillet V57:77,78@1 EXC
+issue962_Fillet V57:77,78@1 ok:11585.9087:0.00148:76
 issue962_Fillet V57:77,101@0.3 ok:11583.60009:0.0001:78
 issue962_Fillet V57:77,101@1 ok:11578.0471:0.0001:76
 issue962_Fillet V57:78,101@0.3 ok:11583.89419:0.0001:81
@@ -9445,7 +9445,7 @@ issue962_Fillet V63:155@1 EXC
 issue962_Fillet V64:86,87,105@0.3 ok:11583.82654:0.0001:82
 issue962_Fillet V64:86,87,105@1 ok:11580.67564:0.0001:79
 issue962_Fillet V64:86,87@0.3 ok:11584.30004:0.0001:77
-issue962_Fillet V64:86,87@1 EXC
+issue962_Fillet V64:86,87@1 ok:11585.91725:0.00498:76
 issue962_Fillet V64:86,105@0.3 ok:11583.89428:0.0001:81
 issue962_Fillet V64:86,105@1 EXC
 issue962_Fillet V64:87,105@0.3 ok:11583.60009:0.0001:78
@@ -9459,7 +9459,7 @@ issue962_Fillet V64:105@1 ok:11578.87262:0.0001:75
 issue962_Fillet V65:87,88,104@0.3 ok:11583.82654:0.0001:82
 issue962_Fillet V65:87,88,104@1 ok:11580.67563:0.0001:79
 issue962_Fillet V65:87,88@0.3 ok:11584.30038:0.0001:77
-issue962_Fillet V65:87,88@1 EXC
+issue962_Fillet V65:87,88@1 ok:11585.90804:0.00486:76
 issue962_Fillet V65:87,104@0.3 ok:11583.60009:0.0001:78
 issue962_Fillet V65:87,104@1 ok:11578.04709:0.0001:76
 issue962_Fillet V65:88,104@0.3 ok:11583.89422:0.0001:81
@@ -10987,7 +10987,7 @@ mini_finwall V10:17@1 ok:768.9269908:1e-07:13
 mini_finwall V11:13,15,19,26@0.3 ok:769.8845689:1e-06:17
 mini_finwall V11:13,15,19,26@1 ok:768.7292:8.6e-06:15
 mini_finwall V11:13,15@0.3 ok:770.060448:0.0001:16
-mini_finwall V11:13,15@1 EXC
+mini_finwall V11:13,15@1 ok:770.6492269:0.00303:15
 mini_finwall V11:13,19@0.3 ok:769.8648008:0.0001:13
 mini_finwall V11:13,19@1 ok:768.4977871:0.0001:13
 mini_finwall V11:13,26@0.3 ok:769.6883849:6.18e-07:14
@@ -11331,7 +11331,7 @@ mini_slot_bothsplit V8:27@1 ok:1127.853982:1.5e-07:13
 mini_slot_bothsplit V9:9,11,16@0.3 ok:1129.579608:0.0001:17
 mini_slot_bothsplit V9:9,11,16@1 ok:1125.446164:0.0001:15
 mini_slot_bothsplit V9:9,11@0.3 ok:1129.751504:6.18e-07:15
-mini_slot_bothsplit V9:9,11@1 EXC
+mini_slot_bothsplit V9:9,11@1 ok:1127.233658:0.00531:15
 mini_slot_bothsplit V9:9,16@0.3 ok:1129.635619:0.0001:15
 mini_slot_bothsplit V9:9,16@1 EXC
 mini_slot_bothsplit V9:11,16@0.3 ok:1129.770819:0.0001:14
@@ -11387,7 +11387,7 @@ mini_slot_bothsplit V12:15@1 ok:1132.146018:1e-06:14
 mini_slot_bothsplit V13:15,16,18,29@0.3 ok:1129.961826:0.0001:17
 mini_slot_bothsplit V13:15,16,18,29@1 ok:1129.587608:0.0001:15
 mini_slot_bothsplit V13:15,16@0.3 ok:1130.021777:0.0001:16
-mini_slot_bothsplit V13:15,16@1 EXC
+mini_slot_bothsplit V13:15,16@1 ok:1130.232632:0.00219:14
 mini_slot_bothsplit V13:15,18@0.3 EXC
 mini_slot_bothsplit V13:15,18@1 BAD:1125.598514:0.7:15
 mini_slot_bothsplit V13:15,29@0.3 ok:1130.193142:1e-06:14
@@ -11851,7 +11851,7 @@ mini_slot_split V8:26@1 ok:1127.853982:1.5e-07:12
 mini_slot_split V9:9,11,16@0.3 ok:1129.579608:0.0001:16
 mini_slot_split V9:9,11,16@1 ok:1125.446164:0.0001:14
 mini_slot_split V9:9,11@0.3 ok:1129.751504:6.18e-07:14
-mini_slot_split V9:9,11@1 EXC
+mini_slot_split V9:9,11@1 ok:1127.233627:0.00531:14
 mini_slot_split V9:9,16@0.3 ok:1129.635619:0.0001:14
 mini_slot_split V9:9,16@1 EXC
 mini_slot_split V9:11,16@0.3 ok:1129.770819:0.0001:13
@@ -11907,9 +11907,9 @@ mini_slot_split V12:15@1 ok:1132.146018:1.5e-07:13
 mini_slot_split V13:15,16,18@0.3 ok:1129.961826:0.0001:16
 mini_slot_split V13:15,16,18@1 ok:1129.587608:0.0001:14
 mini_slot_split V13:15,16@0.3 ok:1130.021774:0.0001:15
-mini_slot_split V13:15,16@1 EXC
+mini_slot_split V13:15,16@1 ok:1130.226705:0.000504:13
 mini_slot_split V13:15,18@0.3 ok:1130.137705:0.0001:15
-mini_slot_split V13:15,18@1 EXC
+mini_slot_split V13:15,18@1 ok:1131.48486:0.00142:14
 mini_slot_split V13:16,18@0.3 ok:1129.765642:0.0001:13
 mini_slot_split V13:16,18@1 ok:1127.328908:0.0001:12
 mini_slot_split V13:15@0.3 ok:1130.193142:1.5e-07:13
@@ -12103,7 +12103,7 @@ mini_slotwall V8:26@1 ok:1127.853982:1.5e-07:12
 mini_slotwall V9:9,11,16@0.3 ok:1129.579608:0.0001:16
 mini_slotwall V9:9,11,16@1 ok:1125.446164:0.0001:14
 mini_slotwall V9:9,11@0.3 ok:1129.751504:6.18e-07:14
-mini_slotwall V9:9,11@1 EXC
+mini_slotwall V9:9,11@1 ok:1127.233627:0.00531:14
 mini_slotwall V9:9,16@0.3 ok:1129.635619:0.0001:14
 mini_slotwall V9:9,16@1 EXC
 mini_slotwall V9:11,16@0.3 ok:1129.770819:0.0001:13
@@ -12159,9 +12159,9 @@ mini_slotwall V12:15@1 ok:1132.146018:1.5e-07:13
 mini_slotwall V13:15,16,18@0.3 ok:1129.961826:0.0001:16
 mini_slotwall V13:15,16,18@1 ok:1129.587608:0.0001:14
 mini_slotwall V13:15,16@0.3 ok:1130.021774:0.0001:15
-mini_slotwall V13:15,16@1 EXC
+mini_slotwall V13:15,16@1 ok:1130.226705:0.000504:13
 mini_slotwall V13:15,18@0.3 ok:1130.137705:0.0001:15
-mini_slotwall V13:15,18@1 EXC
+mini_slotwall V13:15,18@1 ok:1131.48486:0.00142:14
 mini_slotwall V13:16,18@0.3 ok:1129.765642:0.0001:13
 mini_slotwall V13:16,18@1 ok:1127.328908:0.0001:12
 mini_slotwall V13:15@0.3 ok:1130.193142:1.5e-07:13

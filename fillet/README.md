@@ -2344,4 +2344,58 @@ has those pairs too: the floor's edge with the block's side's under the
 slope from 0.8 on, and at 1 the slope's with either and the three
 together, refused where the refined shape makes them.
 
+## A set back corner on a fillet whose first edge is short (realthunder/FreeCAD#962, 2026-10-12)
+
+Two of the four edges at the same corner, apart round the vertex: the
+floor's along the wall and the block's side's under the slope
+(`V36:51,80` on #962). The corner of two such fillets fails on the wall
+in one face as well -- the curve between them is held to an edge's pcurve
+past the edge's end -- and is made set back, each fillet cut a radius
+from the vertex and the opening closed by one patch (the corner setback
+fallback). In pieces that was refused too, twice over.
+
+The setback is a distance from the vertex along the fillet's edge: for a
+contact point, how far along the edge its nearest point is. The edge was
+the one at the vertex. The floor's fillet is a chain, its first edge the
+wall's piece at the corner; past that edge's end every contact point is as
+far as the edge is long, 0.7, and a setback of a radius was never reached
+-- on the stripe's first surface, which was dropped for it, nor on the
+next: `a corner's setback runs past the stripe`. Fix `543ba5a661`: the
+distance is taken along the spine, over its edges from the one at the
+vertex on.
+
+Made so, the result was thrown away. The fallback keeps a computation
+whose fillets are all in the result (`AreFilletsMade`): the midpoint of
+each edge filleted has to lie off the result's faces by half of what a
+fillet moves it. The chain's short edge lies whole under the corner's
+patch, which passes nearer to it than a fillet would -- at every setback
+tried a valid result, and none kept. Fix `f446ee4591`: an edge of a spine
+of several that lies whole within the setback of its end of the spine, or
+the radius there, is not looked at.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_by_slope_floor_inline_r1`, `slot_by_slope_floor_inline_slope_r1` | the miniature's two edges, and those with the slope's: a valid solid within 0.15 of the volume the refined shape's corner has, no tolerance above 0.03, BOP's check (refused) |
+| `slot_by_slope_floor_inline_r0.8` | the same at 0.8, without BOP's check: see below |
+| `issue962_floor_corner_y{13.7,17.1}_floor_inline_r1` | the pair at two of #962's floor corners (refused) |
+
+The picture case: `slot_by_slope_floor_inline_r1`.
+
+The sweeps. Edge: nothing moved. Vertex: 25 refused results made, every
+one refused only in pieces -- on #962, the pair above at the four floor
+corners and the pairs at the slots' mouths (`V56:76,77` and the like), on
+both inputs; on the miniatures, pairs on the slotted blocks and the fin's
+wall. Within 0.11 of the refined shape's volume, tolerances to 0.005.
+Nothing else moved: 9411 valid, 201 invalid, 2630 refused.
+
+Open: the miniature's pair at radii other than 1. From 0.75 to 0.9 and at
+1.2 the patch's edge on the wall is in two, a short piece of it past the
+split, and the patch comes out loose -- 0.014 on all its edges at 0.8,
+where the refined shape's has 4e-4 --: valid, and for BOP's check a
+self-intersection (at 0.75, two edges too small). And at the corner still
+refused only in pieces: the slope's edge with the block's side's (the
+setback, on the floor's short edge here sharp, `exceeds an edge`) and
+with the floor's (`Failed to find edge`), at radius 1. Of the 237 vertex
+results, 52 are left refused and one invalid.
+
 ## Known broken (XFAIL)
