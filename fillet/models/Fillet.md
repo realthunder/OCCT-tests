@@ -1179,6 +1179,42 @@ fillet that comes back to such an edge would meet it.
 
 ![issue962_rib_top_corner_r1](pictures/issue962_rib_top_corner_r1.png)
 
+### A fillet past its wall's piece at a pocket's mouth (`7c3d8b9685`, `6163e90334`, `baf699efbb`, `9d58debece`, realthunder/FreeCAD#962)
+
+The round pocket's mouth on #962: the pocket's wall is a cylinder, the
+slot's a radial plane in two pieces, 1.25 of it beside the pocket, and
+the block's top is split along a circle that starts at the same foot.
+Below a step the pocket is wider by that 1.25, and only the wall's far
+piece goes on down. The edge between pocket and slot, filleted wider than
+the near piece, was the last edge refused only in pieces. On the wall in
+one face the fillet -- a cylinder, made without a walk -- runs on down the
+wall past the edge's end, to the floor, and is cut by the step, the wider
+pocket and the floor on its way.
+
+In pieces two things were missing. The fillet was walked, started from
+the far piece, and a walk stops half the edge's length past the edge's
+end -- in the middle of the piece, with no edge to end on. The fillet is
+now made on the piece its line lies on, as on the whole wall. And the
+faces that cut a fillet's end are found along the outline of the
+fillet's face, from the vertex: of the far piece, that led down the
+split. The outline followed is the wall's, over its pieces -- at the top
+as well, where the block's top is in two pieces across an arc and the
+cut runs over both.
+
+![pocket_mouth_upright_r2](pictures/pocket_mouth_upright_r2.png)
+
+Two smaller faults showed on the way. The step's own edge, and the ring's
+0.05 long one, end where the fillet's line on the wall's piece stops on
+the split -- which lies on the wider pocket's wall, the face that cuts the
+end. The crossing is the line's last point, was found 1e-15 past it and
+counted as none. And at the pocket's other mouth, the mirror image, the
+same fillet came out invalid, a third of the volume -- on the refined
+shape too, with upstream's code: the wider pocket's circles are arcs from
+3.95 to 9.10 on their circle, the fillet cuts them near the end, and the
+point came back on the circle's first turn, at 2.81, off the edge.
+
+![issue962_pocket_edge_r2](pictures/issue962_pocket_edge_r2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

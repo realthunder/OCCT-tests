@@ -2567,4 +2567,107 @@ edge of its patch lies 3% farther from the patch than its tolerance says
 (`BOPAlgo_InvalidCurveOnSurface`); the pair at the piece's top,
 `V16:23,26`, passes it.
 
+## A fillet wider than its wall's piece at a pocket's mouth (realthunder/FreeCAD#962, 2026-10-13)
+
+The edge sweep's last results refused only in pieces, six of them, all at
+the round pocket's two mouths on #962: the pocket's wall is a cylinder,
+the slot's a radial plane kept in two pieces, 1.25 of it beside the
+pocket, and the block's top is split along a circle from the same foot.
+Below, the pocket widens by that 1.25 under a step -- on the fillet's
+input a cone and a ring 0.05 wide -- and only the wall's far piece goes
+on down. Four faults, the last of them upstream's and on the refined
+shape too.
+
+The pocket's edge with the wall, wider than the wall's piece. At the
+top the fillet ends on the far piece's edge with the top, past the foot
+of the split, and the top there is in two pieces as well. The cut over
+two pieces of the face at end (PerformOneCorner) takes a straight edge
+between them, whose line it crosses; the circle goes to the loop over
+the faces at end (PerformIntersectionAtEnd). That loop finds its faces
+along the outline of the fillet's face, from the vertex to the edge the
+fillet ends on. The fillet's face was the far piece, which the vertex
+is not on: the way led down the split, to a face that shares no edge
+with the last (`Failed to find edge`, `Failed to find element`). Fix
+`9d58debece`: the outline is the wall's, over its pieces, and the faces at
+end are those across it, as on the wall in one face; an edge between two
+of them is kept on the side of a vertex on any of the wall's pieces.
+
+At the foot the wall in one face carries the fillet's line on down
+past the edge's end to where the wall ends, 3 or 4 below, and the fillet
+with it: a fillet of a plane and a cylinder is made whole, each side as
+far as its face goes, and cut by the step, the wider pocket and the
+floor. In pieces the line is off the piece the edge is on; that fillet
+was given up and walked instead, from the far piece -- and a walk stops
+half the edge's length past its end, in the middle of the piece, where a
+patch was tried (invalid, or refused). The second attempt, with the
+spine carried on 1.5 radius, reaches the floor on the chamfer's input
+and not on the fillet's. Fix `baf699efbb`: the fillet of the two surfaces is
+made on the piece its line lies on. For one edge alone, neither end
+OnSame, and only when it holds the whole of the edge's fillet: the
+corners of an end OnSame and of a chain start from the walk's. (The
+order of the two matters: the outline without the fillet on the far
+piece lets the top through and leaves the patch at the foot, invalid.)
+
+The step's edge with the wall, 1.25 long, and the 0.05 edge of the ring
+(`OneCorner : bouchon non ecrit`). An end OnSame: the fillet's line on
+the wall's piece ends on the split, and the split lies on the face at
+end, the wider pocket's wall, which goes on up it. The line's crossing
+with that face is its very end -- found 1e-15 past it, and taken for
+none. Fix `6163e90334`: a crossing the last digits past the line's end is
+its end.
+
+The mirror edge, at the pocket's other mouth, came out invalid then --
+and does on the refined shape, at any commit: 3387 of volume for 11584.
+The fillet's cut crosses the edges between the faces at end; on a closed
+curve the crossing comes on the curve's first turn, whatever the edge's
+range, and an arc of the wider pocket's circle that runs from 3.95 to
+9.10 was cut at 2.81 for 9.10: the faces beside it lost the edge whole.
+Upstream's fault. Fix `7c3d8b9685`: the point is brought into the edge's
+range.
+
+| Case | What it covers |
+|------|----------------|
+| `pocket_mouth_plain_upright_r{1.5,2,2.5}` | a pocket and slot in miniature, no step: the pocket's edge, the wall and the top both split from one foot -- the refined shape's volume, no tolerance above 1e-5, BOP's check (refused) |
+| `pocket_mouth_upright_r{1.5,2,2.5}` | the same with the step: the fillet runs on down the far piece to the floor (refused) |
+| `pocket_mouth_wall_upright_r2` | the same, the top in one piece (refused) |
+| `pocket_mouth_turned_step_r1` | the step's edge on the block turned 108.4 deg about z: within 0.01 of the refined shape's volume (refused; made on the block as it stands, the crossing found short of the end there) |
+| `issue962_pocket_edge_r2` | #962's fillet input, edge 14 (refused) |
+| `issue962_chamfer_base_pocket_edge_r2`, `issue962_chamfer_base_step_edge_r2` | the chamfer's input, edges 21 and 6 (refused) |
+| `issue962_pocket_edge_mirror_r2`, `issue962_chamfer_base_pocket_edge_mirror_r2` | the same edges at the pocket's other mouth, edges 5 and 22 (refused) |
+| `issue962_refined_pocket_edge_mirror_r2` | edge 5 on the fillet's input refined: 11582.3197 within 2e-3 (invalid, volume 3386.73 -- upstream's) |
+| `issue474_f001_e12_r1` | #474's ramp edge, a shape with no pieces: no tolerance above 2e-4, BOP's check (0.025, the check failing) |
+
+The picture cases: `pocket_mouth_upright_r2`, `issue962_pocket_edge_r2`.
+
+The sweeps. Edge, at `9d58debece`: 8 refused results made -- the six
+that were left refused only in pieces (`Fillet` E1 at 0.3, 0.8 and 2 and
+E14 at 2, `Chamfer` E6 and E21 at 2) and the two mirror edges, refused in
+pieces and invalid on the refined shape (`Fillet` E5, `Chamfer` E22 at
+2); all eight the refined shape's volume within 1.3e-3, tolerances 2e-7.
+Three valid results moved: `Chamfer` E6 at 0.3 and 0.8, made set back
+before (0.008 and 0.16 off the refined shape's, tolerances 3e-3 and
+9e-3), are the refined shape's at 2e-7, and the sweep's box with a wall in
+two faces, edge 1 at 2, is exact (991.4159265). 2575 valid, 32 invalid,
+1314 refused. Vertex: 12 refused results made -- the twelve that were
+left: `Fillet` V1 and V2 with the 0.05 edge, `Chamfer` V2 and V6 with
+edge 6 at 1. 38 valid results moved: 30 of #474's `Fillet001`, the
+ramp's edges 12, 28, 37 and 45 at 1, alone and with a neighbour -- valid
+with a tolerance of 0.025 and failing BOP's check, 1e-4 and clean now,
+0.012 less of volume (the crossing at the line's end, on a shape with no
+pieces: the suite's `issue474_f001_e12_r1`); six of `Chamfer` V2 and V6
+with edge 6 at 0.3, as the edge alone; two of the box, 7e-6. One refused
+result is invalid now: `Fillet` V1:1,6 at 0.3, the 0.05 edge with the
+cone's edge beside it. Edge 6 alone is invalid there, in pieces and
+refined (upstream's, `sweep/README.md`); the pair was refused for edge 1,
+and is still refused on the refined shape. 9475 valid, 201 invalid, 2566
+refused.
+
+Open. Of the results refused only in pieces none is left on either
+sweep (the lists of `sweep/README.md`: 50 edge results, 237 vertex
+results). The pair `Fillet` V1:1,6 at 0.3, above, invalid for its edge
+6. The volumes of the step's edge differ from the refined shape's by up
+to 0.01 (radius 2.5 on the miniature), both valid at 1.5e-7: the cut's
+curve on the wider pocket's wall is an approximation either way, and the
+two shapes do not get the same one.
+
 ## Known broken (XFAIL)

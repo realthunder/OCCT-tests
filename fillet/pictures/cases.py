@@ -56,6 +56,7 @@ STAGES = {
     "s962ze": ("61f18d7958", "f446ee4591"),
     "s962zf": ("3fb6fdcac3", "2ff60f1efd"),
     "s962zg": ("2ff60f1efd", "2bc692bfc4"),
+    "s962zh": ("2bc692bfc4", "9d58debece"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -260,6 +261,21 @@ def _slot_by_slope():
     return s.generalFuse([Part.LineSegment(V(0.7, 4, 5), V(0.7, 4, 10)).toShape()])[0].Solids[0]
 
 
+def _pocket_mouth():
+    """run_tests.py's pocket_mouth: a block with a round pocket that widens
+    below a step and a slot out of it, the slot's wall split above the step
+    1.25 from the pocket and the block's top by a circle from the same
+    foot."""
+    V = App.Vector
+    seam = lambda c: c.rotated(V(0, 0, 0), V(0, 0, 1), 5.5)
+    s = Part.makeBox(50, 50, 10, V(-25, -25, 0))
+    s = s.cut(seam(Part.makeCylinder(15.5, 5, V(0, 0, 5))))
+    s = s.cut(seam(Part.makeCylinder(16.75, 3, V(0, 0, 2))))
+    s = s.cut(Part.makeBox(19.75, 3, 8, V(0, 0, 2))).removeSplitter()
+    return s.generalFuse([Part.LineSegment(V(16.75, 0, 5), V(16.75, 0, 10)).toShape(),
+                          seam(Part.makeCircle(16.75, V(0, 0, 10)))])[0].Solids[0]
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "slotwall": _slot_wall,
@@ -284,6 +300,7 @@ SHAPES = {
     "slotouter": _slot_outer,
     "slotboth": _slot_both,
     "slotslope": _slot_by_slope,
+    "pocketmouth": _pocket_mouth,
 }
 
 
@@ -369,9 +386,16 @@ UVFACE = {
     "slotboth": _plane_at("y", 3, {"x": 9.4}),
     # the slot's wall, its piece at the block's side (y=4, x -5..0.7), which the cut grows downward
     "slotslope": _plane_at("y", 4, None, {"x": 0.0}),
+    # the slot's wall, its piece beyond the split (x from 16.75)
+    "pocketmouth": _plane_at("y", 0, {"x": 17.0}),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the pocket's radial wall at edge 14, its piece beyond the split (r from 16.75)
+    "issue962_pocket_edge_r2": (lambda f: f.Surface.__class__.__name__ == "Plane"
+                                and abs(f.Surface.Axis.z) < 1e-6
+                                and f.BoundBox.Center.distanceToPoint(
+                                    App.Vector(-12.7, -13.3, -6.75)) < 1.0),
     # the slot's wall, its piece at the mouth, as on the block split twice
     "slot_split_wall_mouth_r0.8": _plane_at("y", 3, {"x": 9.4}),
     # the block's side (y=10.2), its piece past the rib's, from x=38.5 on
@@ -462,6 +486,9 @@ NAMES = {
                 "and the outer face split along y=3 below the floor",
     "slotslope": "10x10x5 block, on it two walls and a slot between, the walls overhanging "
                  "the side x=0 by a 45 deg slope; the slot's wall y=4 split 0.7 from the side",
+    "pocketmouth": "a block with a round pocket r15.5 that widens to r16.75 below z=5 and a "
+                   "slot out of it; the slot's wall split 1.25 from the pocket, the top by the "
+                   "circle r16.75",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -488,6 +515,7 @@ VIEW = {
     "slotouter": ((5, 5, 7), 20.0),
     "slotboth": ((5, 5, 7), 20.0),
     "slotslope": ((3, 5, 5), 20.0),
+    "pocketmouth": ((14, 0, 6), 24.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -514,9 +542,11 @@ UVLABEL = {
     "slotouter": ("the outer face's piece below the wall", False),
     "slotboth": ("the slot's wall, its piece at the mouth", False),
     "slotslope": ("the wall's piece at the block's side", False),
+    "pocketmouth": ("the slot's wall beyond the split", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue962_pocket_edge_r2": ("the slot's wall beyond the split", False),
     "slot_split_wall_mouth_r0.8": ("the slot's wall, its piece at the mouth", False),
     "issue962_e72_r0.8": ("the block's side past the rib's piece", False),
     "issue962_e52_r0.8": ("the rib's wall, its piece at the floor", False),
@@ -720,6 +750,12 @@ CASES = {
         "s962zg", "p962", [((35.5, 10.2, 32.25), (38.5, 10.2, 32.25)),
                            ((38.5, 13.7, 32.25), (38.5, 10.2, 32.25))],
         1.0, 11579.2314, (38.5, 10.2, 32.25), (0.5, -1, 0.7)),
+    "pocket_mouth_upright_r2": ("s962zh", "pocketmouth", ((15.5, 0, 5), (15.5, 0, 10)), 2.0,
+                                18485.2667, (16.2, 0, 6), (-0.6, 1, 0.8)),
+    "issue962_pocket_edge_r2": (
+        "s962zh", "p962", ((-10.68613441, -11.22748999, -5.8),
+                           (-10.68613441, -11.22748999, -3.75)), 2.0, 11582.3197,
+        (-11.3, -11.9, -6.5), (-0.3, 0.8, 0.6)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

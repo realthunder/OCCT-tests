@@ -1317,12 +1317,18 @@ except Exception as e:
 # ramp's side ends at a vertex of four sharp edges whose face beside the
 # spine runs on, tangent, into the next -- a corner of three for the
 # drafted wall's rule above. At radius 0.3 that corner is made (the result
-# tighter: tolerance 0.013 before, 1e-4 now); at radius 1 it cannot be, and
-# the fillet is computed again with the end a break point, as before.
+# tighter: tolerance 0.013 before, 1e-4 now). At radius 1 the fillet's line
+# on the face that runs on meets the face at end at its very last point:
+# found the last digit past it, the crossing was taken for none ("bouchon
+# non ecrit") and the fillet computed again with the end a break point --
+# valid, with a tolerance of 0.025, and failing BOP's check. The crossing
+# taken (6163e90334), the corner is made there too: 1e-4, the check clean,
+# 0.012 more of volume taken.
 p474b = Part.read(os.path.join(MODELS, "issue474_fillet001_base.brep"))
 e474b = edge_between(p474b, (-9, 0, 11), (-9, 0, 16))
-for r, taken in ((0.3, 3.56632), (1.0, 40.25303)):
-    fillet_case("issue474_f001_e12_r%g" % r, p474b, e474b, r, "pass", p474b.Volume - taken)
+for r, taken in ((0.3, 3.56632), (1.0, 40.26510)):
+    fillet_case("issue474_f001_e12_r%g" % r, p474b, e474b, r, "pass", p474b.Volume - taken,
+                max_tol=2e-4, vol_tol=1e-3, bop=True)
 # The bar's long edges (21 and 26) at 2, a hair over its side's 1.9922: the
 # walk leaves the side, too narrow, for the face beyond where there is one,
 # and makes the edge's last seventh (z 11..13 of -0.18..12.82). A surface
@@ -1588,6 +1594,105 @@ for r in (0.3, 1.0):
     pair_case("issue962_short_edge_and_upright_r%g" % r, lambda: p2.copy(),
               [(_v2, (-15.8452529639, 5.2742732685, -7.0)),
                (_v2, (-15.892693841, 5.2900645058, -9.75))], r)
+
+
+def pocket_mouth(undercut=True, wall=True, top=True, turn=0.0):
+    """#962's pocket mouth in miniature: a block (z 0..10) with a round
+    pocket (r=15.5) and a slot out of it (x 0..19.75, y 0..3, down to z=2),
+    the slot's wall y=0 a radial plane. With `undercut` the pocket is z
+    5..10 and widens below (r=16.75, z 2..5), else it goes down to z=2 as it
+    is. The wall is split by a vertical edge at x=16.75 (`wall`; above the
+    step, where the wall's outline already has a corner there) and the
+    block's top by the circle r=16.75 (`top`): the two splits meet on the
+    wall's top edge, 1.25 from the pocket. `turn` turns the block about z,
+    degrees."""
+    # (the cylinders' seams in the slot, cut away)
+    seam = lambda c: c.rotated(V(0, 0, 0), V(0, 0, 1), 5.5)
+    s = Part.makeBox(50, 50, 10, V(-25, -25, 0))
+    if undercut:
+        s = s.cut(seam(Part.makeCylinder(15.5, 5, V(0, 0, 5))))
+        s = s.cut(seam(Part.makeCylinder(16.75, 3, V(0, 0, 2))))
+    else:
+        s = s.cut(seam(Part.makeCylinder(15.5, 8, V(0, 0, 2))))
+    s = s.cut(Part.makeBox(19.75, 3, 8, V(0, 0, 2))).removeSplitter()
+    tools = []
+    if wall:
+        tools.append(Part.LineSegment(V(16.75, 0, 5 if undercut else 2),
+                                      V(16.75, 0, 10)).toShape())
+    if top:
+        tools.append(seam(Part.makeCircle(16.75, V(0, 0, 10))))
+    if tools:
+        s = s.generalFuse(tools)[0].Solids[0]
+    return s.rotated(V(0, 0, 0), V(0, 0, 1), turn) if turn else s
+
+
+def turned(p, turn):
+    """The point `p` turned about z as pocket_mouth(turn=...) is."""
+    c, sn = math.cos(math.radians(turn)), math.sin(math.radians(turn))
+    return (p[0] * c - p[1] * sn, p[0] * sn + p[1] * c, p[2])
+
+
+# The pocket's edge with the slot's wall, filleted wider than the wall's
+# piece (1.25): the fillet's line lies on the piece beyond, along the split.
+# At the top the face at end is in two pieces as well, split along a circle
+# from the same foot: the cut over two pieces of the face at end took a
+# straight edge between them only, and the end went to the loop over the
+# faces at end, which walked the far piece's own outline, down the split
+# ("Failed to find edge"); it walks the wall's now, over its pieces. Here,
+# without the step, the face at the wall's foot is in one piece.
+for r in (1.5, 2.0, 2.5):
+    pair_case("pocket_mouth_plain_upright_r%g" % r, lambda: pocket_mouth(undercut=False),
+              [((15.5, 0, 2), (15.5, 0, 10))], r, vol_tol=1e-4, max_tol=1e-5)
+# With the undercut the wall's near piece ends at the step, the far one goes
+# on down to the floor, and so does the fillet on the wall in one face: its
+# line on the wall ends where the wall does, 3 below the edge, and the
+# fillet is cut by the step, the wider pocket's wall and the floor. The
+# walk, started on the far piece, stopped half the edge past its end, in
+# the piece; the fillet of the two surfaces is made on the far piece now,
+# and the faces at end are found along the wall's outline over its pieces.
+for r in (1.5, 2.0, 2.5):
+    pair_case("pocket_mouth_upright_r%g" % r, pocket_mouth,
+              [((15.5, 0, 5), (15.5, 0, 10))], r, vol_tol=1e-4, max_tol=1e-5)
+pair_case("pocket_mouth_wall_upright_r2", lambda: pocket_mouth(top=False),
+          [((15.5, 0, 5), (15.5, 0, 10))], 2.0, vol_tol=1e-4, max_tol=1e-5)
+# The step's edge with the wall, 1.25 long, at an end OnSame: the fillet's
+# line on the wall's piece ends on the split, which lies on the wider
+# pocket's wall -- the face at end. The line's crossing with that face is
+# its very end, found the last digit past it on a block turned off the
+# axes, and was taken for none ("bouchon non ecrit").
+pair_case("pocket_mouth_turned_step_r1", lambda: pocket_mouth(turn=108.4),
+          [(turned((15.5, 0, 5), 108.4), turned((16.75, 0, 5), 108.4))], 1.0, vol_tol=0.01,
+          max_tol=1e-5)
+# The model's own: edge 14 of the fillet's base (the pocket's wall above a
+# cone and a ring 0.05 wide, then the wider pocket), and edges 21 and 6 of
+# the chamfer's base, the same mouth without the cone
+pair_case("issue962_pocket_edge_r2",
+          lambda: Part.read(os.path.join(MODELS, "issue962_pocket002.brep")),
+          [((-10.68613441, -11.22748999, -5.8), (-10.68613441, -11.22748999, -3.75))], 2.0,
+          vol_tol=1e-4, max_tol=1e-5)
+c2 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue962_Chamfer.brep"))
+pair_case("issue962_chamfer_base_pocket_edge_r2", lambda: c2.copy(),
+          [((-10.68613441, -11.22748999, -3.75), (-10.68613441, -11.22748999, -7.0))], 2.0,
+          vol_tol=1e-4, max_tol=1e-5)
+pair_case("issue962_chamfer_base_step_edge_r2", lambda: c2.copy(),
+          [((-14.70667191, 4.895283573, -7.0), (-15.89269384, 5.290064506, -7.0))], 2.0,
+          vol_tol=0.01, max_tol=1e-5)
+# The same edges at the pocket's other mouth, the mirror image. There the
+# fillet's cut crosses the wider pocket's circles near the end of their
+# arcs, which run from 3.95 to 9.10 on the circle: the crossing came on the
+# circle's first turn, at 2.81, off the edge, and the faces beside the
+# edge lost it -- an invalid result of a third the volume, on the refined
+# shape as well (upstream's fault).
+_m5 = ((-14.70667191, 4.895283573, -5.8), (-14.70667191, 4.895283573, -3.75))
+pair_case("issue962_pocket_edge_mirror_r2",
+          lambda: Part.read(os.path.join(MODELS, "issue962_pocket002.brep")), [_m5], 2.0,
+          vol_tol=2e-3, max_tol=1e-5)
+p2r = Part.read(os.path.join(MODELS, "issue962_pocket002.brep")).removeSplitter()
+fillet_case("issue962_refined_pocket_edge_mirror_r2", p2r, edge_between(p2r, *_m5), 2.0, "pass",
+            11582.3197, max_tol=1e-5, vol_tol=2e-3, bop=True)
+pair_case("issue962_chamfer_base_pocket_edge_mirror_r2", lambda: c2.copy(),
+          [((-14.70667191, 4.895283573, -7.0), (-14.70667191, 4.895283573, -3.75))], 2.0,
+          vol_tol=2e-3, max_tol=1e-5)
 
 counts = {}
 for _, verdict, _ in results:

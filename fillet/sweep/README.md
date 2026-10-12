@@ -43,8 +43,8 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `2bc692bfc4`, FreeCAD OcctFix `493032cbaf`,
-2026-10-13: edge 2567 ok, 32 BAD, 1322 EXC; vertex 9463 ok, 200 BAD, 2579
+`baseline/` is OCCT LinkVibe-801 `9d58debece`, FreeCAD OcctFix `493032cbaf`,
+2026-10-13: edge 2575 ok, 32 BAD, 1314 EXC; vertex 9475 ok, 201 BAD, 2566
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
@@ -58,8 +58,9 @@ vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
 `faf4f72ee0` (edge 2555 / 32 / 1334, vertex 9370 / 193 / 2679),
 `3ba0c94072` (edge 2563 / 32 / 1326, vertex 9378 / 205 / 2659),
 `726d9533c6` (edge the same, vertex 9386 / 201 / 2655), `f446ee4591`
-(edge the same, vertex 9411 / 201 / 2630) and `2ff60f1efd` (edge the
-same, vertex 9435 / 200 / 2607), are in this file's history.
+(edge the same, vertex 9411 / 201 / 2630), `2ff60f1efd` (edge the
+same, vertex 9435 / 200 / 2607) and `2bc692bfc4` (edge 2567 / 32 / 1322,
+vertex 9463 / 200 / 2579), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -99,26 +100,27 @@ The refused results the same way (`grep " EXC"` for the list), at
 `97f346ff4a`. Edge, 1370: 1045 refused on the refined shape as well, 261
 on an edge that is a split itself (`noedge`), 14 invalid there, and 50
 refused only in pieces -- 26 edges, on #962's two inputs and the
-miniatures. 36 of the 50 are made at `faf4f72ee0` and 8 more at
-`3ba0c94072` (../README.md, 2026-10-12); the 6 left:
-
-| Shape | Edges (cases) |
-|-------|---------------|
-| `issue962_Fillet` | E1, the edge 0.05 long (3); E14 at 2 |
-| `issue962_Chamfer` | E6, E21 at 2 |
+miniatures. 36 of the 50 are made at `faf4f72ee0`, 8 more at
+`3ba0c94072` (../README.md, 2026-10-12) and the last 6 at `9d58debece`
+(2026-10-13): #962's `Fillet` E1, the edge 0.05 long (3), and E14 at 2,
+`Chamfer` E6 and E21 at 2. Two of the 14 invalid on the refined shape,
+`Fillet` E5 and `Chamfer` E22 at 2, are made there and in pieces
+(`7c3d8b9685`, upstream's fault).
 
 Vertex, 2823: 2248 refused there too (24 of them with a split among their
 edges), 248 `noedge`, 90 invalid there, and 237 refused only in pieces.
-225 of the 237 are made at `2bc692bfc4`; the 12 left are on #962's two
-inputs -- `Fillet` V1 and V2, its edge 0.05 long alone and with a
-neighbour (6), and `Chamfer` V2 and V6, edge 6 at a distance of 1, longer
-than the edge (6). All four edges at a floor's corner at 1, invalid at
+225 of the 237 are made at `2bc692bfc4` and the last 12 at `9d58debece`,
+on #962's two inputs -- `Fillet` V1 and V2, its edge 0.05 long alone and
+with a neighbour (6), and `Chamfer` V2 and V6, edge 6 at a distance of 1
+(6). All four edges at a floor's corner at 1, invalid at
 `3ba0c94072`, are made at `726d9533c6`, 25 pairs at `f446ee4591`, 24 at
 `2ff60f1efd` (one of them, `mini_slot_bothsplit` V13:15,18 at 1, was
 made invalid in between) and 23 at `2bc692bfc4`. Eight of the refused
 turned invalid at `3ba0c94072`, pairs that are invalid on the refined
 shape as well (V36:52,80 and the like): 200 invalid results in all
-(../README.md).
+(../README.md), and 201 at `9d58debece` -- `Fillet` V1:1,6 at 0.3, refused
+while its edge 1 was, invalid for its edge 6, which is invalid alone, on
+the refined shape too.
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".
