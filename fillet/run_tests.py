@@ -727,6 +727,44 @@ for tag, kw in (("", {}), ("_mirror", {"mirror": True}), ("_both", {"far": True}
                     937.5 - (1 - math.pi / 4) * r * r * 3, 2e-4, vol_tol=1e-5, bop=True)
 
 
+def edges_at(shape, point):
+    """The 1-based indices of the edges of `shape` with an end at `point`."""
+    return [i for i, e in enumerate(shape.Edges, 1)
+            if any((v.Point - V(*point)).Length < 1e-6 for v in e.Vertexes)]
+
+
+def corner_case(name, shape, point, radius, vol_tol, max_tol):
+    """Every edge at `point` filleted together: a valid solid of the volume
+    the same corner has on the shape refined (removeSplitter), within
+    vol_tol -- a plate either way, not the same one --, no tolerance above
+    max_tol, nothing for BOP's argument check to report."""
+    try:
+        ref = shape.removeSplitter()
+        vol = ref.makeFillet(radius, [ref.Edges[i - 1] for i in edges_at(ref, point)]).Volume
+    except Exception as e:
+        report(name, False, False,
+               "EXCEPTION on the refined shape: " + str(e).strip().splitlines()[-1])
+        return
+    fillet_case(name, shape, edges_at(shape, point), radius, "pass", vol, max_tol=max_tol,
+                vol_tol=vol_tol, bop=True)
+
+
+# All four edges at the slot's corner, (0,4,5). The floor's fillet along the
+# wall is a chain of two edges, the wall's piece at the corner 0.7 long: from
+# 0.7 on it meets the fillet of the slot's edge on the block's side past the
+# piece, on its second surface, and the first is dropped. It had met the
+# slope's fillet on that first surface -- the meeting kept by the surface's
+# index and its line's parameter, which now were the second surface's and a
+# point 0.7 further on. The plate was left without its edge on the wall, the
+# wall's two pieces open: invalid, 16 of volume off. The two no longer meet,
+# and the plate's edge between them crosses the split.
+for r in (0.3, 0.8, 1.0, 1.5):
+    corner_case("slot_by_slope_all_four_r%g" % r, slot_by_slope(), (0, 4, 5), r, 0.1, 0.01)
+# #962's slot floors' corners, the wall's piece 0.4606 and 0.6973 long.
+for y in (13.7, 17.1, 20.3, 23.7):
+    corner_case("issue962_floor_corner_y%g_all_four_r1" % y, p2, (38.5, y, 14), 1.0, 0.1, 0.01)
+
+
 def pocket_by_split(mirror=False):
     """#962's pocket mouth in miniature: a 10x6x10 box whose front (y=0) is
     split by a vertical edge at x=5, and in the front a pocket (x 5.3..8,

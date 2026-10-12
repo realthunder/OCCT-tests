@@ -1078,6 +1078,24 @@ invalid. A surface that stops so far short of its edge's end is refused
 split's end, the split is now drawn on to the meeting point itself rather
 than left that far short of it (`5635c27fba`).
 
+### A meeting kept on a surface that was removed (`726d9533c6`, realthunder/FreeCAD#962)
+
+The same corner with all four of its edges filleted, at radius 1. Four
+fillets meet there, and the corner between them is one patch. The
+floor's fillet along the wall is in two parts, one for each piece of the
+wall; the part on the piece at the corner, 0.7 long, lies wholly under the
+patch and is dropped. But the place where that fillet meets the slope's
+had been found on the dropped part and was kept as a position along it --
+which, read along the part that remained, is a point 0.7 further down the
+wall. The patch was given two corners that far apart and nothing between
+them.
+Before, and upstream: the patch and both pieces of the wall are open (in
+red), the body no solid. After: the patch's edge on the wall runs from the
+slope's fillet across the split to the floor's, and the wall's piece at
+the corner, third row, is closed.
+
+![slot_by_slope_all_four_r1](pictures/slot_by_slope_all_four_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

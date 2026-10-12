@@ -52,6 +52,7 @@ STAGES = {
     "s962za": ("74c8a201e0", "247fc423f1"),
     "s962zb": ("247fc423f1", "faf4f72ee0"),
     "s962zc": ("5635c27fba", "3ba0c94072"),
+    "s962zd": ("ce0ac05245", "726d9533c6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -687,6 +688,10 @@ CASES = {
                            (0, 4, 5), (-1, 0.9, 0.8)),
     "issue962_e52_r0.8": ("s962zc", "p962", ((38.5, 13.7, 14), (38.5, 17.1, 14)), 0.8,
                           11583.6729, (38.5, 13.7, 14), (-1, 0.9, 0.8)),
+    "slot_by_slope_all_four_r1": (
+        "s962zd", "slotslope", [((0, 0, 5), (0, 4, 5)), ((0, 4, 5), (0, 7, 5)),
+                                ((0, 4, 5), (-5, 4, 10)), ((0, 4, 5), (0.7, 4, 5))],
+        1.0, 937.5870, (0, 4, 5), (-1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -697,6 +702,7 @@ ZOOM = {
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "slot_by_slope_all_four_r1": "the four at the slot's corner, (0, 4, 5)",
     "arm_on_block_foot_r0.8": "the two at the foot, x=38.5, y=27.2 and y=10.2",
     "issue962_fillet_r0.8": "the Fillet's twelve; zoomed on edge 49's foot",
     "issue876_corner4_r1": "the four at the corner (17,16.75,3); zoomed on it",

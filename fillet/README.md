@@ -2287,4 +2287,61 @@ refused -- 64 on #962's two inputs, 24 of them at the vertices of four
 sharp edges above (pairs that leave edge 52 or 54 out, and all four edges
 at its other end), and 17 on the miniatures -- and the four made invalid.
 
+## A meeting kept on a surface that was removed (realthunder/FreeCAD#962, 2026-10-12)
+
+All four edges at a slot floor's corner on #962, at radius 1: the four
+results the section above left invalid, and the two it left refused at the
+floors' other corners. The slot beside a slope has the same corner in
+miniature, (0,4,5).
+
+`PerformMoreThreeCorner` first finds where each fillet at the vertex meets
+the next (`ChFi3d_SearchFD`): on which of the stripe's surfaces, and at what
+parameter of its line there. A stripe that meets a neighbour farther along
+than its last surface has the surfaces between removed -- they are under
+the corner. The fillet of the floor's edge along the wall is a chain of two
+edges here, the wall's piece at the corner 0.4606 long (0.6973; 0.7 on the
+miniature), a surface for each. It meets the slope's fillet on the first,
+0.41 from the vertex; and it meets the fillet of the slot's edge on the
+block's side on the second, a radius from the vertex, past the piece. The
+first surface is removed for that. The meeting with the slope's fillet
+stayed as it was found -- the stripe's end surface, parameter 0.41 -- and
+from then on meant the second surface's line, which starts where the piece
+ends: a point the piece's length further along the wall. The plate took its
+corners from the two stripes' ends, that far apart, with no edge between
+them, and the wall's two pieces were left open: an open shell, 16 of the
+miniature's volume missing. Upstream does the same.
+
+Fix `726d9533c6`: when surfaces are removed from a stripe, its meeting with
+the neighbour before is looked at again -- the point it was at, against
+the stripe's new end surface at the same parameter. Where the two differ
+the stripes no longer meet, and the corner's edge between them is one more
+of the plate's, as between any two fillets that do not meet; here it
+crosses the split ("A plate's edge across an edge that passes the vertex
+by", above). The faces such an edge crosses were listed where surfaces
+were removed -- by every removal at the vertex, whichever stripes it was
+between: four faces here, from two removals, for an edge over two. Two
+faces that share an edge are now the whole way.
+
+| Case | What it covers |
+|------|----------------|
+| `slot_by_slope_all_four_r{0.8,1,1.5}` | the miniature's corner, its four edges: a valid solid within 0.1 of the volume the refined shape's plate gives, no tolerance above 0.01, BOP's check (invalid, an open shell) |
+| `slot_by_slope_all_four_r0.3` | the same narrower than the piece: made before |
+| `issue962_floor_corner_y{13.7,17.1,20.3,23.7}_all_four_r1` | #962's four floor corners: the same (invalid at 13.7 and 20.3, refused at 17.1 and 23.7) |
+
+The picture case: `slot_by_slope_all_four_r1`.
+
+The sweeps. Edge: nothing moved. Vertex: the four invalid results valid,
+and four refused ones made (`V37:52,53,81,82`, `V39:54,55,91,92`; `V35`,
+`V37` on the Chamfer's input) -- tolerances of 0.006 and 0.007, within 0.07
+of the refined shape's volume. Nothing else moved: 9386 valid, 201
+invalid, 2655 refused.
+
+Of the 237 vertex results refused only in pieces, 77 are left refused --
+60 on #962's two inputs, 20 of them pairs at the floors' corners that
+leave the slot's edge on the block's side out, and 17 on the miniatures --
+and one invalid, `mini_slot_bothsplit` V13:15,18. The miniature's corner
+has those pairs too: the floor's edge with the block's side's under the
+slope from 0.8 on, and at 1 the slope's with either and the three
+together, refused where the refined shape makes them.
+
 ## Known broken (XFAIL)
