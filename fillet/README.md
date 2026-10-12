@@ -1766,6 +1766,182 @@ split of the block's side; 2 at #962's corner on a circle's edge; 2 at
 a vertex of four sharp edges on #309; and the fin's wall split, at radius
 1 (Known broken).
 
+## A fillet's line along a split, at a corner of several fillets (realthunder/FreeCAD#962, 2026-10-12)
+
+The 12 at the pocket's mouth, in four parts; this one is the six at radius
+0.3. The mouth's edge at x=38.8 is 0.3 from the split of the block's side
+at x=38.5, and at 0.3 its fillet's line lies on the far piece, along the
+split: the strip between edge and split goes under the fillet ("A fillet
+as wide as the piece of a split wall", above). At either end of that edge
+are the mouth's next edge and the pocket's inner edge. With any of their
+fillets the corner is made on the faces at the vertex, and the far piece
+is not one of them:
+
+- with the mouth's next edge, whose fillet runs on the near piece, the
+  two fillets had no face in common and the corner was a plate, inside
+  out (invalid, 119 of volume short);
+- with the inner edge, of opposite concavity, and with both, the plate's
+  edge on the wall ended on the split and neither piece was closed along
+  it.
+
+Fix `fbff94bd8b`: while a corner of two fillets or more is made, such a
+line is shown on the spine's piece -- the face the near piece, the line's
+curve on it the projected one, its transition turned where the two pieces
+lie the other way up on their surfaces (`LineOnSplit`, in
+`PerformFilletOnVertex`). After the corner it is put back on its own
+piece, and the split is cut where the line now ends, its part under the
+line gone. The corner is then the one the wall in one face has: the two
+mouth fillets cut by one another (`PerformTwoCornerbyInter`), the three
+fillets' corner (`PerformThreeCorner`).
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_{top,bottom}_mouth_and_side_r0.3` | the mouth's edge beside the split and the next: the refined shape's volume to 1e-7, tolerance 1e-4, BOP's check (invalid before) |
+| `issue962_hex_mouth_{top,bottom}_all_three_r0.3` | with the inner edge as well (invalid before) |
+| `issue962_hex_mouth_{top,bottom}_mouth_and_inner_r0.3` | the mouth's edge and the inner edge (invalid before; see the corner without a pivot, below) |
+| `pocket_by_split{,_mirror}_corner_{mouth_and_side,mouth_and_inner,all_three}_r0.3` | the same on the miniature, a rectangular pocket 0.3 from the split of a box's front, as built and mirrored (invalid, the pair with the inner edge refused) |
+
+The picture case: `issue962_hex_mouth_top_mouth_and_side_r0.3`.
+
+## Two fillets on two pieces of a wall, the split beside the vertex (realthunder/FreeCAD#962, 2026-10-12)
+
+The mouth's two edges at radius 1. The fillet of the edge beside the split
+has its line 0.7 inside the far piece; the fillet of the next runs on the
+near piece, and its line comes to the split. On the hexagon it crosses
+the split 0.23 before the vertex and ends in two surfaces, the last on the
+far piece: the two fillets have that piece in common, a face the vertex
+is not on. `ChFi3d_IsInFront` asked for the vertex's parameters on the
+common face (to choose among several meeting points) with
+`BRep_Tool::Parameters`, which throws there -- refused. On the rectangular
+miniature the line reaches the split 0.3 past the vertex: no face in
+common, a plate, invalid.
+
+Fix `6593a88daa`. The vertex is projected on the common face's surface where
+the face does not hold it. And "Two fillets on the two pieces of a wall"
+(above), made for a split that ends at the vertex, takes one that passes
+it by: the split is looked for among the two faces' edges; neither line
+being on the split, the line carried over it is the one whose meeting
+point with the other lies in the other's piece, and where it crosses the
+split is computed; the pieces may lie the other way up on their surfaces;
+and the other fillet's line may be a walked one, a B-spline, straight all
+the same.
+
+`PerformTwoCorner` also searches the surfaces before the last for a common
+face, and ran into the same exception there. That search is kept from a
+face off the vertex by a refusal of its own: the corner it makes of such a
+surface is a plate from where the surface ends, valid and 0.19 of volume
+off on the slot's miniature (its floor edge and outer wall edge at 1).
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_{top,bottom}_mouth_and_side_r1` | the hexagon's two edges: the refined shape's volume to 1e-5, tolerance 1e-4, BOP's check (refused before) |
+| `pocket_by_split{,_mirror}_corner_mouth_and_side_r1` | the rectangle's: the two cylinders cut by one another, the refined shape's volume to 1e-6 (invalid before, 1.2 of volume short) |
+
+The picture case: `pocket_by_split_corner_mouth_and_side_r1`.
+
+## Two fillets of opposite concavity without a pivot (realthunder/FreeCAD#962, 2026-10-12)
+
+Either of the mouth's edges with the pocket's inner edge, at radius 1:
+four of the 12. `PerformTwoCorner` looked first for the pivot -- the edge
+both fillets end on, away from their common face -- and made a plate when
+the first fillet's point there was not on an edge. The corner of opposite
+concavity has no use for a pivot: it is made of the fillet `OnSame` cut
+where the two lines meet on the common face, and of the edge the fillet
+`OnDiff` ends on. On a wall in one face the first fillet's line reaches
+the face's far edge, however far, and passes for having a pivot; a line
+that stops in its face did not -- a walked fillet's, carried past the
+vertex inside the face, and one stopped by a split. The plate's edge on
+the wall then ended on the split or crossed it, and both pieces were left
+open.
+
+Fix `3f7ddd4bcc`, in three parts:
+
+- No pivot is asked of two fillets of opposite concavity when the edge
+  the fillet `OnDiff` ends on is an edge of the face the fillet `OnSame`
+  runs on, or of a coplanar piece beside it.
+- That piece may be across a split that passes the vertex by, the fillet
+  `OnSame` on the piece beyond ("Two fillets of opposite concavity where a
+  split ends" took a split ending at the vertex): the corner's edge on the
+  wall crosses the split and is cut there, and the split is cut on the
+  side the fillet runs along.
+- The fillet `OnSame` ending in two surfaces, its line crossing the split
+  a little before the vertex: where the lines do not meet on its last
+  surface and do on the one before, the corner is made of that one.
+
+The corner is a filling (`GeomFill_ConstrainedFilling`) whose shape
+follows the parameters of the face it lies against: 5e-3 of volume from
+the refined shape's at radius 1, as far as the refined shape's own
+mirror-image corners are from one another. One of the hexagon's sixteen
+is not put to BOP's check: the top corner's side edge and inner edge at
+0.3, a three-sided patch with a point for its fourth side, is called
+self-intersecting there and is not at the bottom corner, its mirror image
+-- the same outline to the last digit, no fold in either.
+
+Not only on split walls: every such pair whose first fillet is walked was
+a plate, and is the filling now (the sweeps, below).
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_{top,bottom}_{mouth,side}_and_inner_r1` | the hexagon's: valid, the refined shape's volume to 1e-2, tolerance 1e-4, BOP's check (invalid before) |
+| `issue962_hex_mouth_{top,bottom}_{mouth,side}_and_inner_r0.3` | the same at 0.3, the mouth's edge along the split: to 1e-3 (invalid, or a plate of tolerance 0.011) |
+| `pocket_by_split{,_mirror}_corner_{mouth,side}_and_inner_r{0.3,1}` | the rectangle's: the refined shape's volume to 1e-4 (the mouth's edge with the inner edge refused; the side's a plate of tolerance 0.01 and 0.035) |
+
+The picture case: `issue962_hex_mouth_top_mouth_and_inner_r1`.
+
+## A plate's edge across an edge that passes the vertex by (realthunder/FreeCAD#962, 2026-10-12)
+
+The last two of the 12: all three edges of the mouth's corner at radius
+1. On the refined shape the corner is a sphere (`PerformThreeCorner`): the
+two convex fillets have one base face. In pieces they have two, and the
+corner is a plate (`PerformMoreThreeCorner`), whose edge on the wall runs
+from the one fillet's line to the other's across the split. The plate is
+made for that -- an edge over several faces, a piece on each, the edge
+between two faces cut where the plate's edge crosses it. Which part of
+that edge goes was told by its ends: the part from the end nearer the
+vertex. That holds for an edge of the vertex. The split passes the vertex
+by, 0.3 away, and runs 7.8 up and 10.4 down from it: the part the wall
+keeps was dropped, the part under the fillet kept, both pieces left open.
+
+Fix `d62136427b`: the part that goes is the one the vertex is beside, by the
+vertex's projection on the edge. An edge of the vertex is cut as before.
+
+Valid; a plate, not the sphere: tolerance 2e-3, 0.013 of volume from the
+refined shape's on the hexagon, 0.03 on the rectangle. The same cut alone
+made the plate of the mouth's edge and the inner edge at 1 valid, at
+tolerance 0.12, before that corner became the filling above; and it lets
+the corner setback fallback make the mouth's two edges at 1, refused
+until the fix above, 0.21 of volume from the refined shape's.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_hex_mouth_{top,bottom}_all_three_r1` | the hexagon's corner: valid, the refined shape's volume to 5e-2, no tolerance above 5e-3, BOP's check (invalid before) |
+| `pocket_by_split{,_mirror}_corner_all_three_r1` | the rectangle's |
+
+The picture case: `issue962_hex_mouth_top_all_three_r1`.
+
+The sweeps, the four sections together. Edge: nothing changes.
+Vertex: the 12 invalid results valid; 2 refused results made, the
+mouth's two edges at radius 1; and 38 valid results moved -- pairs of
+opposite concavity that were plates and are fillings: on #962 and the
+miniatures from 0.02..0.06 of volume off the refined shape's at radius 1
+to 5e-3 or less, their tolerances from 0.004..0.04 down to 1e-4; on shapes
+with no split, #523's box, #631's and #273's, the same change of corner,
+#631's largest tolerance from 0.18 to 1e-4. Nothing worse: 9204 valid,
+209 invalid, 2829 refused.
+
+Of the 86, 5 are left: 2 at #962's corner on a circle's edge, where one
+of the two edges is 0.05 long and the radius 0.3 or 1; 2 at a vertex of
+four sharp edges on #309, whose result on the refined shape passes
+BRepCheck and fails BOP's check -- invalid there too, by the stricter
+measure, like its edge 9 alone; and the fin's wall split, at radius 1
+(Known broken).
+
+Seen on the way, valid and not the refined shape's: the mouth's side edge
+alone at radius 1 on #962 ends at the corner in the corner setback
+fallback's plate, 0.025 of volume from the refined shape's, where the
+fillet there is cut by the pocket's wall (the line crosses the split 0.23
+before the vertex, and the fillet ends in two surfaces).
+
 
 ## Known broken (XFAIL)
 

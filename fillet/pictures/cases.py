@@ -42,6 +42,10 @@ STAGES = {
     "s962s": ("74a9a42df4", "f8a25381c2"),
     "s962p": ("f8a25381c2", "93759f6d56"),
     "s962q": ("93759f6d56", "6c4e2bc29f"),
+    "s962t": ("6c4e2bc29f", "fbff94bd8b"),
+    "s962u": ("fbff94bd8b", "d62136427b"),
+    "s962v": ("d62136427b", "6593a88daa"),
+    "s962w": ("6593a88daa", "3f7ddd4bcc"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -364,6 +368,11 @@ UVFACE_CASE = {
     "issue962_hex_mouth_r0.8": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
     # the block's top (z=-3.75, x from 38.5), which the corner's edge starts on
     "arm_on_block_z-3.75_upright_and_block_r1": _plane_at("z", -3.75, {"x": 40.0}),
+    # the side's piece beside the pocket's again, which the mouth's fillet has its line on
+    "issue962_hex_mouth_top_mouth_and_side_r0.3": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
+    "issue962_hex_mouth_top_all_three_r1": _plane_at("y", 10.2, {"z": 15.0}, {"x": 38.4}),
+    # the side's piece the pocket is in (x from 38.5, z -3.75..32.25)
+    "issue962_hex_mouth_top_side_and_inner_r1": _plane_at("y", 10.2, {"x": 40.0, "z": 5.0}),
     # the first edge's fillet, a cylinder along (-0.242, 0.970, 0), which the second cuts
     "arm_on_block_far_top_edges_r1": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
                                       and abs(abs(f.Surface.Axis.y) - 0.970) < 0.01),
@@ -462,6 +471,9 @@ UVLABEL_CASE = {
     "issue962_hex_mouth_r0.8": ("the side's piece beside the pocket's", False),
     "arm_on_block_z-3.75_upright_and_block_r1": ("the block's top", False),
     "arm_on_block_far_top_edges_r1": ("the first edge's fillet", True),
+    "issue962_hex_mouth_top_mouth_and_side_r0.3": ("the side's piece beside the pocket's", False),
+    "issue962_hex_mouth_top_all_three_r1": ("the side's piece beside the pocket's", False),
+    "issue962_hex_mouth_top_side_and_inner_r1": ("the side's piece the pocket is in", False),
 }
 _FOOT = [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))]
 _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
@@ -472,6 +484,8 @@ _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 1
               ((17.356038, -9.42499, -3.75), (17.356038, -9.42499, -9.75))]
 # name -> (stage, shape, the edge by its ends -- or a list of them --, radius, expected volume,
 #          the point to zoom on, the direction the camera looks from)
+# the top corner of the hexagonal pocket's mouth
+_HEXV = ((38.8, 10.2, 24.4248711),)
 CASES = {
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
                         (2, 0, 10), (0.55, -1, 0.75)),
@@ -585,6 +599,22 @@ CASES = {
     "fin_on_block_x10_top_and_upright_r1": (
         "s962q", "fin", [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0, 766.4705,
         (10, 3, 5), (1, 0.9, 0.8)),
+    "issue962_hex_mouth_top_mouth_and_side_r0.3": (
+        "s962t", "p962", [_HEXV + ((38.8, 10.2, 19.5751289),),
+                          _HEXV + ((43, 10.2, 26.8497422),)], 0.3, 11583.9526,
+        (38.8, 10.2, 24.42), (-0.3, -1, 0.25)),
+    "issue962_hex_mouth_top_all_three_r1": (
+        "s962u", "p962", [_HEXV + ((38.8, 10.2, 19.5751289),),
+                          _HEXV + ((43, 10.2, 26.8497422),),
+                          _HEXV + ((38.8, 11.7, 24.4248711),)], 1.0, 11582.1803,
+        (38.8, 10.2, 24.42), (-0.3, -1, 0.25)),
+    "pocket_by_split_corner_mouth_and_side_r1": (
+        "s962v", "pocketsplit", [((5.3, 0, 3), (5.3, 0, 7)), ((5.3, 0, 3), (8, 0, 3))], 1.0,
+        576.8663, (5.3, 0, 3), (-0.3, -1, 0.25)),
+    "issue962_hex_mouth_top_side_and_inner_r1": (
+        "s962w", "p962", [_HEXV + ((43, 10.2, 26.8497422),),
+                          _HEXV + ((38.8, 11.7, 24.4248711),)], 1.0, 11583.2438,
+        (38.8, 10.2, 24.42), (-0.3, -1, 0.25)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -608,6 +638,13 @@ EDGES = {
                                                 "and the block's top edge from it",
     "fin_on_block_x10_top_and_upright_r1": "the block's top edge and the fin's upright edge "
                                            "on the side x=10",
+    "issue962_hex_mouth_top_mouth_and_side_r0.3": "the mouth's edge beside the split and the "
+                                                  "next, at the mouth's top corner",
+    "issue962_hex_mouth_top_all_three_r1": "the three at the mouth's top corner",
+    "pocket_by_split_corner_mouth_and_side_r1": "the mouth's edge beside the split and its "
+                                                "bottom edge",
+    "issue962_hex_mouth_top_side_and_inner_r1": "the mouth's second edge from the split and "
+                                                "the pocket's inner edge, at the top corner",
 }
 
 

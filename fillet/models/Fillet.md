@@ -852,6 +852,84 @@ the strip.
 
 ![arm_on_block_far_top_edges_r1](pictures/arm_on_block_far_top_edges_r1.png)
 
+### A fillet's line along a split, at a corner of several fillets (`fbff94bd8b`, realthunder/FreeCAD#962)
+
+The hexagonal pocket in the block's side, its mouth's edge 0.3 from the
+split of that side, filleted at 0.3 together with the mouth's next edge.
+The first fillet is as wide as the strip between edge and split: the strip
+goes under it, and its line lies on the piece beyond, along the split. The
+second runs on the pocket's own piece. The corner of two fillets is made
+on the faces at their vertex, the far piece is not one of them, and the
+two had no face in common: a plate was made of the corner. Upstream
+refuses the pair.
+Before, the pocket's piece of the side is red; in the zoom the plate is a
+sliver standing up the split from the corner, and the far piece's outline,
+in the third row, is open where the fillet's line should end and at the
+split's top.
+While the corner is made, the line is now shown on the pocket's piece, and
+the corner is the one the side in one face has; then the line is put back
+and the split cut where it ends. After, the two fillets meet in a mitre,
+and the far piece closes along the fillet's line.
+
+![issue962_hex_mouth_top_mouth_and_side_r0.3](pictures/issue962_hex_mouth_top_mouth_and_side_r0.3.png)
+
+### A plate's edge across an edge that passes the vertex by (`d62136427b`, realthunder/FreeCAD#962)
+
+The same corner at radius 1, all three of its edges: the mouth's two and
+the pocket's inner edge. The fillet beside the split now has its line 0.7
+inside the far piece, the notch in that piece's outline in the third row.
+The corner is a plate, and its edge on the side runs from one fillet's
+line to the other's across the split. The plate is made for an edge over
+several faces, and cuts the edge between two faces where it crosses; which
+part of that edge goes was told by its ends, the one nearer the vertex.
+The split passes the vertex by and has no end there.
+Before, the plate itself is in place, the three fillets meeting in it, and
+the side around it red: the far piece's outline stops where the plate's
+edge reaches the split (the circle at the notch) and at the split's top --
+the part of the split between the two, which the piece needs, was the part
+dropped. The part that goes is now the one the vertex is beside. After, the
+outline runs up the plate's edge and on along the split.
+
+![issue962_hex_mouth_top_all_three_r1](pictures/issue962_hex_mouth_top_all_three_r1.png)
+
+### Two fillets on two pieces of a wall, the split beside the vertex (`6593a88daa`)
+
+A rectangular pocket 0.3 from the split of a box's front, its mouth's edge
+beside the split and its bottom edge, at radius 1. The first fillet's line
+is on the far piece, the notch in the third row; the second's runs on the
+near piece and comes to the split 0.3 past the corner. No face in common
+again, and a plate: valid since the fix above, and not the corner two
+fillets have.
+Before, the upright fillet ends below the corner in a slanting facet, and
+the notch has the corner at that end cut off by the plate's edge, 0.035 of
+volume missing. On the front in one face the two lines meet on the far piece and
+the fillets are cut by one another; that is done now for a split that
+passes the vertex by, as it was for one that ends at it. After, the two
+fillets meet in a mitre down to where their lines cross, and the notch is
+square: the bottom fillet's line crosses the split and ends the upright
+one's.
+
+![pocket_by_split_corner_mouth_and_side_r1](pictures/pocket_by_split_corner_mouth_and_side_r1.png)
+
+### Two fillets of opposite concavity without a pivot (`3f7ddd4bcc`, realthunder/FreeCAD#962)
+
+The hexagon's corner once more: the mouth's second edge from the split and
+the pocket's inner edge, at radius 1 -- one convex, one concave. Their
+corner is a three-sided patch between the convex fillet, cut where the two
+lines meet on the pocket's wall, and the edge the concave one ends on. It
+was made only when the first fillet's line ended on an edge of its face,
+the "pivot" two fillets of one concavity turn on; this one's line crosses
+the split a little before the corner and stops in the far piece. A plate
+then, and its edge on the side left both pieces open.
+Before (and upstream), the side's edges are red all round, two faces have
+no area, and the outline of the pocket's piece, in the third row, is open
+at the hexagon's corner and at the split's top. The patch asks for no
+pivot now. After, the convex fillet ends in the patch, which turns down
+into the concave one, and the hexagon in the outline has its corner cut by
+the patch's edge.
+
+![issue962_hex_mouth_top_side_and_inner_r1](pictures/issue962_hex_mouth_top_side_and_inner_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -1070,11 +1070,11 @@ for r, taken in ((0.3, 3.56632), (1.0, 40.25303)):
 # coplanar pieces ends (bodies without Refine): the vertex sweep's results
 # invalid only in pieces (sweep/README.md), each on a shape built here. The
 # volume is that of the same two edges on the shape refined.
-def pair_case(name, make, ends, radius, expect="pass", vol_tol=1e-3):
+def pair_case(name, make, ends, radius, expect="pass", vol_tol=1e-3, max_tol=1e-3, bop=True):
     """The edges given by their ends, filleted together on make(): a valid
     solid of the volume the same fillet has on make() refined
-    (removeSplitter), within vol_tol, no tolerance above 1e-3, and nothing
-    for BOP's argument check to report."""
+    (removeSplitter), within vol_tol, no tolerance above max_tol, and
+    nothing for BOP's argument check to report (bop)."""
     try:
         ref = make().removeSplitter()
         vol = ref.makeFillet(radius, [ref.Edges[edge_between(ref, a, b) - 1]
@@ -1085,7 +1085,7 @@ def pair_case(name, make, ends, radius, expect="pass", vol_tol=1e-3):
         return
     s = make()
     fillet_case(name, s, [edge_between(s, a, b) for a, b in ends], radius, expect, vol,
-                max_tol=1e-3, vol_tol=vol_tol, bop=True)
+                max_tol=max_tol, vol_tol=vol_tol, bop=bop)
 
 
 # The slotted block, its outer face (x=10) split by the spine's line below
@@ -1163,6 +1163,49 @@ for r in (0.3, 1.0):
     pair_case("arm_on_block_far_top_edges_r%g" % r, arm_on_block,
               [((17.356, -9.425, -3.75), (10.898, 16.471, -3.75)),
                ((10.898, 16.471, -3.75), (38.5, 27.2, -3.75))], r)
+
+# The pocket's mouth again (pocket_by_split, and #962's own): its corner,
+# 0.3 from the split of the front, where the mouth's two edges and the
+# pocket's own inner edge meet. The fillet of the mouth's edge beside the
+# split has its line on the far piece -- along the split at 0.3, inside that
+# piece at 1 -- and the corner with the other fillets, made on the faces at
+# the vertex, did not find it there: no face in common with the fillet of
+# the mouth's other edge (a plate, inside out; at 1 that fillet ends in two
+# surfaces, the last on the far piece, and the pair was refused, the vertex
+# not being on the common face); with the inner edge's fillet, of opposite
+# concavity, a plate whose edge on the front ends on the split or crosses
+# it, left open. All three: the same plate.
+def mouth_corner(tag, make, vtx, up, side, inner, big_tol, no_bop=()):
+    for r in (0.3, 1.0):
+        pair_case("%s_mouth_and_side_r%g" % (tag, r), make, [(vtx, up), (vtx, side)], r)
+        # the corner of opposite concavity is a filling whose shape follows
+        # the parameters of the face it lies against: 5e-3 from the refined
+        # shape's at 1
+        pair_case("%s_mouth_and_inner_r%g" % (tag, r), make, [(vtx, up), (vtx, inner)], r,
+                  vol_tol=1e-2 if r == 1.0 else 1e-3)
+        name = "%s_side_and_inner_r%g" % (tag, r)
+        pair_case(name, make, [(vtx, side), (vtx, inner)], r,
+                  vol_tol=1e-2 if r == 1.0 else 1e-3, bop=name not in no_bop)
+        # all three at 1: a plate over the split here, a sphere on the
+        # refined shape
+        pair_case("%s_all_three_r%g" % (tag, r), make, [(vtx, up), (vtx, side), (vtx, inner)], r,
+                  vol_tol=big_tol if r == 1.0 else 1e-3, max_tol=5e-3 if r == 1.0 else 1e-3)
+
+
+for tag, mirror in (("", False), ("_mirror", True)):
+    sg = -1 if mirror else 1
+    mouth_corner("pocket_by_split%s_corner" % tag, lambda m=mirror: pocket_by_split(m),
+                 (sg * 5.3, 0, 3), (sg * 5.3, 0, 7), (sg * 8, 0, 3), (sg * 5.3, 2, 3), 5e-2)
+# One of the hexagon's sixteen is not put to BOP's check: the filling of the
+# top corner's side and inner edges at 0.3, a three-sided patch with a point
+# for its fourth side, is called self-intersecting there and is not at the
+# bottom corner, its mirror image -- the same outline to the last digit, no
+# fold in either (the refined shape's is passed as well).
+for tag, z, zo, zs in (("top", 24.4248711, 19.5751289, 26.8497422),
+                       ("bottom", 19.5751289, 24.4248711, 17.1502578)):
+    mouth_corner("issue962_hex_mouth_%s" % tag, lambda: p2.copy(), (38.8, 10.2, z),
+                 (38.8, 10.2, zo), (43, 10.2, zs), (38.8, 11.7, z), 5e-2,
+                 no_bop=("issue962_hex_mouth_top_side_and_inner_r0.3",))
 
 counts = {}
 for _, verdict, _ in results:

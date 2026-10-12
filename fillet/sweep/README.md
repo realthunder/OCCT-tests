@@ -43,16 +43,17 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `6c4e2bc29f`, FreeCAD OcctFix `493032cbaf`,
-2026-10-12: edge 2519 ok, 32 BAD, 1370 EXC; vertex 9190 ok, 221 BAD, 2831
+`baseline/` is OCCT LinkVibe-801 `3f7ddd4bcc`, FreeCAD OcctFix `493032cbaf`,
+2026-10-12: edge 2519 ok, 32 BAD, 1370 EXC; vertex 9204 ok, 209 BAD, 2829
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
 2445 / 42 / 1434, vertex 8847 / 291 / 3104), `7a1fbeffb3` (edge 2507 /
 42 / 1372, vertex 9089 / 291 / 2862), `8704591b60` (edge 2509 / 40 /
 1372, vertex 9089 / 291 / 2862), `fff5d20907` (edge 2509 / 40 / 1372,
-vertex 9109 / 291 / 2842) and `f7464716c0` (edge 2519 / 32 / 1370, vertex
-9118 / 290 / 2834), are in this file's history.
+vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
+9118 / 290 / 2834) and `6c4e2bc29f` (edge 2519 / 32 / 1370, vertex 9190 /
+221 / 2831), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -65,21 +66,21 @@ were invalid only in pieces are fixed (../README.md, 2026-10-11).
 The vertex sweep's 290 at `f7464716c0` (`triage.py`): 181 invalid on the
 refined shape as well -- #273 (36), #309 (14), #474 (93), #631 (2), #962
 (36); 23 with an edge that is a split itself, gone from the refined shape;
-and 86 valid there, invalid only in pieces. 69 of the 86 are fixed
-(../README.md, 2026-10-12); the 17 left, of the 221 at `6c4e2bc29f`:
+and 86 valid there, invalid only in pieces. 81 of the 86 are fixed
+(../README.md, 2026-10-12); the 5 left, of the 209 at `3f7ddd4bcc`:
 
 | Shape | Vertices (cases) |
 |-------|------------------|
-| `issue962_Fillet` | V48, V49 (6 each: the pocket mouth's edge with its neighbours, its fillet's line along the split of the block's side -- two or three fillets at the pocket's corner, one on the far piece); V2 (2: two fillets on the two pieces of a wall, one edge a circle) |
-| `issue309_shape` | V8 (2: a vertex of four sharp edges) |
-| `mini_finwall` | V11 (1: two fillets on the two pieces of a wall, one of them walked) |
+| `issue962_Fillet` | V2 (2: edges 1 and 11, two fillets on the two pieces of a wall where the split ends; edge 1 is 0.05 long, the radius 0.3 and 1) |
+| `issue309_shape` | V8 (2: edges 8 and 9 at a vertex of four sharp edges. The result on the refined shape passes BRepCheck and fails `check(True)`, like edge 9 alone, which is invalid on both: upstream's rather than the pieces') |
+| `mini_finwall` | V11 (1: two fillets on the two pieces of a wall, one of them walked; ../README.md, Known broken) |
 
     grep " BAD" baseline/vertex.txt > /tmp/bad.lst
     SHAPE=issue962_Fillet LIST=/tmp/bad.lst FreeCADCmd triage.py
 
 "Valid" on the refined shape is BRepCheck's; two of the 86 fail Part's
-`check(True)` there (`ok(bop)`). #474's `Fillet002` E2 was such a case
-on the edge sweep: a spike BRepCheck passed.
+`check(True)` there (`ok(bop)`), #309's two above. #474's `Fillet002` E2
+was such a case on the edge sweep: a spike BRepCheck passed.
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".
