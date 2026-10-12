@@ -2671,3 +2671,33 @@ curve on the wider pocket's wall is an approximation either way, and the
 two shapes do not get the same one.
 
 ## Known broken (XFAIL)
+
+| Case | Symptom |
+|------|---------|
+| `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
+| `fin_on_block_wall_top_and_upright_r1` | Invalid, a plate inside out. The fin flush with its block's side, its wall split 0.7 from the side as well: the block's top edge and the fin's upright edge at the L's inner corner, the two pieces of the side their faces (see "Two fillets on the two pieces of a wall"). At radius 1 the upright edge's fillet is wider than the wall's piece and walked, a B-spline, which is not carried on past its end to the point where the two lines meet. Made at 0.3; invalid before as well |
+
+## Pictures
+
+`models/pictures/<case>.png` shows, for each case a fix turned from failing
+to passing, three results side by side -- upstream's `TKFillet` files at the
+fork's base (`91be8c4c71`), with the files of other toolkits a fix changed
+(`UPSTREAM_EXTRA` in `pictures/cases.py`), the fork just before the fix, the
+fork now --
+each whole and zoomed on the fillet's end. `models/Fillet.md` walks
+through them. `pictures/make_pictures.sh` makes them again, on Linux or
+macOS; add a case to `pictures/cases.py`, with its stage, to picture it.
+
+## Layout
+
+```
+tests/fork/fillet/
+  README.md          this file
+  run_tests.py       the suite (FreeCADCmd script)
+  models/            captured models and shapes
+    Fillet.md        the fixes, before and after, in pictures
+    pictures/        before and after, one PNG per fixed case
+  pictures/          the tools that make them (make_pictures.sh)
+  sweep/             every edge and vertex of the issues' shapes, against a
+                     baseline (README.md there)
+```
