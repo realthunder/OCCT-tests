@@ -1462,12 +1462,14 @@ for x in (0, 10):
         pair_case("fin_on_block_x%d_inner_and_upright_r%g" % (x, r), fin_on_block,
                   [inner, upright], r)
 # and the fin's wall split 0.7 from the side as well: at radius 1 the
-# upright edge's fillet is wider than the wall's piece and walked, its
-# surface a B-spline that is not carried on past its end -- the plate still
+# upright edge's fillet is wider than the wall's piece. It was walked, from
+# the far piece -- a B-spline, which is not carried on past its end, and the
+# corner was left to the plate (inside out). The fillet is the far piece's
+# now, a cylinder, at an end OnSame as well (README.md).
 pair_case("fin_on_block_wall_top_and_upright_r0.3", lambda: fin_on_block(wall=True),
           [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 0.3)
 pair_case("fin_on_block_wall_top_and_upright_r1", lambda: fin_on_block(wall=True),
-          [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0, "xfail")
+          [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0, vol_tol=1e-6, max_tol=1e-5)
 
 # The arm on the block: at (38.5,10.2,z) the arm's side meets the block's
 # at 137 degrees, top and bottom in two pieces each. The upright edge with

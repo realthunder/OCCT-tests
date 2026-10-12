@@ -57,6 +57,7 @@ STAGES = {
     "s962zf": ("3fb6fdcac3", "2ff60f1efd"),
     "s962zg": ("2ff60f1efd", "2bc692bfc4"),
     "s962zh": ("2bc692bfc4", "9d58debece"),
+    "s962zi": ("9d58debece", "5052552dd6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -406,6 +407,8 @@ UVFACE_CASE = {
     "issue962_rib_top_corner_r1": _plane_at("y", 10.2, {"z": 20.0}, {"x": 38.4}),
     # the rib's wall (y=13.7), its piece at the floor's corner, up to x=38.96
     "issue962_e52_r0.8": _plane_at("y", 13.7, None, {"x": 38.0}),
+    # the fin's outer face, as on the fin whose wall is one face
+    "fin_on_block_wall_top_and_upright_r1": _plane_at("x", 10, {"z": 5.0 + 1e-6}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
     "issue962_rib_top_r0.8": _plane_at("y", 20.3, {"x": 40.0}, {"x": 50.0}),
     # the B-spline face at edge 51's foot, which the corner extends
@@ -553,6 +556,7 @@ UVLABEL_CASE = {
     "slot_split_wall_top_and_upright_r1": ("the slot's wall, its piece at the mouth", False),
     "issue962_rib_top_corner_r1": ("the rib's wall under the top's edge", False),
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
+    "fin_on_block_wall_top_and_upright_r1": ("the fin's outer face", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
@@ -756,6 +760,9 @@ CASES = {
         "s962zh", "p962", ((-10.68613441, -11.22748999, -5.8),
                            (-10.68613441, -11.22748999, -3.75)), 2.0, 11582.3197,
         (-11.3, -11.9, -6.5), (-0.3, 0.8, 0.6)),
+    "fin_on_block_wall_top_and_upright_r1": (
+        "s962zi", "finwall", [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0,
+        766.4705, (10, 3, 5), (1, 0.9, 0.8)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -796,6 +803,8 @@ EDGES = {
                                                 "the pocket's inner edge, at the top corner",
     "fin_on_block_x10_all_three_r1": "the block's top edge, the fin's upright edge and the "
                                      "concave edge between fin and block, at (10,3,5)",
+    "fin_on_block_wall_top_and_upright_r1": "the block's top edge and the fin's upright edge "
+                                            "on the side x=10, the fin's wall split 0.7 from it",
 }
 
 

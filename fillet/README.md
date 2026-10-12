@@ -1694,7 +1694,7 @@ on its pieces (`slot_split_outer_wall_and_end`) -- refused before.
 | `fin_on_block_x{0,10}_top_and_upright_r{0.3,1}` | the block's top edge and the fin's upright edge at the L's inner corner, at either side: the refined shape's volume to 1e-6, tolerance 6e-7 (invalid before) |
 | `fin_on_block_wall_top_and_upright_r0.3` | the same with the fin's wall split 0.7 from the side as well (invalid before) |
 | `slot_split_outer_wall_and_end_r{0.3,1}` | the slot's two edges on the outer face in pieces (refused before) |
-| `fin_on_block_wall_top_and_upright_r1` (XFAIL) | see Known broken |
+| `fin_on_block_wall_top_and_upright_r1` | XFAIL then, a plate inside out; made since, see "The far piece's fillet at an end OnSame" |
 
 The picture case: `fin_on_block_x10_top_and_upright_r1`.
 
@@ -2670,12 +2670,61 @@ to 0.01 (radius 2.5 on the miniature), both valid at 1.5e-7: the cut's
 curve on the wider pocket's wall is an approximation either way, and the
 two shapes do not get the same one.
 
+## The far piece's fillet at an end OnSame (2026-10-13)
+
+The fin's last invalid result: its upright edge with the block's top edge
+at the L's inner corner, the fin's wall split 0.7 from the side as well,
+at radius 1 (`fin_on_block_wall_top_and_upright_r1`, XFAIL since "Two
+fillets on the two pieces of a wall"). The upright edge's fillet is wider
+than the wall's piece, its line on the wall on the piece beyond. It was
+walked, from the far piece -- a B-spline, where the wall in one face has a
+cylinder. The corner of two fillets on the two pieces of the side cuts
+them by one another, and takes a cylinder or a plane for the one that
+stops on the split, a surface that goes on past its end as it is; this
+one was left to the plate, which came out inside out: 767.2220 for
+766.4705, a tolerance of 0.19.
+
+The fillet of the piece its line lies on (`baf699efbb`, "A fillet wider
+than its wall's piece at a pocket's mouth") was kept from an end OnSame --
+the foot here, where the side runs on down past the fin. That was settled
+while the rule was still wide: tried at such ends it broke corners that
+carry the walk's line over the split (`StoreLineOverSplit`). The rule as
+it ended -- one edge, the whole of its fillet in one surface -- gives the
+same suite and the same sweeps with the exception and without it, but for
+this fin. Fix `5052552dd6`: the exception is gone. The upright edge's
+fillet is the cylinder, and the corner the refined shape's.
+
+| Case | What it covers |
+|------|----------------|
+| `fin_on_block_wall_top_and_upright_r1` | the refined shape's volume to 1e-6, no tolerance above 1e-5, BOP's check (XFAIL before: invalid) |
+
+The picture case: `fin_on_block_wall_top_and_upright_r1`.
+
+The sweeps. Edge: `mini_finwall` E26, the upright edge alone, is the
+exact 762.2743339 at 2 (the walk's 762.2743322) and moves in the tenth
+digit at 0.8; 2575 valid, 32 invalid, 1314 refused as before. Vertex:
+V11:13,26 at 1 -- this corner -- invalid before, valid; seven valid results
+with the upright edge at 1 moved, by 5e-5 at most (the walk's fillet
+before, the cylinder now), and the four edges of V11 among them are down
+from a tolerance of 8.6e-6 to 1e-6. 9476 valid, 200 invalid, 2566
+refused. Nothing else moved.
+
+Open. The same fin's other two pairs at radius 1 with the wall's 0.7
+piece of the concave edge -- with the top edge (V11:13,15) and with the
+upright edge (V11:15,26) -- are valid and not the refined shape's: 770.6492
+for 770.7360 and 770.2217 for 770.3068, at tolerances of 3e-3 and 3.6e-4
+(the second fails BOP's check by a hair, "Two fillets past their wall's
+piece"). The concave edge's fillet is in two surfaces there, one for each
+piece of the wall, and the two fillets' lines meet 1 from the vertex, on
+the second: the corner of two fillets is made of their end surfaces
+(`TwoCorner : No intersection pc pc`, `fillets face to face on a face off
+the vertex`), and Compute runs again with the corner set back, a plate.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
-| `fin_on_block_wall_top_and_upright_r1` | Invalid, a plate inside out. The fin flush with its block's side, its wall split 0.7 from the side as well: the block's top edge and the fin's upright edge at the L's inner corner, the two pieces of the side their faces (see "Two fillets on the two pieces of a wall"). At radius 1 the upright edge's fillet is wider than the wall's piece and walked, a B-spline, which is not carried on past its end to the point where the two lines meet. Made at 0.3; invalid before as well |
 
 ## Pictures
 

@@ -3545,8 +3545,8 @@ mini_finwall E25@0.3 EXC
 mini_finwall E25@0.8 EXC
 mini_finwall E25@2 EXC
 mini_finwall E26@0.3 ok:769.8261725:0.0001:13
-mini_finwall E26@0.8 ok:768.7638932:0.0001:12
-mini_finwall E26@2 ok:762.2743322:0.0001:12
+mini_finwall E26@0.8 ok:768.7638934:0.0001:12
+mini_finwall E26@2 ok:762.2743339:0.0001:12
 mini_mini_wall E1@0.3 ok:999.8068583:1e-07:8
 mini_mini_wall E1@0.8 ok:998.6265482:1e-07:7
 mini_mini_wall E1@2 ok:991.4159265:1e-07:7

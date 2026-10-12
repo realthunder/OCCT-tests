@@ -1215,6 +1215,28 @@ point came back on the circle's first turn, at 2.81, off the edge.
 
 ![issue962_pocket_edge_r2](pictures/issue962_pocket_edge_r2.png)
 
+### The far piece's fillet at an end that runs on (`5052552dd6`)
+
+The fin whose wall is split 0.7 from the block's side: its upright edge
+and the block's top edge at the L's inner corner, at radius 1. The upright
+edge's fillet is wider than the wall's piece; its line on the wall lies on
+the piece beyond, and the fillet was walked from there -- a B-spline, where
+the wall in one face has a cylinder. The corner of the two fillets cuts
+them by one another ("Two fillets on the two pieces of a wall", above),
+and the one that stops on the split has to go on past its end as it is, a
+cylinder or a plane; the walked one was left to the plate. Before, the
+plate is inside out: the red spikes, the block's side red, and the fin's
+outer face, in the third row, drawn out to a point.
+
+The far piece's own fillet, the cylinder, was made for the pocket's mouth
+(the section above) and kept from an end where the fillet's face runs on
+past the vertex -- as the side does here, down the block. It is made
+there as well now. After, the two fillets meet in a mitre, and the fin's
+face is the rectangle the fillet leaves of it, as on the fin whose wall is
+one face.
+
+![fin_on_block_wall_top_and_upright_r1](pictures/fin_on_block_wall_top_and_upright_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
