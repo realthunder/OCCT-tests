@@ -59,6 +59,12 @@ CXX=clang++ ./layouts.py <upstream build>/include/opencascade <fork build>/inclu
 python ifc_serialise.py <any .brep>      # the fork's lib dir on DYLD_LIBRARY_PATH
 ```
 
+`layouts.py` needs a clang that knows `-fdump-record-layouts-complete`
+(the conda environment's; Apple's clang 12 does not). `iscache.cpp`,
+`stable_add.cpp` and `thaw.cpp` are small programs against the fork's
+library, each with its compile line at its head; they print `ok` or what
+failed.
+
 `symbols.py` lists, for each toolkit, what upstream's library exports and
 the fork's does not (`missing.txt`), and for each user binary named the
 OCCT symbols it imports that the fork lacks. `layouts.py` compiles the
@@ -110,6 +116,29 @@ has no state or shares its original's: the code takes a null for "the
 option is off". Accessors of such state are functions of the library,
 not inline.
 
+The same for what one object has to remember of another. A thawed copy
+of a frozen shape's `TopoDS_TShape` knows its original
+(`TopoDS_TShape::ThawedFrom`). That was a table beside the TShapes, and
+a destructor declared for `TopoDS_TShape` to take a dying copy out of
+it. `Thaw()` gives the copy's list of children an allocator that holds
+the original instead (`ThawedOriginal` in `TopoDS_TShape.cxx`), putting
+the children the copy already has back under it, and `ThawedFrom()`
+asks the list's `Allocator()`: no table, no mutex, no destructor
+(`a03dfbb393`). `thaw.cpp` does it 300000 times, children added before
+the thaw and after: the copy holds its original once while it lives, and
+the original's reference count is back where it was when the copies are
+gone.
+
+No destructor, and no other member function declared where upstream has
+none or has it inline, in a class that classes in headers derive from.
+OCCT's headers say `dllexport` to a client too, so with MSVC whatever
+makes an object of a derived class that is all in its header -- a wire, a
+shell, a solid, a compound -- imports the base's declared destructor by
+name: eleven of FreeCAD's modules imported `TopoDS_TShape`'s, and
+upstream's `TKBRep.dll` exports none. With the Itanium ABI upstream's
+library has that symbol anyway, with the virtual table, so `symbols.py`
+on Linux or macOS does not see this; only a build with MSVC does.
+
 `BRep_CurveRepresentation` and `BRep_PointRepresentation` have no
 collection and no unused bytes of their own, and what the fork wanted of
 them was one flag: this representation is a cache, given to a frozen edge
@@ -154,6 +183,22 @@ streamed STEP read, `BinTools_ShapeSet_SetOmitPCurvesOnPlane` and
 geometry for `SetStableBytes`, and a client calls upstream's `Add`
 (`stable_add.cpp` writes a box and one face of it both ways, the same
 bytes). FreeCAD's modules import none now.
+
+Five more families, of FreeCAD's line that freezes shapes (branches
+Transaction, LinkVibe and SolidBody; OcctFix calls none of them), have
+their C functions since `a03dfbb393`: `TopoDS_TShape_ThawedFrom` (the
+original in an argument), `TopoDS_LockedShape_Raised`,
+`BRep_RepresentationLock_Acquire` and `BRep_RepresentationLock_Release`
+(the lock as a pointer to give back), `BinTools_ShapeSet_SetStableBytes`
+and `BRepTools_ShapeSet_AddOwnSurfaces`. The members and the lock class
+stay for the library's own use. That commit was made and measured with
+MSVC, on the Windows box -- the fork's layouts and virtual tables
+upstream's, none of conda-forge's 50073 exported symbols missing,
+FreeCAD's modules importing nothing only the fork has, FreeCADCmd running
+on upstream's DLLs -- and built here with clang afterwards: `layouts.py`
+42 headers, 2762 records, none differing; `symbols.py` none of upstream's
+77673 missing, 225 added (219 before: the six names); `thaw.cpp` finds
+the six by name.
 
 What this does not make of a FreeCAD built against the fork is one that
 behaves with upstream's library as one built against upstream would: it
