@@ -3184,10 +3184,15 @@ fails later leaves the two surfaces as they were.
 The foot's pair with the upright edge keeps the 6e-5 it has at radius
 0.3, where nothing is made one: the patch between the two fillets is a
 filling, and differs with the parameters of the faces it lies between.
-#962's mouths keep more, 0.034 at most: the upright edge's fillet is
-walked there, a B-spline where the refined shape has a cylinder, and the
-patch's area differs with it (2.919 for 2.903 at 1.5 on y=20.3; the
-upright fillet's own face has one area on both). At radius 0.7 itself,
+#962's mouths keep more, 0.034 at most, and by corner: the two at the
+high-y walls of their slots (y=17.1 and 23.7) are the refined shape's to
+1e-4 at radius 1.5 and one of them at 1, their mirror images (y=13.7 and
+20.3) 0.009 off at 1 and 0.034 at 1.5 -- the patch's area 2.919 for 2.903
+on y=20.3. The filling again, turning with the parameters of the faces
+beside it. (This section said until `8558180119` that the upright edge's
+fillet, walked there, was the cause. It was walked, and is the refined
+shape's cylinder since; the corners moved by 1e-5 with that.) At radius
+0.7 itself,
 and up to 0.7001, the pair with the upright edge is as before (refused
 at 0.7, a plate above).
 
@@ -3228,9 +3233,53 @@ BOP's verdict on it turns with the parameters of the faces beside it.
 Not chased; the suite's #962 mouths are the pair with the upright edge,
 which passes.
 
-Not run on this fix: the two sweeps on its last state, the FreeCAD
-tests and the draft sweeps -- the box ran short of memory. The fix is not
-installed.
+(Run since, on the installed build at `594ece7109`, 2026-10-14: the two
+sweeps on the fix's last state are this baseline to the line, FreeCAD's
+`TestPartApp` 282 and `TestPartDesignApp` 368 less the one known, the
+draft sweeps the same 1222, 500 and 114.)
+## The far piece's fillet for an edge of a chain (realthunder/FreeCAD#962, 2026-10-14)
+
+A fillet wider than the piece of a split wall its edge is on is made on
+the piece its line lies on, exact, as on the wall in one face
+(`baf699efbb`, `5052552dd6`) -- for a contour of one edge. #962's slots'
+mouths have the rib's upright edge first of a chain of five, three on the
+refined shape: the rib's top arc is in two pieces as the wall is. On the
+wall's piece at the mouth, 0.69 wide, the first two were walked at radius
+0.8 and up, B-splines where the refined shape has a cylinder and a torus.
+
+Two things kept the rule from a chain. At an end OnSame `SplitKPart`
+looks for the edge beside the spine in each of the fillet's faces, and
+the far piece does not hold the end vertex: "Failed to find element",
+taken for "the walk makes this one". And the far piece's surface for the
+arc's first piece is the whole arc's torus, running over the next edge's
+range, which that edge makes itself: taken, the torus was there twice
+and the result invalid (11576.56 for 11578.87).
+
+Fix `8558180119`. The edge beside the spine is looked for in the spine's
+own piece, the face of the spine's edge that is coplanar with the far
+one. And for an edge of a chain the far piece's surface is taken when it
+is that edge's and no more: it may run on past the spine's own ends, not
+over a neighbour's range. The arc's first piece is left to the second's
+surface, which covers it, as before.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_mouth_upright_r1_cylinder` | the rib's upright edge alone at radius 1: valid, a cylinder face more and no B-spline face (walked before) |
+| `issue962_hex_mouth_edge_r0.8_cylinder` | the hex pocket's mouth edge at 0.8: the same |
+
+The sweeps. No status changed in either. Edge: the miniatures' upright
+edge at 2 moves in the tenth digit, the walk's value to the cylinder's
+(1122.274334), and #962 `Fillet` E68 at 0.8, the hex pocket's mouth edge,
+is a cylinder for a B-spline: its end ellipses carry the tolerance the
+refined shape's do, 1.3e-5, where the walked ends had 2e-7 -- the one
+"tolerance worse" the comparison prints. Vertex: E68 alone at its two
+ends at 1 the same way; the slotted miniatures' floor and upright pair
+(V13:15,16) at 1 is the refined shape's volume to the last digit,
+1130.306793 for 1130.30678; #962's V56:76,102 moves by 2e-5. 2578 valid,
+29 invalid, 1314 refused; 9500, 176, 2566.
+
+Nothing to picture: the surface is the one that was there, exact.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

@@ -1421,6 +1421,16 @@ between them at the mouth.
 
 ![issue962_mouth_y17.1_floor_and_upright_r1.5](pictures/issue962_mouth_y17.1_floor_and_upright_r1.5.png)
 
+### The far piece's fillet for an edge of a chain (`8558180119`, realthunder/FreeCAD#962)
+
+Nothing to see: the rib's upright edge at a slot's mouth, wider than the
+piece of the wall it is on, had a fillet walked along it -- a B-spline
+lying where the cylinder does. The exact surface of the piece the
+fillet's line is on was taken for a contour of one edge only; this edge
+is the first of five. It is taken for an edge of a chain now, when it is
+that edge's surface and no more, and the fillet is the cylinder the
+refined shape has.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

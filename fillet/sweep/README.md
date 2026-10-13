@@ -43,9 +43,8 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `9735ff8875` (run on that fix without its
-1e-3 rule, ../README.md's last section), FreeCAD OcctFix `34abfa2dae`,
-2026-10-13: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
+`baseline/` is OCCT LinkVibe-801 `8558180119`, FreeCAD OcctFix `34abfa2dae`,
+2026-10-14: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
@@ -67,7 +66,11 @@ vertex 9475 / 201 / 2566), `5052552dd6` (edge the same, vertex 9476 /
 1314, vertex 9500 / 176 / 2566, the counts of today's: 20 and then 12
 valid results moved, and then 6 of the edge sweep and 28 of the vertex
 sweep, the edge under a wall of ../README.md) and `0669daa0b6` (the same
-counts; 24 of the vertex sweep moved since), are in this file's history.
+counts; 24 of the vertex sweep moved since) and `9735ff8875` (the same
+counts, and the installed `594ece7109` gives it to the line; 4 lines of
+the edge sweep and 20 of the vertex sweep changed since, 6 of those by
+as much as `compare.py` prints -- the far piece's exact fillet for an
+edge of a chain), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
