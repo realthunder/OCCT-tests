@@ -1498,15 +1498,15 @@ for r in (0.3, 1.0):
 # other fillet, refused ("No intersection pc pc").
 corner_case("slot_split_both_floor_and_end_r0.3", slotted(wall=True, outer=True), (10, 3, 5),
             0.3, 1e-3, 1e-3, along=((-1, 0, 0), (0, 1, 0)))
-# At 1 the fillet along the wall is wider than the wall's piece, the two no
-# longer meet on the floor and the corner is made set back. It was refused
-# there: the outer face's split below the vertex is in line with the wall's
-# edge above it, and two sharp edges in line beside two fillets are a case
-# of their own, its curves ending on the vertex -- which a setback corner
-# never reaches. Set back, the split is cut like any other edge. (The
-# refined shape's corner is the exact one, its floor's edge in one.)
+# At 1 the fillet along the wall is wider than the wall's piece: it is in
+# two surfaces, one for each piece of its edge, and the two fillets' lines
+# meet on the floor past the split's foot, on the surface before the last.
+# The corner of two is made of end surfaces; it was refused, and then made
+# set back, a plate 0.11 off the refined shape's exact corner. The two
+# surfaces are made one for the corner now (README.md, "A fillet in two
+# surfaces at a corner of two"), and it is the refined shape's.
 corner_case("slot_split_both_floor_and_end_r1", slotted(wall=True, outer=True), (10, 3, 5),
-            1.0, 0.15, 2e-3, along=((-1, 0, 0), (0, 1, 0)))
+            1.0, 1e-4, 2e-4, along=((-1, 0, 0), (0, 1, 0)))
 
 
 # Two fillets at a vertex, both wider than the piece of the wall between
@@ -1528,18 +1528,36 @@ for tag, kw in (("wall", {"wall": True}), ("both", {"wall": True, "outer": True}
     corner_case("slot_split_%s_top_and_upright_r1" % tag, slotted(**kw), (10, 3, 14), 1.0, 0.2,
                 2e-3, along=((-1, 0, 0), (0, 0, -1)))
 # The fin's wall, its piece at the block's side: the piece's top edge with
-# its upright one, and the edge at its foot with it. The second's patch is
-# valid and one of its edges lies 3% farther from it than the edge's
-# tolerance says (BOPAlgo_InvalidCurveOnSurface): without BOP's check.
+# its upright one.
 corner_case("fin_on_block_wall_piece_top_and_upright_r1", fin_on_block(wall=True),
             (10, 3, 14), 1.0, 0.2, 2e-3, along=((-1, 0, 0), (0, 0, -1)))
-corner_case("fin_on_block_wall_piece_foot_and_upright_r1", fin_on_block(wall=True),
-            (10, 3, 5), 1.0, 0.2, 2e-3, along=((-1, 0, 0), (0, 0, 1)), bop=False)
+# And the edge at the piece's foot, 0.7 long, a piece of the concave edge
+# under the fin's wall, with the piece's upright edge and with the block's
+# top edge: the foot's fillet in two surfaces, the lines meeting on the one
+# before the last -- on the wall's far piece with the upright edge's, wider
+# than the piece, and on the block's top with the top edge's. Set back
+# plates, 0.03 to 0.76 off the refined shape's corner at 0.71 to 2 (the
+# first with an edge 3% farther from its patch than its tolerance said, and
+# so without BOP's check); the refined shape's now, the two surfaces made
+# one (README.md, "A fillet in two surfaces at a corner of two"). With the
+# upright edge the corner's patch differs from the refined shape's by its
+# parameters, 6e-5 of volume at most, as it does at 0.3 on both.
+for _r in (0.71, 0.8, 1.0, 1.5, 2.0):
+    corner_case("fin_on_block_wall_piece_foot_and_upright_r%g" % _r, fin_on_block(wall=True),
+                (10, 3, 5), _r, 2e-4, 2e-4, along=((-1, 0, 0), (0, 0, 1)))
+for _r in (0.70001, 0.71, 0.8, 1.0, 1.5, 2.0):
+    corner_case("fin_on_block_wall_piece_foot_and_top_r%g" % _r, fin_on_block(wall=True),
+                (10, 3, 5), _r, 1e-5, 2e-4, along=((-1, 0, 0), (0, 1, 0)))
 # #962's slots' mouths: the floor's edge along the rib, the rib's piece 0.69
-# long, with the rib's upright edge.
+# (0.79) long, with the rib's upright edge. The same corner; the upright
+# edge's fillet is walked there, a B-spline where the refined shape has a
+# cylinder, and the patch between the two differs with it: 0.034 of volume
+# at most, where the set back plate was 0.24 off and, at y=17.1 and 1.5,
+# refused.
 for y in (17.1, 20.3):
-    corner_case("issue962_mouth_y%g_floor_and_upright_r1" % y, p2, (50, y, 14), 1.0, 0.2, 2e-3,
-                along=((-1, 0, 0), (0, 0, 1)))
+    for _r in (0.8, 1.0, 1.5):
+        corner_case("issue962_mouth_y%g_floor_and_upright_r%g" % (y, _r), p2, (50, y, 14), _r,
+                    0.05, 2e-4, along=((-1, 0, 0), (0, 0, 1)))
 
 # #962's rib, its top corner at (38.5,10.2,32.25): the wall under the top's
 # edge is in two pieces, split by the 18 long edge that comes up to the

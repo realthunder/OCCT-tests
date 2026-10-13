@@ -1390,6 +1390,37 @@ tilted plane, and the flat face tilts with the top.
 
 ![arm_tilted_under_block_skew_r2](pictures/arm_tilted_under_block_skew_r2.png)
 
+### A fillet in two surfaces at a corner of two (`9735ff8875`, realthunder/FreeCAD#962)
+
+The fin flush with the block, its wall split 0.7 from the outer face. The
+split's foot is on the edge under the fin's wall, so that edge is two
+edges and its fillet two surfaces, the one at the vertex 0.7 long. With
+the block's top edge at radius 1 the two fillets' lines meet on the
+block's top 1 from the vertex, past the split's foot -- on the surface
+before the last, and a corner of two fillets is made of their last ones.
+Upstream refuses the pair. Before, the corner was made set back: both
+fillets stopped short, and a four-sided plate between them and the two
+faces beside, 0.10 of volume off. After, the two surfaces are one for the
+corner, as they are on the wall in one face: each fillet runs to the
+other, and a three-sided patch closes the corner.
+
+![fin_on_block_wall_piece_foot_and_top_r1](pictures/fin_on_block_wall_piece_foot_and_top_r1.png)
+
+The same piece with the fin's upright edge. That fillet is wider than the
+wall's piece at the vertex and lies on the far piece, where the two lines
+meet before the split. Before, the plate again, between the upright
+fillet's end and the block's side; after, the patch of two fillets.
+
+![fin_on_block_wall_piece_foot_and_upright_r1](pictures/fin_on_block_wall_piece_foot_and_upright_r1.png)
+
+#962's own: a slot's mouth, the floor's edge along the rib -- its piece
+at the mouth 0.69 long -- with the rib's upright edge, at radius 1.5.
+Refused upstream and before (the input is shown); after, the upright
+fillet coming down, the floor's running in under the rib, and the patch
+between them at the mouth.
+
+![issue962_mouth_y17.1_floor_and_upright_r1.5](pictures/issue962_mouth_y17.1_floor_and_upright_r1.5.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

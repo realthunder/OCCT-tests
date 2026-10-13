@@ -65,6 +65,7 @@ STAGES = {
     "sarm": ("afb7f305d0", "2ec760a1d3"),
     "srib": ("2ec760a1d3", "52a5c89410"),
     "s962zk": ("e79f700798", "0669daa0b6"),
+    "s962zl": ("5b5471ad11", "9735ff8875"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -460,6 +461,8 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
+    "fin_on_block_wall_piece_foot_and_upright_r1": _plane_at("y", 3, None, {"x": 5.0}),
     # the flat face under the block's wall, in the plane of the arm's top
     "issue962_e36_r2": _flat_near(38.5, 27.2, -3.75),
     "arm_on_tall_block_whole_r0.8": _flat_near(38.5, 27.2, -3.75),
@@ -640,6 +643,8 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "fin_on_block_wall_piece_foot_and_upright_r1": ("the fin's wall, its far piece", False),
+    "issue962_mouth_y17.1_floor_and_upright_r1.5": ("the slot's floor", False),
     "issue962_e36_r2": ("the flat face under the wall", False),
     "arm_on_tall_block_whole_r0.8": ("the flat face under the wall", False),
     "issue962_pocket_edge_r2": ("the slot's wall beyond the split", False),
@@ -880,6 +885,16 @@ CASES = {
         "srib", "p962", [((38.5, 13.7, 32.25), (38.5, 10.2, 32.25)),
                          ((38.5, 13.7, 32.25), (35.5, 13.7, 32.25))], 1.0, 11579.0926,
         (38.5, 13.7, 32.25), (0.5, 1, 0.7)),
+    "fin_on_block_wall_piece_foot_and_top_r1": (
+        "s962zl", "finwall", [((9.3, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 10, 5))], 1.0,
+        770.7360, (10, 3, 5), (1, 0.9, 0.8)),
+    "fin_on_block_wall_piece_foot_and_upright_r1": (
+        "s962zl", "finwall", [((9.3, 3, 5), (10, 3, 5)), ((10, 3, 5), (10, 3, 14))], 1.0,
+        770.3068, (10, 3, 5), (1, 0.9, 0.8)),
+    "issue962_mouth_y17.1_floor_and_upright_r1.5": (
+        "s962zl", "p962", [((49.308025, 17.1, 14), (50, 17.1, 14)),
+                           ((50, 17.1, 14), (50, 17.1, 22))], 1.5, 11578.2359,
+        (50, 17.1, 14), (1, -0.9, 0.8)),
     # seen from below: the face under the wall looks down
     "issue962_e36_r2": ("s962zk", "p962", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 2.0,
                         11584.0883, (38.5, 27.2, -3.75), (-0.35, 0.7, -1)),
@@ -897,6 +912,9 @@ STRICT = {
     "issue962_e36_r2": (1e-6, 1e-4),
     "arm_on_tall_block_whole_r0.8": (1e-6, 1e-4),
     "arm_tilted_under_block_skew_r2": (1e-6, 1e-4),
+    "fin_on_block_wall_piece_foot_and_top_r1": (2e-4, 1e-3),
+    "fin_on_block_wall_piece_foot_and_upright_r1": (2e-4, 1e-3),
+    "issue962_mouth_y17.1_floor_and_upright_r1.5": (2e-4, 1e-3),
 }
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
@@ -917,6 +935,12 @@ ZOOM = {
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "
+                                               "and the block's top edge on the side x=10",
+    "fin_on_block_wall_piece_foot_and_upright_r1": "the 0.7 piece of the edge under the fin's "
+                                                   "wall and the fin's upright edge",
+    "issue962_mouth_y17.1_floor_and_upright_r1.5": "the 0.69 piece of the floor's edge along "
+                                                   "the rib and the rib's upright edge",
     "slot_by_slope_floor_inline_r1": "the floor's on the wall, the side's under the slope",
     "slot_by_slope_inline_slope_r1": "the side's under the slope, the slope's on the wall",
     "slot_by_slope_slope_floor_r1": "the slope's on the wall, the floor's on the wall",

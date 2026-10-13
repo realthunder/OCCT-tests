@@ -2719,6 +2719,8 @@ piece of the wall, and the two fillets' lines meet 1 from the vertex, on
 the second: the corner of two fillets is made of their end surfaces
 (`TwoCorner : No intersection pc pc`, `fillets face to face on a face off
 the vertex`), and Compute runs again with the corner set back, a plate.
+(Made since, the two surfaces one: "A fillet in two surfaces at a corner
+of two".)
 
 ## A side stopped on a split in the plane of the face at end (realthunder/FreeCAD#962, 2026-10-13)
 
@@ -3039,11 +3041,11 @@ and V105:150,158, `Fillet` V105:152,183 and V118:169,177, from 1.8e-3).
 9500 valid, 176 invalid, 2566 refused.
 
 Open. The plate at the rib chain's bottom end, 0.1 of tolerance on
-both shapes. The fin wall's two pairs whose corner is set back where the
-refined shape's is not. (#962 `Fillet` E36 and `Chamfer` E33, the arm's
-edge that ends under the block's wall, with a plate over the arm's top
-that was loose and refused by BOP on both shapes, are made since: the
-next section.)
+both shapes. (#962 `Fillet` E36 and `Chamfer` E33, the arm's edge that
+ends under the block's wall, with a plate over the arm's top that was
+loose and refused by BOP on both shapes, and the fin wall's two pairs
+whose corner was set back where the refined shape's is not, are made
+since: the next two sections.)
 
 ## A ceiling under a wall at a fillet's end (realthunder/FreeCAD#962, 2026-10-13)
 
@@ -3124,6 +3126,111 @@ edges of the vertex: from 0.019 at 0.3 and 0.030 at 1 to 2.1e-7, or to
 1e-4 where a second fillet brings its own. No status changed: 2578 valid,
 29 invalid, 1314 refused; 9500, 176, 2566. Of the suite's 41 cases of this
 section, new or tightened, every one fails on the build before.
+## A fillet in two surfaces at a corner of two (realthunder/FreeCAD#962, 2026-10-13)
+
+The fin wall's two pairs the comparison with the refined shape left as
+set back plates (`mini_finwall` V11:13,15 and V11:15,26 at 1): the 0.7
+piece of the concave edge under the fin's wall, with the block's top edge
+and with the fin's upright edge. Valid, and 0.087 and 0.085 of volume off
+the refined shape's corner.
+
+The wall is in two coplanar pieces, split 0.7 from the outer face, and
+the split's foot is on the concave edge: the edge is two edges, and its
+fillet two surfaces, one for each. A corner of two fillets is made of
+their surfaces at the vertex. At a radius above 0.7 the two lines on the
+face the fillets share meet past the split's foot, on the surface before
+the last: with the top edge's fillet on the block's top, 1 from the
+vertex ("TwoCorner : No intersection pc pc"); with the upright edge's,
+which is wider than the wall's piece at the vertex and lies on the far
+piece, on that far piece ("fillets face to face on a face off the
+vertex"). Both were refused, and Compute made the corner again set back,
+with a plate.
+
+On the wall in one face the fillet is one surface, and the corner is the
+exact one of two fillets of opposite concavity: a patch between the one
+fillet cut where the lines meet, the other cut across from there to its
+end on an edge of the vertex, and the face beside.
+
+Fix `9735ff8875` (`PerformTwoCorner`). Where the lines do not meet, or the
+fillets share no face, and the fillet that ends on an edge of the vertex
+(OnDiff) has two surfaces or more, its last two are made one, if they are
+one: the same face on one side, coplanar pieces on the other with the
+split between them where the line of the one before the last stops, both
+lines straight, and that one's surface and curves, carried on as they
+are, passing through the last one's two ends. The surface before the last
+takes the last one's end on the common side and the last one goes. On the
+pieces' side, twice. First the line is shown on the piece at the vertex,
+to the last surface's end there: for fillets that meet on the face they
+both lie on whole (the block's top); when the corner is made the line
+ends on the split again and its piece beyond is put on the piece at the
+vertex and on the fillet, as a line over a split wall
+(`StoreLineOverSplit`), with the fillet's end and the cut of the edge it
+ends on. Else it is left on its own piece: the other fillet lies on that
+piece too, the lines meet on it short of the split, and the corner cuts
+the line there. A meeting within 1e-3 of the split is not taken -- a
+fillet as wide as the piece has its line along the split -- and whatever
+fails later leaves the two surfaces as they were.
+
+| pair, radius | before | now | refined |
+|--|--|--|--|
+| foot and top, 0.70001 / 0.71 / 0.8 | 770.3172 / 770.2787 / 770.5097, tolerance to 0.054 | 770.3472 / 770.3576 / 770.4593, 1e-4 | the same to 2e-6 |
+| foot and top, 1 / 1.5 / 2 | 770.6492 / 770.9980 / 772.5666 | 770.7360 / 771.7596 / 773.3126 | the same to 2e-6 |
+| foot and upright, 0.71 / 0.8 / 1 | 770.1107 / 770.1410 / 770.2217 | 770.1412 / 770.1846 / 770.3068 | to 6e-5 |
+| foot and upright, 1.5 / 2 | 770.5069 / 770.9153 | 770.7940 / 771.5958 | to 6e-5 |
+| the slot's floor edge and its end, 1 (`slot_split_both`) | 1131.4815 | 1131.5944 | the same |
+| #962's mouths, floor and upright, y=17.1, 0.8 / 1 / 1.5 | 11582.3841 / 11581.4006 / refused | 11582.4199 / 11581.4810 / 11578.2358 | 11582.4196 / 11581.4709 / 11578.2359 |
+| the same, y=20.3 | 11582.3841 / 11581.4006 / 11577.9994 | 11582.4251 / 11581.4804 / 11578.2701 | 11582.4196 / 11581.4709 / 11578.2359 |
+
+The foot's pair with the upright edge keeps the 6e-5 it has at radius
+0.3, where nothing is made one: the patch between the two fillets is a
+filling, and differs with the parameters of the faces it lies between.
+#962's mouths keep more, 0.034 at most: the upright edge's fillet is
+walked there, a B-spline where the refined shape has a cylinder, and the
+patch's area differs with it (2.919 for 2.903 at 1.5 on y=20.3; the
+upright fillet's own face has one area on both). At radius 0.7 itself,
+and up to 0.7001, the pair with the upright edge is as before (refused
+at 0.7, a plate above).
+
+| Case | What it covers |
+|------|----------------|
+| `fin_on_block_wall_piece_foot_and_top_r{0.70001,0.71,0.8,1,1.5,2}` | the 0.7 piece with the block's top edge: the refined shape's volume to 1e-5, no tolerance above 2e-4, BOP's check (new) |
+| `fin_on_block_wall_piece_foot_and_upright_r{0.71,0.8,1,1.5,2}` | with the fin's upright edge: to 2e-4 (radius 1 asked for 0.2 and no BOP check before; the others are new) |
+| `slot_split_both_floor_and_end_r1` | the slot's floor edge along the split wall with the floor's on the outer face: to 1e-4, tolerance 2e-4 (0.15 and 2e-3 before) |
+| `issue962_mouth_y{17.1,20.3}_floor_and_upright_r{0.8,1,1.5}` | the model's own: to 0.05, tolerance 2e-4 (0.2 and 2e-3 at radius 1 before; 0.8 and 1.5 are new, y=17.1 at 1.5 was refused) |
+
+The picture cases: `fin_on_block_wall_piece_foot_and_top_r1`,
+`fin_on_block_wall_piece_foot_and_upright_r1`,
+`issue962_mouth_y17.1_floor_and_upright_r1.5`.
+
+The sweeps, run on the fix without its 1e-3 rule, which only takes
+results back. Edge: nothing moved. Vertex: no status changed (9500 valid,
+176 invalid, 2566 refused), and 24 valid results moved, every one a set
+back plate at radius 1: the fin's two; six on the three slotted
+miniatures, the 0.7 piece of the floor's edge with the wall's upright
+edge and with the floor's edge on the outer face (V13:15,16 and
+V13:15,18), the refined shape's volume to 1.4e-5 at a tolerance of 1e-4
+for 4e-4 to 2e-3; and 16 on #962, eight on each input, at the four
+slots' mouths -- the floor's piece with the rib's upright edge and with
+the floor's edge on the outer face -- within 0.01 of the refined shape's
+where the plates were 0.07 and 0.09 off, at 1e-4 for 5e-4 and 6e-4.
+
+BOP's check. All 24 passed it as plates. Of the 14 looked at since --
+the `Chamfer` input's eight and six of the `Fillet`'s; the run was
+stopped there, and of the other ten the fin's two and three of the
+miniatures' were looked at by hand and pass -- three fail it now: "self
+intersecting face", the patch between the floor's piece and the floor's
+edge on the outer face (`Chamfer` V57:78,79 and V58:79,80, `Fillet`
+V64:86,87). The refined shape's result fails the same check at two of
+the mirror corners (`Chamfer` V49:68,69, `Fillet` V56:76,77), where the
+pieces pass. The patch is `GeomFill_ConstrainedFilling`'s on both, the
+one of "An edge's tolerance over its curves on the faces" above, and
+BOP's verdict on it turns with the parameters of the faces beside it.
+Not chased; the suite's #962 mouths are the pair with the upright edge,
+which passes.
+
+Not run on this fix: the two sweeps on its last state, the FreeCAD
+tests and the draft sweeps -- the box ran short of memory. The fix is not
+installed.
 ## Known broken (XFAIL)
 
 | Case | Symptom |
