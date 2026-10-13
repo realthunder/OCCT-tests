@@ -156,6 +156,30 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
     report(name, ok, expect == "xfail", detail)
 
 
+def exact_case(name, shape, edge_index, radius, kind):
+    """makeFillet(radius, [Edge<edge_index>]) is valid and makes no B-spline
+    face: the fillet is the exact surface -- `kind` faces more than the input
+    has, and as many B-spline faces as it."""
+    try:
+        def count(s, k):
+            return sum(1 for f in s.Faces if f.Surface.__class__.__name__ == k)
+        r = shape.makeFillet(radius, [shape.Edges[edge_index - 1]])
+        problems = []
+        if not r.isValid():
+            problems.append("invalid")
+        if count(r, "BSplineSurface") != count(shape, "BSplineSurface"):
+            problems.append("%d B-spline faces for %d" % (count(r, "BSplineSurface"),
+                                                          count(shape, "BSplineSurface")))
+        if count(r, kind) <= count(shape, kind):
+            problems.append("no %s face more" % kind)
+        ok = not problems
+        detail = "; ".join(problems) if problems else "vol=%.4f" % r.Volume
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    report(name, ok, False, detail)
+
+
 def nocrash_case(name, shape, edge_index, radius):
     """The fillet may fail, but must not take the process down; the input
     must be left as it was either way. A crash ends the run: the missing
@@ -1549,15 +1573,26 @@ for _r in (0.70001, 0.71, 0.8, 1.0, 1.5, 2.0):
     corner_case("fin_on_block_wall_piece_foot_and_top_r%g" % _r, fin_on_block(wall=True),
                 (10, 3, 5), _r, 1e-5, 2e-4, along=((-1, 0, 0), (0, 1, 0)))
 # #962's slots' mouths: the floor's edge along the rib, the rib's piece 0.69
-# (0.79) long, with the rib's upright edge. The same corner; the upright
-# edge's fillet is walked there, a B-spline where the refined shape has a
-# cylinder, and the patch between the two differs with it: 0.034 of volume
-# at most, where the set back plate was 0.24 off and, at y=17.1 and 1.5,
-# refused.
+# (0.79) long, with the rib's upright edge. The same corner. The mouths at
+# the high-y walls of their slots are the refined shape's; their mirror
+# images, these two among them, are 0.034 of volume off at most, where the
+# set back plate was 0.24 off and, at y=17.1 and 1.5, refused: the patch
+# between the two fillets is a filling, and differs with the parameters of
+# the faces beside it. (Not with the upright edge's fillet, which was
+# walked there and is the refined shape's cylinder now: README.md.)
 for y in (17.1, 20.3):
     for _r in (0.8, 1.0, 1.5):
         corner_case("issue962_mouth_y%g_floor_and_upright_r%g" % (y, _r), p2, (50, y, 14), _r,
                     0.05, 2e-4, along=((-1, 0, 0), (0, 0, 1)))
+# The rib's upright edge alone, first of a chain of five on a piece of the
+# wall 0.69 wide, and the hex pocket's mouth edge: wider than the piece,
+# they were walked, B-splines; the far piece's exact surface is taken for an
+# edge of a chain too now, a cylinder as on the wall in one face.
+_q2 = Part.read(os.path.join(MODELS, "issue962_pocket002.brep"))
+exact_case("issue962_mouth_upright_r1_cylinder", _q2,
+           edge_between(_q2, (50, 17.1, 14), (50, 17.1, 22)), 1.0, "Cylinder")
+exact_case("issue962_hex_mouth_edge_r0.8_cylinder", _q2,
+           edge_between(_q2, (38.8, 10.2, 24.424871), (38.8, 10.2, 19.575129)), 0.8, "Cylinder")
 
 # #962's rib, its top corner at (38.5,10.2,32.25): the wall under the top's
 # edge is in two pieces, split by the 18 long edge that comes up to the

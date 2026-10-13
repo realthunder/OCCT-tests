@@ -2924,7 +2924,7 @@ issue962_Fillet E67@0.3 ok:11584.04774:0.0001:73
 issue962_Fillet E67@0.8 ok:11583.50217:0.0001:73
 issue962_Fillet E67@2 EXC
 issue962_Fillet E68@0.3 ok:11584.04774:2.12e-07:73
-issue962_Fillet E68@0.8 ok:11583.50217:2.12e-07:73
+issue962_Fillet E68@0.8 ok:11583.50217:1.94e-05:73
 issue962_Fillet E68@2 EXC
 issue962_Fillet E69@0.3 ok:11584.04775:0.0001:73
 issue962_Fillet E69@0.8 ok:11583.50217:0.0001:73
@@ -3639,7 +3639,7 @@ mini_slot_bothsplit E15@0.8 ok:1131.373452:1e-06:14
 mini_slot_bothsplit E15@2 ok:1138.584073:1e-06:14
 mini_slot_bothsplit E16@0.3 ok:1129.826173:0.0001:13
 mini_slot_bothsplit E16@0.8 ok:1128.763893:0.0001:12
-mini_slot_bothsplit E16@2 ok:1122.274332:0.0001:12
+mini_slot_bothsplit E16@2 ok:1122.274334:0.0001:12
 mini_slot_bothsplit E17@0.3 ok:1130.193142:1.5e-07:13
 mini_slot_bothsplit E17@0.8 ok:1131.373452:1.5e-07:13
 mini_slot_bothsplit E17@2 ok:1138.584073:1.5e-07:13
@@ -3804,7 +3804,7 @@ mini_slot_split E15@0.8 ok:1131.373452:1.5e-07:13
 mini_slot_split E15@2 ok:1138.584073:1.5e-07:13
 mini_slot_split E16@0.3 ok:1129.826173:0.0001:12
 mini_slot_split E16@0.8 ok:1128.763893:0.0001:11
-mini_slot_split E16@2 ok:1122.274332:0.0001:11
+mini_slot_split E16@2 ok:1122.274334:0.0001:11
 mini_slot_split E17@0.3 ok:1130.193142:1.5e-07:12
 mini_slot_split E17@0.8 ok:1131.373452:1.5e-07:12
 mini_slot_split E17@2 ok:1138.584073:1.5e-07:12
@@ -3885,7 +3885,7 @@ mini_slotwall E15@0.8 ok:1131.373452:1.5e-07:13
 mini_slotwall E15@2 ok:1138.584073:1.5e-07:13
 mini_slotwall E16@0.3 ok:1129.826173:0.0001:12
 mini_slotwall E16@0.8 ok:1128.763893:0.0001:11
-mini_slotwall E16@2 ok:1122.274332:0.0001:11
+mini_slotwall E16@2 ok:1122.274334:0.0001:11
 mini_slotwall E17@0.3 ok:1130.193142:1.5e-07:12
 mini_slotwall E17@0.8 ok:1131.373452:1.5e-07:12
 mini_slotwall E17@2 ok:1138.584073:1.5e-07:12
