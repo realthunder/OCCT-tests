@@ -13,6 +13,9 @@
 #      TKF      a directory of OCCT libraries to load first (DYLD_LIBRARY_PATH /
 #               LD_LIBRARY_PATH): a rebuilt TKFillet, say, without installing it.
 #               Set inside RUN: macOS strips DYLD_* from a bash script's children.
+#      WORKER   the script run inside FreeCADCmd (default fsw.py; fsw_ref.py for
+#               the comparison with the refined shape, see README.md)
+#      TIMEOUT  seconds without output before a case is killed (default 120)
 import os, platform, select, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +25,8 @@ FCBUILD = os.environ.get("FCBUILD", os.path.join(
     FCAD, "build", "mac-relwithdebinfo-801" if MAC else "conda-relwithdebinfo-801"))
 RUN = os.environ.get("RUN", os.path.join(FCAD, ".conda", "run.sh"))
 FC = os.path.join(FCBUILD, "bin", "FreeCADCmd")
+WORKER = os.path.join(HERE, os.environ.get("WORKER", "fsw.py"))
+TIMEOUT = float(os.environ.get("TIMEOUT", "120"))
 
 mode, out = sys.argv[1], sys.argv[2]
 only = set(sys.argv[3:])
@@ -40,8 +45,8 @@ for name, path in shapes:
         continue
     done, total, finished = [], None, False
     while not finished and (total is None or len(done) < total):
-        env = dict(os.environ, SHAPE=path, MODE=mode, START=str(len(done)))
-        p = subprocess.Popen([RUN] + pre + [FC, os.path.join(HERE, "fsw.py")], env=env,
+        env = dict(os.environ, SHAPE=path, NAME=name, MODE=mode, START=str(len(done)))
+        p = subprocess.Popen([RUN] + pre + [FC, WORKER], env=env,
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              stdin=subprocess.DEVNULL)
         last, buf, why, trying = time.time(), b"", "CRASH", "?"
@@ -66,7 +71,7 @@ for name, path in shapes:
                     else:
                         continue
                     last = time.time()
-            if time.time() - last > 120:
+            if time.time() - last > TIMEOUT:
                 p.kill()
                 why = "TIMEOUT"
                 break

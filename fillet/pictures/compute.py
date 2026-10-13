@@ -34,7 +34,10 @@ def uv_outline(shape, pick):
             for e in w.childShapes():
                 if e.ShapeType != "Edge":
                     continue
-                c, a, b = f.curveOnSurface(e)[:3]
+                pc = f.curveOnSurface(e)
+                if pc is None:  # an invalid result: an edge with no pcurve on the face
+                    continue
+                c, a, b = pc[:3]
                 pts = [c.value(a + (b - a) * i / 24.0) for i in range(25)]
                 if e.Orientation == "Reversed":
                     pts.reverse()

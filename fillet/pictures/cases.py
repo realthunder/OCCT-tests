@@ -58,6 +58,10 @@ STAGES = {
     "s962zg": ("2ff60f1efd", "2bc692bfc4"),
     "s962zh": ("2bc692bfc4", "9d58debece"),
     "s962zi": ("9d58debece", "5052552dd6"),
+    "s962zj": ("5052552dd6", "6505747185"),
+    "s309": ("6505747185", "9c45825ba1"),
+    "s309b": ("9c45825ba1", "358d611f3f"),
+    "s474c": ("358d611f3f", "afb7f305d0"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -105,19 +109,39 @@ def _fin_wall():
     return _fin().generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
 
 
-def _arm_on_tall_block(split=True):
+def _arm_on_tall_block(split=True, near=False):
     # run_tests.py's arm fused to a block that goes on above it, the block's
-    # side y=27.2 two faces split at the arm's top (or one face)
+    # side y=27.2 two faces split at the arm's top (or one face); near: its
+    # side y=10.2 split there
     V = App.Vector
     pts = [V(17.356, -9.425, -9.75), V(38.5, 10.2, -9.75), V(38.5, 27.2, -9.75),
            V(10.898, 16.471, -9.75)]
     arm = Part.Face(Part.makePolygon(list(reversed(pts)) + [pts[-1]])).extrude(V(0, 0, 6))
     bp = [V(38.5, 27.2, -9.75), V(38.5, 10.2, -9.75), V(50, 10.2, -9.75), V(50, 27.2, -9.75)]
     s = Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 23.75)).fuse(arm)
-    if not split:
+    cuts = []
+    if split:
+        cuts.append(Part.LineSegment(V(38.5, 27.2, -3.75), V(50, 27.2, -3.75)).toShape())
+    if near:
+        cuts.append(Part.LineSegment(V(38.5, 10.2, -3.75), V(50, 10.2, -3.75)).toShape())
+    if not cuts:
         return s
-    cut = Part.LineSegment(V(38.5, 27.2, -3.75), V(50, 27.2, -3.75)).toShape()
-    return s.generalFuse([cut])[0].Solids[0]
+    return s.generalFuse(cuts)[0].Solids[0]
+
+
+def _arch_on_plate(split=False, R=10.0):
+    # run_tests.py's arch on a plate: a half cylinder on a plate as long as
+    # its diameter, the plate's ends tangent to it (and split under the
+    # arch's end face)
+    V = App.Vector
+    plate = Part.makeBox(12, 2 * R, 2, V(-10, -R, -2))
+    cyl = Part.makeCylinder(R, 2, V(0, 0, 0), V(1, 0, 0)).common(
+        Part.makeBox(2, 2 * R, R, V(0, -R, 0)))
+    s = plate.fuse(cyl).removeSplitter()
+    if split:
+        s = s.generalFuse([Part.LineSegment(V(0, y, -2), V(0, y, 0)).toShape()
+                           for y in (-R, R)])[0].Solids[0]
+    return s
 
 
 def _arm_on_block():
@@ -279,6 +303,8 @@ def _pocket_mouth():
 
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
+    "arch": _arch_on_plate,
+    "archsplit": lambda: _arch_on_plate(split=True),
     "slotwall": _slot_wall,
     "p962": _brep("issue962_pocket002.brep"),
     "fin": _fin,
@@ -286,6 +312,7 @@ SHAPES = {
     "armfoot": _arm_on_block,
     "armtall": _arm_on_tall_block,
     "armwhole": lambda: _arm_on_tall_block(split=False),
+    "armnear": lambda: _arm_on_tall_block(split=False, near=True),
     "p474": _brep("issue474_fillet003_base.brep"),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
@@ -338,6 +365,11 @@ UVFACE = {
     # the corner's cylinder, not a fillet of the same radius
     "boxcyl": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
                and abs(f.Surface.Radius - 2) < 1e-6 and abs(abs(f.Surface.Axis.z) - 1) < 1e-9),
+    # the arch's cylinder, which grows over the fillet's ends
+    "arch": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+             and abs(f.Surface.Radius - 10) < 1e-6),
+    "archsplit": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+                  and abs(f.Surface.Radius - 10) < 1e-6),
     # the slot's floor, where the fillet ends
     "slotwall": _plane_at("z", 5),
     # the slot's floor at e101's foot (y 13.7..17.1); for e50 see UVFACE_CASE
@@ -353,6 +385,8 @@ UVFACE = {
                 and f.BoundBox.isInside(App.Vector(38.5, 27.2, -3.76))),
     # the arm's top, which the fillet's end cuts
     "armwhole": _plane_at("z", -3.75),
+    # the arm's top, which grows over the fillet's end
+    "armnear": _plane_at("z", -3.75),
     # the corner's plate at edge 6's top
     "p474": _plate_near(-13, 0, 13),
     # the plate's side, whose outline ran up to the top and back down
@@ -407,6 +441,8 @@ UVFACE_CASE = {
     "issue962_rib_top_corner_r1": _plane_at("y", 10.2, {"z": 20.0}, {"x": 38.4}),
     # the rib's wall (y=13.7), its piece at the floor's corner, up to x=38.96
     "issue962_e52_r0.8": _plane_at("y", 13.7, None, {"x": 38.0}),
+    # the arm's top (z=-3.75), which grows over the fillet's end
+    "issue962_block_far_edge_over_arm_r2": _plane_at("z", -3.75, None, {"x": 38.6}),
     # the fin's outer face, as on the fin whose wall is one face
     "fin_on_block_wall_top_and_upright_r1": _plane_at("x", 10, {"z": 5.0 + 1e-6}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
@@ -456,6 +492,8 @@ UVFACE_CASE = {
 }
 NAMES = {
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
+    "arch": "a half cylinder r10, 2 thick, on a 12x20x2 plate whose ends are tangent to it",
+    "archsplit": "the arch on its plate, the plate's ends split under the arch's end face",
     "slotwall": "10x10x14 block, a slot down to z=5, the slot's wall two faces split 0.7 "
                 "from the outer face",
     "p962": "#962's Pocket002, the Fillet's input (a PartDesign body without Refine)",
@@ -465,6 +503,8 @@ NAMES = {
     "armtall": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 two faces "
                "split at the arm's top",
     "armwhole": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 one face",
+    "armnear": "the arm fused to an 11.5x17x23.75 block, the block's side y=10.2 two faces "
+               "split at the arm's top",
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
@@ -496,6 +536,8 @@ NAMES = {
 # shape -> the whole shape's view: (center, height)
 VIEW = {
     "boxcyl": ((4, 4, 5), 19.0),  # the box and cylinder span -2..10 on each axis
+    "arch": ((-4, 0, 3), 30.0),
+    "archsplit": ((-4, 0, 3), 30.0),
     "slotwall": ((5, 5, 7), 20.0),
     "p962": ((16, 4, 11), 62.0),
     "fin": ((5, 5, 7), 20.0),
@@ -503,6 +545,7 @@ VIEW = {
     "armfoot": ((30, 9, -6.75), 42.0),
     "armtall": ((30, 9, 2), 46.0),
     "armwhole": ((30, 9, 2), 46.0),
+    "armnear": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
@@ -523,6 +566,8 @@ VIEW = {
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
     "boxcyl": ("the cylinder face", True),
+    "arch": ("the arch's cylinder", False),
+    "archsplit": ("the arch's cylinder", False),
     "slotwall": ("the slot's floor", False),
     "p962": ("the face at the fillet's end", False),
     "fin": ("the fin's outer face", False),
@@ -530,6 +575,7 @@ UVLABEL = {
     "armfoot": ("the arm's bottom", False),
     "armtall": ("the corner's plate", False),
     "armwhole": ("the arm's top", False),
+    "armnear": ("the arm's top", False),
     "p474": ("the corner's plate", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
@@ -557,6 +603,7 @@ UVLABEL_CASE = {
     "issue962_rib_top_corner_r1": ("the rib's wall under the top's edge", False),
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
     "fin_on_block_wall_top_and_upright_r1": ("the fin's outer face", False),
+    "issue962_block_far_edge_over_arm_r2": ("the arm's top", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
@@ -763,6 +810,19 @@ CASES = {
     "fin_on_block_wall_top_and_upright_r1": (
         "s962zi", "finwall", [((10, 3, 5), (10, 10, 5)), ((10, 3, 5), (10, 3, 14))], 1.0,
         766.4705, (10, 3, 5), (1, 0.9, 0.8)),
+    "arm_on_tall_block_near_split_down_r2": (
+        "s962zj", "armnear", ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75)), 2.0, 8074.1204,
+        (38.5, 10.2, -3.75), (0.5, -1, 0.6)),
+    "issue962_block_far_edge_over_arm_r2": (
+        "s962zj", "p962", ((38.5, 27.2, -3.75), (38.5, 27.2, 14)), 2.0, 11569.2867,
+        (38.5, 27.2, -3.75), (-1, 1, 0.5)),
+    "arch_on_plate_foot_r0.8": ("s309", "arch", ((0, -10, 0), (0, 10, 0)), 0.8, 796.9055,
+                                (0, -10, 0), (-1, -0.8, 0.7)),
+    "arch_on_plate_split_foot_r0.8": ("s309b", "archsplit", ((0, -10, 0), (0, 10, 0)), 0.8,
+                                      796.9055, (0, -10, 0), (-1, -0.8, 0.7)),
+    "issue474_f002_wall_edge_r0.8": (
+        "s474c", "p474b", ((-3.803564356, 8.156770083, 11.0), (-3.803564356, 8.156770083, 0.0)),
+        0.8, 1937.9543, (-3.803564356, 8.156770083, 11.0), (0.9, -0.5, -0.3)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {

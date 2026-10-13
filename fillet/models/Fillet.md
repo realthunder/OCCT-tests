@@ -1237,6 +1237,84 @@ one face.
 
 ![fin_on_block_wall_top_and_upright_r1](pictures/fin_on_block_wall_top_and_upright_r1.png)
 
+### A side stopped on a split in the plane of the face at end (`6505747185`, realthunder/FreeCAD#962)
+
+#962's arm is lower than its block, and the block's sides are split at
+the arm's top: at each of the two vertices where arm and block meet, the
+split is an edge of the vertex, lying in the plane of the arm's top. A
+fillet that ends there with a side on the block's side -- the upright edge
+between arm and block, the block's own edge above the arm -- has its line
+stopped on the split. On the side in one face the line runs on past the
+vertex, and the fillet is cut by the arm's top alone, which is extended
+over the fillet's end. In pieces every face round the vertex was taken in
+turn, the fillet found short of the edge between the arm's top and the
+block's wall, and the end left to a plate.
+
+The miniature, the upright edge between arm and block: concave, the
+fillet adds material and stops at the arm's top. Before, a small patch at
+its end, drawn up into the corner of the top and the block's wall --
+valid, with a tolerance of 0.067, and BOP's check fails. After, a flat
+end: the arm's top has grown over it, the tab at its corner in the third
+row, up to the split, which the top shares with the side's upper piece
+from there.
+
+![arm_on_tall_block_near_split_down_r2](pictures/arm_on_tall_block_near_split_down_r2.png)
+
+The model's own, the block's edge above the arm at y=27.2. Upstream's
+plate is the folded one of "A corner plate folded to stay tangent",
+above, 1.8 of volume too much; the fork's, before, is smooth and dips
+into the arm's side below the top, 0.31 short, at a tolerance of 0.034.
+After, the fillet ends on the arm's top, a quarter round to its end.
+
+![issue962_block_far_edge_over_arm_r2](pictures/issue962_block_far_edge_over_arm_r2.png)
+
+### An arch on a plate (`9c45825ba1`, `358d611f3f`, realthunder/FreeCAD#309)
+
+A half cylinder standing on a plate as long as its diameter: the cylinder
+comes down to the plate's top where the plate ends, tangent to the end.
+The fillet of the edge at the arch's foot is cut at each end by the
+cylinder, which grows over the fillet's end down to the plate's top edge
+-- an edge that lies on the cylinder and is none of its face's. The end
+point's place on the cylinder was read off that edge's curve on the face;
+it has none, and the place was left at the surface's origin. Upstream's
+fault, and the fork's until now, on a body in one piece: the three
+results look alike, and the first two are 671 of volume for 797, with a
+vertex at a tolerance of 21. The third row shows it: the cylinder's
+outline in (u, v) is the arch's rectangle and stray pieces far from it,
+their ends open (red). After, the rectangle with a tongue at either foot,
+where the cylinder has grown over the fillet's ends.
+
+![arch_on_plate_foot_r0.8](pictures/arch_on_plate_foot_r0.8.png)
+
+The same with the plate's ends split under the arch's end face, as #309
+has them. The vertex has five edges there, and the cylinder with the
+end's two pieces passed for three tangent faces: the fillet was cut by
+the end's plane instead, a little off the point where its other side
+stops on the arch's circle. Invalid, the cylinder's wire open. The
+pieces of one face are no tangent faces now, and the cylinder is cut as on
+the end in one face.
+
+![arch_on_plate_split_foot_r0.8](pictures/arch_on_plate_split_foot_r0.8.png)
+
+### A fillet's last surface past the vertex (`afb7f305d0`, realthunder/FreeCAD#474)
+
+#474's ramp starts on a block, and the block's end wall is in two pieces,
+split at the level where the ramp starts. The upright edge between the
+wall and the block's side: the ramp rises along the side from the split's
+level, so the fillet's line on the side runs on a little past that level
+before it meets the ramp's edge. Two surfaces, the second past the
+vertex, on the wall's upper piece; on the wall in one face they are one,
+and the fillet is cut by the ramp.
+
+Before, as with upstream's code, the end is a plate, a point drawn up the
+wall's upper piece: valid, at a tolerance of 0.05, and BOP's check fails.
+The surface before the last takes the side's end over now and the last
+one goes; the split lies on the ramp's surface, its straight end, and the
+ramp alone is cut ("A side stopped on a split in the plane of the face at
+end", above). After, the fillet ends under the ramp.
+
+![issue474_f002_wall_edge_r0.8](pictures/issue474_f002_wall_edge_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

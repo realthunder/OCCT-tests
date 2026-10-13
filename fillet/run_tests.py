@@ -294,9 +294,13 @@ for name, a, b in (("e101", (50, 13.7, 22), (50, 13.7, 14)),
                    ("e105", (50, 23.7, 14), (50, 23.7, 22))):
     fillet_case("issue962_%s_r0.8" % name, p2, edge_between(p2, a, b), 0.8, "pass",
                 11580.7739)
+# (Edges 50 and 56 ended in a plate until 2026-10-13, at 11583.8075,
+# 11581.7204 and 11581.7068 with tolerances to 0.05; the arm's top alone is
+# cut since -- README.md, "A side stopped on a split in the plane of the
+# face at end" -- and they take the quarter round of their 17.75.)
 e50 = edge_between(p2, (38.5, 10.2, -3.75), (38.5, 10.2, 14))
-fillet_case("issue962_e50_r0.3", p2, e50, 0.3, "pass", 11583.8075)
-fillet_case("issue962_e50_r0.8", p2, e50, 0.8, "pass", 11581.7204, 0.05)
+fillet_case("issue962_e50_r0.3", p2, e50, 0.3, "pass", 11583.7984, 2e-4, vol_tol=1e-4, bop=True)
+fillet_case("issue962_e50_r0.8", p2, e50, 0.8, "pass", 11581.7266, 2e-4, vol_tol=1e-4, bop=True)
 # Edge 56, e50's mirror image across the block (y=27.2 for 10.2): its foot is
 # the five-face corner at (38.5,27.2,-3.75), filled by a plate held tangent to
 # the stripe, which missed its boundary by 0.09 and folded; the approximation
@@ -304,7 +308,7 @@ fillet_case("issue962_e50_r0.8", p2, e50, 0.8, "pass", 11581.7204, 0.05)
 # integrates to anything from 2.0 to 5.0 taken. Built again on positions
 # alone it takes what e50 takes.
 e56 = edge_between(p2, (38.5, 27.2, -3.75), (38.5, 27.2, 14))
-fillet_case("issue962_e56_r0.8", p2, e56, 0.8, "pass", 11581.7068, 0.05)
+fillet_case("issue962_e56_r0.8", p2, e56, 0.8, "pass", 11581.7266, 2e-4, vol_tol=1e-4, bop=True)
 # Edge 33, the arm's top on its side, ending at the corner (38.5,10.2,-3.75)
 # under e50. The plate's boundary on the block's side (y=10.2) is a projection
 # that came out running from the corner's far end to its near one, and was
@@ -925,15 +929,20 @@ for r in (0.1, 0.3):
     fillet_case("issue962_e36_r%g" % r, p2, e36, r, "pass")
 
 
-def arm_on_tall_block(split=True):
+def arm_on_tall_block(split=True, near=False):
+    """split: the block's side y=27.2 split at the arm's top; near: its side y=10.2"""
     pts = [V(17.356, -9.425, -9.75), V(38.5, 10.2, -9.75), V(38.5, 27.2, -9.75),
            V(10.898, 16.471, -9.75)]
     arm = Part.Face(Part.makePolygon(list(reversed(pts)) + [pts[-1]])).extrude(V(0, 0, 6))
     bp = [V(38.5, 27.2, -9.75), V(38.5, 10.2, -9.75), V(50, 10.2, -9.75), V(50, 27.2, -9.75)]
     s = Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 23.75)).fuse(arm)
+    cuts = []
     if split:
-        cut = Part.LineSegment(V(38.5, 27.2, -3.75), V(50, 27.2, -3.75)).toShape()
-        s = s.generalFuse([cut])[0].Solids[0]
+        cuts.append(Part.LineSegment(V(38.5, 27.2, -3.75), V(50, 27.2, -3.75)).toShape())
+    if near:
+        cuts.append(Part.LineSegment(V(38.5, 10.2, -3.75), V(50, 10.2, -3.75)).toShape())
+    if cuts:
+        s = s.generalFuse(cuts)[0].Solids[0]
     return s
 
 
@@ -1695,6 +1704,89 @@ fillet_case("issue962_refined_pocket_edge_mirror_r2", p2r, edge_between(p2r, *_m
 pair_case("issue962_chamfer_base_pocket_edge_mirror_r2", lambda: c2.copy(),
           [((-14.70667191, 4.895283573, -7.0), (-14.70667191, 4.895283573, -3.75))], 2.0,
           vol_tol=2e-3, max_tol=1e-5)
+
+# The arm on the taller block, the block's side split at the arm's top:
+# the edges at (38.5,10.2,-3.75) -- the upright one between arm and block
+# below it, concave, and the block's own above it -- and the block's edge
+# above the arm at (38.5,27.2,-3.75). Each ends at a vertex of four sharp
+# edges, its side on the block's face stopped on the split: an edge of the
+# vertex, lying in the plane of the arm's top. The loop over the faces at
+# end took every face round the vertex, found the fillet short of the edge
+# between the arm's top and the block's wall, and left the end to a plate:
+# valid, with tolerances of 3e-3 to 7e-2, volumes off by up to 0.3, and
+# BOP's check failing on the first from 0.8 on. The arm's top alone is cut
+# now, as on the side in one face (README.md).
+_near = lambda: arm_on_tall_block(split=False, near=True)
+for r in (0.3, 0.8, 2.0):
+    pair_case("arm_on_tall_block_near_split_down_r%g" % r, _near,
+              [((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))], r, vol_tol=1e-5, max_tol=2e-4)
+    pair_case("arm_on_tall_block_near_split_up_r%g" % r, _near,
+              [((38.5, 10.2, -3.75), (38.5, 10.2, 14))], r, vol_tol=1e-5, max_tol=2e-4)
+    pair_case("arm_on_tall_block_far_split_up_r%g" % r, arm_on_tall_block,
+              [((38.5, 27.2, -3.75), (38.5, 27.2, 14))], r, vol_tol=1e-5, max_tol=2e-4)
+# the model's own: edges 49, 50 and 56 of the fillet's base
+_p2 = lambda: Part.read(os.path.join(MODELS, "issue962_pocket002.brep"))
+pair_case("issue962_arm_upright_r0.8", _p2, [((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))], 0.8,
+          vol_tol=1e-4, max_tol=2e-4)
+pair_case("issue962_block_edge_over_arm_r2", _p2, [((38.5, 10.2, -3.75), (38.5, 10.2, 14))],
+          2.0, vol_tol=1e-4, max_tol=2e-4)
+pair_case("issue962_block_far_edge_over_arm_r2", _p2,
+          [((38.5, 27.2, -3.75), (38.5, 27.2, 14))], 2.0, vol_tol=1e-4, max_tol=2e-4)
+
+# An arch on a plate (#309): a half cylinder of radius R standing on a plate
+# as long as its diameter, so that the plate's ends are tangent to it. The
+# edge at the arch's foot, between its end face and the plate's top, ends
+# where the cylinder, tangent to the plate's end, comes down to the top.
+# The fillet's end is cut by the cylinder, which grows over it down to the
+# plate's top edge -- an edge that lies on the cylinder and is none of its
+# face. The end point's parameters on the cylinder were read off that
+# edge's curve on the face, and left as they stood when it has none, at
+# (0,0): upstream's fault, on the body in one piece. "Valid", with a vertex
+# at a tolerance of 21 (71 and 210 at R=50), a volume of 671 for 797, and
+# BOP's check failing. And with the plate's ends split under the arch's
+# end face, as #309 has them, the cylinder and the end's two pieces were
+# taken for three tangent faces, and the fillet cut by the end's plane
+# instead: invalid.
+def arch_on_plate(split=False, R=10.0):
+    plate = Part.makeBox(12, 2 * R, 2, V(-10, -R, -2))
+    cyl = Part.makeCylinder(R, 2, V(0, 0, 0), V(1, 0, 0)).common(
+        Part.makeBox(2, 2 * R, R, V(0, -R, 0)))
+    s = plate.fuse(cyl).removeSplitter()
+    if split:
+        s = s.generalFuse([Part.LineSegment(V(0, y, -2), V(0, y, 0)).toShape()
+                           for y in (-R, R)])[0].Solids[0]
+    return s
+
+
+for r, vol in ((0.3, 794.545534), (0.8, 796.905452), (2.0, 811.298183)):
+    aop = arch_on_plate()
+    fillet_case("arch_on_plate_foot_r%g" % r, aop, edge_between(aop, (0, -10, 0), (0, 10, 0)), r,
+                "pass", vol, 1e-5, vol_tol=1e-4, bop=True)
+    pair_case("arch_on_plate_split_foot_r%g" % r, lambda: arch_on_plate(split=True),
+              [((0, -10, 0), (0, 10, 0))], r, vol_tol=1e-5, max_tol=1e-5)
+# the model's own, edge 9, in pieces and refined
+s309 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue309_shape.brep"))
+s309r = s309.removeSplitter()
+for r, vol in ((0.3, 12765.2985), (0.8, 12777.1032), (2.0, 12849.1968)):
+    pair_case("issue309_arch_foot_r%g" % r, lambda: s309.copy(), [((0, -50, 0), (0, 50, 0))], r,
+              vol_tol=1e-3, max_tol=2e-4)
+    fillet_case("issue309_refined_arch_foot_r%g" % r, s309r,
+                edge_between(s309r, (0, -50, 0), (0, 50, 0)), r, "pass", vol, 2e-4, vol_tol=1e-3,
+                bop=True)
+
+# #474's Fillet002 input, edge 13: an upright edge of the block under the
+# ramp, 11 long. Its wall is in two pieces, split at the level where the
+# ramp starts, and the ramp rises from there along the other face: that
+# face's line runs on 0.027 past the split's level to the ramp's edge. Two
+# surfaces, the second past the vertex; the corner took the split for a
+# tangent edge and made a plate -- tolerance 0.05, BOP's check failing, the
+# volume 0.035 off at 0.8. On the wall in one face the two are one surface
+# and the fillet is cut by the ramp.
+_p474 = lambda: Part.read(os.path.join(MODELS, "issue474_fillet002_base.brep"))
+for r in (0.3, 0.8):
+    pair_case("issue474_f002_wall_edge_r%g" % r, _p474,
+              [((-3.803564356, 8.156770083, 11.0), (-3.803564356, 8.156770083, 0.0))], r,
+              vol_tol=1e-4, max_tol=2e-4)
 
 counts = {}
 for _, verdict, _ in results:

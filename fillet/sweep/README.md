@@ -43,8 +43,8 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `5052552dd6`, FreeCAD OcctFix `493032cbaf`,
-2026-10-13: edge 2575 ok, 32 BAD, 1314 EXC; vertex 9476 ok, 200 BAD, 2566
+`baseline/` is OCCT LinkVibe-801 `afb7f305d0`, FreeCAD OcctFix `493032cbaf`,
+2026-10-13: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
@@ -60,8 +60,9 @@ vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
 `726d9533c6` (edge the same, vertex 9386 / 201 / 2655), `f446ee4591`
 (edge the same, vertex 9411 / 201 / 2630), `2ff60f1efd` (edge the
 same, vertex 9435 / 200 / 2607), `2bc692bfc4` (edge 2567 / 32 / 1322,
-vertex 9463 / 200 / 2579) and `9d58debece` (edge 2575 / 32 / 1314,
-vertex 9475 / 201 / 2566), are in this file's history.
+vertex 9463 / 200 / 2579), `9d58debece` (edge 2575 / 32 / 1314,
+vertex 9475 / 201 / 2566) and `5052552dd6` (edge the same, vertex 9476 /
+200 / 2566), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -69,7 +70,11 @@ The invalid results, each tried again on the shape refined
 and E38 at 2, `Fillet001` E16 and E55 at 2; #309's E9; #474's `Fillet002`
 E4 at 2 and E11, `Fillet003` E2, E18, E49, E52, E56; #962's `Fillet` E6
 -- upstream's behaviour on that geometry, not the pieces'. The eight that
-were invalid only in pieces are fixed (../README.md, 2026-10-11).
+were invalid only in pieces are fixed (../README.md, 2026-10-11). #309's
+E9 (3) is made since `358d611f3f`, in pieces and refined -- the refined
+shape's result was valid by BRepCheck's leave and no more: the right
+surfaces, and a vertex at a tolerance of 100 (../README.md, 2026-10-13).
+29 are left.
 
 The vertex sweep's 290 at `f7464716c0` (`triage.py`): 181 invalid on the
 refined shape as well -- #273 (36), #309 (14), #474 (93), #631 (2), #962
@@ -77,18 +82,15 @@ refined shape as well -- #273 (36), #309 (14), #474 (93), #631 (2), #962
 and 86 valid there, invalid only in pieces. 83 of the 86 are fixed
 (../README.md, 2026-10-12) and `mini_finwall`'s V11:13,26 at 1 -- two
 fillets on the two pieces of a wall, one of them walked -- at `5052552dd6`
-(2026-10-13); the 2 left:
-
-| Shape | Vertices (cases) |
-|-------|------------------|
-| `issue309_shape` | V8 (2: edges 8 and 9 at a vertex of four sharp edges. The result on the refined shape passes BRepCheck and fails `check(True)`, like edge 9 alone, which is invalid on both: upstream's rather than the pieces') |
+(2026-10-13); and #309's two -- V8, edges 8 and 9, at 0.3 and 1 -- with
+its edge 9, at `358d611f3f`. None is left.
 
 The 23 with a split among their edges are the sweep's "all the edges of
 the vertex" where a split ends there: the builder leaves the split out, and
 the fillet is that of the vertex's other edges, which the refined shape
 has. 15 were invalid only in pieces after all -- three fillets at such a
-vertex -- and are fixed; the 8 left hold #309's edge 9, invalid on the
-refined shape as well. `triage.py` took them for `noedge` then; it fillets
+vertex -- and are fixed; the 8 left hold #309's edge 9, and are made with
+it at `358d611f3f`. `triage.py` took them for `noedge` then; it fillets
 the refined shape on the edges it has now, and says how many were splits.
 
     grep " BAD" baseline/vertex.txt > /tmp/bad.lst
@@ -122,8 +124,57 @@ turned invalid at `3ba0c94072`, pairs that are invalid on the refined
 shape as well (V36:52,80 and the like): 200 invalid results in all
 (../README.md), 201 at `9d58debece` -- `Fillet` V1:1,6 at 0.3, refused
 while its edge 1 was, invalid for its edge 6, which is invalid alone, on
-the refined shape too -- and 200 again at `5052552dd6`, the fin's pair
-above.
+the refined shape too -- 200 again at `5052552dd6`, the fin's pair
+above, and 176 at `358d611f3f`: the 24 with #309's edge 9, at its two
+ends.
+
+Valid in pieces, and the same? `fsw_ref.py` makes each case of a sweep
+twice, in pieces and on the shape refined, and runs Part's `check(True)`
+on both results; `refcmp.py` classes the pairs -- the same, the volume
+different, BOP's check failing on one or both, the tolerance more than
+ten times the refined shape's, and every other pair of statuses.
+
+    WORKER=fsw_ref.py TIMEOUT=400 SKIP=baseline/edge.txt ./drive.py edge /tmp/f_ref [shape ...]
+    ./refcmp.py /tmp/f_ref
+
+`SKIP` names a baseline whose refused cases are not run. Two fillets and
+two checks a case: several times a sweep's time, and #273's `Fillet001`
+alone over an hour under BOP's check.
+
+Run at `9d58debece`, the edge sweep on every shape but #273's
+`Fillet001`: 2300 results valid on both and the same; 179 valid on both
+and failing BOP's check on both, 112 of them #876's `Fillet001`, whose
+input fails it by itself; 25 invalid on both; and 28 that differ --
+
+| Results | What |
+|--------:|------|
+| 18 | #962's `Fillet` E49, E50, E56 and `Chamfer` E46, E47, E53: plates in pieces, tolerances of 3e-3 to 7e-2 for 1e-4, the volume off by up to 0.31, BOP's check failing on two. Exact at `6505747185` |
+| 3 | #309's E9: invalid in pieces; on the refined shape valid by BRepCheck with a vertex at tolerance 100 -- counted as invalid on both, above, until this run. Made on both at `9c45825ba1` and `358d611f3f` |
+| 2 | #474's `Fillet002` E13 at 0.3 and 0.8: a plate in pieces, tolerance 0.05 for 1.6e-5, BOP's check failing. Exact at `afb7f305d0` |
+| 2 | #474's `Fillet002` E4: at 0.3 loose on both and failing BOP's check in pieces, at 0.8 valid in pieces and invalid refined |
+| 3 | #962's `Chamfer` E12, E23, E27 at 2: volumes 0.03 to 0.08 apart at tight tolerances. The integration's, not the shapes': the fillet's face is the same on both to 1e-10, trimmed by a B-spline and parametrized the other way round, and its area comes out 107.9625 and 107.9723 |
+
+The vertex sweep on #962's two inputs, #309, #523 and the miniatures, at
+`9d58debece` and at `358d611f3f`:
+
+| Class | `9d58debece` | `358d611f3f` |
+|-------|-----:|-----:|
+| valid on both, the same | 4144 | 4203 |
+| valid on both, a split among the case's edges | 784 | 788 |
+| valid on both, the volume different | 97 | 83 |
+| valid on both, the tolerance over ten times the refined shape's | 34 | 10 |
+| valid on both, BOP's check failing in pieces only | 13 | 5 |
+| valid on both, BOP's check failing on both | 19 | 19 |
+| invalid in pieces, valid refined (16 with #309's edge 9, at tolerance 100 there; the fin's pair of `5052552dd6`) | 17 | 0 |
+| valid in pieces, invalid refined | 42 | 50 |
+| valid in pieces, refused refined | 8 | 8 |
+| invalid on both | 52 | 44 |
+| invalid in pieces, refused refined | 1 | 1 |
+
+What is left worse in pieces there: the 5 and the 10, pairs at a vertex
+on #962 and on the arm's miniatures (0.0036 for 5e-6 at most), and those
+of the 83 whose plate differs from the refined shape's exact corner
+(`mini_finwall` V11:13,15 and V11:15,26 at 1, ../README.md).
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".

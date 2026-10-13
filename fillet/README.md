@@ -2720,6 +2720,177 @@ the second: the corner of two fillets is made of their end surfaces
 (`TwoCorner : No intersection pc pc`, `fillets face to face on a face off
 the vertex`), and Compute runs again with the corner set back, a plate.
 
+## A side stopped on a split in the plane of the face at end (realthunder/FreeCAD#962, 2026-10-13)
+
+Found by a new comparison: the sweeps' results that are valid in pieces,
+each made again on the refined shape, with BOP's check on both
+(`sweep/README.md`, "Valid in pieces, and the same?"). Six edges of #962
+came out loose where the refined shape's fillet is exact.
+
+The arm meets the block at (38.5,10.2) and (38.5,27.2). The block goes on
+above the arm, and its sides y=10.2 and y=27.2 are split at the arm's top,
+z=-3.75: each split is an edge of the vertex there, and lies in the plane
+of the arm's top. Three edges end at those vertices with a side on the
+block's side -- the upright edge between arm and block at y=10.2, concave
+(edge 49; 46 on the chamfer's input), and the block's own two edges above
+the arm (50 and 56; 47 and 53). The line on the block's side stops on the
+split.
+
+On the side in one face the vertex has four edges; one side of the fillet
+ends on an edge of the vertex and the other runs on past it in its face.
+`IntersectMoreCorner` cuts the fillet by the one face at end, beside the
+first side -- the arm's top -- and extends that face over the fillet's end
+to the section. In pieces both sides end on edges of the vertex, five of
+them, and the loop over the faces at end (`PerformIntersectionAtEnd`)
+took the three faces round the vertex in turn: the arm's top, the block's
+wall above it, the side's other piece. The fillet stops short of the edge
+between the first two, and the end was left to a plate
+(`PerformMoreThreeCorner`): valid, with tolerances of 3e-3 to 7e-2, the
+volume off by up to 0.31 at radius 2, and BOP's check failing on the
+upright edge at 0.8 and 1. Edges 50 and 56 at 0.8 are the plates of "A
+corner plate folded to stay tangent" above, held to 0.05 since.
+
+Fix `6505747185`: a side that ends on a split of its own face, an edge of
+the vertex lying in the plane of the face at end beside the other side,
+has that face alone cut. The fillet's end is its section in that plane,
+from the other side's edge to the split; the face grows over it up to the
+split from the vertex to the line's end, which it shares with the side's
+piece beyond from then on -- the loop's case of one intersection, with
+the split itself for the edge that is kept. The faces between are left
+as they are.
+
+Not where a wall stands on that face in the way of the section
+(`SectionCrossesEndFace`, "A fillet's end under a wall that runs on past
+the corner"): the arm's other upright edge, at y=27.2 (edge 36; 33),
+convex, whose end runs under the block's wall. That end is a plate on the
+side in one face as well; the rule taken there made it invalid.
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_tall_block_near_split_down_r{0.3,0.8,2}` | the arm on the taller block, the block's side y=10.2 split at the arm's top: the upright edge between them -- the refined shape's volume to 1e-5, no tolerance above 2e-4, BOP's check (a plate: tolerances 3.6e-3 to 6.7e-2, BOP's check failing at 0.8 and 2) |
+| `arm_on_tall_block_near_split_up_r{0.3,0.8,2}` | the block's edge above the arm there (a plate: 3.5e-3 to 2.3e-2, the volume 0.14 short at 2) |
+| `arm_on_tall_block_far_split_up_r{0.3,0.8,2}` | the block's edge above the arm at y=27.2, that side split (a plate: 5.2e-3 to 3.4e-2, 0.31 short at 2) |
+| `issue962_arm_upright_r0.8`, `issue962_block_edge_over_arm_r2`, `issue962_block_far_edge_over_arm_r2` | the model's own, edges 49, 50 and 56 |
+| `issue962_e50_r{0.3,0.8}`, `issue962_e56_r0.8` | held to the quarter round's volume, 2e-4 and BOP's check now (they were held to 0.05) |
+
+The picture cases: `arm_on_tall_block_near_split_down_r2`,
+`issue962_block_far_edge_over_arm_r2`.
+
+Open. The arm's upright edge at y=27.2 (#962's edge 36; 33): a plate,
+with tolerances of 0.02 to 0.06, and BOP's check fails -- in pieces and
+on the refined shape alike. Its fillet's end lies under the block's wall:
+the cut needs a face of its own there, in the plane of the arm's top and
+facing down.
+
+## An arch on a plate: a point on a face without its edge, and pieces taken for tangent faces (realthunder/FreeCAD#309, 2026-10-13)
+
+#309's arch stands on a plate as long as its diameter: the cylinder comes
+down to the plate's top where the plate ends, tangent to the end. The edge
+at the arch's foot, between its end face and the plate's top, 100 long,
+was invalid at every radius in pieces -- and on the refined shape valid by
+BRepCheck with a vertex at a tolerance of 100 and an edge at 69, BOP's
+check failing. It was counted with upstream's (`sweep/README.md`) until
+the comparison of the section above showed the refined result's surfaces
+to be the right ones.
+
+At each end three faces meet the fillet round the vertex: the arch's end
+face, the fillet's own; the cylinder; and the plate's end, tangent to the
+cylinder along the edge between them. The cut is the cylinder's. The
+fillet's side on the end face stops on the arch's circle, a little short
+of the vertex (0.04 at radius 2); the other stops on the top's edge with
+the plate's end, an edge in line with the tangent one: two edges in line,
+one face of intersection (`PerformIntersectionAtEnd`). The cylinder grows
+over the fillet's end down to the top's edge, which lies on it and is
+none of its face's edges.
+
+Two faults.
+
+The parameters of the end's two points on the face that is cut are read
+from the pcurves of their edges on it. For an edge that has none the
+surface is extended and the point projected on it -- a B-spline or a
+Bezier; on any other surface the parameters were left as they stood,
+(0,0) on the first face. On #309 the cut came out right all the same and
+the point took the distance for its tolerance; on the miniature the cut
+is wrong: valid, 671 of volume for 797 at radius 0.8, a vertex at a
+tolerance of 21. Upstream's fault, on a body in one piece. Fix
+`9c45825ba1`: the point is projected on the surface as it is, and brought
+into the face's range on a periodic one.
+
+In pieces the plate's end is two faces, split under the arch's end face,
+and the vertex has five edges. Two tangent faces in a row and a third
+are a case of their own there (pro15368): the two are passed over as one
+and the third is cut. The cylinder, tangent to the end's first piece, and
+that piece, "tangent" to the second across the split, passed for it, and
+the fillet was cut by the end's plane -- 0.04 off the point on the arch's
+circle: an end section at a tolerance of 0.042, and the cylinder's wire
+left open. Fix `358d611f3f`: the pieces of one face are no tangent faces
+there. The vertex is one of four edges, two of them in line, the face
+between them in pieces ("A corner of five edges, two of them in line"),
+and the cylinder is cut.
+
+| Case | What it covers |
+|------|----------------|
+| `arch_on_plate_foot_r{0.3,0.8,2}` | a half cylinder of radius 10 on a plate 20 long, in one piece: the edge at its foot -- the volume taken, no tolerance above 1e-5, BOP's check (valid at 747, 671 and 809 for 795, 797 and 811, tolerances of 15 to 21: upstream's) |
+| `arch_on_plate_split_foot_r{0.3,0.8,2}` | the same with the plate's ends split under the arch's end face: the refined shape's volume to 1e-5 (invalid) |
+| `issue309_refined_arch_foot_r{0.3,0.8,2}` | the model's edge 9 on the refined shape: no tolerance above 2e-4, BOP's check (a vertex at 100) |
+| `issue309_arch_foot_r{0.3,0.8,2}` | in pieces: the refined shape's volume to 1e-3 (invalid) |
+
+The picture cases: `arch_on_plate_foot_r0.8`,
+`arch_on_plate_split_foot_r0.8`.
+
+The sweeps, this section and the one above. Edge: #309's E9
+invalid at the three radii, valid; 18 valid results moved to the refined
+shape's -- #962's six edges, tolerances of 3e-3 to 7e-2 down to 1e-4; and
+the plate's top edges at its ends on #309 (E23, E24, at 0.3 and 0.8) the
+same volume with a face less. 2578 valid, 29 invalid, 1314 refused.
+Vertex: 24 invalid results valid, every case with #309's edge 9 at its
+two ends; 84 valid results with #962's six edges moved to the exact
+volume at 1e-4; 28 of #309 a face less. 9500 valid, 176 invalid, 2566
+refused. Nothing lost on either.
+
+## A fillet's last surface past the vertex, on its face's next piece (realthunder/FreeCAD#474, 2026-10-13)
+
+The comparison's one edge left: #474's Fillet002 input, edge 13, an
+upright edge of the block under the ramp, between the block's end wall
+and its side. The wall is in two pieces, split at the level where the
+ramp starts. The ramp rises from there along the side, and the side's
+top edge with it: the fillet's line on the side runs on 0.027 past the
+split's level (radius 0.3) before it meets the ramp's edge. A fillet of
+two planes is cut where a line leaves its face -- two surfaces, the second
+from the split's level to the ramp's edge, on the wall's upper piece. On
+the wall in one face they are one.
+
+When a fillet has more surfaces than edges, the loop over the faces at
+end (`PerformIntersectionAtEnd`) asks whether an edge beside the spine is
+a tangent one. If the surface before the last ends on such an edge on
+both sides, the last one is dropped; if on one, the end is a plate
+(`PerformMoreThreeCorner`). The split passed for the tangent edge, the
+surface before the last ends on it on the wall's side alone, and the end
+was a plate: a tolerance of 0.05 for the refined shape's 1.6e-5, BOP's
+check failing, 0.035 of volume off at radius 0.8.
+
+Fix `afb7f305d0`. Where the last surface lies on the next coplanar piece
+of one of the fillet's faces, past a split that is an edge of the vertex,
+and its other side ends on an edge of the vertex, the surface before it
+takes that side's end over and the last one goes: one surface, whose side
+on the wall stops on the split -- what the corner would cut off the line
+on the upper piece anyway. And the rule of "A side stopped on a split in
+the plane of the face at end" takes a split that lies on the surface of
+the face at end, a plane or not: the ramp is a B-spline surface, the
+split its straight end. The ramp alone is cut, as on the wall in one face.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f002_wall_edge_r{0.3,0.8}` | #474's Fillet002 input, edge 13: the refined shape's volume to 1e-4, no tolerance above 2e-4, BOP's check (a plate: tolerance 0.05, BOP's check failing) |
+
+The picture case: `issue474_f002_wall_edge_r0.8`.
+
+The sweeps. Edge: the edge's two results moved to the refined shape's,
+tolerance 0.05 down to 1e-4; 2578 valid, 29 invalid, 1314 refused.
+Vertex: 12 valid results with it, at its two ends, the same way (0.05 and
+0.065 at radius 1); 9500 valid, 176 invalid, 2566 refused. Nothing else
+moved.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
