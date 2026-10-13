@@ -1315,6 +1315,21 @@ end", above). After, the fillet ends under the ramp.
 
 ![issue474_f002_wall_edge_r0.8](pictures/issue474_f002_wall_edge_r0.8.png)
 
+### A line carried over a split to the pivot of two fillets (`2ec760a1d3`)
+
+An arm fused to a block as tall: their tops are one plane in two faces.
+The block's top edge and the upright edge between arm and block: on the
+top in one face the top edge's fillet runs on past the block to the arm's
+top edge, where the upright edge's fillet ends too, and the two are cut
+by one another along one curve. In pieces its line on the top stops on
+the split, short of that edge, and the corner was a plate: before, the
+small patch between the two fillets, at a tolerance of 0.012. The line is
+carried over the split to the arm's edge now; after, the two fillets meet
+in one curve, and the arm's top, in the third row, has lost its corner to
+the fillet as far as the line runs on it.
+
+![arm_on_block_far_z-3.75_upright_and_block_r1](pictures/arm_on_block_far_z-3.75_upright_and_block_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

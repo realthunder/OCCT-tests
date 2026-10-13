@@ -2891,6 +2891,58 @@ Vertex: 12 valid results with it, at its two ends, the same way (0.05 and
 0.065 at radius 1); 9500 valid, 176 invalid, 2566 refused. Nothing else
 moved.
 
+## A line carried over a split to the pivot of two fillets (2026-10-13)
+
+The same comparison on the vertex sweep: the arm fused to a block as
+tall, their tops (and bottoms) one plane in two faces, split along
+x=38.5. At (38.5,27.2) the block's top edge along y=27.2 with the upright
+edge between arm and block -- a plate, with tolerances of 3.6e-3 at radius
+0.3 and 1.2e-2 at 1 for the refined shape's 5e-6 and 1.7e-5, the volume
+0.074 off at 1 (`mini_armblock2` V7:9,11 and V8:10,11, `mini_ab_r3`
+V9:12,20 and V10:14,20).
+
+Two fillets at a vertex are cut by one another
+(`PerformTwoCornerbyInter`) when their lines on the sides away from the
+face they share end on one edge, the pivot: here the arm's top edge with
+its side, which the upright edge's fillet ends on, and which the top
+edge's line on the top reaches 0.77 past the block (radius 0.3). In
+pieces that line stops on the split between the block's top and the
+arm's, short of the pivot: "fillets are not on the same arc", and the
+corner went to the plate.
+
+Fix `2ec760a1d3`: the line that stops on a split of its face, when the
+other fillet's edge is an edge of the piece beyond the split and of the
+other fillet's face, is carried over the split to that edge for the cut
+-- its face the piece beyond, its end on the pivot, as it runs on the face
+in one piece. Then it ends on the split again; its piece from there to
+the pivot is put on the piece beyond and on its own fillet
+(`StoreLineOverSplit`, as "Two fillets on the two pieces of a wall" does
+on the shared side), and the pivot is cut where the line ends on it. A
+straight line on a cylinder or a plane, which goes on past its end as it
+is.
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_block_far_z{-9.75,-3.75}_upright_and_block_r{0.3,1}` | the pair at the arm's top and at its bottom: the refined shape's volume to 1e-5, no tolerance above 2e-4, BOP's check (a plate: 3.6e-3 and 1.2e-2, 0.074 of volume off at 1) |
+
+The picture case: `arm_on_block_far_z-3.75_upright_and_block_r1`.
+
+The sweeps. Edge: nothing moved. Vertex: 20 valid results
+moved, none lost. The miniatures' 8 -- the pair at either end of the
+upright edge, at 0.3 and 1 -- to the refined shape's volume at 1e-4. On
+#962 the rib's top corner at y=10.2, its two top edges (`Chamfer`
+V41:99,103 and V65:154,158, `Fillet` V45:110,114 and V72:173,177), the
+same way, from 3.7e-4 and 1.2e-3; and the arm's top edge with its upright
+edge at y=27.2 (`Chamfer` V11:33,34, `Fillet` V16:36,37), whose other
+corner is still the plate of the upright edge alone: the volume within
+1e-3 of the refined shape's, 0.07 off at radius 1 before. 9500 valid, 176
+invalid, 2566 refused.
+
+Open. #962's rib top corners (`Chamfer` V74:103,114 and V89:127,163, the
+`Fillet` input's V83 and V102) are plates the same way, 3.7e-3 for
+1.3e-5 at radius 0.3: there the pivot itself is in two pieces in line, a
+split's foot between them, and both lines pass the first.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -2900,13 +2952,18 @@ moved.
 ## Pictures
 
 `models/pictures/<case>.png` shows, for each case a fix turned from failing
-to passing, three results side by side -- upstream's `TKFillet` files at the
-fork's base (`91be8c4c71`), with the files of other toolkits a fix changed
+to passing, three results side by side -- upstream's `TKFillet` files at
+`91be8c4c71`, with the files of other toolkits a fix changed
 (`UPSTREAM_EXTRA` in `pictures/cases.py`), the fork just before the fix, the
 fork now --
 each whole and zoomed on the fillet's end. `models/Fillet.md` walks
 through them. `pictures/make_pictures.sh` makes them again, on Linux or
 macOS; add a case to `pictures/cases.py`, with its stage, to picture it.
+(`91be8c4c71` is not the fork's base, as this section said until
+2026-10-13: the branch stands on upstream 8.0.1, `b8f597c677`, 60 commits
+later. Two of those touch TKFillet -- `9825547d15`, the solid's
+reconstruction made reentrant, and `cffb2852ba`, crashes in StartSol --
+and the pictures' first column is without them.)
 
 ## Layout
 

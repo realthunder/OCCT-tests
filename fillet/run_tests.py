@@ -1788,6 +1788,21 @@ for r in (0.3, 0.8):
               [((-3.803564356, 8.156770083, 11.0), (-3.803564356, 8.156770083, 0.0))], r,
               vol_tol=1e-4, max_tol=2e-4)
 
+# The arm on the block, both as tall: their tops (and bottoms) are one
+# plane in two faces, split along x=38.5. At (38.5,27.2) the block's top
+# edge along y=27.2 with the upright edge between arm and block: the top
+# edge's fillet has its line on the top stopped on the split, 0.77 short of
+# the arm's top edge, which the upright edge's fillet ends on -- the pivot
+# both end on when the top is one face, where the two are cut by one
+# another. "Fillets are not on the same arc": a plate, tolerances of 3.6e-3
+# and 1.2e-2, the volume 0.074 off at radius 1. The line is carried over
+# the split to the pivot now (README.md).
+for z, zo in ((-9.75, -3.75), (-3.75, -9.75)):
+    for r in (0.3, 1.0):
+        pair_case("arm_on_block_far_z%g_upright_and_block_r%g" % (z, r), arm_on_block,
+                  [((38.5, 27.2, z), (38.5, 27.2, zo)), ((38.5, 27.2, z), (50, 27.2, z))], r,
+                  vol_tol=1e-5, max_tol=2e-4)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

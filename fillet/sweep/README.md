@@ -43,7 +43,7 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `afb7f305d0`, FreeCAD OcctFix `493032cbaf`,
+`baseline/` is OCCT LinkVibe-801 `2ec760a1d3`, FreeCAD OcctFix `493032cbaf`,
 2026-10-13: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
@@ -61,8 +61,9 @@ vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
 (edge the same, vertex 9411 / 201 / 2630), `2ff60f1efd` (edge the
 same, vertex 9435 / 200 / 2607), `2bc692bfc4` (edge 2567 / 32 / 1322,
 vertex 9463 / 200 / 2579), `9d58debece` (edge 2575 / 32 / 1314,
-vertex 9475 / 201 / 2566) and `5052552dd6` (edge the same, vertex 9476 /
-200 / 2566), are in this file's history.
+vertex 9475 / 201 / 2566), `5052552dd6` (edge the same, vertex 9476 /
+200 / 2566) and `afb7f305d0` (edge 2578 / 29 / 1314, vertex 9500 / 176 /
+2566, the counts of today's), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's
@@ -174,7 +175,10 @@ The vertex sweep on #962's two inputs, #309, #523 and the miniatures, at
 What is left worse in pieces there: the 5 and the 10, pairs at a vertex
 on #962 and on the arm's miniatures (0.0036 for 5e-6 at most), and those
 of the 83 whose plate differs from the refined shape's exact corner
-(`mini_finwall` V11:13,15 and V11:15,26 at 1, ../README.md).
+(`mini_finwall` V11:13,15 and V11:15,26 at 1, ../README.md). The
+miniatures' four of the 10, and 16 of the 83, are the refined shape's at
+`2ec760a1d3` (../README.md, "A line carried over a split to the pivot of
+two fillets").
 
 A purged or misnamed input reads `MISSING` and its cases are not run: check
 that both runs have every shape before reading "all the same".

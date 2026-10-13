@@ -62,12 +62,14 @@ STAGES = {
     "s309": ("6505747185", "9c45825ba1"),
     "s309b": ("9c45825ba1", "358d611f3f"),
     "s474c": ("358d611f3f", "afb7f305d0"),
+    "sarm": ("afb7f305d0", "2ec760a1d3"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
     "s962d": "TKFillet TKGeomAlgo",
 }
-# Upstream: the toolkit's files that differ from the fork, at the fork's base --
+# Upstream: the toolkit's files that differ from the fork, at 91be8c4c71 (an
+# upstream commit 60 before 8.0.1, b8f597c677, which the branch stands on) --
 # TKFillet's all, and of the other toolkits only the files a fix of these
 # changed (the fork's TKGeomAlgo differs from upstream's in more than that).
 UPSTREAM = "91be8c4c71"
@@ -443,6 +445,8 @@ UVFACE_CASE = {
     "issue962_e52_r0.8": _plane_at("y", 13.7, None, {"x": 38.0}),
     # the arm's top (z=-3.75), which grows over the fillet's end
     "issue962_block_far_edge_over_arm_r2": _plane_at("z", -3.75, None, {"x": 38.6}),
+    # the arm's top, the piece of the top beyond the split
+    "arm_on_block_far_z-3.75_upright_and_block_r1": _plane_at("z", -3.75, None, {"x": 38.5}),
     # the fin's outer face, as on the fin whose wall is one face
     "fin_on_block_wall_top_and_upright_r1": _plane_at("x", 10, {"z": 5.0 + 1e-6}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
@@ -604,6 +608,7 @@ UVLABEL_CASE = {
     "issue962_rib_top_r0.8": ("the rib's wall, its second piece", False),
     "fin_on_block_wall_top_and_upright_r1": ("the fin's outer face", False),
     "issue962_block_far_edge_over_arm_r2": ("the arm's top", False),
+    "arm_on_block_far_z-3.75_upright_and_block_r1": ("the arm's top", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
@@ -823,6 +828,10 @@ CASES = {
     "issue474_f002_wall_edge_r0.8": (
         "s474c", "p474b", ((-3.803564356, 8.156770083, 11.0), (-3.803564356, 8.156770083, 0.0)),
         0.8, 1937.9543, (-3.803564356, 8.156770083, 11.0), (0.9, -0.5, -0.3)),
+    "arm_on_block_far_z-3.75_upright_and_block_r1": (
+        "sarm", "armfoot", [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)),
+                            ((38.5, 27.2, -3.75), (50, 27.2, -3.75))], 1.0, 4600.9495,
+        (38.5, 27.2, -3.75), (-0.3, 1, 0.6)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -865,6 +874,8 @@ EDGES = {
                                      "concave edge between fin and block, at (10,3,5)",
     "fin_on_block_wall_top_and_upright_r1": "the block's top edge and the fin's upright edge "
                                             "on the side x=10, the fin's wall split 0.7 from it",
+    "arm_on_block_far_z-3.75_upright_and_block_r1": "the upright edge between arm and block "
+                                                    "and the block's top edge from it, at y=27.2",
 }
 
 
