@@ -146,12 +146,20 @@ C++ symbol as any.
 
 `symbols.py`, given FreeCAD's libraries for users, counts what each
 imports that only the fork exports (`fork_only.txt`). On 2026-10-13
-there were 7, in `Part.so`, `PartGui.so` and `Import.so`: the fork's
-`BRepTools_ShapeSet::Add`, `BinTools_ShapeSet::SetOmitPCurvesOnPlane`
-and `GeomTools_Curve2dSet::SetMerging` (the last two inline until
-`e38b0e262d`, when they wrote into members upstream's classes do not
-have), and four functions of `STEPCAFControl_Reader`. Until those are
-reached the same way, FreeCAD does not load with upstream's OCCT.
+there were 7, in `Part.so`, `PartGui.so` and `Import.so`. Six have a
+C function now (`fece1a32c7`): four of `STEPCAFControl_Reader` for the
+streamed STEP read, `BinTools_ShapeSet_SetOmitPCurvesOnPlane` and
+`GeomTools_Curve2dSet_SetMerging`. The seventh, the fork's own
+`BRepTools_ShapeSet::Add`, is gone: `AddGeometry` names the shape's own
+geometry for `SetStableBytes`, and a client calls upstream's `Add`
+(`stable_add.cpp` writes a box and one face of it both ways, the same
+bytes). FreeCAD's modules import none now.
+
+What this does not make of a FreeCAD built against the fork is one that
+behaves with upstream's library as one built against upstream would: it
+still runs the fork's inline functions (a flag written where upstream
+has unused bytes, a bit of a shape's state upstream ignores). It loads,
+and what it asks of the fork it does without.
 
 ## After a change here
 
