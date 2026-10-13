@@ -200,6 +200,52 @@ on upstream's DLLs -- and built here with clang afterwards: `layouts.py`
 77673 missing, 225 added (219 before: the six names); `thaw.cpp` finds
 the six by name.
 
+An inline function of a header is the third way in, and the one no list
+of FreeCAD's calls shows: it is compiled into the client, and a function
+of the fork's it calls by name is the client's import, whether or not the
+client ever gets there. `TopoDS_LockedShape`'s constructor was one. It
+counted the refusals (`Raised()`, what FreeCAD reads to tell that an
+algorithm was refused a frozen input and made an error message of it)
+through `raisedCounter()`, exported; and the tolerance setters of
+`BRep_TVertex`, `BRep_TEdge` and `BRep_TFace`, inline as upstream's are,
+raise one. A client that set a tolerance on a TShape imported the
+counter: FreeCAD's `Part_tests_run` did, the last of its binaries to
+import anything of the fork's alone.
+
+Since `9671c1f4a2` the count is behind the common allocator.
+`NCollection_ForkState`, an abstract class in a header, is what the
+fork's TKernel makes `NCollection_BaseAllocator::CommonBaseAllocator()`
+of; an inline function asks that function, which upstream's library has
+too, for it with `dynamic_cast` -- null with upstream's -- and goes on by
+virtual calls, which are no symbols of the client's. It is the rule for a
+class's state ("behind an allocator", above) for state that belongs to
+no object. Not two bodies for the constructor, one counting in the
+library and one not in a client: which copy of an inline function runs
+is the loader's to say wherever the copies are shared, and a count that
+held in one build would be lost in another. Here every copy does the
+same, and the library answers.
+
+So: an inline function of a header the fork changes calls nothing the
+fork exports by name. The installed headers were read for it on
+2026-10-13, and only the `SHOW_TOPO_SHAPE` debugging macro of
+`TopTools.hxx` does. A member upstream has inline and the fork has out
+of line is another matter and still an import of the client that calls
+it (`BRepAlgo_Loop::CutEdges`, `BinTools_ShapeSet::IsOmitPCurvesOnPlane`
+and `IsStableBytes`); FreeCAD calls none.
+
+Measured with MSVC on the Windows box: `TopoDS_LockedShape` and
+`NCollection_BaseAllocator` laid out as upstream's, none of conda-forge's
+50073 exported symbols missing, no binary of FreeCAD's -- the test
+binaries with them, 34 that import OCCT -- importing a symbol only the
+fork exports, and FreeCAD's test of it
+(`ImmutableShapeTest.aRefusalRaisedByAnInlineSetterIsCounted`: a refusal
+raised by the test binary's own copy of the setter and one raised inside
+the library both counted, a write that changes nothing not, another
+thread's count its own) passing on the fork's DLLs and skipped on
+upstream's, where the binary now loads. Not yet run with clang or gcc:
+whether `dynamic_cast` finds the class across libraries there is the
+thing to see.
+
 What this does not make of a FreeCAD built against the fork is one that
 behaves with upstream's library as one built against upstream would: it
 still runs the fork's inline functions (a flag written where upstream
