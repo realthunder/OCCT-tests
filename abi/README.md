@@ -33,7 +33,7 @@ the fork:
 | `BRepTools_ShapeSet` 528 -> 704, `BinTools_ShapeSet` 528 -> 608, `TopTools_ShapeSet` (every member 8 on), `GeomTools_Curve2dSet` 56 -> 144 | the crash above | `e38b0e262d` |
 | `ChFiDS_FilSpine` 1168 -> 1296 | | `c602dc457e` |
 | `BRepAlgo_Loop` 512 -> 624, one map changed for another kind | | `d929c938a9` |
-| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88`, then `a23e0824af` for MSVC as well; `373f7dd01c` gives the query back as `BRep_Builder::IsCache` |
+| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88`, then `a23e0824af` for MSVC as well; the query is `BRep_Builder_IsCache`, a C function (`102e86e44e`) |
 
 Now: no symbol missing (the fork adds 217), no record differing, on
 macOS (clang, libc++). On Linux (gcc 16, libstdc++; 2026-10-13, the same
@@ -121,15 +121,37 @@ of a class of its own, the representation's class and a mark beside it
 (`Cache<BRep_CurveOnSurface>` in `BRep_Builder.cxx`), made where the
 representation is made and asked for with `dynamic_cast`. Its dynamic
 type is the representation's, so nothing else needs to know;
-`BRep_Builder::IsCache` answers for a caller outside (`iscache.cpp` is
-the smallest use: a frozen edge given a pcurve on a new surface). Where
-the state is one bit about an object the library makes itself, this
-moves nothing on any compiler.
+`BRep_Builder_IsCache`, a C function, answers for a caller outside
+(`iscache.cpp` is the smallest use: a frozen edge given a pcurve on a new
+surface). Where the state is one bit about an object the library makes
+itself, this moves nothing on any compiler.
 
 The checks here run with clang. What MSVC lays out differently is a
 base's unused bytes, as above: the flags in the unused bytes of
 `TopTools_ShapeSet` and `BRepTools_ShapeSet` are in the class's own, after
 its own last member, and are there with MSVC too.
+
+## The other direction: a client of the fork with upstream's library
+
+FreeCAD is built against the fork and should still load where the
+libraries are upstream's. A function of the fork it calls by its C++
+name is a symbol upstream's library does not have: the loader refuses
+the whole library. So what FreeCAD needs of the fork is a C function,
+declared `extern "C" Standard_EXPORT` beside the class it belongs to,
+and FreeCAD looks it up by name at run time (`dlsym`, `GetProcAddress`;
+`Part::lookUpTKFillet`, `Part::lookUpTKBRep`) and does without where it
+is not there: `ChFi3d_SetPlateG0FallbackRatio`, `BRepFilletAPI_SetSetback`,
+`BRep_Builder_IsCache`. Not a static member function, which is as much a
+C++ symbol as any.
+
+`symbols.py`, given FreeCAD's libraries for users, counts what each
+imports that only the fork exports (`fork_only.txt`). On 2026-10-13
+there were 7, in `Part.so`, `PartGui.so` and `Import.so`: the fork's
+`BRepTools_ShapeSet::Add`, `BinTools_ShapeSet::SetOmitPCurvesOnPlane`
+and `GeomTools_Curve2dSet::SetMerging` (the last two inline until
+`e38b0e262d`, when they wrote into members upstream's classes do not
+have), and four functions of `STEPCAFControl_Reader`. Until those are
+reached the same way, FreeCAD does not load with upstream's OCCT.
 
 ## After a change here
 

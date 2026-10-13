@@ -7,6 +7,12 @@ longer loads (README.md). Then, for each user binary named -- a library or a
 Python extension built against upstream -- the OCCT symbols it imports that
 the fork does not export.
 
+For a user built against the fork -- FreeCAD's own libraries -- the other
+direction is counted too: the symbols it imports that only the fork exports.
+Each is a reason it does not load with upstream's OCCT; a function of the
+fork that such a user needs is a C function it looks up at run time
+(README.md). They are written to fork_only.txt.
+
 The missing ones are written, demangled, to missing.txt in the current
 directory. Exit status 1 when a strong symbol is missing or a user imports
 one the fork lacks. A weak one alone does not fail: it is an inline function
@@ -85,14 +91,19 @@ def main():
         missing += ["%s weak   %s" % (tk, n) for n in demangle(gone_w)]
     print("upstream exports %d symbols; the fork lacks %d (%d strong) and adds %d" % (
         nup, len(missing), bad, nadd))
+    fork_only = []
     for user in sys.argv[3:]:
         und = undefined(user)
         lost = {n for n in und if n in uall and n not in fall}
-        print("%-50s imports %4d of OCCT's, %d not in the fork" % (
-            os.path.basename(user)[:50], len({n for n in und if n in uall or n in fall}),
-            len(lost)))
+        only = {n for n in und if n in fall and n not in uall}
+        print("%-44s imports %4d of OCCT's, %d not in the fork, %d only in the fork" % (
+            os.path.basename(user)[:44], len({n for n in und if n in uall or n in fall}),
+            len(lost), len(only)))
         missing += ["%s imports %s" % (os.path.basename(user), n) for n in demangle(lost)]
+        fork_only += ["%s imports %s" % (os.path.basename(user), n) for n in demangle(only)]
         bad += len(lost)
+    with open("fork_only.txt", "w") as out:
+        out.write("".join(m + "\n" for m in fork_only))
     with open("missing.txt", "w") as out:
         out.write("".join(m + "\n" for m in missing))
     return 1 if bad else 0
