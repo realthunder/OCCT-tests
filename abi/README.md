@@ -33,9 +33,9 @@ the fork:
 | `BRepTools_ShapeSet` 528 -> 704, `BinTools_ShapeSet` 528 -> 608, `TopTools_ShapeSet` (every member 8 on), `GeomTools_Curve2dSet` 56 -> 144 | the crash above | `e38b0e262d` |
 | `ChFiDS_FilSpine` 1168 -> 1296 | | `c602dc457e` |
 | `BRepAlgo_Loop` 512 -> 624, one map changed for another kind | | `d929c938a9` |
-| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88` (not with MSVC, see below) |
+| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88`, then `a23e0824af` for MSVC as well |
 
-Now: no symbol missing (the fork adds 203), no record differing, on
+Now: no symbol missing (the fork adds 217), no record differing, on
 macOS. The libraries of the development environment that import OCCT
 (SMESH's, netgen's, ifcopenshell's) lack none of the symbols they import.
 
@@ -105,13 +105,23 @@ option is off". Accessors of such state are functions of the library,
 not inline.
 
 `BRep_CurveRepresentation` and `BRep_PointRepresentation` have no
-collection and no unused bytes of their own. Their flag is declared
-before upstream's members: with the Itanium C++ ABI (Linux, macOS) it
+collection and no unused bytes of their own, and what the fork wanted of
+them was one flag: this representation is a cache, given to a frozen edge
+or vertex after it was frozen. A flag declared before upstream's members
 lands in the four bytes their base, `Standard_Transient`, ends with
-unused. MSVC does not give a base's unused bytes to a derived class, so
-on Windows these 16 classes are still 8 bytes larger than upstream's.
-Making them equal there means telling a cache from the class of the
-representation instead of from a flag in it; not done.
+unused -- with the Itanium C++ ABI (Linux, macOS); MSVC does not give a
+base's unused bytes to a derived class. So there is no flag: a cache is
+of a class of its own, the representation's class and a mark beside it
+(`Cache<BRep_CurveOnSurface>` in `BRep_Builder.cxx`), made where the
+representation is made and asked for with `dynamic_cast`. Its dynamic
+type is the representation's, so nothing else needs to know. Where the
+state is one bit about an object the library makes itself, this moves
+nothing on any compiler.
+
+The checks here run with clang. What MSVC lays out differently is a
+base's unused bytes, as above: the flags in the unused bytes of
+`TopTools_ShapeSet` and `BRepTools_ShapeSet` are in the class's own, after
+its own last member, and are there with MSVC too.
 
 ## After a change here
 
