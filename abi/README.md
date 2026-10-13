@@ -33,10 +33,14 @@ the fork:
 | `BRepTools_ShapeSet` 528 -> 704, `BinTools_ShapeSet` 528 -> 608, `TopTools_ShapeSet` (every member 8 on), `GeomTools_Curve2dSet` 56 -> 144 | the crash above | `e38b0e262d` |
 | `ChFiDS_FilSpine` 1168 -> 1296 | | `c602dc457e` |
 | `BRepAlgo_Loop` 512 -> 624, one map changed for another kind | | `d929c938a9` |
-| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88`, then `a23e0824af` for MSVC as well |
+| `BRep_CurveRepresentation`, `BRep_PointRepresentation` and the 14 classes derived from them, 8 larger each | | `15bcce7c88`, then `a23e0824af` for MSVC as well; `373f7dd01c` gives the query back as `BRep_Builder::IsCache` |
 
 Now: no symbol missing (the fork adds 217), no record differing, on
-macOS. The libraries of the development environment that import OCCT
+macOS (clang, libc++). On Linux (gcc 16, libstdc++; 2026-10-13, the same
+commits): upstream exports 83784 there, none strong missing and one weak,
+a piece of `std::sort` instantiated for a comparison; no record
+differing, where the headers before these fixes give the same eight
+breaks at libstdc++'s sizes (`BRepTools_ShapeSet` 528 -> 760). The libraries of the development environment that import OCCT
 (SMESH's, netgen's, ifcopenshell's) lack none of the symbols they import.
 
 ## The checks
@@ -62,7 +66,9 @@ headers the fork changed since `BASE` (default `b8f597c677`) once with
 each include directory, with clang's `-fdump-record-layouts`, and reports
 each record whose size differs or where a member of upstream's is not
 where it was (`BREAK`), and each member the fork added without that
-(`fits`). Both exit 1 on a finding.
+(`fits`). Both exit 1 on a finding; `symbols.py` not for a weak symbol
+alone, an inline function or a template's instance the client has its
+own of.
 
 Neither sees a virtual function added to an upstream class, or put in
 another place among its virtual functions, which moves every entry of
@@ -114,9 +120,11 @@ base's unused bytes to a derived class. So there is no flag: a cache is
 of a class of its own, the representation's class and a mark beside it
 (`Cache<BRep_CurveOnSurface>` in `BRep_Builder.cxx`), made where the
 representation is made and asked for with `dynamic_cast`. Its dynamic
-type is the representation's, so nothing else needs to know. Where the
-state is one bit about an object the library makes itself, this moves
-nothing on any compiler.
+type is the representation's, so nothing else needs to know;
+`BRep_Builder::IsCache` answers for a caller outside (`iscache.cpp` is
+the smallest use: a frozen edge given a pcurve on a new surface). Where
+the state is one bit about an object the library makes itself, this
+moves nothing on any compiler.
 
 The checks here run with clang. What MSVC lays out differently is a
 base's unused bytes, as above: the flags in the unused bytes of

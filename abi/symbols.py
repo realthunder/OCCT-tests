@@ -8,7 +8,11 @@ Python extension built against upstream -- the OCCT symbols it imports that
 the fork does not export.
 
 The missing ones are written, demangled, to missing.txt in the current
-directory. Exit status 1 when there are any.
+directory. Exit status 1 when a strong symbol is missing or a user imports
+one the fork lacks. A weak one alone does not fail: it is an inline function
+or a template's instance that this build of upstream happened to keep and
+this build of the fork did not (with gcc, a piece of std::sort for a
+comparison the fork no longer makes), and a client that uses it has its own.
 """
 import glob
 import os
@@ -66,7 +70,7 @@ def main():
     fd = {tk: defined(fork[tk]) for tk in ud}
     uall = set().union(*[s | w for s, w in ud.values()])
     fall = set().union(*[s | w for s, w in fd.values()])
-    nup = nadd = 0
+    nup = nadd = bad = 0
     missing = []
     for tk in ud:
         (us, uw), (fs, fw) = ud[tk], fd[tk]
@@ -74,12 +78,13 @@ def main():
         gone_s, gone_w, added = us - f, uw - f, f - us - uw
         nup += len(us | uw)
         nadd += len(added)
+        bad += len(gone_s)
         if gone_s or gone_w:
             print("%-14s missing: %d strong, %d weak" % (tk, len(gone_s), len(gone_w)))
         missing += ["%s strong %s" % (tk, n) for n in demangle(gone_s)]
         missing += ["%s weak   %s" % (tk, n) for n in demangle(gone_w)]
-    print("upstream exports %d symbols; the fork lacks %d and adds %d" % (nup, len(missing), nadd))
-    bad = len(missing)
+    print("upstream exports %d symbols; the fork lacks %d (%d strong) and adds %d" % (
+        nup, len(missing), bad, nadd))
     for user in sys.argv[3:]:
         und = undefined(user)
         lost = {n for n in und if n in uall and n not in fall}

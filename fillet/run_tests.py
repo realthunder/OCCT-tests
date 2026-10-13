@@ -1545,16 +1545,22 @@ for tag, mirror in (("", False), ("_mirror", True)):
     sg = -1 if mirror else 1
     mouth_corner("pocket_by_split%s_corner" % tag, lambda m=mirror: pocket_by_split(m),
                  (sg * 5.3, 0, 3), (sg * 5.3, 0, 7), (sg * 8, 0, 3), (sg * 5.3, 2, 3), 5e-2)
-# One of the hexagon's sixteen is not put to BOP's check: the filling of the
-# top corner's side and inner edges at 0.3, a three-sided patch with a point
+# Two of the hexagon's sixteen are not put to BOP's check: the filling of
+# the top corner's side and inner edges, a three-sided patch with a point
 # for its fourth side, is called self-intersecting there and is not at the
 # bottom corner, its mirror image -- the same outline to the last digit, no
-# fold in either (the refined shape's is passed as well).
+# fold in either (the refined shape's is passed as well). At 0.3 with clang
+# and libc++ on macOS; at 1 with gcc and libstdc++ on Linux, where 0.3
+# passes (2026-10-13). The patch is GeomFill_ConstrainedFilling's, made from
+# the same three boundaries each time; its degrees, and with them the
+# check's verdict, follow the last digits (README.md, "An edge's tolerance
+# over its curves on the faces").
 for tag, z, zo, zs in (("top", 24.4248711, 19.5751289, 26.8497422),
                        ("bottom", 19.5751289, 24.4248711, 17.1502578)):
     mouth_corner("issue962_hex_mouth_%s" % tag, lambda: p2.copy(), (38.8, 10.2, z),
                  (38.8, 10.2, zo), (43, 10.2, zs), (38.8, 11.7, z), 5e-2,
-                 no_bop=("issue962_hex_mouth_top_side_and_inner_r0.3",))
+                 no_bop=("issue962_hex_mouth_top_side_and_inner_r0.3",
+                         "issue962_hex_mouth_top_side_and_inner_r1"))
 
 # The hexagon's side edge alone at radius 1: its fillet's line crosses the
 # split 0.23 before the corner, where the pocket's next wall cuts the fillet
