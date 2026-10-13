@@ -2938,10 +2938,111 @@ corner is still the plate of the upright edge alone: the volume within
 1e-3 of the refined shape's, 0.07 off at radius 1 before. 9500 valid, 176
 invalid, 2566 refused.
 
-Open. #962's rib top corners (`Chamfer` V74:103,114 and V89:127,163, the
-`Fillet` input's V83 and V102) are plates the same way, 3.7e-3 for
+The rib top corners of #962 (`Chamfer` V74:103,114 and V89:127,163, the
+`Fillet` input's V83 and V102) were plates the same way, 3.7e-3 for
 1.3e-5 at radius 0.3: there the pivot itself is in two pieces in line, a
-split's foot between them, and both lines pass the first.
+split's foot between them. The next section.
+
+## The pivot of two fillets in two pieces (realthunder/FreeCAD#962, 2026-10-13)
+
+The rib's top corners on #962, the last pairs the comparison with the
+refined shape left loose: at (38.5,13.7,32.25) the top's edge with the
+rib's slope and its edge with the wall beside it, y=13.7 -- a plate,
+3.7e-3 of tolerance at radius 0.3 for the refined shape's 1.3e-5, the
+volume 0.003 off, and 0.1 off at radius 1 (`Chamfer` V74:103,114 and
+V89:127,163, the `Fillet` input's twins).
+
+The wall is in two pieces, split 0.46 from the corner, and the split's
+foot is on the slope's edge with the wall. That edge is the pivot, the
+edge both fillets end on, and it is in two pieces itself: the first 0.52
+long, dropping 0.24 on the way. The slope's fillet ends on the first
+piece, 0.07 from the vertex. The wall's fillet has its line on the wall
+0.3 below the top or more -- under the first piece's end: on the wall in
+one face it runs on 0.57 past the corner to the slope's edge, and the two
+fillets are cut by one another there (`PerformTwoCornerbyInter`). In
+pieces the line ended where the fillet's edge does, in the middle of the
+wall's first piece, on no edge at all: no pivot, and the corner went to
+the plate.
+
+Fix `52a5c89410`, in two parts. The line carried over a split to the pivot
+(`2ec760a1d3`) was one that stops on the split; a line that ends in its
+face short of the split, straight on, is carried the same way, the split
+the first one of its face it crosses. And the pivot it is carried to may
+be the second piece of the edge the other fillet ends on: an edge of the
+piece of the wall beyond the split and of the other fillet's face, which
+goes on, tangent, from the first piece's other end, the split's foot
+(`ChFi3d_PivotInTwoPieces`). `PerformTwoCornerbyInter` then has the two
+fillets' points on two edges, where it sent every such corner to the
+plate ("fillets are not on the same arc"): the two pieces are one pivot,
+the piece at the vertex, with the far point at its parameter on that
+piece's curve, past its end. The cut itself needs no more -- the wider
+fillet is cut by the other's face to its own point on the edge, an edge
+of that face whichever piece it is.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_rib_top_{near,far}_r{0.3,0.8,1}` | the pair at the rib's two top corners beside the split walls, y=13.7 and y=17.1: the refined shape's volume to 1e-4, no tolerance above 2e-4, BOP's check (a plate: 3.7e-3, the volume 0.003 off at 0.3 and 0.1 at 1) |
+
+The picture case: `issue962_rib_top_near_r1`.
+
+## An edge's tolerance over its curves on the faces (realthunder/FreeCAD#962, 2026-10-13)
+
+The pairs the comparison left valid on both shapes with BOP's check
+failing only in pieces, five of them, all on #962.
+
+One is a tolerance. The pocket's mouth, the wall's edge with the circle
+of the cone below it, radius 1 (`Fillet` V8:10,14): "invalid curve on
+surface". The two fillets are cut by one another along a curve whose ends
+are put on the points known on each of them, and the curve is farthest
+off the wall's fillet a little inside its end: 2.51e-6 at 0.003 of it for
+2.18e-6 at the end. The builder's last pass (`BRepLib::SameParameter`)
+gives an edge the largest distance at its samples and a twentieth more,
+2.29e-6 here; BOP's check looks for the largest distance. On the refined
+shape the same margin held by chance, 7.32e-6 for 7.63e-6 -- upstream's
+fault, and no matter of pieces. Fix `b72e581675`: after that pass an edge
+the fillet made takes the largest distance of its curves on the faces of
+the result when that is more than its tolerance, looked for as BOP's
+check does (`BRepLib_CheckCurveOnSurface`), its vertices with it. Only
+for a curve or a curve on a surface that is not a line or a conic, and
+never an edge of the input. That search on every edge cost the suite 9%
+and the vertex sweep a quarter of its time; the distance is taken at ten
+times the samples first and followed to its peak, and only an edge that
+comes out within a fiftieth of its tolerance, or over it, is searched.
+That costs nothing that shows (90.3 s for 90.3).
+
+Two are one plate. The rib's chain at its bottom end, (38.5,17.1,14),
+radius 1 (`Chamfer` V35:73,74, `Fillet` V37:81,82): a plate with a
+tolerance of 0.1 on the refined shape as well, where BOP's check happens
+to pass. Not a matter of pieces; the plate is the fault.
+
+Two are one patch. The hex pocket's mouth, the mouth's edge with the
+pocket's upright edge, of opposite concavity (`Fillet` V48:67,120 at 0.3,
+V51:70,126 at 1): "self-intersecting face", the three-sided patch
+between the two fillets. It is made by the same code from the same three
+boundaries on both shapes (`GeomFill_ConstrainedFilling`); what differs
+is the block's top, a plane with other axes once refined, and with it the
+patch's degrees -- 8 by 5 in 16 by 18 poles for 6 by 8 in 7 by 16 -- while
+its edges, its area to 2e-4 and its angles to the faces beside it (0 on
+the plane, up to 8 deg on a fillet, on both) are the same. Left as it is.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_pocket_wall_and_cone_r1` | the pocket's pair: BOP's check, no tolerance above 1e-4, the refined shape's volume to 2e-3 ("invalid curve on surface") |
+
+The sweeps. Edge: nothing moved. Vertex: 12 valid results
+moved, none lost, all on #962 and all from a plate to the refined
+shape's volume at a tolerance of 1e-4: the rib's top corners at y=13.7
+and y=17.1 at radius 0.3 and 1 (`Chamfer` V74:103,114 and V89:127,163,
+`Fillet` V83:114,132 and V102:146,183, from 3.7e-3 and 1.2e-2), and at
+radius 1 the same corner at the rib's other walls (`Chamfer` V92:133,163
+and V105:150,158, `Fillet` V105:152,183 and V118:169,177, from 1.8e-3).
+9500 valid, 176 invalid, 2566 refused.
+
+Open. The plate at the rib chain's bottom end, 0.1 of tolerance on
+both shapes. #962 `Fillet` E36 and `Chamfer` E33, the arm's edge that
+ends under the block's wall (a plate over the arm's top, loose and
+refused by BOP on both shapes). The fin wall's two pairs whose corner is
+set back where the refined shape's is not.
 
 ## Known broken (XFAIL)
 

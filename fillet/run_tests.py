@@ -1803,6 +1803,39 @@ for z, zo in ((-9.75, -3.75), (-3.75, -9.75)):
                   [((38.5, 27.2, z), (38.5, 27.2, zo)), ((38.5, 27.2, z), (50, 27.2, z))], r,
                   vol_tol=1e-5, max_tol=2e-4)
 
+# The pocket's mouth on #962: the wall's edge with the circle of the cone
+# below it, radius 1. The two fillets are cut by one another along a curve
+# whose ends are put on the points known on each of them, and the curve is
+# farthest off the wall's fillet a little inside its end: 2.51e-6 at 0.003
+# of it for 2.18e-6 at the end. The edge's tolerance, the largest distance
+# at the samples and a twentieth more, did not cover that, and BOP's check
+# called the curve invalid -- on the block in pieces; on the refined one
+# the same margin held by chance (7.32e-6 for 7.63e-6). The edges the
+# fillet makes cover their curves on the faces now (README.md).
+pair_case("issue962_pocket_wall_and_cone_r1",
+          lambda: Part.read(os.path.join(MODELS, "issue962_pocket002.brep")),
+          [((-10.68613441, -11.22748999, -5.8), (-14.70667191, 4.895283573, -5.8)),
+           ((-10.68613441, -11.22748999, -5.8), (-10.68613441, -11.22748999, -3.75))], 1.0,
+          vol_tol=2e-3, max_tol=1e-4)
+
+# The rib's top corners on #962: the top with the rib's slope and with the
+# wall beside it, at (38.5,13.7,32.25) and its twin at y=17.1. The wall is
+# in two pieces, split 0.46 from the corner, and the split's foot is on the
+# slope's edge with the wall: that edge, the pivot both fillets end on, is
+# in two pieces itself, the first 0.52 long and dropping 0.24. The wall's
+# fillet has its line 0.3 below the top (and more): under the first piece's
+# end, across the split, to the second piece. It ended where the fillet's
+# edge does, in the wall's face, with no edge to end on -- a plate, 3.7e-3
+# of tolerance and 0.003 of volume off at radius 0.3, 0.1 at 1. The line is
+# carried over the split to the pivot's second piece, and the two pieces
+# are one pivot (README.md).
+for nm, y, yo in (("near", 13.7, 10.2), ("far", 17.1, 20.3)):
+    for r in (0.3, 0.8, 1.0):
+        pair_case("issue962_rib_top_%s_r%g" % (nm, r),
+                  lambda: Part.read(os.path.join(MODELS, "issue962_pocket002.brep")),
+                  [((38.5, y, 32.25), (38.5, yo, 32.25)), ((38.5, y, 32.25), (35.5, y, 32.25))],
+                  r, vol_tol=1e-4, max_tol=2e-4)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

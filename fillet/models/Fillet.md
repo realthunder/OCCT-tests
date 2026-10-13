@@ -1330,6 +1330,34 @@ the fillet as far as the line runs on it.
 
 ![arm_on_block_far_z-3.75_upright_and_block_r1](pictures/arm_on_block_far_z-3.75_upright_and_block_r1.png)
 
+### The pivot of two fillets in two pieces (`52a5c89410`, realthunder/FreeCAD#962)
+
+The rib's top corner on #962: the top's edge with the rib's slope and its
+edge with the wall beside it. The wall is in two pieces, split 0.46 from
+the corner, and the split's foot is on the slope's edge with the wall --
+the edge both fillets end on, in two pieces itself, the first 0.52 long.
+The wall's fillet reaches that edge on its second piece: on the wall in
+one face its line runs on past the corner, under the first piece's end,
+and the two fillets are cut by one another along one curve. In pieces the
+line ended where the fillet's edge does, on no edge, and the corner was a
+plate: before, the patch between the two fillets, with a crease to the
+wall's fillet. The line is carried over the split to the edge's second
+piece now, and the two pieces are taken for one edge; after, one curve
+between the two fillets, and the wall's second piece, in the third row,
+has lost its corner to the fillet as far as the line runs on it.
+
+![issue962_rib_top_near_r1](pictures/issue962_rib_top_near_r1.png)
+
+### An edge's tolerance over its curves on the faces (`b72e581675`, realthunder/FreeCAD#962)
+
+Nothing to see: a result BOP's check called invalid for one edge whose
+curve lay 2.51e-6 off its fillet at a tolerance of 2.29e-6. The builder
+gives the edges it makes the largest distance from their curves on the
+faces at a set of samples, and a twentieth more; the curve between two
+fillets is farthest off a little inside its end, between two samples.
+The largest distance is looked for now, as the check does, on every edge
+the fillet made that is not a line or a circle.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -43,7 +43,7 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `2ec760a1d3`, FreeCAD OcctFix `493032cbaf`,
+`baseline/` is OCCT LinkVibe-801 `4988e007e1`, FreeCAD OcctFix `493032cbaf`,
 2026-10-13: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
 EXC; no crash or timeout. Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
@@ -62,8 +62,9 @@ vertex 9109 / 291 / 2842), `f7464716c0` (edge 2519 / 32 / 1370, vertex
 same, vertex 9435 / 200 / 2607), `2bc692bfc4` (edge 2567 / 32 / 1322,
 vertex 9463 / 200 / 2579), `9d58debece` (edge 2575 / 32 / 1314,
 vertex 9475 / 201 / 2566), `5052552dd6` (edge the same, vertex 9476 /
-200 / 2566) and `afb7f305d0` (edge 2578 / 29 / 1314, vertex 9500 / 176 /
-2566, the counts of today's), are in this file's history.
+200 / 2566), `afb7f305d0` and `2ec760a1d3` (edge 2578 / 29 / 1314, vertex
+9500 / 176 / 2566, the counts of today's: 20 and then 12 valid results
+moved), are in this file's history.
 
 The invalid results, each tried again on the shape refined
 (`removeSplitter`, the edge found again by its middle): the edge sweep's

@@ -63,6 +63,7 @@ STAGES = {
     "s309b": ("9c45825ba1", "358d611f3f"),
     "s474c": ("358d611f3f", "afb7f305d0"),
     "sarm": ("afb7f305d0", "2ec760a1d3"),
+    "srib": ("2ec760a1d3", "52a5c89410"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -447,6 +448,8 @@ UVFACE_CASE = {
     "issue962_block_far_edge_over_arm_r2": _plane_at("z", -3.75, None, {"x": 38.6}),
     # the arm's top, the piece of the top beyond the split
     "arm_on_block_far_z-3.75_upright_and_block_r1": _plane_at("z", -3.75, None, {"x": 38.5}),
+    # the rib's wall (y=13.7), its second piece, from x=38.96 on
+    "issue962_rib_top_near_r1": _plane_at("y", 13.7, {"x": 39.0}, {"x": 50.0}),
     # the fin's outer face, as on the fin whose wall is one face
     "fin_on_block_wall_top_and_upright_r1": _plane_at("x", 10, {"z": 5.0 + 1e-6}),
     # the rib's wall (y=20.3), its second piece, from x=39.197 on
@@ -609,6 +612,7 @@ UVLABEL_CASE = {
     "fin_on_block_wall_top_and_upright_r1": ("the fin's outer face", False),
     "issue962_block_far_edge_over_arm_r2": ("the arm's top", False),
     "arm_on_block_far_z-3.75_upright_and_block_r1": ("the arm's top", False),
+    "issue962_rib_top_near_r1": ("the rib's wall, its second piece", False),
     "issue962_rib_foot_r1.5": ("the block's top at the rib's foot", False),
     "issue474_f003_e51_r0.8": ("the face at the fillet's end", False),
     "slot_split_wall_r0.7001": ("the block's top beside the slot", False),
@@ -832,6 +836,10 @@ CASES = {
         "sarm", "armfoot", [((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)),
                             ((38.5, 27.2, -3.75), (50, 27.2, -3.75))], 1.0, 4600.9495,
         (38.5, 27.2, -3.75), (-0.3, 1, 0.6)),
+    "issue962_rib_top_near_r1": (
+        "srib", "p962", [((38.5, 13.7, 32.25), (38.5, 10.2, 32.25)),
+                         ((38.5, 13.7, 32.25), (35.5, 13.7, 32.25))], 1.0, 11579.0926,
+        (38.5, 13.7, 32.25), (0.5, 1, 0.7)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
@@ -876,6 +884,8 @@ EDGES = {
                                             "on the side x=10, the fin's wall split 0.7 from it",
     "arm_on_block_far_z-3.75_upright_and_block_r1": "the upright edge between arm and block "
                                                     "and the block's top edge from it, at y=27.2",
+    "issue962_rib_top_near_r1": "the top's two edges at the rib's corner beside the split "
+                                "wall, (38.5, 13.7, 32.25)",
 }
 
 
