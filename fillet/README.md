@@ -549,7 +549,7 @@ sweep showed 13 valid results turn to exceptions and 6 invalid, #962 and
 
 | Case | What it covers |
 |------|----------------|
-| `arm_on_tall_block_whole_r{0.1,0.3,0.5,2}` | the corner with the block's side one face: valid (no volume: the change is below GProp's precision on the whole shape) |
+| `arm_on_tall_block_whole_r{0.1,0.3,0.5,2}` | the corner with the block's side one face: valid (no volume: the change is below GProp's precision on the whole shape). Held to its exact volume since 2026-10-13, the plate gone: "A ceiling under a wall at a fillet's end" |
 | `arm_on_tall_block_down_r{0.3,1,2}` | the mirror corner: the exact floor, the volume of a quarter-round's section over the edge's 17.75, tolerance under 1e-3 |
 
 The every-edge sweep (3921 fillets of 25 shapes) is the same to the last
@@ -3039,11 +3039,91 @@ and V105:150,158, `Fillet` V105:152,183 and V118:169,177, from 1.8e-3).
 9500 valid, 176 invalid, 2566 refused.
 
 Open. The plate at the rib chain's bottom end, 0.1 of tolerance on
-both shapes. #962 `Fillet` E36 and `Chamfer` E33, the arm's edge that
-ends under the block's wall (a plate over the arm's top, loose and
-refused by BOP on both shapes). The fin wall's two pairs whose corner is
-set back where the refined shape's is not.
+both shapes. The fin wall's two pairs whose corner is set back where the
+refined shape's is not. (#962 `Fillet` E36 and `Chamfer` E33, the arm's
+edge that ends under the block's wall, with a plate over the arm's top
+that was loose and refused by BOP on both shapes, are made since: the
+next section.)
 
+## A ceiling under a wall at a fillet's end (realthunder/FreeCAD#962, 2026-10-13)
+
+The last single edge the comparison with the refined shape left loose: #962
+`Fillet` E36 and `Chamfer` E33, the upright edge between the arm's side and
+the block's side y=27.2, at its top end -- the corner (38.5,27.2,-3.75),
+where the block's wall x=38.5 stands on the arm's top. The fix of
+2026-10-03 ("A fillet's end under a wall that runs on past the corner")
+made that end valid with the corner plate, on the block's side in one face
+as in two. Valid was all it was: a tolerance of 0.006 to 0.06 on the
+fillet and up to 0.19 on the chamfer, 0.007 of volume off at radius 2 for
+0.052 taken (0.36 on the chamfer at 2), and BOP's check refusing the
+fillet's -- on both shapes, so the comparison had nothing to say about it.
+
+The plate covers the corner between the vertex and the section's two ends,
+in the plane of the arm's top. On the arm's side of the wall's edge that is
+the arm's top itself, which nothing cut: two faces back to back. And a
+plate there cannot be tangent to the fillet, which stands upright on it.
+
+What is there is plain. The fillet ends in the plane of the arm's top. Its
+section in that plane runs from the edge of the arm's side to the block's
+side, and on the way crosses the edge between the arm's top and the wall,
+at a point X. Up to X the section cuts the arm's top. From X on it runs
+under the wall: the fillet has taken what was below, the block is above,
+and the body is closed by a face in the plane of the arm's top that faces
+down -- a ceiling. Its three sides are the section from X on, the piece of
+the wall's edge from the vertex to X, which the wall keeps where the arm's
+top has lost it, and the way back from the section's end to the vertex on
+the block's side: the split's piece from the vertex, which the face above
+the split keeps, or, on the side in one face, a new edge on that face.
+
+Fix `0669daa0b6` (`CeilingAtEnd`, called by `PerformIntersectionAtEnd` at a
+vertex of more than three edges before it looks for the faces to cut).
+One side of the fillet ends on an edge of the vertex; the face across
+that edge, the face at end, is a plane; the other side's line crosses that
+plane on its own face, which runs on past the vertex, or ends on a split of
+that face in coplanar pieces; the face at end's other edge at the vertex
+runs into the corner between the two (`SectionCrossesEndFace`, as before);
+and there are no faces at the vertex but the fillet's two, the face at end,
+the wall, and the piece above the split. The fillet's surface is cut by the
+plane in one curve from side to side, and the curve is cut in two at X,
+found in the plane where the curve crosses the wall's edge: once, and
+inside both. The first piece goes on the face at end, as any corner's
+curve; the second on a surface of the DS, the same plane the other way up,
+with its curves the other way round. The wall's edge is cut at X and its
+piece from the vertex is given again as a curve between the wall and the
+ceiling, and so is the split's piece, between the face above and the
+ceiling; on the side in one face the line is cut where it crosses the
+plane (not at the section through the first side's end: the plane need
+not be square to the edge) and the third side is a line on that face. The
+vertex stays, and the edge filleted is ended at it: a face that keeps the
+vertex -- the block's side in one face does -- kept the edge with it.
+Anything else -- a face at end that is no plane, the other side's face no
+plane where a new edge is wanted on it, more faces at the vertex, a
+section that misses the wall's edge or meets it at an end -- is left to the
+plate, as before.
+
+| | before | now |
+|--|--|--|
+| arm on the block, side in two faces, r 0.1 / 0.3 / 0.8 / 2 | tolerance 0.0065 / 0.020 / 0.023 / 0.059, BOP refuses | 1e-7, BOP clean, the corner's section over the edge's 6 to 1e-6 |
+| the same, side in one face | 0.0063 / 0.021 / 0.025 / 0.061, BOP refuses | the same |
+| #962 `Fillet` E36, r 0.1 / 0.3 / 0.8 / 2 | 0.0065 / 0.019 / 0.021 / 0.061, BOP refuses; refined 0.0066 / 0.019 / 0.024 / 0.061 | 2.1e-7 on both, BOP clean, one volume to the last digit |
+| #962 `Chamfer` E33, d 0.1 / 0.3 / 0.8 / 2 | 0.009 / 0.029 / 0.074 / 0.18; volume 0.36 short at 2 | 1e-4 (the chamfer's other end), one volume on both |
+
+| Case | What it covers |
+|------|----------------|
+| `arm_on_tall_block_r{0.1,0.3,0.8,2}`, `arm_on_tall_block_whole_r{0.1,0.3,0.5,0.8,2}` | the corner, the block's side in two faces and in one: the closed form's volume to 1e-6, no tolerance above 1e-6, BOP's check (valid was all they asked before) |
+| `arm_on_tall_block_chamfer_d{0.3,2}`, `arm_on_tall_block_whole_chamfer_d{0.3,2}` | the chamfer there: its section a line, the same ceiling |
+| `arm_on_tall_block_mirror_{x,z,xz}_r{0.3,2}`, `arm_on_tall_block_whole_mirror_{x,z,xz}_r{0.3,2}` | mirror images: the fillet's other side on the edge of the vertex, its other end at the corner |
+| `arm_tilted_under_block_{up_x,down_x,up_y,down_y,skew}_r{0.3,2}` | the arm's top tilted 4.6 deg each way and askew: the line crosses the plane above or below the corner, the section is an arc of an ellipse; the section's area times the plane's height over its centroid, to 1e-6 |
+| `issue962_e36_r{0.1,0.3,0.8,2}`, `issue962_e36_chamfer_d{0.3,2}` | the model's own edge: the same three checks (0.8 and 2 are new; 0.1 and 0.3 asked for validity) |
+
+The sweeps. Edge: six results moved and nothing else -- that edge on
+the two shapes at 0.3, 0.8 and 2, from a tolerance of 0.019, 0.021 and
+0.061 to 2.1e-7. Vertex: 28 valid results moved, every one with that edge
+among its edges, at its two ends -- alone, in pairs and with all the
+edges of the vertex: from 0.019 at 0.3 and 0.030 at 1 to 2.1e-7, or to
+1e-4 where a second fillet brings its own. No status changed: 2578 valid,
+29 invalid, 1314 refused; 9500, 176, 2566. Of the suite's 41 cases of this
+section, new or tightened, every one fails on the build before.
 ## Known broken (XFAIL)
 
 | Case | Symptom |

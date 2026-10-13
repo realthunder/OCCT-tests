@@ -1358,6 +1358,38 @@ fillets is farthest off a little inside its end, between two samples.
 The largest distance is looked for now, as the check does, on every edge
 the fillet made that is not a line or a circle.
 
+### A ceiling under a wall (`0669daa0b6`, realthunder/FreeCAD#962)
+
+The arm's upright edge against the block's side, at its top, where the
+block's wall stands on the arm's top -- edge 36 of #962's `Fillet`, at
+radius 2, seen from below. The fillet ends in the plane of the arm's top,
+and half of its section there lies under the wall. Before, as upstream:
+a plate over the whole corner, from the vertex to the section, bulging up
+between the fillet and the wall; it lay on the arm's top on this side of
+the wall, could not be tangent to the fillet standing on it, and came out
+valid with a tolerance of 0.061, refused by BOP's check and 0.0103 of
+volume off. After: the fillet's end is a clean arc, and between it and the
+wall's lower edge is a thin flat face -- the section cuts the arm's top as
+far as the wall's edge, and the rest of the corner is closed under the
+wall by a face in the top's plane that looks down. The third row draws
+that face, which the first two columns do not have: two straight sides,
+on the wall's edge and on the block's side, and the section's arc.
+
+![issue962_e36_r2](pictures/issue962_e36_r2.png)
+
+The block's side in one face, radius 0.8. Upstream's result is invalid
+there; the fork's was the plate. The flat face's third side is a new
+edge on the block's side, from the fillet's line to the vertex.
+
+![arm_on_tall_block_whole_r0.8](pictures/arm_on_tall_block_whole_r0.8.png)
+
+The arm's top tilted 4.9 degrees. Upstream extends the arm's top over the
+corner and leaves it invalid, drawn in red. The section is an arc of an
+ellipse, the fillet's line on the block's side is cut where it crosses the
+tilted plane, and the flat face tilts with the top.
+
+![arm_tilted_under_block_skew_r2](pictures/arm_tilted_under_block_skew_r2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

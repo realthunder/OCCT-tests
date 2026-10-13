@@ -921,12 +921,33 @@ for r in (0.5, 0.8, 1.5):
 # side at 21 degrees, and above the arm the block goes on, its side y=27.2 two
 # coplanar faces split at the arm's top. The corner is a GeomPlate patch; below
 # radius 0.42 a curve of its boundary had no projection on the plate's first
-# surface, and the projection threw where Perform tries another surface. The
-# volumes taken are too small for the whole shape's (about 0.002 of 11584):
-# validity is the check.
+# surface, and the projection threw where Perform tries another surface.
+# The plate went since (the ceiling, below arm_on_tall_block): the end is
+# exact, and what the fillet takes -- 0.0012 of 11584 at 0.3 -- is the check,
+# with BOP's and a tolerance no plate would keep.
+def round_cut(shape, edge_index, size, chamfer=False):
+    """What a fillet of radius `size` takes of a straight convex edge between
+    two planes, cut square at its ends: the corner's section, r^2 (tan a - a)
+    with a half the angle between the faces' normals, over the edge's length.
+    A chamfer of distance `size`: d^2 sin(2a) / 2."""
+    e = shape.Edges[edge_index - 1]
+    n = [f.normalAt(0, 0) for f in shape.ancestorsOfType(e, Part.Face)]
+    a = n[0].getAngle(n[1]) / 2
+    area = size * size * (math.sin(2 * a) / 2 if chamfer else math.tan(a) - a)
+    return area * e.Length
+
+
 e36 = edge_between(p2, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
-for r in (0.1, 0.3):
-    fillet_case("issue962_e36_r%g" % r, p2, e36, r, "pass")
+# (the model read anew: a fillet leaves its tolerances on what the result
+# shares with the input, and p2 has been filleted above)
+for r in (0.1, 0.3, 0.8, 2.0):
+    q2 = Part.read(os.path.join(MODELS, "issue962_pocket002.brep"))
+    fillet_case("issue962_e36_r%g" % r, q2, e36, r, "pass", q2.Volume - round_cut(q2, e36, r),
+                1e-6, vol_tol=1e-6, bop=True)
+for d in (0.3, 2.0):
+    fillet_case("issue962_e36_chamfer_d%g" % d, p2, e36, d, "pass",
+                p2.Volume - round_cut(p2, e36, d, True), 2e-4, chamfer=True, vol_tol=1e-6,
+                bop=True)
 
 
 def arm_on_tall_block(split=True, near=False):
@@ -946,18 +967,38 @@ def arm_on_tall_block(split=True, near=False):
     return s
 
 
+# The fillet ends in the plane of the arm's top, under the block's wall
+# x=38.5, which stands on that plane: its section cuts the arm's top as far
+# as the wall's edge, and from there on it runs under the wall, where the
+# body is closed by a face in the same plane turned the other way, a ceiling
+# (CeilingAtEnd). A plate over the whole corner stood there before, lying
+# on the arm's top for the part of it this side of the wall: valid, 0.02
+# to 0.06 of tolerance, 0.007 of volume off at radius 2 and refused by
+# BOP's check. What the fillet takes is the corner's section over the
+# edge's 6, to the last digit.
 atb = arm_on_tall_block()
 top = edge_between(atb, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
-for r in (0.1, 0.3, 2.0):
-    fillet_case("arm_on_tall_block_r%g" % r, atb, top, r, "pass")
+for r in (0.1, 0.3, 0.8, 2.0):
+    fillet_case("arm_on_tall_block_r%g" % r, atb, top, r, "pass",
+                atb.Volume - round_cut(atb, top, r), 1e-6, vol_tol=1e-6, bop=True)
+for d in (0.3, 2.0):
+    fillet_case("arm_on_tall_block_chamfer_d%g" % d, atb, top, d, "pass",
+                atb.Volume - round_cut(atb, top, d, True), 2e-4, chamfer=True, vol_tol=1e-6,
+                bop=True)
 # The block's side one face: the line on it runs on up past the arm's top,
 # and the arm's top, extended to meet it, crossed its own edge under the
-# block's wall -- invalid at every radius. Cut at the section through the
-# arm's side, the corner is that of the split side.
+# block's wall -- invalid at every radius. The line is cut where it crosses
+# the plane of the arm's top, and the ceiling's third side is a new edge on
+# the block's side, from there to the vertex.
 atb = arm_on_tall_block(split=False)
 top = edge_between(atb, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
-for r in (0.1, 0.3, 0.5, 2.0):
-    fillet_case("arm_on_tall_block_whole_r%g" % r, atb, top, r, "pass")
+for r in (0.1, 0.3, 0.5, 0.8, 2.0):
+    fillet_case("arm_on_tall_block_whole_r%g" % r, atb, top, r, "pass",
+                atb.Volume - round_cut(atb, top, r), 1e-6, vol_tol=1e-6, bop=True)
+for d in (0.3, 2.0):
+    fillet_case("arm_on_tall_block_whole_chamfer_d%g" % d, atb, top, d, "pass",
+                atb.Volume - round_cut(atb, top, d, True), 2e-4, chamfer=True, vol_tol=1e-6,
+                bop=True)
 # The mirror corner, the block's edge x=38.5 y=10.2 coming down onto the arm's
 # top: there the arm's top, extended, is the floor of the fillet's end and
 # crosses nothing, and must stay the exact plane it is (a plate in its place
@@ -966,6 +1007,65 @@ low = edge_between(atb, (38.5, 10.2, -3.75), (38.5, 10.2, 14))
 for r in (0.3, 1.0, 2.0):
     fillet_case("arm_on_tall_block_down_r%g" % r, atb, low, r, "pass",
                 atb.Volume - (1 - math.pi / 4) * r * r * 17.75, max_tol=1e-3)
+# The corner under the wall again (the ceiling, above): mirror images, for
+# the fillet's other side on the arm and its other end at the corner.
+for split in (True, False):
+    for tag, normals in (("x", [(1, 0, 0)]), ("z", [(0, 0, 1)]), ("xz", [(1, 0, 0), (0, 0, 1)])):
+        mirrored = arm_on_tall_block(split=split)
+        ends = [V(38.5, 27.2, -3.75), V(38.5, 27.2, -9.75)]
+        for n in normals:
+            mirrored = mirrored.mirror(V(0, 0, 0), V(*n))
+            ends = [V(q.x * (1 - 2 * n[0]), q.y, q.z * (1 - 2 * n[2])) for q in ends]
+        mtop = edge_between(mirrored, tuple(ends[0]), tuple(ends[1]))
+        for r in (0.3, 2.0):
+            fillet_case("arm_on_tall_block%s_mirror_%s_r%g" % ("" if split else "_whole", tag, r),
+                        mirrored, mtop, r, "pass", mirrored.Volume - round_cut(mirrored, mtop, r),
+                        1e-6, vol_tol=1e-6, bop=True)
+
+
+def arm_tilted_under_block(normal):
+    """The arm on the tall block with its top a plane of the given normal
+    through the corner (38.5, 27.2, -3.75), not square to the edge between
+    the arm's side and the block's."""
+    pts = [V(17.356, -9.425, -9.75), V(38.5, 10.2, -9.75), V(38.5, 27.2, -9.75),
+           V(10.898, 16.471, -9.75)]
+    arm = Part.Face(Part.makePolygon(list(reversed(pts)) + [pts[-1]])).extrude(V(0, 0, 12))
+    n = V(*normal).normalize()
+    plane = Part.makePlane(400, 400, V(-200, -200, 0))
+    plane.Placement = App.Placement(V(38.5, 27.2, -3.75), App.Rotation(V(0, 0, 1), n))
+    arm = arm.common(plane.extrude(n * -40))
+    bp = [V(38.5, 27.2, -9.75), V(38.5, 10.2, -9.75), V(50, 10.2, -9.75), V(50, 27.2, -9.75)]
+    return Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 23.75)).fuse(arm)
+
+
+def tilted_cut(radius, normal):
+    """What the fillet takes there: the corner's section times the height
+    of the tilted plane over the section's centroid."""
+    u1 = V(10.898 - 38.5, 16.471 - 27.2, 0).normalize()
+    u2 = V(1, 0, 0)
+    a = (math.pi - u1.getAngle(u2)) / 2
+    bis = (u1 + u2).normalize()
+    area = radius * radius * (math.tan(a) - a)
+    t = radius * math.tan(a)
+    d = radius / math.cos(a)
+    # the kite between the tangent points less the sector of the arc
+    c = (radius * radius * math.tan(a) * (t * math.sin(a) + d) / 3
+         - radius * radius * a * (d - 2 * radius * math.sin(a) / (3 * a))) / area
+    return area * (6.0 - (normal[0] * bis.x + normal[1] * bis.y) * c / normal[2])
+
+
+# The arm's top tilted: the fillet's line on the block's side crosses its
+# plane above or below the corner, the section is an arc of an ellipse, and
+# the ceiling tilts with the top.
+for tag, normal in (("up_x", (0.08, 0, 1)), ("down_x", (-0.08, 0, 1)), ("up_y", (0, 0.08, 1)),
+                    ("down_y", (0, -0.08, 1)), ("skew", (0.06, -0.06, 1))):
+    tilted = arm_tilted_under_block(normal)
+    ttop = [i for i, e in enumerate(tilted.Edges, 1)
+            if abs(e.Length - 6) < 1e-6
+            and e.distToShape(Part.Vertex(V(38.5, 27.2, -6.75)))[0] < 1e-6][0]
+    for r in (0.3, 2.0):
+        fillet_case("arm_tilted_under_block_%s_r%g" % (tag, r), tilted, ttop, r, "pass",
+                    tilted.Volume - tilted_cut(r, normal), 1e-6, vol_tol=1e-6, bop=True)
 
 # A fin padded flush with the block's side: the outer face is two faces, the
 # fin's and the block's, split at the floor's height, and the fillet's line on

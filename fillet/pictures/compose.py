@@ -15,7 +15,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cases import CASES, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM
+from cases import CASES, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM, ZOOMLABEL
 
 P = os.environ["FILLET_WORK"]
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
@@ -117,7 +117,8 @@ for name in sys.argv[2:] or list(CASES):
             if row == 0 and R[k][name]["problems"] and R[k][name]["problems"][0].startswith("threw"):
                 d.text((x + 10, top + lab + 8), "threw: the input is shown", font=F, fill=(190, 30, 30))
             if row == 1:
-                d.text((x + 10, top + lab + H + 8), "the fillet's end", font=F, fill=(110, 110, 110))
+                zl, zc = ZOOMLABEL.get(name, ("the fillet's end", (110, 110, 110)))
+                d.text((x + 10, top + lab + H + 8), zl, font=F, fill=zc)
             if meta.get("dropped") and row == 0:
                 d.text((x + 10, top + lab + 28), "%d face(s) of no area, not drawn" % meta["dropped"],
                        font=F, fill=(190, 30, 30))

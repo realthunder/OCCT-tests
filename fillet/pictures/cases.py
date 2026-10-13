@@ -64,6 +64,7 @@ STAGES = {
     "s474c": ("358d611f3f", "afb7f305d0"),
     "sarm": ("afb7f305d0", "2ec760a1d3"),
     "srib": ("2ec760a1d3", "52a5c89410"),
+    "s962zk": ("e79f700798", "0669daa0b6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -130,6 +131,21 @@ def _arm_on_tall_block(split=True, near=False):
     if not cuts:
         return s
     return s.generalFuse(cuts)[0].Solids[0]
+
+
+def _arm_tilted_under_block(normal=(0.06, -0.06, 1)):
+    # run_tests.py's: the arm on the tall block, its top a plane of the given
+    # normal through the corner (38.5, 27.2, -3.75)
+    V = App.Vector
+    pts = [V(17.356, -9.425, -9.75), V(38.5, 10.2, -9.75), V(38.5, 27.2, -9.75),
+           V(10.898, 16.471, -9.75)]
+    arm = Part.Face(Part.makePolygon(list(reversed(pts)) + [pts[-1]])).extrude(V(0, 0, 12))
+    n = V(*normal).normalize()
+    plane = Part.makePlane(400, 400, V(-200, -200, 0))
+    plane.Placement = App.Placement(V(38.5, 27.2, -3.75), App.Rotation(V(0, 0, 1), n))
+    arm = arm.common(plane.extrude(n * -40))
+    bp = [V(38.5, 27.2, -9.75), V(38.5, 10.2, -9.75), V(50, 10.2, -9.75), V(50, 27.2, -9.75)]
+    return Part.Face(Part.makePolygon(bp + [bp[0]])).extrude(V(0, 0, 23.75)).fuse(arm)
 
 
 def _arch_on_plate(split=False, R=10.0):
@@ -316,6 +332,7 @@ SHAPES = {
     "armtall": _arm_on_tall_block,
     "armwhole": lambda: _arm_on_tall_block(split=False),
     "armnear": lambda: _arm_on_tall_block(split=False, near=True),
+    "armtilt": _arm_tilted_under_block,
     "p474": _brep("issue474_fillet003_base.brep"),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
@@ -363,6 +380,18 @@ def _plate_near(x, y, z, reach=1.0):
     return pick
 
 
+def _flat_near(x, y, z, reach=1.0):
+    """A flat face that closes a corner: a plane face whose vertices all lie
+    within <reach> of the corner (x, y, z). Where a plate closes it there is
+    none, and the row stays empty."""
+    def pick(f):
+        if f.Surface.__class__.__name__ != "Plane":
+            return False
+        c = App.Vector(x, y, z)
+        return all(v.Point.distanceToPoint(c) < reach for v in f.Vertexes)
+    return pick
+
+
 # shape -> the face whose (u, v) outline the third row draws, found in a result
 UVFACE = {
     # the corner's cylinder, not a fillet of the same radius
@@ -390,6 +419,8 @@ UVFACE = {
     "armwhole": _plane_at("z", -3.75),
     # the arm's top, which grows over the fillet's end
     "armnear": _plane_at("z", -3.75),
+    # the flat face under the block's wall, in the plane of the arm's top
+    "armtilt": _flat_near(38.5, 27.2, -3.75),
     # the corner's plate at edge 6's top
     "p474": _plate_near(-13, 0, 13),
     # the plate's side, whose outline ran up to the top and back down
@@ -429,6 +460,9 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the flat face under the block's wall, in the plane of the arm's top
+    "issue962_e36_r2": _flat_near(38.5, 27.2, -3.75),
+    "arm_on_tall_block_whole_r0.8": _flat_near(38.5, 27.2, -3.75),
     # the pocket's radial wall at edge 14, its piece beyond the split (r from 16.75)
     "issue962_pocket_edge_r2": (lambda f: f.Surface.__class__.__name__ == "Plane"
                                 and abs(f.Surface.Axis.z) < 1e-6
@@ -512,6 +546,8 @@ NAMES = {
     "armwhole": "the arm fused to an 11.5x17x23.75 block, the block's side y=27.2 one face",
     "armnear": "the arm fused to an 11.5x17x23.75 block, the block's side y=10.2 two faces "
                "split at the arm's top",
+    "armtilt": "the arm fused to an 11.5x17x23.75 block, the arm's top tilted 4.9 deg about "
+               "the corner under the block's wall, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
@@ -553,6 +589,7 @@ VIEW = {
     "armtall": ((30, 9, 2), 46.0),
     "armwhole": ((30, 9, 2), 46.0),
     "armnear": ((30, 9, 2), 46.0),
+    "armtilt": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
@@ -583,6 +620,7 @@ UVLABEL = {
     "armtall": ("the corner's plate", False),
     "armwhole": ("the arm's top", False),
     "armnear": ("the arm's top", False),
+    "armtilt": ("the flat face under the wall", False),
     "p474": ("the corner's plate", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
@@ -602,6 +640,8 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue962_e36_r2": ("the flat face under the wall", False),
+    "arm_on_tall_block_whole_r0.8": ("the flat face under the wall", False),
     "issue962_pocket_edge_r2": ("the slot's wall beyond the split", False),
     "slot_split_wall_mouth_r0.8": ("the slot's wall, its piece at the mouth", False),
     "issue962_e72_r0.8": ("the block's side past the rib's piece", False),
@@ -840,9 +880,36 @@ CASES = {
         "srib", "p962", [((38.5, 13.7, 32.25), (38.5, 10.2, 32.25)),
                          ((38.5, 13.7, 32.25), (35.5, 13.7, 32.25))], 1.0, 11579.0926,
         (38.5, 13.7, 32.25), (0.5, 1, 0.7)),
+    # seen from below: the face under the wall looks down
+    "issue962_e36_r2": ("s962zk", "p962", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 2.0,
+                        11584.0883, (38.5, 27.2, -3.75), (-0.35, 0.7, -1)),
+    "arm_on_tall_block_whole_r0.8": (
+        "s962zk", "armwhole", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 0.8, 8073.6686,
+        (38.5, 27.2, -3.75), (-0.35, 0.7, -1)),
+    "arm_tilted_under_block_skew_r2": (
+        "s962zk", "armtilt", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 2.0, 7967.7871,
+        (38.5, 27.2, -3.75), (-0.35, 0.7, -1)),
+}
+# case -> (the largest tolerance it may carry, how far its volume may be off):
+# a result is also held to these and to BOP's check (Shape.check(True)), where
+# valid is not enough to tell before from after
+STRICT = {
+    "issue962_e36_r2": (1e-6, 1e-4),
+    "arm_on_tall_block_whole_r0.8": (1e-6, 1e-4),
+    "arm_tilted_under_block_skew_r2": (1e-6, 1e-4),
+}
+# case -> (the zoomed row's label, its colour), when it is not "the fillet's
+# end" in grey: a view from below is dark where the label goes
+ZOOMLABEL = {
+    "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
+    "arm_on_tall_block_whole_r0.8": ("the fillet's end, from below", (240, 240, 240)),
+    "arm_tilted_under_block_skew_r2": ("the fillet's end, from below", (240, 240, 240)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
+    "issue962_e36_r2": 1.4,
+    "arm_on_tall_block_whole_r0.8": 0.6,
+    "arm_tilted_under_block_skew_r2": 1.4,
     "issue962_e36_r0.3": 0.5,
     "arm_on_tall_block_r0.3": 0.5,
     "issue962_e33_r0.3": 0.5,
