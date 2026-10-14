@@ -1239,7 +1239,7 @@ one face.
 
 ### A side stopped on a split in the plane of the face at end (`6505747185`, realthunder/FreeCAD#962)
 
-#962's arm is lower than its block, and the block's sides are split at
+On #962 the arm is lower than its block, and the block's sides are split at
 the arm's top: at each of the two vertices where arm and block meet, the
 split is an edge of the vertex, lying in the plane of the arm's top. A
 fillet that ends there with a side on the block's side -- the upright edge
@@ -1298,7 +1298,7 @@ the end in one face.
 
 ### A fillet's last surface past the vertex (`afb7f305d0`, realthunder/FreeCAD#474)
 
-#474's ramp starts on a block, and the block's end wall is in two pieces,
+On #474 the ramp starts on a block, and the block's end wall is in two pieces,
 split at the level where the ramp starts. The upright edge between the
 wall and the block's side: the ramp rises along the side from the split's
 level, so the fillet's line on the side runs on a little past that level
@@ -1413,7 +1413,7 @@ fillet's end and the block's side; after, the patch of two fillets.
 
 ![fin_on_block_wall_piece_foot_and_upright_r1](pictures/fin_on_block_wall_piece_foot_and_upright_r1.png)
 
-#962's own: a slot's mouth, the floor's edge along the rib -- its piece
+On #962 itself: a slot's mouth, the floor's edge along the rib -- its piece
 at the mouth 0.69 long -- with the rib's upright edge, at radius 1.5.
 Refused upstream and before (the input is shown); after, the upright
 fillet coming down, the floor's running in under the rib, and the patch
@@ -1466,8 +1466,8 @@ other bottom edge.
 Not a fillet's fault: `TKMath`'s solver of a cos^2 + 2b cos sin + c cos +
 d sin + e = 0 dropped every root between a lower bound below zero and
 zero. BOP finds a point's place on an ellipse through it, and on an arc of
-ellipse running from -PI/2 to 0 found none: two fillets at a corner of
-#474's, three planes five degrees off square, meet in such an arc, and
+ellipse running from -PI/2 to 0 found none: two fillets at a corner of #474's,
+three planes five degrees off square, meet in such an arc, and
 BOP took their common edge for a new section and the fillets for
 self-intersecting. Nothing to see either: the fillets are the shapes they
 were. The fix also lets the new draft make #876's face 44 at 5 degrees,
