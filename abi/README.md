@@ -246,6 +246,21 @@ upstream's, where the binary now loads. Not yet run with clang or gcc:
 whether `dynamic_cast` finds the class across libraries there is the
 thing to see.
 
+Measured with clang on the macOS box (`forkstate.cpp`, with
+`forkstate_lib.cpp` as a module of its own, 2026-10-14): from the
+executable the class is found, and a refusal raised by its own copy of
+the setter and one raised in the library are both counted, as
+`TopoDS_LockedShape_Raised` reads them too; from a module loaded with
+`dlopen(RTLD_LOCAL)` the same. Not from a module compiled with
+`-fvisibility=hidden`: its copy of the class's `type_info` is private to
+it, `dynamic_cast` against the library's object fails, `Get()` is null,
+and its refusals are thrown but not counted. With the class given
+default visibility (`__attribute__((visibility("default")))` on it, not
+`Standard_EXPORT`, which is an import with MSVC) the module's copy is a
+weak definition of its own, found, and still no import of the fork's.
+FreeCAD's own modules are not built hidden here; a client that is
+would need it.
+
 What this does not make of a FreeCAD built against the fork is one that
 behaves with upstream's library as one built against upstream would: it
 still runs the fork's inline functions (a flag written where upstream

@@ -66,6 +66,7 @@ STAGES = {
     "srib": ("2ec760a1d3", "52a5c89410"),
     "s962zk": ("e79f700798", "0669daa0b6"),
     "s962zl": ("5b5471ad11", "9735ff8875"),
+    "s523e": ("61f59f6842", "1a971d66bc"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -518,6 +519,9 @@ UVFACE_CASE = {
     # the top: the whole of it before, the box's rectangle after (the disc
     # its own face)
     "pinch_top_r2": _plane_at("z", 10, {"x": 3.0}),
+    # the bottom: the whole of it before, the box's rectangle after (the disc
+    # its own face)
+    "issue523_bottom_rim_and_edge_a_r1": _plane_at("z", 0, {"x": 3.0}),
     # the block's side y=10.2 below the arm's top (z -9.75..-3.75)
     "issue962_top_wall_r0.8": _plane_at("y", 10.2, {"x": 40.0}, {"z": -5.0}),
     # the same side's piece beside the pocket, the rib's (x 34.5..38.5, z from 14)
@@ -665,6 +669,7 @@ UVLABEL_CASE = {
     "seam_end_top_r3": ("the corner's plate", False),
     "issue962_rib_foot_r0.9865": ("the block's top at the rib's foot", False),
     "pinch_top_r2": ("the top, the box's part", False),
+    "issue523_bottom_rim_and_edge_a_r1": ("the bottom, the box's part", False),
     "issue962_top_wall_r0.8": ("the block's side below the arm's top", False),
     "issue962_hex_mouth_r0.8": ("the side's piece beside the pocket's", False),
     "arm_on_block_z-3.75_upright_and_block_r1": ("the block's top", False),
@@ -762,6 +767,9 @@ CASES = {
                          (0, 2, 0), (-1, 0.55, -0.75)),
     "issue962_rib_foot_r0.9865": ("s962l", "p962", ((35.5, 20.3, 32.25), (38.5, 20.3, 32.25)),
                                   0.9865, 11579.2408, (38.8, 20.0, 14.6), (-1, 0.6, -0.1)),
+    "issue523_bottom_rim_and_edge_a_r1": ("s523e", "boxcyl", [((2, 0, 0), (10, 0, 0)),
+                                                              ((0, 2, 0), (2, 0, 0))],
+                                          1.0, 1090.6315, (0, 1, 0), (-1, 0.55, -0.75)),
     "pinch_top_r2": ("s523d", "boxcyl", ((2, 0, 10), (10, 0, 10)), 2.0, 1087.3009,
                      (0, 2, 10), (-1, 0.55, 0.75)),
     "issue962_top_wall_r0.8": ("s962m", "p962", ((38.5, 10.2, -3.75), (38.5, 27.2, -3.75)), 0.8,
@@ -977,6 +985,7 @@ EDGES = {
                                                     "and the block's top edge from it, at y=27.2",
     "issue962_rib_top_near_r1": "the top's two edges at the rib's corner beside the split "
                                 "wall, (38.5, 13.7, 32.25)",
+    "issue523_bottom_rim_and_edge_a_r1": "the cylinder's rim and the box's bottom edge from it",
 }
 
 
