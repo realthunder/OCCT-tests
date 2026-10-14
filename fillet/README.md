@@ -3429,7 +3429,22 @@ What is left, and why:
 - Corner plates at loose tolerances -- 3e-3 to 0.37 -- on #631's four
   inputs, #962's two (V20 to V23 and V34 to V37, both inputs), #273 and
   #474's `Fillet002` (edge 4's plate at 0.008). The plate's quality,
-  which fcad's `docs/CornerBlending.md` corner blend is for.
+  which fcad's `docs/CornerBlending.md` corner blend is for. Looked at
+  on #631's V8, edges 9 and 21 at 0.3 (two fillets with no face in
+  common at a vertex of four convex edges): the two fillets' ends meet
+  the edge between their other faces 0.0025 apart (0.8% of the radius),
+  and the plate has that piece of the edge for a side. The plate misses
+  its boundary by 1.9e-4 but is 8.5 deg off tangent to the fillets, its
+  approximation 1e-3 off the curves near that side, and the corner's
+  tolerance is 0.0031 (1% of the radius at every radius): the side is
+  "too small" under it. More points on the boundaries make the plate
+  tangent (G1 0.148 rad at ten, 0.006 at thirty) and the result looser
+  (0.014); a tighter approximation does nothing; dropping the side, as an
+  edge of no length, satisfies the check and moves the volume by 0.24
+  (the wires open by 0.0025 at a lever of ~100). Not taken.
+- #876's V39, its edges 52 and 53 together: two edges each a degree from
+  smooth, filleted at 0.3 -- the fillets a few thousandths wide, 0.005 of
+  tolerance. Left.
 - #273's results at tolerances of 0.04 to 0.26, on an input with two
   vertices at 0.03; and its edges 23 and 24 at 0.8, a corner's patch at
   the tip of a groove that the check calls self-intersecting.
