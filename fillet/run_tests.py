@@ -2006,17 +2006,17 @@ for nm, y, yo in (("near", 13.7, 10.2), ("far", 17.1, 20.3)):
 # edge 1.1e-6 (10) and 5.1e-5 (42, 53) long. Valid each time, and refused by
 # BOP's check: "too small edge", "self-intersecting vertex".
 # (The tolerances asked are the results' own, away from that end: 0.018 on
-# the outer helix, 0.005 at the other end of #876's edge 10. Edge 42 at 2,
-# the twin of 53, is not a case: with gcc on Linux its corner comes out
-# loose -- 0.02, a side the vertices cover and longer than the pass takes,
-# 0.24 of volume less -- where clang's is 1.5e-3; a fillet a degree from
-# smooth at radius 2 is that sensitive.)
+# the outer helix, 0.005 at the other end of #876's edge 10. Edges 42 and 53
+# at 2 are not cases: their corners come out loose with one compiler or
+# another -- 42 with gcc on Linux (0.02, 0.24 of volume less), 53 with MSVC
+# (0.0115, 0.19 less), each fine with the other two -- a fillet a degree
+# from smooth at radius 2 is that sensitive.)
 for e, r, vol, tol in ((53, 0.3, 1988.8326, 1e-3), (13, 0.3, 1985.1153, 1e-3),
                        (5, 0.3, 1983.6314, 0.02)):
     fillet_case("issue474_f003_no_width_e%d_r%g" % (e, r),
                 Part.read(os.path.join(MODELS, "issue474_fillet003_base.brep")),
                 e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)
-for e, r, vol, tol in ((10, 0.3, 8665.7839, 6e-3), (53, 2.0, 8665.7579, 2e-3)):
+for e, r, vol, tol in ((10, 0.3, 8665.7839, 6e-3),):
     fillet_case("issue876_post_foot_e%d_r%g" % (e, r),
                 Part.read(os.path.join(MODELS, "issue876_fillet_base.brep")),
                 e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)

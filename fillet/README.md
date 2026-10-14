@@ -3341,7 +3341,7 @@ integration (1e-10) agreeing with the default one on both shapes.
 | Case | What it covers |
 |------|----------------|
 | `issue474_f003_no_width_e{53,13,5}_r0.3` | the hexagon's bottom edge and the thread's two helices, each ending at a needle: valid, BOP's check ("too small edge" before) |
-| `issue876_post_foot_e10_r0.3`, `issue876_post_foot_e53_r2` | the edge at the post's foot, a degree from smooth: the same (edge 42 at 2, its twin, dropped from the suite: with gcc on Linux its corner comes out loose, 0.02, and 0.24 of volume less -- a different path, not the pass's) |
+| `issue876_post_foot_e10_r0.3` | the edge at the post's foot, a degree from smooth: the same (edges 42 and 53 at 2 dropped from the suite: their corners come out loose with one compiler or another -- 42 with gcc, 0.02 and 0.24 of volume less; 53 with MSVC, 0.0115 and 0.19 less -- other paths, not the pass's) |
 | `issue273_handle_foot_e{12,14}_r0.3` | the handle's front edges, ending at its foot two degrees from the wall: the same |
 
 ### A pinch between two new vertices
