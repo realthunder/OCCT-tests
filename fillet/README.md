@@ -3471,6 +3471,7 @@ Import, the ABI checks (no layout moved, no fork-only import).
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
+| `boss_flush_foot_r{0.3,1,2}` | A cylinder boss (r 5) on a plate (30 x 20 x 3) standing flush with the plate's side: the foot's fillet is refused at every radius, "TopOpeBRepDS_DataStructure::Point" -- a point of index 0. The foot circle is tangent to the plate's top edge, the top narrows to nothing there, and the fillet's ring cannot pass: it would have to open at the tangent point, each end cut by the side's plane carried up, so that the flush side stays flat. The same boss set 3 in from the side is made (`boss_inset_foot_r1`). #876's post is this, flush with the plate's round end: its foot's edges (30 to 32, 91 to 94) are refused there too, upstream and on the refined shape alike. Found 2026-10-14; a new end, to design |
 
 ## Pictures
 

@@ -2050,6 +2050,29 @@ for r, vol in ((0.3, 1886.6776), (1.0, 1883.8419)):
                                        "issue474_Fillet.brep")),
                 [19, 21], r, "pass", vol, 1e-5, vol_tol=1e-3, bop=True)
 
+# A cylinder boss standing flush with a plate's side: its foot circle is
+# tangent to the plate's top edge, and the top narrows to nothing there. A
+# fillet round the foot is refused at every radius ("TopOpeBRepDS_
+# DataStructure::Point", a point of index 0); the ring would have to open at
+# the tangent point, each end cut by the side's plane carried up (README.md,
+# Known broken). The boss set in from the side, for comparison, is made.
+def _boss(y):
+    s = Part.makeBox(30, 20, 3).fuse(Part.makeCylinder(5, 10, App.Vector(15, y, 3)))
+    return s.removeSplitter()
+
+
+def _foot(s):
+    return [i for i, e in enumerate(s.Edges, 1)
+            if e.Curve.__class__.__name__ == "Circle"
+            and abs(e.BoundBox.ZMin - 3) < 1e-7 and abs(e.BoundBox.ZMax - 3) < 1e-7]
+
+
+_flush = _boss(5)
+for r in (0.3, 1.0, 2.0):
+    fillet_case("boss_flush_foot_r%g" % r, _flush, _foot(_flush), r, "xfail")
+_inset = _boss(8)
+fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
