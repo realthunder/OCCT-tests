@@ -1431,6 +1431,48 @@ is the first of five. It is taken for an edge of a chain now, when it is
 that edge's surface and no more, and the fillet is the cylinder the
 refined shape has.
 
+### An edge of no length (`61f59f6842`, realthunder/FreeCAD#474, #876, #273)
+
+The fillet sweeps now put every valid result to BOP's argument check as
+well (`../README.md`, "BOP's check on every valid result"): BRepCheck's
+"valid" is not what the next boolean asks. The most reported fault was an
+edge with nothing between its ends -- where a fillet ends across a face of
+no width (#474's hexagon has two faces with a needle 1.4e-7 wide), or is
+thinner at its end than its own tolerance (#876's post, a degree from
+flush; #273's handle, two degrees from its wall). Such an edge is dropped
+now and its two vertices made one. Nothing to see: the edge is 1e-7 to
+1e-4 long, and the shapes are what they were.
+
+### A pinch between two vertices the fillet made (`1a971d66bc`, realthunder/FreeCAD#523)
+
+The pinched top of `40ba54dcdf` again, at the bottom: the cylinder's rim
+and the box's bottom edge from it, at radius 1. The rim's fillet touches
+the bottom on a whole circle of radius 1, the edge's on a line tangent to
+it, and what is left of the bottom is the box's rectangle and the disc,
+touching at one point -- but there both vertices are the fillet's, and the
+circle runs from one to the other: the pass took neither. It takes two
+vertices of the fillet's now, and an edge between them that is itself a
+loop of the wire. The views are alike in all three columns; the third row
+is the bottom: before, the rectangle with the disc hanging from its
+corner, one face; after, the rectangle alone, the disc a face of its own.
+The volume does not move, and the result passes BOP's check (two vertices
+at one point before). The same at the rim's other end, and with the box's
+other bottom edge.
+
+![issue523_bottom_rim_and_edge_a_r1](pictures/issue523_bottom_rim_and_edge_a_r1.png)
+
+### The roots of a trigonometric equation below zero (`5c531f4938`, realthunder/FreeCAD#474)
+
+Not a fillet's fault: `TKMath`'s solver of a cos^2 + 2b cos sin + c cos +
+d sin + e = 0 dropped every root between a lower bound below zero and
+zero. BOP finds a point's place on an ellipse through it, and on an arc of
+ellipse running from -PI/2 to 0 found none: two fillets at a corner of
+#474's, three planes five degrees off square, meet in such an arc, and
+BOP took their common edge for a new section and the fillets for
+self-intersecting. Nothing to see either: the fillets are the shapes they
+were. The fix also lets the new draft make #876's face 44 at 5 degrees,
+which it refused for want of a closure.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

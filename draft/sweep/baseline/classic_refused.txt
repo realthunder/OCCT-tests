@@ -310,7 +310,7 @@ issue876_Fillet 44 34 15 ok:6848.354304:48:1
 issue876_Fillet 44 34 5 ok:7443.285276:48:1
 issue876_Fillet 44 34 60 ok:6651.253215:47:1
 issue876_Fillet 44 36 15 ok:6900.267541:48:1
-issue876_Fillet 44 36 5 FAIL(Failed_to_create_draft:_Cell_draft:_NoClosure_on_Face44_(neighbour_Face41):_the_face_does_not_meet_its_neighbours:_the_region_it_sweeps_is_not_closed)
+issue876_Fillet 44 36 5 ok:7628.966853:48:1
 issue876_Fillet 44 36 60 ok:6658.837487:46:1
 issue876_Fillet 44 38 15 ok:6848.354304:46:1
 issue876_Fillet 44 38 5 ok:7443.285276:44:1

@@ -29,7 +29,11 @@ A result is `ok:volume:faces:bopclean` (the last is Part's `check(True)`) or
 
 `baseline/` is fcad OcctFix `3b1f9a37cb` (2026-10-09), `Method = New`, the
 stop on: `classic_valid` and `classic_refused` with propagation on,
-`chains_nopropagate` with it off.
+`chains_nopropagate` with it off. One line since: #876 `Fillet` face 44
+at 5 degrees (`classic_refused`), "NoClosure" until OCCT `5c531f4938`
+(`TKMath`: the roots of a trigonometric equation below a lower bound
+under zero were dropped, ../../fillet/README.md), made since -- valid,
+48 faces, BOP's check clean.
 
 A purged input makes every case `TIMEOUT/CRASH` on both builds, and a
 comparison then reads "all the same": check that the results are real.

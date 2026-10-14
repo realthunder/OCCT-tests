@@ -3408,7 +3408,9 @@ alone and with its neighbours at V27 and V32; 123 valid results moved
 the same way, and #523's four pairs have the bottom in two faces. 2581
 valid, 26 invalid, 1314 refused; 9511, 165, 2566. `TKMath`'s fix moves
 no fillet in either sweep: it changes what BOP finds, not what the
-builder makes.
+builder makes. It does move one draft: the new draft makes #876's face 44
+at 5 degrees, refused before for want of a closure (valid, BOP's check
+clean; the draft sweep's baseline has the line).
 
 BOP's check (`baseline/bop_*.txt`): the edge sweep's 60 are 28 -- #474's
 `Fillet003` 30 to 10, #876's `Fillet` 8 to none, #273's `Fillet` 20 to
@@ -3439,7 +3441,15 @@ What is left, and why:
 
 Nothing to picture for the first and the last: the edge is not to be
 seen at any scale a picture has, and the fillets are the shapes they
-were.
+were. #523's first pair is pictured (stage `s523e`).
+
+Run since on the installed build -- the three on `256171494a`, the merge
+of the fork's `raisedCounter` work, FreeCAD built again against it: the
+suites plain and frozen (568 and the one known failure, 99, 378), both
+sweeps and both BOP sweeps the baselines to the line, FreeCAD's
+`TestPartApp` 282 and `TestPartDesignApp` 368 less the one known, the
+draft sweeps the same but the one draft above, the gtests of Part and
+Import, the ABI checks (no layout moved, no fork-only import).
 
 ## Known broken (XFAIL)
 
