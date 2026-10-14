@@ -20,6 +20,8 @@ FreeCADCmd tests/fork/draft/run_tests.py
   and its README; its models are `occ-issues/`'s.
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
+- `math/` -- checks of `TKMath` the work on the others led to: a C++
+  driver each, built against an install.
 - `abi/` -- the fork against upstream's ABI: the symbols upstream exports
   and the layouts of the classes the fork changed, checked against an
   upstream build, and how to add to a class of upstream's without moving it.

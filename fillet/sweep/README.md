@@ -43,9 +43,10 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `8558180119`, FreeCAD OcctFix `34abfa2dae`,
-2026-10-14: edge 2578 ok, 29 BAD, 1314 EXC; vertex 9500 ok, 176 BAD, 2566
-EXC; no crash or timeout. Move it forward with each fix that changes
+`baseline/` is OCCT LinkVibe-801 `5c531f4938`, FreeCAD OcctFix `34abfa2dae`,
+2026-10-14: edge 2581 ok, 26 BAD, 1314 EXC; vertex 9511 ok, 165 BAD, 2566
+EXC; no crash or timeout. `8558180119` had edge 2578 / 29 / 1314, vertex
+9500 / 176 / 2566 (../README.md, "BOP's check on every valid result"). Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge
 2445 / 42 / 1434, vertex 8847 / 291 / 3104), `7a1fbeffb3` (edge 2507 /
@@ -135,6 +136,31 @@ while its edge 1 was, invalid for its edge 6, which is invalid alone, on
 the refined shape too -- 200 again at `5052552dd6`, the fin's pair
 above, and 176 at `358d611f3f`: the 24 with #309's edge 9, at its two
 ends.
+
+Valid for a boolean? BRepCheck's "valid" is not what the next feature
+asks: a boolean takes BOP's argument check (Part's `check(True)`).
+`fsw_bop.py` runs the cases a baseline has valid and puts each result to
+it: `ok:<volume>:<max tol>:<faces>:c` when it reports nothing,
+`...:b:<what>` when it does, `<what>` being `<shape type>/<BOP's
+status>*<count>,...`. `bopin.py` puts the inputs to it first
+(`baseline/inputs_bop.txt`): an input that fails it itself -- #273's
+`Fillet001`, #876's `Fillet001` -- has its cases marked `input` and not
+run, its results inheriting the fault (and the check of #273's taking
+minutes a case). `bopcmp.py` classes an outdir by shape: clean, reported
+at a tolerance of 1e-4 or less, reported looser, and what is reported;
+`compare.py` takes two such runs, or one and `baseline/bop_*.txt`, and
+lists every case whose verdict changed.
+
+    FreeCADCmd bopin.py                                  # once per new input
+    WORKER=fsw_bop.py SKIP=baseline/edge.txt ./drive.py edge /tmp/b_edge
+    ./bopcmp.py /tmp/b_edge
+    ./compare.py baseline/bop_edge.txt /tmp/b_edge
+
+About four times a sweep's time on the mac: the edge sweep ~10 min, the
+vertex sweep ~75. `baseline/bop_*.txt` is `5c531f4938`'s: the edge sweep's
+2395 valid results on clean inputs, 28 reported; the vertex sweep's 8849,
+213 reported (two of #962's cases outlast the 120 s), 30 of them at 1e-4
+or less. At `8558180119` it was 60 and 423 (../README.md).
 
 Valid in pieces, and the same? `fsw_ref.py` makes each case of a sweep
 twice, in pieces and on the shape refined, and runs Part's `check(True)`

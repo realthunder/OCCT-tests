@@ -3280,6 +3280,167 @@ ends at 1 the same way; the slotted miniatures' floor and upright pair
 
 Nothing to picture: the surface is the one that was there, exact.
 
+## BOP's check on every valid result (realthunder/FreeCAD#474, #876, #273, #523, 2026-10-14)
+
+The sweeps call a result valid on BRepCheck's word. The feature after a
+fillet is a boolean, and a boolean asks BOP's argument check
+(`Shape.check(True)`), which is stricter: the suite has put single cases
+to it since #523's pinched top, the sweeps never had. `sweep/fsw_bop.py`
+does (sweep/README.md): every valid result of a sweep, with what the
+check reports.
+
+At `8558180119`, on the inputs that pass the check themselves -- #273's
+`Fillet001` and #876's `Fillet001` do not, and their results are set
+aside -- 60 of the edge sweep's 2395 valid results fail it, and 423 of the
+vertex sweep's 8849. #962's two inputs, #631's four, #309, #523 and the
+nine miniatures have none on the edge sweep. 323 of the 423 report "too
+small edge". Three faults, fixed here; what is left is mostly corner
+plates at loose tolerances (below).
+
+### An edge of no length
+
+An edge the fillet made with nothing between its ends:
+
+- #474's `Fillet003` has two faces of its hexagon with a needle: at
+  (6.415,11.307) and at (4.441,7.828) two of a face's edges lie on one
+  line for 2 of height, 1.4e-7 apart. A fillet ending at either corner
+  crosses the needle with an edge of that length between two vertices.
+- #876's post is flush with the plate's round end and drafted by a
+  degree, so the edge at its foot is a degree from smooth. Its fillet is
+  thousandths wide and ends in an edge 1.1e-6 long at radius 0.3, 1.0e-4
+  long between ends 5.1e-5 apart at radius 2.
+- #273's handle stands on the cylinder's wall two degrees from it; the
+  fillet down a front edge of the handle ends at its foot in an edge
+  1.5e-5 long, closed on one vertex.
+
+BRepCheck lets such an edge be. BOP's check calls it too small and its
+two vertices, or the edge and the faces beside it, self-intersecting.
+
+Fix `61f59f6842`, `ChFi3d_DropMicroEdges` in `ChFi3d_Builder.cxx`, run on
+the result before the pinched faces are split. An edge the fillet made
+-- not one of the input's -- no longer than twice the tolerance the
+fillet's surfaces are made to (2e-4 by default: its ends, each known to
+1e-4, are one point), and that BOP's own test finds covered by its
+vertices (`BOPTools_AlgoTools::IsMicroEdge`), is taken out of its wires
+and its two vertices made one: the input's when one of them is, with the
+tolerance to hold the other. An edge closed on one vertex just goes. The
+builder's history is carried over as for the pinched faces. No member,
+no exported symbol.
+
+The length is the limit that matters. Without it the pass took an edge
+0.029 long under vertices at a tolerance of 0.045, on #273's edge 5 at
+0.3 -- a loose result, which stayed loose and whose volume moved by 1.9.
+An edge its vertices cover and that is longer than the fillet's own
+tolerance is the mark of a loose result, not an edge of no length.
+
+What it costs: the wire is open by the edge's length where it was, under
+the vertex. The volume moves by that length times its lever: 5.0e-4 at
+most (#876's edge 53 at radius 2, 8665.7574 to 8665.7579), the adaptive
+integration (1e-10) agreeing with the default one on both shapes.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f003_no_width_e{53,13,5}_r0.3` | the hexagon's bottom edge and the thread's two helices, each ending at a needle: valid, BOP's check ("too small edge" before) |
+| `issue876_post_foot_e10_r0.3`, `issue876_post_foot_e{42,53}_r2` | the edge at the post's foot, a degree from smooth: the same |
+| `issue273_handle_foot_e{12,14}_r0.3` | the handle's front edges, ending at its foot two degrees from the wall: the same |
+
+### A pinch between two new vertices
+
+#523's box and cylinder, the bottom: the cylinder's rim and one of the
+box's two edges it ends on, filleted at radius 1. The rim's fillet
+touches the bottom on a whole circle of radius 1 and the edge's on a line
+tangent to it, so the bottom is a rectangle and a disc meeting at a point
+-- the pinched top of `40ba54dcdf` again, but the circle ran from one
+vertex the fillet made to another at the same place, and the pass that
+splits a pinched face took only a pinch at a vertex of the input's, and
+none with an edge between its two vertices. BOP's check: the two vertices
+self-intersecting.
+
+Fix `1a971d66bc`, `FindPinch`. Two vertices the fillet made are a pinch
+too, the looser kept; and an edge between them does not rule it out when
+it is itself a loop of the wire -- longer than ten times what the
+vertices cover. Such a loop keeps its range when its vertices are made
+one (the parameter update the other edges get would have collapsed it).
+
+| Case | What it covers |
+|------|----------------|
+| `issue523_bottom_rim_and_edge_{a,b,c,d}_r1` | the rim and either box edge, at both ends of the rim: valid, the bottom in two faces, BOP's check (two vertices at one point before) |
+
+### The roots of a trigonometric equation below zero
+
+#474's first input has a corner of three planes, two of them five
+degrees off square, at (-13,1.992,-0.176). Fillet the two edges on the
+third and the fillets are two cylinders meeting in an exact quarter of an
+ellipse. BOP's check called the two cylinders self-intersecting: it took
+their common edge for a new section. The edge's range on its ellipse is
+-PI/2..0, and on that range BOP found no projection of a point lying on
+it (`IntTools_Context::ComputePE`, `GeomAPI_ProjectPointOnCurve` -- the
+same point projects on the range moved by a period).
+
+The fault is upstream's and old, in `TKMath`:
+`math_TrigonometricFunctionRoots` finds the roots in [0, 2 PI) and brings
+them to the bounds asked by the whole periods in the lower bound, rounded
+toward zero (`IntegerPart`, `std::trunc` since 8.0). For a lower bound
+below zero that is no period at all: every root between the bound and
+zero was out of range, and dropped. Its first- and second-degree branches
+did not bring a root up a period for a positive bound either.
+
+Fix `5c531f4938`: one function brings each root up or down by whole
+periods to the first value not below the lower bound (less the branch's
+tolerance), in all six places. Checked against the old code on 400000
+random equations of every form the solver has a branch for, half with a
+lower bound below zero (`../math/trig_roots.cpp`): the old missed 150272
+roots a sampling finds by a change of sign, the new none; no root the old
+found is lost, and every new one is a root within the bounds.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_skew_corner_r{0.3,1}` | the corner's two edges: valid, no tolerance above 1e-5, BOP's check (two cylinders self-intersecting before) |
+
+### The sweeps
+
+No status lost on either sweep; no result whose BOP check was clean
+reports anything now. Edge: 3 results invalid before are valid, #474's
+`Fillet003` edge 56 at every radius, the other needle's hexagon edge; 19
+valid results moved by up to 7e-4 in volume, every one an edge of no
+length dropped. Vertex: 11 invalid before are valid, the same edge 56
+alone and with its neighbours at V27 and V32; 123 valid results moved
+the same way, and #523's four pairs have the bottom in two faces. 2581
+valid, 26 invalid, 1314 refused; 9511, 165, 2566. `TKMath`'s fix moves
+no fillet in either sweep: it changes what BOP finds, not what the
+builder makes.
+
+BOP's check (`baseline/bop_*.txt`): the edge sweep's 60 are 28 -- #474's
+`Fillet003` 30 to 10, #876's `Fillet` 8 to none, #273's `Fillet` 20 to
+16, #474's `Fillet002` 2 as they were. The vertex sweep's 423 are 213 --
+`Fillet003` 208 to 74, #876 46 to 2, #273 83 to 59, #523 4 to none, the
+skewed corner's 4 to none. The suite, the draft suite (99) and the
+thickness suite (378) pass on the three.
+
+What is left, and why:
+
+- #474's `Fillet003`, the thread's upper helix (edges 3, 8, 16, 32 and 40
+  and the pairs holding them): the fillet's end is a vertex on one of the
+  needle's two edges, at a tolerance of 7e-6 that reaches the other,
+  1.4e-7 away ("self-intersecting vertex"; the input's own vertices there
+  are at 1e-7). The input's.
+- Corner plates at loose tolerances -- 3e-3 to 0.37 -- on #631's four
+  inputs, #962's two (V20 to V23 and V34 to V37, both inputs), #273 and
+  #474's `Fillet002` (edge 4's plate at 0.008). The plate's quality,
+  which fcad's `docs/CornerBlending.md` corner blend is for.
+- #273's results at tolerances of 0.04 to 0.26, on an input with two
+  vertices at 0.03; and its edges 23 and 24 at 0.8, a corner's patch at
+  the tip of a groove that the check calls self-intersecting.
+- #962's three `GeomFill` patches at the slots' mouths (`Fillet` V48,
+  V51, V64; `Chamfer` V57 and the like), at 1e-4: "self-intersecting
+  face" -- the patch of "An edge's tolerance over its curves on the
+  faces", whose verdict turns with the parameters of the faces beside
+  it.
+
+Nothing to picture for the first and the last: the edge is not to be
+seen at any scale a picture has, and the fillets are the shapes they
+were.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

@@ -1995,6 +1995,61 @@ for nm, y, yo in (("near", 13.7, 10.2), ("far", 17.1, 20.3)):
                   [((38.5, y, 32.25), (38.5, yo, 32.25)), ((38.5, y, 32.25), (35.5, y, 32.25))],
                   r, vol_tol=1e-4, max_tol=2e-4)
 
+# An edge its two vertices cover (README.md, "An edge of no length"). #474's
+# Fillet003 input keeps a face 1.4e-7 wide beside the hexagon's corner at
+# (6.415,11.307), between two edges on one line, and one like it at
+# (4.441,7.828): a fillet ending at either crossed the face with an edge of
+# that length -- the hexagon's bottom edge (53) and the thread's two helices
+# (13 at radius 9, 5 at radius 13). On #876 the post is flush with the
+# plate's round end and drafted by a degree: the edge at its foot is a
+# degree from smooth, and its fillet, a few thousandths wide, ends in an
+# edge 1.1e-6 (10) and 5.1e-5 (42, 53) long. Valid each time, and refused by
+# BOP's check: "too small edge", "self-intersecting vertex".
+# (The tolerances asked are the results' own, away from that end: 0.018 on
+# the outer helix, 0.005 at the other end of #876's edge 10.)
+for e, r, vol, tol in ((53, 0.3, 1988.8326, 1e-3), (13, 0.3, 1985.1153, 1e-3),
+                       (5, 0.3, 1983.6314, 0.02)):
+    fillet_case("issue474_f003_no_width_e%d_r%g" % (e, r),
+                Part.read(os.path.join(MODELS, "issue474_fillet003_base.brep")),
+                e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)
+for e, r, vol, tol in ((10, 0.3, 8665.7839, 6e-3), (42, 2.0, 8665.7717, 2e-3),
+                       (53, 2.0, 8665.7579, 2e-3)):
+    fillet_case("issue876_post_foot_e%d_r%g" % (e, r),
+                Part.read(os.path.join(MODELS, "issue876_fillet_base.brep")),
+                e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)
+# #273's handle stands on the cylinder's wall two degrees from it: a fillet
+# down either of its front edges ends at the handle's foot in an edge
+# 1.5e-5 long, closed on one vertex. The input has a vertex at 0.03.
+for e, vol in ((12, 8559.3314), (14, 8559.3365)):
+    fillet_case("issue273_handle_foot_e%d_r0.3" % e,
+                Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                                       "issue273_Fillet.brep")),
+                e, 0.3, "pass", vol, 0.031, vol_tol=1e-3, bop=True)
+
+# #523's box and cylinder, the bottom: the cylinder's rim and one of the
+# box's two edges it ends on, at radius 1. The rim's fillet touches the
+# bottom on a whole circle of radius 1, the edge's on a line tangent to it:
+# the bottom is a rectangle and a disc meeting at a point, where the circle
+# ran from one new vertex to another at the same place (README.md, "A
+# pinch between two new vertices").
+for nm, pair in (("a", [8, 13]), ("b", [9, 11]), ("c", [11, 14]), ("d", [13, 15])):
+    fillet_case("issue523_bottom_rim_and_edge_%s_r1" % nm,
+                Part.read(os.path.join(MODELS, "issue523_box_cylinder.brep")),
+                pair, 1.0, "pass", 1090.6315, 2e-3, vol_tol=1e-3, bop=True)
+
+# #474's first fillet input, the corner at (-13,1.992,-0.176): three planes,
+# two of them five degrees off square, and the two edges on the third
+# filleted. Two cylinders and their mitre, an exact quarter of an ellipse
+# with the range -PI/2..0 -- on which BOP found no projection of a point,
+# so that it took the mitre for a new section and the two fillets for
+# self-intersecting (README.md, "The roots of a trigonometric equation
+# below zero").
+for r, vol in ((0.3, 1886.6776), (1.0, 1883.8419)):
+    fillet_case("issue474_skew_corner_r%g" % r,
+                Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                                       "issue474_Fillet.brep")),
+                [19, 21], r, "pass", vol, 1e-5, vol_tol=1e-3, bop=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
