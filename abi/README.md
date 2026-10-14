@@ -259,7 +259,9 @@ default visibility (`__attribute__((visibility("default")))` on it, not
 `Standard_EXPORT`, which is an import with MSVC) the module's copy is a
 weak definition of its own, found, and still no import of the fork's.
 FreeCAD's own modules are not built hidden here; a client that is
-would need it.
+would need it. With gcc on Linux (the Linux box, the same day) the hidden
+module finds the class and counts: the miss is clang's on macOS, where
+the module's private `type_info` is not the library's.
 
 What this does not make of a FreeCAD built against the fork is one that
 behaves with upstream's library as one built against upstream would: it
