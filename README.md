@@ -12,6 +12,11 @@ FreeCADCmd tests/fork/fillet/run_tests.py
 FreeCADCmd tests/fork/draft/run_tests.py
 ```
 
+On another OCCT than the fork -- upstream's, as FreeCAD can load it -- every
+case would fail for want of the fork, so each suite says "SKIP: not the OCCT
+fork" and exits 0. The fork is found as FreeCAD finds it, by a C function of
+its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
+
 - `thickness/` -- the thickness (`BRepOffsetAPI_MakeThickSolid`) suite:
   `run_tests.py`, the sweep, the captured models, `models/Thickness.md`
   (every fix, before and after) and its pictures.

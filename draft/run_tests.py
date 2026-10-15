@@ -35,6 +35,17 @@ def emit(line):
     os.write(1, (line + "\n").encode())
 
 
+# Every case here pins what the fork does. On another OCCT -- upstream's, as
+# FreeCAD can load it -- they fail for want of the fork, so the suite says so
+# and runs nothing. The fork is found as FreeCAD finds it, by a C function of
+# its TKBRep; a FreeCAD from before Part.hasOCCTFunction runs the suite.
+if hasattr(Part, "hasOCCTFunction") and not Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape"):
+    emit("SKIP: not the OCCT fork (TKBRep has no SetFuncShowTopoShape)")
+    emit("summary: SKIP=1")
+    sys.stdout.flush()
+    os._exit(0)
+
+
 # Unfrozen, as any other build of FreeCAD runs (see ../fillet/run_tests.py).
 App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
     "ImmutableShapeValues", os.environ.get("DRAFT_FREEZE", "0") != "0")
