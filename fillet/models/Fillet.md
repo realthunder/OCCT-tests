@@ -187,6 +187,11 @@ the edge and the small patch at its top; in the third row, the patch's
 outline, closed, with a hook where two of its boundary curves meet. The
 small block is the same corner made small; it failed the same way.
 
+The pictures' after is the fork as it is now: since the ceiling under a
+wall (`0669daa0b6`, below) there is no patch at this corner, the fillet
+ends exactly (the closed form's volume to 1e-6), and the third row has
+no patch to draw.
+
 ![issue962_e36_r0.3](pictures/issue962_e36_r0.3.png)
 ![arm_on_tall_block_r0.3](pictures/arm_on_tall_block_r0.3.png)
 
@@ -258,9 +263,12 @@ before it is stored, and the orientation read with the boundaries'
 directions as the plate reports them.
 
 The zoom shows the corner: upstream's is the G1 plate, dark where it
-crumples, the fork's before is missing, after it is the G0 plate. The third row, the plate's
-outline, looks alike in all three; what was wrong is a direction, which an
-outline does not show. The same fix gives four more edges into these corners
+crumples, the fork's before is missing. After this fix it was the G0 plate;
+the picture's after is the fork as it is now, where the corner of five edges
+below (`63c8218a86`) makes this one exactly too: no plate, the fillet
+meets the side, 11583.5853 where the plate gave 11583.5858, and the third
+row has nothing to draw. That row, the plate's outline, looks alike in the
+other two; what was wrong is a direction, which an outline does not show. The same fix gives four more edges into these corners
 -- two in each of #962's Fillet and Chamfer inputs -- the volumes a mesh
 gives them, and tolerances of 0.007 to 0.12 where they had the radius.
 
@@ -1151,7 +1159,10 @@ split as well, below the vertex: a fillet's leftover surface past the
 vertex, with a face on one side only, was taken for its end where two
 fillets meet; and set back, the outer face's split, in line with the
 wall's edge above it, sent the corner down a path meant for two sharp
-edges in line.
+edges in line. That corner was a plate 0.11 off the refined shape's
+exact one; the picture's after is the fork as it is now, the exact corner
+(1131.5944) since the fillet in two surfaces at a corner of two
+(`9735ff8875`, below).
 
 ![slot_split_both_floor_and_end_r1](pictures/slot_split_both_floor_and_end_r1.png)
 
@@ -1176,6 +1187,11 @@ part of each fillet that runs on past the vertex, keeping the surface that
 touches an edge beside the fillet's -- and took the one at the foot for
 it: of the fillet's six surfaces five were dropped. An upstream fault; any
 fillet that comes back to such an edge would meet it.
+
+The corner this fix made was a patch, 0.043 too large at radius 1. The
+picture's after is the fork as it is now: since the line carried over a
+split to the pivot of two fillets (`2ec760a1d3`, below) it is the exact
+corner of the two fillets, the refined shape's to the boolean.
 
 ![issue962_rib_top_corner_r1](pictures/issue962_rib_top_corner_r1.png)
 
@@ -1472,6 +1488,35 @@ BOP took their common edge for a new section and the fillets for
 self-intersecting. Nothing to see either: the fillets are the shapes they
 were. The fix also lets the new draft make #876's face 44 at 5 degrees,
 which it refused for want of a closure.
+
+### A boss flush with the plate's side (`b234546fbe`)
+
+A cylinder boss standing flush with a side of the plate under it: the
+boss touches the side's plane along one line, and its foot circle touches
+the plate's top edge at one point. A fillet round the foot was refused at
+every radius -- an error about a point of index 0, nothing a user can read.
+The fillet runs round the boss until its line on the plate reaches the
+plate's edge on either side of that point, and stops; both its ends are
+then at the one vertex, and no corner took them.
+
+It is made now as the fillet on a plate reaching past the side would be,
+then cut by the side: the ring loses what would hang over the edge, and
+the side grows a peak above the plate's top under the fillet's two cut
+ends, up to the point where the boss touches it at the fillet's height.
+The boss's foot is the fillet's line all round. Before, in the first two
+columns, nothing; after, the ring and the peak. The third row is the
+side: a rectangle before; after, the peak stands out of the edge along
+the plate's top (on the right: the side's plane is drawn turned). Checked against that very construction -- the fillet on a wider
+plate, cut by the side's plane -- at radius 1 and 2: nothing of either
+lies outside the other. The same against a round plate's rim, the boss
+inside it.
+
+Not made: a chamfer there (its cut would end in a corner of no angle), a
+drafted boss (it touches the side only at its foot, so its fillet does
+not reach the side at all; #876's post), and a rim whose seam runs
+through the point.
+
+![boss_flush_foot_r1](pictures/boss_flush_foot_r1.png)
 
 ## Making the pictures
 

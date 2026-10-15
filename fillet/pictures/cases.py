@@ -67,6 +67,7 @@ STAGES = {
     "s962zk": ("e79f700798", "0669daa0b6"),
     "s962zl": ("5b5471ad11", "9735ff8875"),
     "s523e": ("61f59f6842", "1a971d66bc"),
+    "sboss": ("af24dcdca0", "b234546fbe"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -307,6 +308,13 @@ def _slot_by_slope():
     return s.generalFuse([Part.LineSegment(V(0.7, 4, 5), V(0.7, 4, 10)).toShape()])[0].Solids[0]
 
 
+def _boss_flush():
+    """run_tests.py's _boss(5): a cylinder boss r5 on a 30x20x3 plate, flush
+    with the plate's side y=0."""
+    V = App.Vector
+    return Part.makeBox(30, 20, 3).fuse(Part.makeCylinder(5, 10, V(15, 5, 3))).removeSplitter()
+
+
 def _pocket_mouth():
     """run_tests.py's pocket_mouth: a block with a round pocket that widens
     below a step and a slot out of it, the slot's wall split above the step
@@ -351,6 +359,7 @@ SHAPES = {
     "slotboth": _slot_both,
     "slotslope": _slot_by_slope,
     "pocketmouth": _pocket_mouth,
+    "bossflush": _boss_flush,
 }
 
 
@@ -459,6 +468,8 @@ UVFACE = {
     "slotslope": _plane_at("y", 4, None, {"x": 0.0}),
     # the slot's wall, its piece beyond the split (x from 16.75)
     "pocketmouth": _plane_at("y", 0, {"x": 17.0}),
+    # the plate's side the boss is flush with, which grows a peak over the gap
+    "bossflush": _plane_at("y", 0),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -582,6 +593,7 @@ NAMES = {
     "pocketmouth": "a block with a round pocket r15.5 that widens to r16.75 below z=5 and a "
                    "slot out of it; the slot's wall split 1.25 from the pocket, the top by the "
                    "circle r16.75",
+    "bossflush": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -613,6 +625,7 @@ VIEW = {
     "slotboth": ((5, 5, 7), 20.0),
     "slotslope": ((3, 5, 5), 20.0),
     "pocketmouth": ((14, 0, 6), 24.0),
+    "bossflush": ((15, 10, 5), 24.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -644,6 +657,7 @@ UVLABEL = {
     "slotboth": ("the slot's wall, its piece at the mouth", False),
     "slotslope": ("the wall's piece at the block's side", False),
     "pocketmouth": ("the slot's wall beyond the split", False),
+    "bossflush": ("the plate's side", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -912,6 +926,10 @@ CASES = {
     "arm_tilted_under_block_skew_r2": (
         "s962zk", "armtilt", ((38.5, 27.2, -3.75), (38.5, 27.2, -9.75)), 2.0, 7967.7871,
         (38.5, 27.2, -3.75), (-0.35, 0.7, -1)),
+    # the foot's two arcs share their ends: each told by a point on it
+    "boss_flush_foot_r1": ("sboss", "bossflush", [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
+                                                  ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))],
+                           1.0, 2591.8420, (15, 0, 3.5), (0.35, -1, 0.5)),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -986,12 +1004,18 @@ EDGES = {
     "issue962_rib_top_near_r1": "the top's two edges at the rib's corner beside the split "
                                 "wall, (38.5, 13.7, 32.25)",
     "issue523_bottom_rim_and_edge_a_r1": "the cylinder's rim and the box's bottom edge from it",
+    "boss_flush_foot_r1": "the boss's foot, its two arcs",
 }
 
 
-def edge_between(shape, a, b):
+def edge_between(shape, a, b, via=None):
+    """The edge from a to b; of several, the one passing nearest <via>."""
     want = sorted([tuple(round(c, 6) for c in a), tuple(round(c, 6) for c in b)])
-    for i, e in enumerate(shape.Edges):
-        if sorted(tuple(round(c, 6) for c in v.Point) for v in e.Vertexes) == want:
-            return e
-    raise ValueError("no edge between %s and %s" % (a, b))
+    found = [e for e in shape.Edges
+             if sorted(tuple(round(c, 6) for c in v.Point) for v in e.Vertexes) == want]
+    if not found:
+        raise ValueError("no edge between %s and %s" % (a, b))
+    if via is None or len(found) == 1:
+        return found[0]
+    p = Part.Vertex(App.Vector(*via))
+    return min(found, key=lambda e: e.distToShape(p)[0])

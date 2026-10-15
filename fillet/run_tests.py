@@ -1600,11 +1600,13 @@ exact_case("issue962_hex_mouth_edge_r0.8_cylinder", _q2,
 # round the wall's piece and comes back to that long edge at its foot; of
 # the fillet's six surfaces the corner kept the one there, at the chain's
 # other end, for the one at the vertex, and removed the rest ("Failed to
-# find edge", of two faces that share none). The corner is a patch, its
-# edge on the wall over the two pieces; the refined shape's is the exact
-# corner of two fillets.
+# find edge", of two faces that share none). The corner was a patch, its
+# edge on the wall over the two pieces (0.043 too large at 1); since
+# 2ec760a1d3 (the line carried over the split to the pivot) it is the
+# refined shape's, the exact corner of two fillets: the booleans either
+# way leave nothing.
 for r in (0.3, 1.0):
-    corner_case("issue962_rib_top_corner_r%g" % r, p2, (38.5, 10.2, 32.25), r, 0.06, 2e-3,
+    corner_case("issue962_rib_top_corner_r%g" % r, p2, (38.5, 10.2, 32.25), r, 1e-4, 1e-4,
                 along=((-1, 0, 0), (0, 1, 0)))
 
 # The fin on the block, flush with its side: the side is an L in two faces,
@@ -2054,25 +2056,84 @@ for r, vol in ((0.3, 1886.6776), (1.0, 1883.8419)):
                 [19, 21], r, "pass", vol, 1e-5, vol_tol=1e-3, bop=True)
 
 # A cylinder boss standing flush with a plate's side: its foot circle is
-# tangent to the plate's top edge, and the top narrows to nothing there. A
-# fillet round the foot is refused at every radius ("TopOpeBRepDS_
-# DataStructure::Point", a point of index 0); the ring would have to open at
-# the tangent point, each end cut by the side's plane carried up (README.md,
-# Known broken). The boss set in from the side, for comparison, is made.
-def _boss(y):
-    s = Part.makeBox(30, 20, 3).fuse(Part.makeCylinder(5, 10, App.Vector(15, y, 3)))
-    return s.removeSplitter()
+# tangent to the plate's top edge, and the top narrows to nothing there. The
+# fillet round the foot opens at the tangent point, each end cut by the
+# side carried up, which grows over the gap (README.md, "A boss flush with
+# the plate's side"); it was refused at every radius ("TopOpeBRepDS_
+# DataStructure::Point", a point of index 0). The result is the fillet made
+# on a plate reaching past the side, cut by the side's plane: boss_flush_csg
+# makes both and takes one from the other. The boss set in from the side is
+# made as it always was.
+def _boss(y, turn=0.0, plate=None, x=15.0):
+    b = Part.makeCylinder(5, 10, App.Vector(0, 0, 3))
+    b.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), turn)
+    b.translate(App.Vector(x, y, 0))
+    return (plate if plate is not None else Part.makeBox(30, 20, 3)).fuse(b).removeSplitter()
 
 
-def _foot(s):
+def _foot(s, z=3.0):
     return [i for i, e in enumerate(s.Edges, 1)
-            if e.Curve.__class__.__name__ == "Circle"
-            and abs(e.BoundBox.ZMin - 3) < 1e-7 and abs(e.BoundBox.ZMax - 3) < 1e-7]
+            if e.Curve.__class__.__name__ == "Circle" and e.Curve.Radius < 5.5
+            and abs(e.BoundBox.ZMin - z) < 1e-7 and abs(e.BoundBox.ZMax - z) < 1e-7]
+
+
+def _rim(turn):
+    p = Part.makeCylinder(20, 3)
+    p.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), turn)
+    return p
 
 
 _flush = _boss(5)
-for r in (0.3, 1.0, 2.0):
-    fillet_case("boss_flush_foot_r%g" % r, _flush, _foot(_flush), r, "xfail")
+for r, vol in ((0.3, 2585.9842), (1.0, 2591.8420), (2.0, 2611.2741), (4.5, 2720.7921)):
+    fillet_case("boss_flush_foot_r%g" % r, _flush, _foot(_flush), r, "pass", vol, 1e-5,
+                vol_tol=1e-3, bop=True)
+# the boss's seam on the far side: one edge of the foot, both ends on it
+_turned = _boss(5, 180.0)
+fillet_case("boss_flush_turned_foot_r1", _turned, _foot(_turned), 1.0, "pass", 2591.8420, 1e-5,
+            vol_tol=1e-3, bop=True)
+# two bosses on one side; the foot and the boss's top together
+_two = _boss(5, plate=_boss(5, plate=Part.makeBox(40, 20, 3), x=10.0), x=28.0)
+fillet_case("boss_flush_two_feet_r1", _two, _foot(_two), 1.0, "pass", 3983.6841, 1e-5,
+            vol_tol=1e-3, bop=True)
+fillet_case("boss_flush_foot_and_top_r1", _flush, _foot(_flush) + _foot(_flush, 13.0), 1.0,
+            "pass", 2585.4013, 1e-5, vol_tol=1e-3, bop=True)
+# a round plate, the boss against its rim from inside: the side a cylinder
+_inrim = _boss(0, 90.0, _rim(90.0))
+for r, vol in ((0.3, 4555.8909), (1.0, 4561.6566), (2.0, 4580.5973)):
+    fillet_case("boss_rim_foot_r%g" % r, _inrim, _foot(_inrim), r, "pass", vol, 1e-5,
+                vol_tol=1e-3, bop=True)
+
+
+def boss_flush_csg(name, r):
+    """The flush boss's fillet against the fillet on a plate reaching past
+    the side, cut there: nothing of either outside the other."""
+    try:
+        f = _flush.makeFillet(r, [_flush.Edges[i - 1] for i in _foot(_flush)])
+        wide = _boss(5, plate=Part.makeBox(30, 40, 3, App.Vector(0, -20, 0)))
+        ref = wide.makeFillet(r, [wide.Edges[i - 1] for i in _foot(wide)]).common(
+            Part.makeBox(100, 100, 100, App.Vector(-20, 0, -20)))
+        a, b = f.cut(ref).Volume, ref.cut(f).Volume
+        ok = f.isValid() and a < 1e-6 and b < 1e-6 and abs(f.Volume - ref.Volume) < 1e-3
+        report(name, ok, False, "vol=%.4f ref=%.4f out=%.1e,%.1e" % (f.Volume, ref.Volume, a, b))
+    except Exception as e:
+        report(name, False, False, "EXCEPTION " + str(e).strip().splitlines()[-1])
+
+
+boss_flush_csg("boss_flush_csg_r1", 1.0)
+boss_flush_csg("boss_flush_csg_r2", 2.0)
+# Still refused, as they were: a chamfer (its cut reaches the line on the
+# boss tangent to it, a corner of no angle); a drafted boss (it touches the
+# side only at the foot, and the fillet's line on it never reaches the
+# side); the rim's seam through the tangent point (the seam would have to
+# run on up); the boss at a corner of the plate, flush with two sides.
+fillet_case("boss_flush_chamfer_r1", _flush, _foot(_flush), 1.0, "xfail", chamfer=True)
+_drafted = Part.makeBox(30, 20, 3).fuse(Part.makeCone(5, 4, 10, App.Vector(15, 5, 3)))
+_drafted = _drafted.removeSplitter()
+fillet_case("boss_drafted_flush_foot_r1", _drafted, _foot(_drafted), 1.0, "xfail")
+_seamrim = _boss(0, 90.0, _rim(0.0))
+fillet_case("boss_rim_seam_foot_r1", _seamrim, _foot(_seamrim), 1.0, "xfail")
+_corner = _boss(5, x=5.0)
+fillet_case("boss_corner_foot_r1", _corner, _foot(_corner), 1.0, "xfail")
 _inset = _boss(8)
 fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
 
