@@ -354,9 +354,11 @@ for a in (5, 15):
 # At f41's corner (50, 13.7, 22) that curve is the wall's new edge on a
 # fillet, an ellipse, and the surface it is to cross is the side x=50, which
 # the fillet's cylinder is tangent to: the ellipse only touches the side.
-# The closest approach taken for the crossing is good to the square root of
-# its tolerance only -- 3.4e-7 off the kept edge with clang, 1.24e-4 with
-# MSVC and gcc, refused there. The vertex is placed where the kept edge
+# With MSVC and gcc the intersection finds no crossing, and the closest
+# approach taken instead, good to the square root of its tolerance only,
+# lands 1.24e-4 off the kept edge: refused. With clang the intersection
+# reports the touch as two crossings, the nearer 3.4e-7 off, within the
+# check. Where no crossing is found the vertex is placed where the kept edge
 # crosses the wall's new plane now, exactly. f48 (the same corner from the
 # other side, y=20.3) and the Chamfer model's f42 missed the same way.
 #
