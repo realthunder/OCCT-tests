@@ -350,10 +350,39 @@ for a in (5, 15):
 # of a split edge the draft leaves alone is placed by another edge's curve
 # and misses the split edge by 3.4e-7, three times its tolerance: the
 # result was invalid. The vertex's tolerance now covers it.
+#
+# At f41's corner (50, 13.7, 22) that curve is the wall's new edge on a
+# fillet, an ellipse, and the surface it is to cross is the side x=50, which
+# the fillet's cylinder is tangent to: the ellipse only touches the side.
+# The closest approach taken for the crossing is good to the square root of
+# its tolerance only -- 3.4e-7 off the kept edge with clang, 1.24e-4 with
+# MSVC and gcc, refused there. The vertex is placed where the kept edge
+# crosses the wall's new plane now, exactly. f48 (the same corner from the
+# other side, y=20.3) and the Chamfer model's f42 missed the same way.
+#
+# Placed so, the new edge only touches the face, and beyond the vertex it
+# can run into it: f44 about n30 at 15 deg came out "valid" and
+# self-intersecting (BOP's check), as did #876's post foot drafted about its
+# fillets -- both refused before only because the closest approach happened
+# to miss the kept edge. A draft with a vertex placed at such a touch is
+# checked for self-intersection, and refused when it fails.
 P962 = os.path.join(HERE, "..", "fillet", "models", "issue962_pocket002.brep")
+SHAPES = os.path.join(HERE, "sweep", "shapes")
 for face, neutral, a, vol in ((41, 24, 5, 11432.6957), (44, 30, 5, 11738.5401),
-                              (51, 30, 15, 12057.0173)):
+                              (48, 26, 5, 11432.6957)):
     brep_case("issue962_f%d_n%d_a%d" % (face, neutral, a), P962, face, neutral, a, "valid", vol)
+brep_case("issue962_chamfer_f42_n25_a5", os.path.join(SHAPES, "issue962_Chamfer.brep"),
+          42, 25, 5, "valid", 11546.3881)
+# f51 about n30 at 15 deg is not placed at a touch, and is not checked: its
+# 12057.0173 is self-intersecting too (BOP's check), from before this, and
+# stays so -- what the case pins is that it does not change. The new
+# draft's 12041.2537 is clean.
+brep_case("issue962_f51_n30_a15", P962, 51, 30, 15, "valid", 12057.0173)
+brep_case("issue962_f51_n30_a15_new", P962, 51, 30, 15, "valid", 12041.2537, method="New")
+brep_case("issue962_f44_n30_a15", P962, 44, 30, 15, "refused")
+for neutral, a in ((36, 5), (38, 15)):
+    brep_case("issue876_post_foot_f44_n%d_a%d" % (neutral, a),
+              os.path.join(SHAPES, "issue876_Fillet.brep"), 44, neutral, a, "refused")
 
 # ---------------------------------------------------------------------------
 # The new draft (FreeCAD's Part::CellDraft, docs/NewDraft.md in

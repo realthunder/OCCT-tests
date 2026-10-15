@@ -179,7 +179,10 @@ them. Four changes:
 | `slot_wall_a5`, `slot_wall_a{15,30}` | a slot's wall 2 from the block's front, drafted about the slot's floor: valid at 5 deg (2 * 18^2 tan(a) taken), refused past 6.3 deg where it breaks through (were invalid) |
 | `split_floor_corner_a5` | a front wall drafted about the end wall, its corner where the floor's split edge and a slanted wall meet: refused (was invalid) |
 | `slot_wall_split_piece_a{5,15}` | one coplanar piece of a slot's wall drafted about the side through its split edge: refused (was "invalid" at the input's volume, the piece flattened) |
-| `issue962_f41_n24_a5`, `issue962_f44_n30_a5`, `issue962_f51_n30_a15` | #962's Pocket002, walls drafted about chamfer planes: valid (were invalid, a vertex 3.4e-7 off a split edge) |
+| `issue962_f41_n24_a5`, `issue962_f44_n30_a5` | #962's Pocket002, walls drafted about chamfer planes: valid (were invalid, a vertex 3.4e-7 off a split edge) |
+| `issue962_f41_n24_a5`, `issue962_f48_n26_a5`, `issue962_chamfer_f42_n25_a5` | the corner where the wall's new edge on a fillet (an ellipse) only touches the side x=50 that the fillet is tangent to: there is no crossing to find, and the closest approach taken instead missed the kept fillet edge by 3.4e-7 with clang but by 1.2e-4 with MSVC and gcc, refused there. Placed where the kept edge crosses the wall's new plane now: valid with every compiler, at the new draft's volume (11432.6957, 11546.3881) |
+| `issue962_f44_n30_a15`, `issue876_post_foot_f44_n{36,38}_a{5,15}` | the same touch where the wall's new edge runs into the face beyond the vertex: "valid" and self-intersecting once the vertex is placed exactly, and refused before only because the closest approach happened to miss the kept edge. A draft with a vertex placed at a touch is checked for self-intersection (BOPAlgo, those drafts only): refused |
+| `issue962_f51_n30_a15`, `issue962_f51_n30_a15_new` | the classic draft's 12057.0173 is self-intersecting (BOP's check), from before the touch change and not through it (no vertex placed at a touch, so not checked): the case pins that it does not change, not that it is right. The new draft makes it clean, 12041.2537, 73 faces |
 
 The draft sweep (8982 drafts): of the 893 invalid results, 854 are refused
 and 39 come out valid -- 37 within a vertex tolerance of 1e-5, the other two
