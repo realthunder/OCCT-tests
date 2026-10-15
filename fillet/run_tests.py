@@ -20,6 +20,8 @@ import Part
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODELS = os.path.join(HERE, "models")
+sys.path.insert(0, os.path.dirname(HERE))
+from loose_ends import loose, widest  # noqa: E402
 RELTOL = 1e-4
 
 
@@ -51,6 +53,14 @@ App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
 def signature(shape):
     """What a fillet must leave of its input: the shape valid, the volume."""
     return (shape.isValid(), round(shape.Volume, 6))
+
+
+def ends_problem(shape, allowed=0.0):
+    """'loose end ...' when an edge's curve ends past its vertex by more than
+    <allowed> too (see ../loose_ends.py: BRepCheck lets the vertex's
+    tolerance cover the gap)."""
+    gap, i = loose(shape, allowed)
+    return "loose end %.3g at Edge%d" % (gap, i) if gap else None
 
 
 results = []  # (name, verdict, detail); verdict in PASS/FAIL/XFAIL/UNEXPECTED-PASS
@@ -130,7 +140,12 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
                     max_tol when given; with bop=True, nothing BOP's argument
                     check (Shape.check(True)) reports.
     expect='xfail': known broken (see README.md); an exception, an invalid
-                    shape or an open shell counts as the expected failure.
+                    shape, a loose end or an open shell counts as the
+                    expected failure.
+    Every result made is checked for loose ends: an edge whose curve ends
+    past its vertex (../loose_ends.py), which BRepCheck lets pass -- by
+    more than the input's own gap, and than max_tol when given, the
+    looseness the case accepts.
     """
     try:
         before = signature(shape)
@@ -142,6 +157,9 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
             problems.append("input changed: valid=%s vol=%.4f" % signature(shape))
         if not r.isValid():
             problems.append("invalid")
+        else:
+            problems += [p for p in [ends_problem(r, max(max_tol or 0.0, widest(shape)))]
+                         if p]
         if len(r.Shells) != 1:
             problems.append("shells=%d" % len(r.Shells))
         elif not r.Shells[0].isClosed():
@@ -178,6 +196,8 @@ def exact_case(name, shape, edge_index, radius, kind):
         problems = []
         if not r.isValid():
             problems.append("invalid")
+        else:
+            problems += [p for p in [ends_problem(r, widest(shape))] if p]
         if count(r, "BSplineSurface") != count(shape, "BSplineSurface"):
             problems.append("%d B-spline faces for %d" % (count(r, "BSplineSurface"),
                                                           count(shape, "BSplineSurface")))
@@ -214,6 +234,9 @@ def sound_case(name, shape, edge_index, radius, expect="pass"):
         r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
         ok = r.isValid() and len(r.Shells) == 1 and r.Shells[0].isClosed()
         detail = "vol=%.4f" % r.Volume if ok else "invalid result, vol=%.4g" % r.Volume
+        loose_end = ends_problem(r, widest(shape)) if ok else None
+        if loose_end:
+            ok, detail = False, loose_end
     except Exception as e:
         ok = True
         detail = "refused: " + str(e).strip().splitlines()[-1]
@@ -1170,13 +1193,16 @@ for d in (0.7, 0.70001, 0.7001):
 # corner setback fallback makes it: both corners set back where the fillets
 # meet (fcad docs/CornerBlending.md section 9). The edges run between nearly
 # coplanar drafted walls, so the fillets move the volume by thousandths.
+# At 0.3 the fillet on the long edge (-17..17, z=3) is the one of
+# issue876_post_foot_e10_r0.3 below, a few thousandths wide, and both its
+# lines end in one vertex at the setback corner, 0.0026 from each (0.00524).
 p876 = Part.read(os.path.join(MODELS, "issue876_fillet_base.brep"))
 c876 = [edge_between(p876, (17, 16.75, 0), (17, 16.75, 3)),
         edge_between(p876, (-17, 16.75, 3), (17, 16.75, 3)),
         edge_between(p876, (19.238761, 15.746985, 3), (17, 16.75, 3)),
         edge_between(p876, (17, 16.75, 3), (17, 16.442791, 20.6))]
-for r, vol in ((0.3, 8665.7840), (1.0, 8665.7870)):
-    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol)
+for r, vol, tol in ((0.3, 8665.7840, 6e-3), (1.0, 8665.7870, None)):
+    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol, tol)
 
 
 def refused_case(name, shape, edge_index, radius):
@@ -2147,6 +2173,32 @@ _corner = _boss(5, x=5.0)
 fillet_case("boss_corner_foot_r1", _corner, _foot(_corner), 1.0, "xfail")
 _inset = _boss(8)
 fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
+
+
+# x16win's chamfer at a corner of two fillets: a 40x30x10 block, fillet 2 on
+# the edges at y=30 (the two verticals, the top one) and on (0,30,0)-(0,0,0),
+# then chamfer 1 on the top edge x=0, which ends at the corner of the fillet
+# on y=30's top edge and the one on its vertical. The block as a polygon
+# extruded makes a "valid" solid, BOP's check clean, whose corner patch has
+# three edges with curves stopping 0.3819 short of their vertices, the
+# vertices raised to 0.382 to cover it: 11864.0665, where a fine mesh of it
+# gives 11909.63. From makeBox (the faces' edges the other way round) it is
+# refused. Upstream refuses both. A PartDesign Pad on MSVC gives the polygon's
+# fault (11858.2585, the same three edges).
+def chamfer_corner(block):
+    def at(s, a, b):
+        return s.Edges[edge_between(s, a, b) - 1]
+    ends = [((0, 30, 0), (0, 30, 10)), ((0, 30, 0), (0, 0, 0)), ((40, 30, 0), (40, 30, 10)),
+            ((40, 30, 10), (0, 30, 10))]
+    return block.makeFillet(2, [at(block, a, b) for a, b in ends])
+
+
+_cpoly = chamfer_corner(Part.Face(Part.makePolygon(
+    [V(0, 0, 0), V(40, 0, 0), V(40, 30, 0), V(0, 30, 0), V(0, 0, 0)])).extrude(V(0, 0, 10)))
+_cbox = chamfer_corner(Part.makeBox(40, 30, 10))
+for tag, s in (("poly", _cpoly), ("box", _cbox)):
+    fillet_case("chamfer_fillet_corner_%s" % tag, s, edge_between(s, (0, 0, 10), (0, 28, 10)),
+                1.0, "xfail", chamfer=True, bop=True)
 
 counts = {}
 for _, verdict, _ in results:

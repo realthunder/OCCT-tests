@@ -16,7 +16,13 @@ FreeCADCmd tests/fork/fillet/run_tests.py
 The suite runs with FreeCAD's shape values unfrozen (`ImmutableShapeValues`
 off), as any build that does not freeze them runs; `FILLET_FREEZE=1` runs it
 frozen. Every case also checks that its input comes back as it went in
-(valid, the same volume).
+(valid, the same volume), and every result it makes for loose ends -- an
+edge whose curve ends past its vertex, which BRepCheck lets pass
+(`../loose_ends.py`, added 2026-10-15) by more than the tolerance the case
+accepts. Of the cases that passed, only #876's fillet a few thousandths
+wide (`issue876_corner4_r0.3`, `issue876_post_foot_e10_r0.3`) is loose past
+1e-4: both its lines end in one vertex, 0.0026 from each, within the 6e-3
+the cases accept.
 
 Exit code 0 = no regression (every expected-pass case passed). Known-broken
 cases are marked `XFAIL` in the script; when one starts passing the suite
@@ -3560,6 +3566,8 @@ draft suite (99) and the thickness suite (378) pass.
 | `boss_drafted_flush_foot_r1` | A drafted boss (a cone, radius 5 to 4) flush at its foot: refused, as before. It touches the side only at the foot; the fillet's line on it never reaches the side, and the two ends' cuts would meet below it, the fillet running on over the gap. #876's post is this |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
+| `chamfer_fillet_corner_poly` | x16win's case: a 40x30x10 block (a polygon extruded), fillet 2 on the edges at y=30 and on (0,30,0)-(0,0,0), then chamfer 1 on the top edge x=0, which ends at the corner of two of the fillets. Made "valid", BOP's check clean, 11864.0665: the corner patch's three edges have curves 0.3819 short of their vertices (pieces 0..0.35..0.65..1 of one curve), the vertices raised to 0.382 to cover it; a fine mesh gives 11909.63. The loose-end check fails it. Upstream refuses it; a PartDesign Pad on MSVC gives the same three edges (11858.2585) |
+| `chamfer_fillet_corner_box` | The same from `makeBox`, whose faces' edges run the other way round: refused ("BRep_API: command not done"), as upstream refuses it |
 
 ## Pictures
 

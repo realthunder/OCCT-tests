@@ -32,7 +32,9 @@ process died `CRASH`; the rest of the shape goes on in a new process.
 
 A case is `E<edge>@<r>` or `V<vertex>:<edge>,...@<r>` (indices as
 `Part.read` numbers them); a result is `ok:<volume>:<max tol>:<faces>`,
-`BAD:...` (made but `isValid()` false), `EXC` or `NULL`. Each case fillets a
+`BAD:...` (made but `isValid()` false), `LOOSE:...:<gap>` (valid, but an
+edge's curve ends past its vertex by more than ten times the edge's
+tolerance -- `../../loose_ends.py`; since 2026-10-15), `EXC` or `NULL`. Each case fillets a
 fresh copy of the input: a fillet that succeeds raises the tolerances of the
 sub-shapes it shares with its input, and one that fails can leave the input
 changed, so reusing one input makes a result depend on the cases run before
@@ -45,7 +47,13 @@ doubled or halved (`SHOW=n` of each).
 
 `baseline/` is OCCT LinkVibe-801 `5c531f4938`, FreeCAD OcctFix `34abfa2dae`,
 2026-10-14: edge 2581 ok, 26 BAD, 1314 EXC; vertex 9511 ok, 165 BAD, 2566
-EXC; no crash or timeout. `8558180119` had edge 2578 / 29 / 1314, vertex
+EXC; no crash or timeout. Since 2026-10-15 (the loose-end check, no build
+change) 16 of the edge results and 118 of the vertex ones are `LOOSE` in
+place of `ok`: #876's `Fillet` and `Fillet001` at 0.3, 0.00262 -- a fillet
+a few thousandths wide on an edge a degree from smooth, both its lines
+ending in one vertex -- and 10 of #273's `Fillet` corners at 1.5e-4 to
+2.6e-4; `issue273_Fillet001`'s 71 at 2.6e-4 are its input's own gap and
+stay `ok`. Nothing near the 0.38 of x16win's chamfer. `8558180119` had edge 2578 / 29 / 1314, vertex
 9500 / 176 / 2566 (../README.md, "BOP's check on every valid result"). Move it forward with each fix that changes
 results, saying in the commit what moved. The earlier ones, at `b207bd4103`
 (edge 2425 / 62 / 1434, vertex 8843 / 295 / 3104), `9c44789bbb` (edge

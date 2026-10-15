@@ -29,7 +29,7 @@ def load(p):
 
 def parse(x):
     w = x.split(":")
-    if len(w) >= 4 and w[0] in ("ok", "BAD"):
+    if len(w) >= 4 and w[0] in ("ok", "BAD", "LOOSE"):
         return w[0], float(w[1]), float(w[2]), int(w[3])
     return x, None, None, None
 

@@ -31,6 +31,16 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   and the layouts of the classes the fork changed, checked against an
   upstream build, and how to add to a class of upstream's without moving it.
 
+`loose_ends.py` is a check the suites and sweeps share: an edge whose 3D
+curve, at an end of its parameter range, misses its vertex by more than ten
+times the edge's tolerance (and 1e-4). BRepCheck measures that gap against
+the vertex's tolerance, so a vertex raised to cover it passes -- and BOP's
+argument check too. x16win's chamfer at a corner of two fillets
+(`fillet/README.md`) made such a solid: three edges 0.3819 short of their
+vertices, the vertices at 0.382, the volume 45.6 out, "valid". Every result
+a suite makes is checked; a sweep marks such a result `LOOSE` in place of
+`ok`.
+
 The pictures are made again after every fix; their history grows here, not
 in the fork's.
 

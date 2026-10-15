@@ -24,7 +24,9 @@ features' base shapes from `../../occ-issues/models` and a few minimal ones;
 `TKF` (a directory of OCCT libraries loaded first -- a rebuilt TKFillet tried
 without installing it; macOS strips `DYLD_*` from a bash script's children,
 so it is set inside `RUN`). One FreeCADCmd per shape, one at a time (8 GB box).
-A result is `ok:volume:faces:bopclean` (the last is Part's `check(True)`) or
+A result is `ok:volume:faces:bopclean` (the last is Part's `check(True)`),
+`LOOSE:volume:faces:bopclean:gap` (valid, but an edge's curve ends past its
+vertex -- `../../loose_ends.py`; since 2026-10-15), `BAD:...` (invalid) or
 `FAIL(why)`. `compare.py` classes the changes; `SHOW=n` lists n of each.
 
 `baseline/` is fcad OcctFix `3b1f9a37cb` (2026-10-09), `Method = New`, the
@@ -34,6 +36,11 @@ at 5 degrees (`classic_refused`), "NoClosure" until OCCT `5c531f4938`
 (`TKMath`: the roots of a trigonometric equation below a lower bound
 under zero were dropped, ../../fillet/README.md), made since -- valid,
 48 faces, BOP's check clean.
+Since 2026-10-15 (the loose-end check) 10 lines are `LOOSE` in place of
+`ok`, the volumes, faces and BOP's verdict unchanged: #474's `Fillet002`
+(3, 1.6e-4) and `Fillet003` (1, 1.5e-3), #631's `Fillet002` (2) and
+`Fillet003` (4), up to 1.9e-3 -- where the general fuse's fuzzy third try
+merged a point it found in two places (`../README.md`).
 
 A purged input makes every case `TIMEOUT/CRASH` on both builds, and a
 comparison then reads "all the same": check that the results are real.

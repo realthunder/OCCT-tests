@@ -19,6 +19,8 @@ import FreeCAD as App
 import Part
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+from loose_ends import loose, widest  # noqa: E402
 
 
 def emit(line):
@@ -55,6 +57,15 @@ def signature(shape):
     next thickness of that shape was wrong."""
     tol = max([0.0] + [x.Tolerance for x in shape.Vertexes + shape.Edges + shape.Faces])
     return (shape.isValid(), round(shape.Volume, 6), round(tol, 9))
+
+
+def loose_end(shape, given, loose_ok=0.0):
+    """['loose end ...'] when an edge's curve ends past its vertex by more
+    than any gap of the input <given>'s own and than <loose_ok>
+    (../loose_ends.py: BRepCheck lets the vertex's tolerance cover the
+    gap)."""
+    gap, i = loose(shape, max(widest(given), loose_ok))
+    return ["loose end %.3g at Edge%d" % (gap, i)] if gap else []
 
 
 def input_problems(shape, before):
@@ -127,7 +138,8 @@ def placed(shape):
 # Programmatic cases: thickness of simple solids, removing one face at a time.
 # ---------------------------------------------------------------------------
 
-def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inter=False, join=0):
+def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inter=False, join=0,
+                   loose_ok=0.0):
     """makeThickness(mode=Skin, join=Arc unless given) removing 1-based face `face_index`
     (or the faces of a list of them).
 
@@ -147,6 +159,8 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
             problems.append("type=%s" % r.ShapeType)
         if not r.isValid():
             problems.append("invalid")
+        else:
+            problems += loose_end(r, shape, loose_ok)
         if len(r.Shells) != 1:
             problems.append("shells=%d" % len(r.Shells))
         elif not r.Shells[0].isClosed():
@@ -178,6 +192,8 @@ def pieces_case(name, shape, face_indices, value, solids, inter=False, join=0):
             problems.append("type=%s" % r.ShapeType)
         if not r.isValid():
             problems.append("invalid")
+        else:
+            problems += loose_end(r, shape)
         if len(r.Solids) != len(solids):
             problems.append("solids=%d" % len(r.Solids))
         for s in r.Solids:
@@ -411,6 +427,8 @@ def sealed_case(name, shape, face_index, value, skin_volume, void_volume, inter,
             problems.append("type=%s" % r.ShapeType)
         if not r.isValid():
             problems.append("invalid")
+        else:
+            problems += loose_end(r, shape)
         vols = sorted((abs(Part.Solid(sh).Volume) for sh in r.Shells), reverse=True)
         if len(r.Shells) != 2 or not all(sh.isClosed() for sh in r.Shells):
             problems.append("shells=%s" % ["%.4f" % v for v in vols])
@@ -548,10 +566,13 @@ thickness_case("filletbox_fillet_join_out", filletbox, 3, +1.0, "pass", 424.7690
 # BRepAlgo_Loop looked for that vertex where it stands, not where it sits on
 # the edges, took the meeting for a crossing inside both and gave them a
 # second vertex at the parameter of the first: the wall had no wire, and the
-# offset came back with no face ("command not done").
+# offset came back with no face ("command not done"). The walls' new line
+# keeps that meeting: it ends 0.378 from the vertex, at tolerance 0.397 (the
+# input's own curves end on theirs; its looseness is between the walls and
+# the vertex, which only the thickness turns into an edge's end).
 case5829 = Part.Shape()
 case5829.importBrep(os.path.join(MODELS, "case5829_fillet.brep"))
-thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844)
+thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844, loose_ok=0.4)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

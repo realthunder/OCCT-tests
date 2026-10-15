@@ -22,6 +22,14 @@ the cases here are about the kernel's draft itself. FreeCAD's `TestDraft`
 covers `Auto`. The `new_*` cases at the end (next section) are the
 exception: they run the new draft, and are skipped by a FreeCAD without it.
 
+A valid result also has to have no loose ends (`../loose_ends.py`, since
+2026-10-15): no edge whose curve ends past its vertex by more than its
+base's own do. The new draft's fuzzy third try (`CellDraft.cpp`, 1e-5 of
+the part's diagonal) leaves such gaps where it merges a point it found in
+two places -- 1.9e-4 to 4.7e-4 on #631's chain and #474's ramp ledge, up
+to 1.9e-3 in the draft sweep -- and those cases accept 1e-3
+(`LOOSE_FUZZY`).
+
 ## Pictures
 
 `models/Draft.md` shows each fix in pictures -- upstream, the fork before

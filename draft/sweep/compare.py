@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # compare.py <baseline.txt> <outdir>: drive.py's results against a baseline
 # (lines "shape face neutral angle result"), the changes classed and listed.
-# A result is ok:volume:faces:bopclean or FAIL(why); volumes within 1e-9
+# A result is ok:volume:faces:bopclean (LOOSE:...:gap, BAD:...) or FAIL(why); volumes within 1e-9
 # relative count as the same, changes within 1e-6 are classed together.
 import glob, os, sys
 
 
 def parse(r):
-    if r.startswith("ok:") or r.startswith("BAD:"):
+    if r.startswith("ok:") or r.startswith("BAD:") or r.startswith("LOOSE:"):
         k, v, f, c = r.split(":")[:4]
         return (k, float(v), int(f), int(c))
     return (r,)

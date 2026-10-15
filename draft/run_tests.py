@@ -23,6 +23,8 @@ import FreeCAD as App
 import Part
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+from loose_ends import loose, widest  # noqa: E402
 ISSUES = os.path.join(HERE, "..", "occ-issues", "models")
 RELTOL = 1e-6
 
@@ -74,16 +76,33 @@ def report(name, ok, expect_fail, detail):
     emit("%-32s %-16s %s" % (name, verdict, detail))
 
 
-def outcome(feature):
+def outcome(feature, loose_ok=0.0):
     """What a recomputed Draft feature gave: ('error', message),
-    ('invalid', volume) or ('valid', volume)."""
+    ('invalid', volume), ('loose end <gap> at Edge<i>', volume) -- valid,
+    but an edge's curve ends past its vertex, farther than its base's do and
+    than <loose_ok> (../loose_ends.py) -- or ('valid', volume)."""
     states = [str(s) for s in feature.State]
     if "Invalid" in states or "Error" in states:
         return "error", "; ".join(states)
     s = feature.getPropertyByName("Shape")
     if s.isNull():
         return "error", "null shape"
-    return ("valid" if s.isValid() else "invalid"), s.Volume
+    if not s.isValid():
+        return "invalid", s.Volume
+    # as loose as its base may be
+    base = getattr(feature, "BaseFeature", None)
+    given = widest(base.Shape) if base is not None and not base.Shape.isNull() else 0.0
+    gap, i = loose(s, max(given, loose_ok))
+    return ("loose end %.3g at Edge%d" % (gap, i) if gap else "valid"), s.Volume
+
+
+# How loose a New draft's result may be where the general fuse took its
+# fuzzy third try (fcad CellDraft.cpp, 1e-5 of the part's diagonal): it
+# puts one point in two places 0.0007 apart on #631's ramp, and the vertex
+# covers both. Measured 2026-10-15: 1.9e-4 and 3.9e-4 on #631's chain,
+# 4.7e-4 on #474's ramp ledge at 11 deg; the draft sweep's New results up
+# to 1.9e-3 (#631's Fillet003, face 12 about 2 at 15 deg).
+LOOSE_FUZZY = 1e-3
 
 
 def judge(name, got, expect, ref_volume=None, feature=None):
@@ -117,7 +136,7 @@ def judge(name, got, expect, ref_volume=None, feature=None):
 # ---------------------------------------------------------------------------
 
 def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None, method=None,
-               stop=True, reversed=False, neutral_shape=None, propagate=True):
+               stop=True, reversed=False, neutral_shape=None, propagate=True, loose_ok=0.0):
     """Draft <face> of <shape> by <angle> degrees, the neutral plane that of
     the face <neutral> (faces picked by predicate), the pull direction its
     normal, as PartDesign's Draft takes it with no pull direction given.
@@ -160,7 +179,7 @@ def draft_case(name, shape, face, neutral, angle, expect, ref_volume=None, metho
             if not propagate:
                 d.TangentPropagation = False
         doc.recompute()
-        judge(name, outcome(d), expect, ref_volume, d)
+        judge(name, outcome(d, loose_ok), expect, ref_volume, d)
     except Exception:
         report(name, False, False, traceback.format_exc().splitlines()[-1])
     finally:
@@ -292,7 +311,7 @@ def ramp_ledge_drafts(angles, method=None):
             else:
                 # the ramp extended meets the lifted ledge again: the wedge
                 # under the 8 x 4 ledge hinged at its end, 128 tan(a)
-                judge("new_issue474_ramp_ledge_a%d" % a, outcome(d), "valid",
+                judge("new_issue474_ramp_ledge_a%d" % a, outcome(d, LOOSE_FUZZY), "valid",
                       shape.Volume + 128 * math.tan(math.radians(a)))
     except Exception:
         report("issue474_ramp_ledge", False, False, traceback.format_exc().splitlines()[-1])
@@ -777,7 +796,7 @@ if has_cell_draft():
     for a, vol in ((5, 39164.1931), (15, 34327.1140)):
         draft_case("new_chain_issue631_f7_n9_a%d" % a, p631,
                    lambda f: f.isSame(p631.Faces[6]), lambda f: f.isSame(p631.Faces[8]), a,
-                   "valid", vol, method="New")
+                   "valid", vol, method="New", loose_ok=LOOSE_FUZZY)
     # Three vertical edges filleted, the one at the origin sharp: the chain
     # closes on itself there, and the two new planes meet in a new edge.
     # From the far wall and from a wall at the sharp corner; at 15 deg past

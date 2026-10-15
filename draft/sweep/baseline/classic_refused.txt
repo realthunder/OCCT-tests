@@ -259,7 +259,7 @@ issue309_shape 15 14 15 FAIL(Failed_to_create_draft:_Cell_draft:_SplitsSolid_on_
 issue309_shape 15 14 5 ok:12133.448748:14:1
 issue309_shape 15 14 60 FAIL(Failed_to_create_draft:_Cell_draft:_SplitsSolid_on_Face15:_the_draft_cuts_the_solid_in_pieces)
 issue474_Fillet002 11 4 5 ok:1941.412526:25:1
-issue474_Fillet003 26 28 15 ok:1960.226856:30:1
+issue474_Fillet003 26 28 15 LOOSE:1960.226856:30:1:0.00151
 issue474_Fillet003 26 28 5 ok:1979.520150:30:1
 issue523_box 3 1 5 ok:1122.542602:7:1
 issue523_box 3 6 5 ok:1129.385576:7:1
