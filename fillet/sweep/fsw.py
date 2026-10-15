@@ -1,6 +1,7 @@
 # One shape's fillet sweep, run by drive.py inside FreeCADCmd.
 # env: SHAPE (a brep), MODE (edge | vertex), START (the first case to run),
-#      RADII (default "0.3 0.8 2" for edge, "0.3 1" for vertex).
+#      RADII (default "0.3 0.8 2" for edge, "0.3 1" for vertex),
+#      OP (fillet, the default, or chamfer: makeChamfer at the same sizes).
 # edge:   every edge between two faces, alone, at each radius.
 # vertex: at every vertex of 3+ such edges, all of them, every pair and each
 #         alone, at each radius.
@@ -28,6 +29,7 @@ def emit(s):
 
 
 mode = os.environ.get("MODE", "edge")
+chamfer = os.environ.get("OP", "fillet") == "chamfer"
 start = int(os.environ.get("START", "0"))
 radii = [float(x) for x in os.environ.get("RADII", "0.3 0.8 2" if mode == "edge" else "0.3 1").split()]
 s = Part.read(os.environ["SHAPE"])
@@ -61,7 +63,7 @@ for n in range(start, len(cases)):
     x = Part.Shape()
     x.importBrepFromString(brep, False)
     try:
-        f = x.makeFillet(r, [x.Edges[i - 1] for i in st])
+        f = (x.makeChamfer if chamfer else x.makeFillet)(r, [x.Edges[i - 1] for i in st])
         if f.isNull():
             res = "NULL"
         else:

@@ -68,6 +68,7 @@ STAGES = {
     "s962zl": ("5b5471ad11", "9735ff8875"),
     "s523e": ("61f59f6842", "1a971d66bc"),
     "sboss": ("af24dcdca0", "b234546fbe"),
+    "schamfer": ("4124325682", "a2f5c2a5d4"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -330,6 +331,19 @@ def _pocket_mouth():
                           seam(Part.makeCircle(16.75, V(0, 0, 10)))])[0].Solids[0]
 
 
+def _chamfer_corner(box=False):
+    """run_tests.py's chamfer_corner: a 40x30x10 block -- makeBox, or a
+    polygon extruded, its faces' edges the other way round -- with fillet 2
+    on the edges at y=30 (the two verticals, the top one) and on
+    (0,30,0)-(0,0,0)."""
+    V = App.Vector
+    b = (Part.makeBox(40, 30, 10) if box else Part.Face(Part.makePolygon(
+        [V(0, 0, 0), V(40, 0, 0), V(40, 30, 0), V(0, 30, 0), V(0, 0, 0)])).extrude(V(0, 0, 10)))
+    ends = [((0, 30, 0), (0, 30, 10)), ((0, 30, 0), (0, 0, 0)), ((40, 30, 0), (40, 30, 10)),
+            ((40, 30, 10), (0, 30, 10))]
+    return b.makeFillet(2, [edge_between(b, a, c) for a, c in ends])
+
+
 SHAPES = {
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "arch": _arch_on_plate,
@@ -360,6 +374,8 @@ SHAPES = {
     "slotslope": _slot_by_slope,
     "pocketmouth": _pocket_mouth,
     "bossflush": _boss_flush,
+    "chfcorner": _chamfer_corner,
+    "chfcornerbox": lambda: _chamfer_corner(box=True),
 }
 
 
@@ -470,6 +486,9 @@ UVFACE = {
     "pocketmouth": _plane_at("y", 0, {"x": 17.0}),
     # the plate's side the boss is flush with, which grows a peak over the gap
     "bossflush": _plane_at("y", 0),
+    # the back face, both fillets flush with it at the corner, whose corner the cut takes off
+    "chfcorner": _plane_at("y", 30),
+    "chfcornerbox": _plane_at("y", 30),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -594,6 +613,10 @@ NAMES = {
                    "slot out of it; the slot's wall split 1.25 from the pocket, the top by the "
                    "circle r16.75",
     "bossflush": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0",
+    "chfcorner": "a 40x30x10 block (a polygon extruded), fillet 2 on its edges at y=30 and "
+                 "on (0,30,0)-(0,0,0)",
+    "chfcornerbox": "a 40x30x10 block (makeBox), fillet 2 on its edges at y=30 and on "
+                    "(0,30,0)-(0,0,0)",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -626,6 +649,8 @@ VIEW = {
     "slotslope": ((3, 5, 5), 20.0),
     "pocketmouth": ((14, 0, 6), 24.0),
     "bossflush": ((15, 10, 5), 24.0),
+    "chfcorner": ((20, 15, 5), 40.0),
+    "chfcornerbox": ((20, 15, 5), 40.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -658,6 +683,8 @@ UVLABEL = {
     "slotslope": ("the wall's piece at the block's side", False),
     "pocketmouth": ("the slot's wall beyond the split", False),
     "bossflush": ("the plate's side", False),
+    "chfcorner": ("the back face y=30", False),
+    "chfcornerbox": ("the back face y=30", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -930,6 +957,21 @@ CASES = {
     "boss_flush_foot_r1": ("sboss", "bossflush", [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                                                   ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))],
                            1.0, 2591.8420, (15, 0, 3.5), (0.35, -1, 0.5)),
+    # x16win's chamfer, run on along the mitre of two fillets to their corner
+    # (2,30,8), where both turn flush with the back face; the radius is the
+    # larger distance (CHAMFER has them)
+    "chamfer_fillet_corner_poly": ("schamfer", "chfcorner", ((0, 0, 10), (0, 28, 10)), 1.0,
+                                   11909.6170, (2.4, 30, 7.6), (-0.5, 1, 0.6)),
+    "chamfer_fillet_corner_box": ("schamfer", "chfcornerbox", ((0, 0, 10), (0, 28, 10)), 1.0,
+                                  11909.6170, (2.4, 30, 7.6), (-0.5, 1, 0.6)),
+    "chamfer_fillet_corner_poly_1_1.5": ("schamfer", "chfcorner", ((0, 0, 10), (0, 28, 10)),
+                                         1.5, 11901.8128, (2.6, 30, 7.4), (-0.5, 1, 0.6)),
+}
+# case -> the chamfer's distances: makeChamfer in place of makeFillet
+CHAMFER = {
+    "chamfer_fillet_corner_poly": (1.0,),
+    "chamfer_fillet_corner_box": (1.0,),
+    "chamfer_fillet_corner_poly_1_1.5": (1.0, 1.5),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -939,12 +981,18 @@ STRICT = {
     "arm_on_tall_block_whole_r0.8": (1e-6, 1e-4),
     "arm_tilted_under_block_skew_r2": (1e-6, 1e-4),
     "fin_on_block_wall_piece_foot_and_top_r1": (2e-4, 1e-3),
+    "chamfer_fillet_corner_poly": (1e-4, 1e-3),
+    "chamfer_fillet_corner_box": (1e-4, 1e-3),
+    "chamfer_fillet_corner_poly_1_1.5": (1e-4, 1e-3),
     "fin_on_block_wall_piece_foot_and_upright_r1": (2e-4, 1e-3),
     "issue962_mouth_y17.1_floor_and_upright_r1.5": (2e-4, 1e-3),
 }
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 ZOOMLABEL = {
+    "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
+    "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),
+    "chamfer_fillet_corner_poly_1_1.5": ("the chamfer's end", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "arm_on_tall_block_whole_r0.8": ("the fillet's end, from below", (240, 240, 240)),
     "arm_tilted_under_block_skew_r2": ("the fillet's end, from below", (240, 240, 240)),

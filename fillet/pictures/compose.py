@@ -15,7 +15,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cases import CASES, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM, ZOOMLABEL
+from cases import (CASES, CHAMFER, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM,
+                   ZOOMLABEL)
 
 P = os.environ["FILLET_WORK"]
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
@@ -83,7 +84,9 @@ for name in sys.argv[2:] or list(CASES):
     else:
         on = "the edge %s-%s" % (ends[0], ends[1])
     expect = "expected %.4f" % ref if ref is not None else "expected a valid solid"
-    desc = "%s; fillet r%g on %s; %s  (fix: %s)" % (NAMES[sk], radius, on, expect, fix)
+    what = ("chamfer " + " and ".join("%g" % x for x in CHAMFER[name]) if name in CHAMFER
+            else "fillet r%g" % radius)
+    desc = "%s; %s on %s; %s  (fix: %s)" % (NAMES[sk], what, on, expect, fix)
     words, line, lines = desc.split(" "), "", []
     for wd in words:
         if d.textlength(line + " " + wd, font=F) > 3 * W - 20 and line:

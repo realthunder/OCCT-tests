@@ -132,7 +132,8 @@ def document_case(name, filename, volumes=None):
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
                 chamfer=False, vol_tol=None, bop=False):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
-    makeChamfer(radius, ...) with chamfer=True.
+    makeChamfer(radius, ...) with chamfer=True, radius a pair for two
+    distances.
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
                     ref_volume when given (within vol_tol when given, else
@@ -151,7 +152,8 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
         before = signature(shape)
         indices = edge_index if isinstance(edge_index, list) else [edge_index]
         op = shape.makeChamfer if chamfer else shape.makeFillet
-        r = op(radius, [shape.Edges[i - 1] for i in indices])
+        sizes = radius if isinstance(radius, tuple) else (radius,)
+        r = op(*sizes, [shape.Edges[i - 1] for i in indices])
         problems = []
         if signature(shape) != before:
             problems.append("input changed: valid=%s vol=%.4f" % signature(shape))
@@ -2177,14 +2179,16 @@ fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413,
 
 # x16win's chamfer at a corner of two fillets: a 40x30x10 block, fillet 2 on
 # the edges at y=30 (the two verticals, the top one) and on (0,30,0)-(0,0,0),
-# then chamfer 1 on the top edge x=0, which ends at the corner of the fillet
-# on y=30's top edge and the one on its vertical. The block as a polygon
-# extruded makes a "valid" solid, BOP's check clean, whose corner patch has
-# three edges with curves stopping 0.3819 short of their vertices, the
-# vertices raised to 0.382 to cover it: 11864.0665, where a fine mesh of it
-# gives 11909.63. From makeBox (the faces' edges the other way round) it is
-# refused. Upstream refuses both. A PartDesign Pad on MSVC gives the polygon's
-# fault (11858.2585, the same three edges).
+# then chamfer 1 on the top edge x=0. The chamfer runs on along the mitre of
+# the fillet on y=30's top edge and the one on its vertical, to their corner,
+# where both turn flush with the back face. The block as a polygon extruded
+# made a "valid" solid, BOP's check clean, whose corner patch had three edges
+# with curves stopping 0.3819 short of their vertices, the vertices raised to
+# 0.382 to cover it: 11864.0665, where a fine mesh of it gave 11909.63. From
+# makeBox (the faces' edges the other way round) it was refused, as upstream
+# refuses both. Now the chamfer is carried past the corner until it reaches
+# the back face, its last section the cut: both alike, 11909.6170. With two
+# distances one side reaches the back face first and runs on over it.
 def chamfer_corner(block):
     def at(s, a, b):
         return s.Edges[edge_between(s, a, b) - 1]
@@ -2197,8 +2201,10 @@ _cpoly = chamfer_corner(Part.Face(Part.makePolygon(
     [V(0, 0, 0), V(40, 0, 0), V(40, 30, 0), V(0, 30, 0), V(0, 0, 0)])).extrude(V(0, 0, 10)))
 _cbox = chamfer_corner(Part.makeBox(40, 30, 10))
 for tag, s in (("poly", _cpoly), ("box", _cbox)):
-    fillet_case("chamfer_fillet_corner_%s" % tag, s, edge_between(s, (0, 0, 10), (0, 28, 10)),
-                1.0, "xfail", chamfer=True, bop=True)
+    for d, vol in ((1.0, 11909.6170), ((1.0, 1.5), 11901.8128), ((1.5, 1.0), 11901.8128)):
+        fillet_case("chamfer_fillet_corner_%s%s" % (tag, "" if d == 1.0 else "_%g_%g" % d), s,
+                    edge_between(s, (0, 0, 10), (0, 28, 10)), d, "pass", vol, 1e-4,
+                    chamfer=True, bop=True)
 
 counts = {}
 for _, verdict, _ in results:

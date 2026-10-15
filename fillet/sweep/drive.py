@@ -10,6 +10,7 @@
 #               build of ~/works/sw/fcad)
 #      RUN      the wrapper that runs a command in the build's environment
 #      RADII    passed to fsw.py
+#      OP       passed to fsw.py: chamfer sweeps makeChamfer in place of makeFillet
 #      TKF      a directory of OCCT libraries to load first (DYLD_LIBRARY_PATH /
 #               LD_LIBRARY_PATH): a rebuilt TKFillet, say, without installing it.
 #               Set inside RUN: macOS strips DYLD_* from a bash script's children.

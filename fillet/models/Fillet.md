@@ -1518,6 +1518,47 @@ through the point.
 
 ![boss_flush_foot_r1](pictures/boss_flush_foot_r1.png)
 
+### A chamfer carried past a corner where its faces turn tangent (`a2f5c2a5d4`)
+
+x16win's case: a 40x30x10 block with fillet 2 on its edges at the back
+(y=30) -- the two verticals and the top one -- and on the bottom edge
+under the left side, then chamfer 1 on the top edge of the left side. The
+fillet on the top back edge and the one on the left back vertical meet in
+a mitre, an ellipse, with no patch at their corner, and the chamfered edge
+runs on along it, tangent, to (2,30,8). There both fillets turn flush with
+the back face: the angle the chamfer cuts goes to nothing. A fillet ends
+at such a point (its section closes to it); a chamfer keeps its width and
+has to be carried past it until it reaches the back face.
+
+It was not carried past. The extruded polygon's chamfer stopped at the
+point, 0.127 short of the back face, and a patch bridged the gap with three
+edges ending 0.38 short of their vertices: "valid", 45.6 off in volume.
+makeBox's ran on a little and stopped just short of the back face's
+edges: refused. Upstream does the same, both ways.
+
+Now the chamfer is carried past (its guide extended there, as at any
+other end of a chamfer), its sides step onto the back face's edges, and
+its last section, which lies in the back face, is the cut: the chamfer
+meets the back face smoothly along it, and the corner of the back face
+beyond it goes. Both blocks give the same solid. With two distances one
+side reaches the back face first and runs on over it until the other
+does; the chamfer ends in a sliver between the back face and the top
+fillet. In the pictures the first two columns hold the polygon's bridge
+or nothing; after, the chamfer runs into the back face. The third row is
+the back face: a rectangle before, its corner cut off after.
+
+A fillet whose faces turn tangent at its end now stops the same way, once
+both its sides are on the face there. On #273's handle, tangent only to
+within 0.7, that drops a sliver (a fillet between the handle's cylinder
+and itself) and makes 13 invalid corners valid; but the fillet's last
+section there is shorter than its points' tolerances, and BOP's check
+reports the two as overlapping. Closing such a section to a point is
+still to do.
+
+![chamfer_fillet_corner_poly](pictures/chamfer_fillet_corner_poly.png)
+![chamfer_fillet_corner_box](pictures/chamfer_fillet_corner_box.png)
+![chamfer_fillet_corner_poly_1_1.5](pictures/chamfer_fillet_corner_poly_1_1.5.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

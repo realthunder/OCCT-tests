@@ -3557,6 +3557,100 @@ edge). The draft sweep (the new draft makes fillets): valid 1222,
 refused 500, chains 114, all the same. The suite (579, 5 XFAIL), the
 draft suite (99) and the thickness suite (378) pass.
 
+## A chamfer carried past a corner where its faces turn tangent (`a2f5c2a5d4`, 2026-10-15)
+
+x16win's case: a 40x30x10 block, fillet 2 on its edges at y=30 (the two
+verticals, the top one) and on (0,30,0)-(0,0,0), then chamfer 1 on the
+top edge x=0. The fillet on the top back edge and the one on the left
+back vertical meet in a mitre, an ellipse from (0,28,10) to (2,30,8) with
+no corner patch, tangent to the chamfered edge at (0,28,10); the chamfer
+runs on along it (its spine is the edge and the ellipse, 31.82 long). At
+(2,30,8) both fillets turn tangent to the back face y=30, so the angle
+between the chamfer's two faces goes to nothing there -- the spine's end
+is a tangency extremity -- and a third face, the back face, is tangent to
+both.
+
+A fillet's section closes to the vertex at such an end; a chamfer's keeps
+its width. The spine was not extended there, a chamfer's no more than a
+fillet's, so the walk could not reach the back face's edges:
+
+- the polygon block, its stripe walked backward to the vertex, stopped
+  there, its last section at y=29.873, 0.127 short of the back face, and
+  the corner bridged the gap with a patch whose three edges end 0.382
+  short of their vertices: "valid", BOP's check clean, 11864.0665, where a
+  fine mesh gives 11909.63;
+- makeBox's, walked forward, ran on past the vertex on the guide's
+  extrapolation and stopped 8e-5 short of the back face's edges, its
+  last section in the back face but its ends on no edge: refused.
+
+Upstream does the same, both ways (11864.0665 and refused; 11753.1281
+with distances 1 and 1.5); a PartDesign Pad on MSVC gave the polygon's
+three edges (11858.2585).
+
+Now:
+
+1. a chamfer's spine is extended at a tangency extremity too
+   (`ChFi3d_ChBuilder::ExtentOneCorner`), and the walk runs on past the
+   vertex either way until its sides step onto the back face's edges;
+2. the stripe ends once both its sides are on the one face
+   (`PerformSetOfSurfOnElSpine`). A side that reaches the back face first
+   carries on over it, as a walk does across a tangent edge, until the
+   other side reaches its edge; one more surface, between the face and
+   itself, would only run on over the face (it ran down to z=0);
+3. that end is its last section (`ChFi3d_PerformTangentEnd`, tried first
+   at a vertex of one stripe). The section lies in the back face, the
+   chamfer tangent to the face along it, so there is nothing to intersect:
+   the cut is the surface's iso there, its curve on the face projected (in
+   the face to 1e-7). The corner of the back face beyond the cut goes.
+
+Both blocks give 11909.6170, the same faces. The back face loses the
+triangle the cut takes off, 0.5 x 1.4063^2 (287.0112 of its 288), and the
+chamfer meets it at 0 degrees along the cut. With distances 1 and 1.5,
+either way round, one side reaches the back face first: the chamfer is
+two surfaces, the second a sliver between the back face and the top
+fillet, 11901.8128.
+
+The chamfer sweep (`sweep/`, `OP=chamfer`: every edge at 0.3, 0.8 and 2,
+every vertex's sets at 0.3 and 1), the library before against this one:
+
+| | edge (3921) | vertex (12242) |
+|---|---|---|
+| loose -> ok | 6 | 28 |
+| refused -> ok | 2 | 14 |
+| invalid -> ok | | 13 |
+| crash -> refused | 2 | |
+| refused -> invalid | 2 | 2 |
+
+All the cases that moved but one are #273's `Fillet001` (the handle's
+chamfers along tangent chains that end where their faces turn tangent);
+the one is #474's `Fillet003` `V1:2,6@1`. The four now invalid were
+refused, and are a self-intersecting wire on #273's handle at 2 (`E11`,
+`E30`; `V8:16,22@0.3`) and #474's at 1: FreeCAD rejects them as it did.
+No result valid in both moved. `mini_ab_r3`'s `V1:1,3,6,11` came out
+TIMEOUT; it hangs now and then with either library (a walk on a guide of
+no length, `-6e-247..0`), refused the other times.
+
+Steps 2 and 3 are not the chamfer's alone: a fillet whose faces turn
+tangent at its end stops there too. In the fillet sweep that moved only
+#273's `Fillet001`, whose handle's fillets run out between its cylinder
+and a face tangent to it to within its tolerance (0.71 at its vertices).
+Edge `E22`/`E33` at 0.3 and 14 vertex sets with them lose a sliver,
+0.0002 of area, that a stripe between the cylinder and itself left (4e-4
+less volume, one face fewer); 13 vertex sets at 1, invalid (unorientable)
+before, are valid. The last section there is only 0.0003 long, shorter
+than its points' tolerances from the walk (3.5e-4), so the cut's two
+vertices, 3.8e-4 and 4.4e-4, overlap: BOP's check reports 26 vertex
+self-intersections at 0.3 and 28 at 1 where the input has 24 of its own.
+The cut lies in the cylinder to 2.4e-7. Closing such a section to one
+point is still to do. No other fillet case moved; the New draft sweeps
+(1222 valid, 500 refused, 114 chains) are the same case for case. Suites:
+fillet 585 + 5 XFAIL, draft 105, thickness 378 (plain, frozen).
+
+| Case | What it covers |
+|------|----------------|
+| `chamfer_fillet_corner_poly`, `chamfer_fillet_corner_box` | x16win's case, both blocks: 11909.6170, no tolerance above 1e-4, BOP's check (loose, refused before) |
+| `chamfer_fillet_corner_{poly,box}_1_1.5`, `..._1.5_1` | two distances, either way round: 11901.8128 |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -3566,8 +3660,6 @@ draft suite (99) and the thickness suite (378) pass.
 | `boss_drafted_flush_foot_r1` | A drafted boss (a cone, radius 5 to 4) flush at its foot: refused, as before. It touches the side only at the foot; the fillet's line on it never reaches the side, and the two ends' cuts would meet below it, the fillet running on over the gap. #876's post is this |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
-| `chamfer_fillet_corner_poly` | x16win's case: a 40x30x10 block (a polygon extruded), fillet 2 on the edges at y=30 and on (0,30,0)-(0,0,0), then chamfer 1 on the top edge x=0, which ends at the corner of two of the fillets. Made "valid", BOP's check clean, 11864.0665: the corner patch's three edges have curves 0.3819 short of their vertices (pieces 0..0.35..0.65..1 of one curve), the vertices raised to 0.382 to cover it; a fine mesh gives 11909.63. The loose-end check fails it. Upstream refuses it; a PartDesign Pad on MSVC gives the same three edges (11858.2585) |
-| `chamfer_fillet_corner_box` | The same from `makeBox`, whose faces' edges run the other way round: refused ("BRep_API: command not done"), as upstream refuses it |
 
 ## Pictures
 

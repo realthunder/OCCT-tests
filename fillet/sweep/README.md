@@ -23,7 +23,11 @@ shapes stored in the documents.
     ./compare.py baseline/vertex.txt /tmp/f_vertex
     TKF=/path/to/libdir ./drive.py edge /tmp/f_new  # a rebuilt TKFillet
 
-`drive.py <edge|vertex> <outdir> [shape ...]`, env `FCBUILD`, `RUN`, `RADII`,
+`OP=chamfer` makes the same cases with `makeChamfer` at the same sizes
+(2026-10-15; no baseline is kept: run it before and after a change to a
+chamfer's code and compare the two).
+
+`drive.py <edge|vertex> <outdir> [shape ...]`, env `FCBUILD`, `RUN`, `RADII`, `OP`,
 `TKF` (a directory of OCCT libraries loaded first -- a rebuilt TKFillet tried
 without installing it; macOS strips `DYLD_*` from a bash script's children,
 so it is set inside `RUN`). One FreeCADCmd per shape (`fsw.py`), one at a
@@ -45,7 +49,14 @@ it (the old scratch sweeps did, and their tolerances drifted along a shape).
 both the ones whose volume or face count moved and whose tolerance more than
 doubled or halved (`SHOW=n` of each).
 
-`baseline/` is OCCT LinkVibe-801 `5c531f4938`, FreeCAD OcctFix `34abfa2dae`,
+`baseline/` is OCCT LinkVibe-801 `a2f5c2a5d4`, FreeCAD OcctFix `34abfa2dae`,
+2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
+LOOSE, 152 BAD, 2566 EXC; no crash or timeout. `a2f5c2a5d4` (a stripe
+whose faces turn tangent at its end stops once both its sides are on the
+face there, that last section the cut) moved only #273's `Fillet001`: 13
+vertex cases at 1 invalid -> valid, and 16 at 0.3 (2 edge, 14 vertex)
+without the sliver they had, 0.0002 of area, a stripe between the handle's
+cylinder and itself (4e-4 less volume). Before it, `5c531f4938`,
 2026-10-14: edge 2581 ok, 26 BAD, 1314 EXC; vertex 9511 ok, 165 BAD, 2566
 EXC; no crash or timeout. Since 2026-10-15 (the loose-end check, no build
 change) 16 of the edge results and 118 of the vertex ones are `LOOSE` in

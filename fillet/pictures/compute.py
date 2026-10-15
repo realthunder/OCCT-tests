@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.environ["FILLET_TOOLS"])
 import FreeCAD as App
 import Part
-from cases import CASES, SHAPES, STRICT, UVFACE, UVFACE_CASE, edge_between
+from cases import CASES, CHAMFER, SHAPES, STRICT, UVFACE, UVFACE_CASE, edge_between
 
 OUT = os.environ["OUT"]
 os.makedirs(OUT, exist_ok=True)
@@ -66,7 +66,8 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
         # one edge by its two ends (and a point on it, where two share
         # them), or a list of such
         pairs = ends if isinstance(ends, list) else [ends]
-        r = s.makeFillet(radius, [edge_between(s, *e) for e in pairs])
+        edges = [edge_between(s, *e) for e in pairs]
+        r = s.makeChamfer(*CHAMFER[name], edges) if name in CHAMFER else s.makeFillet(radius, edges)
         p = []
         if (s.isValid(), round(s.Volume, 6)) != before:
             p.append("input changed")
