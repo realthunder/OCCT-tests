@@ -1502,4 +1502,9 @@ main window occluded, and Qt stopped painting it -- so the renderer, whose
 capture needs a frame drawn, never got one. Fixed in FreeCAD; the renderer
 captures these panels on Metal now.) Edges are marked
 red by counting their uses through the faces' wires; `isSeam()` would count
-an edge like #523's leftover seam twice in a face that holds it once.
+an edge like #523's leftover seam twice in a face that holds it once. The
+wire's edges are its `OrderedEdges` when that has them all: `childShapes()`
+lists each edge once, with FreeCAD's element map, a seam too -- until
+2026-10-14 every seam in sight was marked red, on valid results as well
+(the post's in `post_seam_on_plate`), and the (u, v) row drew one side of
+it and circled its corners as open.

@@ -36,6 +36,18 @@ jobs = json.load(open(os.environ["JOBS"]))
 W, H = jobs["size"]
 
 
+def wire_edges(w, f):
+    # A wire's edges as it holds them, a seam twice. childShapes() lists
+    # each once with the element map (a seam once: every seam came out
+    # red); OrderedEdges (BRepTools_WireExplorer) keeps both, but drops the
+    # edges a broken wire does not chain, so it is taken only when it has
+    # them all (ShapeExtend_WireData's count).
+    o = w.OrderedEdges
+    if len(o) == Part.ShapeFix.Wire(w, f, 1e-7).numberOfEdges():
+        return o
+    return [e for e in w.childShapes() if e.ShapeType == "Edge"]
+
+
 def defects(shape):
     # Each edge's uses, counted through the faces' wires: a seam occurs in
     # its face twice, once each way. (isSeam() is BRep_Tool::IsClosed, true
@@ -43,7 +55,7 @@ def defects(shape):
     uses = {}
     for f in shape.Faces:
         for w in f.childShapes():
-            for e in w.childShapes():
+            for e in wire_edges(w, f):
                 if e.ShapeType != "Edge" or e.Degenerated:
                     continue
                 uses.setdefault(e.hashCode(), (e, []))[1].append(e.Orientation)

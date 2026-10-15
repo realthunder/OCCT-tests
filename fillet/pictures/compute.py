@@ -22,6 +22,16 @@ def emit(s):
     os.write(1, (s + "\n").encode())
 
 
+def wire_edges(w, f):
+    # A wire's edges as it holds them, a seam twice (render.py has the same):
+    # childShapes() lists each once with the element map, OrderedEdges drops
+    # what a broken wire does not chain -- taken when it has them all.
+    o = w.OrderedEdges
+    if len(o) == Part.ShapeFix.Wire(w, f, 1e-7).numberOfEdges():
+        return o
+    return [e for e in w.childShapes() if e.ShapeType == "Edge"]
+
+
 def uv_outline(shape, pick):
     """The pcurves of the face `pick` chooses, each edge as it occurs in its
     wire (what BRepCheck reads), sampled: [[[u, v], ...], ...] per wire."""
@@ -31,9 +41,7 @@ def uv_outline(shape, pick):
             continue
         for w in f.childShapes():
             wire = []
-            for e in w.childShapes():
-                if e.ShapeType != "Edge":
-                    continue
+            for e in wire_edges(w, f):
                 pc = f.curveOnSurface(e)
                 if pc is None:  # an invalid result: an edge with no pcurve on the face
                     continue
@@ -55,7 +63,8 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
     before = (s.isValid(), round(s.Volume, 6))
     d = {"input_volume": s.Volume, "ref": ref}
     try:
-        # one edge by its two ends, or a list of such pairs
+        # one edge by its two ends (and a point on it, where two share
+        # them), or a list of such
         pairs = ends if isinstance(ends, list) else [ends]
         r = s.makeFillet(radius, [edge_between(s, *e) for e in pairs])
         p = []

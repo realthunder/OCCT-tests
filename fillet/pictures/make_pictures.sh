@@ -90,14 +90,25 @@ done
 # The pictures.
 rm -rf $W/png
 $RUN python $HERE/compose.py jobs
-if [ -n "$MAC" ]; then
-    # a .py given to the GUI opens in the editor on macOS; a macro runs
-    cp $HERE/render.py $W/render.FCMacro
-    JOBS=$W/jobs.json FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCAD $W/render.FCMacro \
-        > $W/render.log 2>&1
-else
-    JOBS=$W/jobs.json FREECAD_USER_HOME=$W/home xvfb-run -a -s "-screen 0 1600x1200x24" \
-        $RUN $FCBUILD/bin/FreeCAD $HERE/render.py > $W/render.log 2>&1
-fi
-grep -q '^DONE' $W/render.log || { echo "render failed, see $W/render.log"; exit 1; }
+# One FreeCAD per 150 panels: on macOS a process stopped getting GL contexts
+# after 444 ("Failed to create NSOpenGLContext", then hung; 2026-10-15).
+NB=$(python3 -c "
+import json
+j = json.load(open('$W/jobs.json'))
+p, n = j['panels'], 150
+for i in range(0, len(p), n):
+    json.dump(dict(j, panels=p[i:i + n]), open('$W/jobs.%d.json' % (i // n), 'w'))
+print((len(p) + n - 1) // n)")
+for k in $(seq 0 $((NB - 1))); do
+    if [ -n "$MAC" ]; then
+        # a .py given to the GUI opens in the editor on macOS; a macro runs
+        cp $HERE/render.py $W/render.FCMacro
+        JOBS=$W/jobs.$k.json FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCAD \
+            $W/render.FCMacro > $W/render.$k.log 2>&1
+    else
+        JOBS=$W/jobs.$k.json FREECAD_USER_HOME=$W/home xvfb-run -a -s "-screen 0 1600x1200x24" \
+            $RUN $FCBUILD/bin/FreeCAD $HERE/render.py > $W/render.$k.log 2>&1
+    fi
+    grep -q '^DONE' $W/render.$k.log || { echo "render failed, see $W/render.$k.log"; exit 1; }
+done
 $RUN python $HERE/compose.py ${OUTDIR:-$HERE/../models/pictures}
