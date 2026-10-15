@@ -3640,9 +3640,15 @@ less volume, one face fewer); 13 vertex sets at 1, invalid (unorientable)
 before, are valid. The last section there is only 0.0003 long, shorter
 than its points' tolerances from the walk (3.5e-4), so the cut's two
 vertices, 3.8e-4 and 4.4e-4, overlap: BOP's check reports 26 vertex
-self-intersections at 0.3 and 28 at 1 where the input has 24 of its own.
-The cut lies in the cylinder to 2.4e-7. Closing such a section to one
-point is still to do. No other fillet case moved; the New draft sweeps
+self-intersections at 0.3 and 28 at 1 where the input has 24 of its own,
+and 20 edges too small where it has 16. The cut lies in the cylinder to
+2.4e-7. Closing such a section to one point (both sides one DS point, the
+end edge degenerate, as `PerformSingularCorner` does for a section of no
+length) was tried at 0.3: 24 self-intersections and 18 edges too small,
+but the side not at the point then ends 0.00033 from it, past the
+loose-end check (the input's own widest gap is 2.6e-4) -- the section is
+that long, and one vertex covers it only by its tolerance. Not kept:
+neither is clean, and the input fails BOP's check itself. No other fillet case moved; the New draft sweeps
 (1222 valid, 500 refused, 114 chains) are the same case for case. Suites:
 fillet 585 + 5 XFAIL, draft 105, thickness 378 (plain, frozen).
 

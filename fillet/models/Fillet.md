@@ -1552,8 +1552,10 @@ both its sides are on the face there. On #273's handle, tangent only to
 within 0.7, that drops a sliver (a fillet between the handle's cylinder
 and itself) and makes 13 invalid corners valid; but the fillet's last
 section there is shorter than its points' tolerances, and BOP's check
-reports the two as overlapping. Closing such a section to a point is
-still to do.
+reports the two as overlapping. Closing such a section to a point was
+tried: the overlap goes, but the other side's edge then ends 0.0003 short
+of that point. Neither is clean, on an input BOP's check already fails;
+it stays as it is.
 
 ![chamfer_fillet_corner_poly](pictures/chamfer_fillet_corner_poly.png)
 ![chamfer_fillet_corner_box](pictures/chamfer_fillet_corner_box.png)
