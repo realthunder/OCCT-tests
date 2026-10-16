@@ -227,13 +227,15 @@ def nocrash_case(name, shape, edge_index, radius):
     report(name, ok, False, detail if ok else "input changed; " + detail)
 
 
-def sound_case(name, shape, edge_index, radius, expect="pass"):
-    """The fillet may be refused, but a shape it makes must be a valid solid
-    with one closed shell; the input must be left as it was either way."""
+def sound_case(name, shape, edge_index, radius, expect="pass", chamfer=False):
+    """The fillet (the chamfer with chamfer=True) may be refused, but a shape
+    it makes must be a valid solid with one closed shell; the input must be
+    left as it was either way."""
     before = signature(shape)
     try:
         indices = edge_index if isinstance(edge_index, list) else [edge_index]
-        r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
+        op = shape.makeChamfer if chamfer else shape.makeFillet
+        r = op(radius, [shape.Edges[i - 1] for i in indices])
         ok = r.isValid() and len(r.Shells) == 1 and r.Shells[0].isClosed()
         detail = "vol=%.4f" % r.Volume if ok else "invalid result, vol=%.4g" % r.Volume
         loose_end = ends_problem(r, widest(shape)) if ok else None
@@ -2205,6 +2207,20 @@ for tag, s in (("poly", _cpoly), ("box", _cbox)):
         fillet_case("chamfer_fillet_corner_%s%s" % (tag, "" if d == 1.0 else "_%g_%g" % d), s,
                     edge_between(s, (0, 0, 10), (0, 28, 10)), d, "pass", vol, 1e-4,
                     chamfer=True, bop=True)
+
+# The chamfer sweep's mini_ab_r3 V1:1,3,6,11 (four edges at the vertex
+# (38.5, 10.2, -9.75), three chamfers there): a run in four or so hung. Two
+# of the three chamfers have no face in common, and ExtentThreeCorner
+# extended their spines by distances it had left unset -- whatever the stack
+# held, -inf or NaN at times, and the walk on a guide from NaN never ends.
+# Now such a corner is refused ("two chamfers on no common face"), every
+# time, in a second; not extending the pair instead made #962's like corners
+# at 0.3 BOP-dirty and at 1 invalid. A hang here is the run that never
+# reaches its summary.
+abr3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "mini_ab_r3.brep"))
+for r in (0.3, 1):
+    for k in range(4):
+        sound_case("mini_ab_r3_chamfer_V1_%g_%d" % (r, k), abr3, [1, 3, 6, 11], r, chamfer=True)
 
 counts = {}
 for _, verdict, _ in results:

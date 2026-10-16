@@ -3628,7 +3628,8 @@ refused, and are a self-intersecting wire on #273's handle at 2 (`E11`,
 `E30`; `V8:16,22@0.3`) and #474's at 1: FreeCAD rejects them as it did.
 No result valid in both moved. `mini_ab_r3`'s `V1:1,3,6,11` came out
 TIMEOUT; it hangs now and then with either library (a walk on a guide of
-no length, `-6e-247..0`), refused the other times.
+no length, `-6e-247..0`), refused the other times -- an uninitialized
+distance, fixed in `c2635d5492` (next section).
 
 Steps 2 and 3 are not the chamfer's alone: a fillet whose faces turn
 tangent at its end stops there too. In the fillet sweep that moved only
@@ -3656,6 +3657,47 @@ fillet 585 + 5 XFAIL, draft 105, thickness 378 (plain, frozen).
 |------|----------------|
 | `chamfer_fillet_corner_poly`, `chamfer_fillet_corner_box` | x16win's case, both blocks: 11909.6170, no tolerance above 1e-4, BOP's check (loose, refused before) |
 | `chamfer_fillet_corner_{poly,box}_1_1.5`, `..._1.5_1` | two distances, either way round: 11901.8128 |
+
+## A chamfer corner of three with two chamfers on no common face (`c2635d5492`, 2026-10-16)
+
+The chamfer sweep's `mini_ab_r3` `V1:1,3,6,11` -- four edges at the
+vertex (38.5, 10.2, -9.75), three chamfers there -- hung about one run in
+four, with this library and the one before; refused the other times, in
+a second. A hung run was in `BRepBlend_Walking::InternalPerform`, its
+`math_FunctionSetRoot` spending the time in SVD, on and on: the walk's
+loop has no end when its step is NaN (never below the tolerance that
+stops the halving, never at the bound). A trap in
+`ChFiDS_Spine::SetFirstParameter` caught the spine's start set to `-inf`,
+from `ExtentSpineOnCommonFace`, called by `ChFi3d_ChBuilder::
+ExtentThreeCorner`.
+
+`ExtentThreeCorner` extends each pair of the three chamfers on the face
+the two have in common, by their distances on it, found by comparing their
+faces. Two of the three here have no face in common, and their entries in
+`dis[3][3]`, a local left uninitialized, kept whatever the stack held:
+`-inf`, NaN, `-6e-247` -- or something the walk got through, the garbage
+deciding. Now:
+
+- such a corner is refused ("Chamfer corner of three: two chamfers on no
+  common face"). Not extending that pair instead was tried: #962's like
+  corners (`Chamfer` V33, V38; `Fillet` V35, V40, the four edges at a
+  rib's foot) came out at 0.3 valid but with two self-intersecting edges
+  in BOP's check, on clean inputs, and at 1 invalid;
+- `ExtentTwoCorner` does not extend two chamfers with no common face (it
+  did not already: their distances were 0, and 0/0 made no extension);
+- `ExtentSpineOnCommonFace` does not extend by a distance that is not
+  finite, and takes sin(alpha) from max(0, 1 - cos^2).
+
+The chamfer vertex sweep against the library before: only such corners
+moved, all to refused -- `mini_ab_r3` `V1:1,3,6,11` at 0.3 and 1 (TIMEOUT
+before), #962 `Chamfer` V38 and `Fillet` V40 at 0.3 (valid, BOP-dirty as
+above) and at 1 (invalid); their mirror twins V33 and V35 were refused in
+that run. Fillets do not take this path. Fillet suite 593 + 5 XFAIL
+(plain, frozen).
+
+| Case | What it covers |
+|------|----------------|
+| `mini_ab_r3_chamfer_V1_{0.3,1}_{0..3}` | the corner, four times at each size: refused, and the run reaches its summary (it hung now and then) |
 
 ## Known broken (XFAIL)
 
