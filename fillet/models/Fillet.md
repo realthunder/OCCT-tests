@@ -1561,6 +1561,28 @@ it stays as it is.
 ![chamfer_fillet_corner_box](pictures/chamfer_fillet_corner_box.png)
 ![chamfer_fillet_corner_poly_1_1.5](pictures/chamfer_fillet_corner_poly_1_1.5.png)
 
+### Corner plates held to their own miss (`6de00fea30`, realthunder/FreeCAD#631, #273)
+
+Nothing to see: the corners look as they did, and their volumes move by
+less than 0.08. What changed is how loose they are. A corner's patch is a
+plate that misses the fillets' ends by a little, then approximated, and
+the approximation was let off at ten times that miss; the corner, and
+every edge and vertex of it, took the approximation's error as its
+tolerance. On #631, two fillets of 0.3 meeting with no face in common,
+that came to 3.1e-3 over a side of the solid 0.0025 long -- for BOP's
+check (what the next boolean asks of a shape), an edge too small and two
+vertices on top of each other. The approximation is now held to the
+plate's own miss, as a set back corner's already was, and the corner
+takes the fit to the fillets' ends as its tolerance: 6.5e-4 there, and
+clean. Over the sweeps, 37 corners BOP's check reported are clean now,
+none the other way; 128 fillets and 37 chamfers that ended an edge's curve
+short of its vertex by more than the edge's tolerance no longer do (on
+#273, the corner had been 0.045 loose and covered it), and four corners
+refused before are made.
+
+Still reported: corners whose plate falls back to touching the fillets'
+ends only, 0.04 off them (#631 at radius 1), and a few at 0.3.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

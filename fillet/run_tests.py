@@ -837,9 +837,13 @@ def corner_case(name, shape, point, radius, vol_tol, max_tol, along=None, bop=Tr
 # index and its line's parameter, which now were the second surface's and a
 # point 0.7 further on. The plate was left without its edge on the wall, the
 # wall's two pieces open: invalid, 16 of volume off. The two no longer meet,
-# and the plate's edge between them crosses the split.
+# and the plate's edge between them crosses the split. The refined shape's
+# corner is another plate, 17 faces to 18, the two volumes the further apart
+# the larger the radius: 0.034, 0.070, 0.109 at 0.8, 1, 1.5 (0.0999 at 1.5
+# while the refined plate stood at a tolerance of 0.156, not 0.016).
 for r in (0.3, 0.8, 1.0, 1.5):
-    corner_case("slot_by_slope_all_four_r%g" % r, slot_by_slope(), (0, 4, 5), r, 0.1, 0.01)
+    corner_case("slot_by_slope_all_four_r%g" % r, slot_by_slope(), (0, 4, 5), r,
+                0.1 * max(1.0, r), 0.01)
 # #962's slot floors' corners, the wall's piece 0.4606 and 0.6973 long.
 for y in (13.7, 17.1, 20.3, 23.7):
     corner_case("issue962_floor_corner_y%g_all_four_r1" % y, p2, (38.5, y, 14), 1.0, 0.1, 0.01)
@@ -2071,6 +2075,22 @@ for e, vol in ((12, 8559.3314), (14, 8559.3365)):
                 Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
                                        "issue273_Fillet.brep")),
                 e, 0.3, "pass", vol, 0.031, vol_tol=1e-3, bop=True)
+# The fillet down edge 5 ends in a corner whose vertex ShapeFix raises to
+# 0.029 to meet the circle beside it; the circle's edge, at 1e-7, has to
+# cover it too (README.md, "Corner plates held to their own miss"). No
+# max_tol: the loose-end check would allow that much.
+fillet_case("issue273_corner_circle_end_e5_r0.3",
+            Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                                   "issue273_Fillet.brep")),
+            5, 0.3, "pass", 8559.4933, vol_tol=1e-3)
+# #631's corners of two fillets: a plate approximated to ten times its miss
+# of its boundary left a corner loose enough to swallow a short side --
+# under it an edge too small, its vertices overlapping, in BOP's check.
+p631f = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue631_Fillet.brep"))
+for es, vol, tol in (([9, 21], 41870.6264, 1e-3), ([1, 8], 41865.7269, 0.02),
+                     ([15, 16], 41870.0851, 0.02)):
+    fillet_case("issue631_corner_plate_e%s_r0.3" % "_".join(map(str, es)), p631f, es, 0.3,
+                "pass", vol, tol, vol_tol=1e-3, bop=True)
 
 # #523's box and cylinder, the bottom: the cylinder's rim and one of the
 # box's two edges it ends on, at radius 1. The rim's fillet touches the

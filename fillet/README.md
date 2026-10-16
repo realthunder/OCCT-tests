@@ -2330,7 +2330,7 @@ faces that share an edge are now the whole way.
 
 | Case | What it covers |
 |------|----------------|
-| `slot_by_slope_all_four_r{0.8,1,1.5}` | the miniature's corner, its four edges: a valid solid within 0.1 of the volume the refined shape's plate gives, no tolerance above 0.01, BOP's check (invalid, an open shell) |
+| `slot_by_slope_all_four_r{0.8,1,1.5}` | the miniature's corner, its four edges: a valid solid within 0.1 (0.1 x r past 1) of the volume the refined shape's plate gives, no tolerance above 0.01, BOP's check (invalid, an open shell) |
 | `slot_by_slope_all_four_r0.3` | the same narrower than the piece: made before |
 | `issue962_floor_corner_y{13.7,17.1,20.3,23.7}_all_four_r1` | #962's four floor corners: the same (invalid at 13.7 and 20.3, refused at 17.1 and 23.7) |
 
@@ -3698,6 +3698,65 @@ that run. Fillets do not take this path. Fillet suite 593 + 5 XFAIL
 | Case | What it covers |
 |------|----------------|
 | `mini_ab_r3_chamfer_V1_{0.3,1}_{0..3}` | the corner, four times at each size: refused, and the run reaches its summary (it hung now and then) |
+
+## Corner plates held to their own miss (realthunder/FreeCAD#631, #273, 2026-10-16)
+
+The largest class of the results BOP's check reports on clean inputs
+(above, "The sweeps") is corners at loose tolerances: two edges too small
+and two vertices self-intersecting, in some 41 vertex cases of #631's
+four inputs, #962, #273 and #474's `Fillet002`. #631's `V8:9,21` at 0.3,
+two fillets with no face in common: the plate is 1.9e-4 off its boundary
+(`G0Error`), its approximation 1.3e-3 off the plate, and the corner's
+face and so its edges and vertices at 3.1e-3 -- over a side 0.0025 long,
+the edge between the fillets' other faces. BOP's check found that edge too
+small under the tolerance and its two vertices overlapping.
+
+`PerformMoreThreeCorner` held an ordinary corner's approximation to ten
+times the plate's miss, in at most 9 patches, and gave the face the
+approximation's error to the plate as its tolerance; only a setback
+corner was held to the miss itself, in 16, its face at the criterion
+(the fit to the boundary, which the curves' tolerances carry). Now every
+corner is held to the miss, an ordinary one in up to 32 patches, and every
+corner's face takes the criterion. On ten of #631's dirty corners: 6
+clean of 0, `V8:9,21` at 6.5e-4; 0.40 s to 0.63 s; at most 1936 poles
+for 256. The face's tolerance alone, the approximation as it was, made
+one clean; 20 points on the boundary in place of 4 made more of them
+worse; twice the miss, worse than once.
+
+The face's tolerance had been covering a gap, at #273's fillet of 0.3 on
+its edge 5: the corner's vertex 0.029 from the end of the circle beside
+it, an edge of tolerance 1e-7. ShapeFix's `SameParameter` pass, the last
+on the new faces, raises a vertex to its edges' curve ends but not the
+edges with it; the pass that raises an edge to the end of its curve
+(`ChFi3d_EdgesCoverTheirEnds`, "An edge's tolerance over its curves on
+the faces", above) had already run -- and found the vertex short of the
+gap, where before the face's 0.045 had raised it in time. The pass now
+runs again after ShapeFix's: 12 of #273's results loose without it (the
+loose-end check, 0.029 and 0.018), none with it.
+
+Still reported: #631's `V7:8,18` and `V14:22,28` at 1, whose plates fall
+back to G0 and miss their boundary by 0.04 (three self-intersecting
+edges and a vertex), `V7:9,16` and `V1:2,5` at 0.3.
+
+The sweeps against `a2f5c2a5d4`'s baseline: no valid result lost. Edge 16
+`LOOSE` -> ok, vertex 112 and 4 refused -> valid (#876's four-edge
+corners at 0.3); 17 edge and 97 vertex tolerances below half; volumes
+within 0.078, #273's loose corners. BOP's check (the cases the old
+baseline had valid): vertex 37 reported -> clean, edge 1, none the other
+way; #273's `V4:4,5,11,14` at 1 outlasts the 120 s now (reported
+before). Chamfers, before and after: edge 1 and vertex 36 `LOOSE` -> ok;
+#273's E12 and E16 at 2 from 3.11 to 0.718, E16 now its siblings'
+volume (8533.30; E14 8533.29). New draft sweeps the same. The suite's
+`slot_by_slope_all_four_r1.5` met the refined shape's plate, a corner of
+17 faces to its 18, 0.0999 apart while the refined one stood at 0.156;
+at 0.016 they are 0.109 apart, and the margin is now 0.1 x r past 1 (the
+gap grows with the radius: 0.034, 0.070, 0.109). Nothing to picture: the
+corners look as they did.
+
+| Case | What it covers |
+|------|----------------|
+| `issue631_corner_plate_e{9_21,1_8,15_16}_r0.3` | #631's corners of two fillets: valid, the volume, a tolerance of 1e-3 (9, 21) or 0.02, nothing for BOP's check |
+| `issue273_corner_circle_end_e5_r0.3` | #273's edge 5: the volume, no loose end (no `max_tol`, which would allow it) |
 
 ## Known broken (XFAIL)
 
