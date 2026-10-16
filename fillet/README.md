@@ -3734,9 +3734,26 @@ gap, where before the face's 0.045 had raised it in time. The pass now
 runs again after ShapeFix's: 12 of #273's results loose without it (the
 loose-end check, 0.029 and 0.018), none with it.
 
-Still reported: #631's `V7:8,18` and `V14:22,28` at 1, whose plates fall
-back to G0 and miss their boundary by 0.04 (three self-intersecting
-edges and a vertex), `V7:9,16` and `V1:2,5` at 0.3.
+Still reported, each for its corner's shape, not for slack left in it:
+
+- #631's `V7:8,18` and `V14:22,28` at 1 (three self-intersecting edges
+  and a vertex). Of their two corners the one of a single fillet falls
+  back to G0, 0.042 off a boundary that closes to 1e-13 -- not what BOP's
+  check finds. The corner of two holds 0.063 of the sharp edge on its
+  floor, and the next side, of radius about 1, leaves it tangent: a
+  boundary turning through no angle, the arc 0.002 off the edge's line
+  (0.063^2 / 2r) where it passes the edge's vertex, under the corner's
+  tolerance of 0.0077 (vertex 0.0154). Held to 1e-3 x r it would part;
+  the plate does not get there -- degree 2 or three iterations bring the
+  single corner to 0.015 or 0.010, the double to 0.00044 but its
+  approximation 0.18 off it inside, and the check reports the same.
+- `V1:2,5` and `V7:9,16` at 0.3: a side 0.004 and 0.007 long between the
+  two fillets' ends, its vertices 0.0045 and 0.0079 apart at tolerances
+  0.0035 and 0.0054 each -- twice the edges', a point taking the plate's
+  error once from each curve it ends. At once, they would part; the edges
+  either side of the short one, converging on it, would still come within
+  0.001 and 0.0034 of each other. The class of a corner with a side too
+  small (a setback blend, or the side closed to a point, not tried here).
 
 The sweeps against `a2f5c2a5d4`'s baseline: no valid result lost. Edge 16
 `LOOSE` -> ok, vertex 112 and 4 refused -> valid (#876's four-edge
