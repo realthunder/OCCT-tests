@@ -1202,15 +1202,17 @@ for d in (0.7, 0.70001, 0.7001):
 # meet (fcad docs/CornerBlending.md section 9). The edges run between nearly
 # coplanar drafted walls, so the fillets move the volume by thousandths.
 # At 0.3 the fillet on the long edge (-17..17, z=3) is the one of
-# issue876_post_foot_e10_r0.3 below, a few thousandths wide, and both its
-# lines end in one vertex at the setback corner, 0.0026 from each (0.00524).
+# issue876_post_foot_e10_r0.3 below, a few thousandths wide. Its lines
+# ended in one vertex, 0.0026 from each (0.00524), and BOP's check found
+# an edge too small there -- the fillet split where it is no narrower
+# (issue876_kink_* below).
 p876 = Part.read(os.path.join(MODELS, "issue876_fillet_base.brep"))
 c876 = [edge_between(p876, (17, 16.75, 0), (17, 16.75, 3)),
         edge_between(p876, (-17, 16.75, 3), (17, 16.75, 3)),
         edge_between(p876, (19.238761, 15.746985, 3), (17, 16.75, 3)),
         edge_between(p876, (17, 16.75, 3), (17, 16.442791, 20.6))]
-for r, vol, tol in ((0.3, 8665.7840, 6e-3), (1.0, 8665.7870, None)):
-    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol, tol)
+for r, vol, tol, bop in ((0.3, 8665.7840, 1e-3, True), (1.0, 8665.7870, None, False)):
+    fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol, tol, bop=bop)
 
 
 def refused_case(name, shape, edge_index, radius):
@@ -2053,7 +2055,7 @@ for nm, y, yo in (("near", 13.7, 10.2), ("far", 17.1, 20.3)):
 # edge 1.1e-6 (10) and 5.1e-5 (42, 53) long. Valid each time, and refused by
 # BOP's check: "too small edge", "self-intersecting vertex".
 # (The tolerances asked are the results' own, away from that end: 0.018 on
-# the outer helix, 0.005 at the other end of #876's edge 10. Edges 42 and 53
+# the outer helix, 2e-4 along #876's edge 10. Edges 42 and 53
 # at 2 are not cases: their corners come out loose with one compiler or
 # another -- 42 with gcc on Linux (0.02, 0.24 of volume less), 53 with MSVC
 # (0.0115, 0.19 less), each fine with the other two -- a fillet a degree
@@ -2063,10 +2065,23 @@ for e, r, vol, tol in ((53, 0.3, 1988.8326, 1e-3), (13, 0.3, 1985.1153, 1e-3),
     fillet_case("issue474_f003_no_width_e%d_r%g" % (e, r),
                 Part.read(os.path.join(MODELS, "issue474_fillet003_base.brep")),
                 e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)
-for e, r, vol, tol in ((10, 0.3, 8665.7839, 6e-3),):
+for e, r, vol, tol in ((10, 0.3, 8665.7839, 1e-3),):
     fillet_case("issue876_post_foot_e%d_r%g" % (e, r),
                 Part.read(os.path.join(MODELS, "issue876_fillet_base.brep")),
                 e, r, "pass", vol, tol, vol_tol=1e-3, bop=True)
+# #876's post stands flush with the plate's sides, its walls drafted a
+# degree: at 0.3 a fillet of its foot is 0.005 wide all along -- edge 52
+# between two planes, 50 and 58 between a corner's cylinder and cone. Narrower than 100 times the approximation
+# tolerance, it was searched for a section closing to a point, and split at
+# each minimum of its width -- found by the derivative alone, of no depth
+# here -- its section there one vertex as loose as the section is long
+# (0.00524), its two lines both through it: BOP's check, "self-intersecting
+# edge". They came out with two, five and four faces more than now: one
+# fillet face, its edges at 3e-4 at most.
+for e, vol in ((52, 8665.7839), (50, 8665.7841), (58, 8665.7841)):
+    fillet_case("issue876_kink_e%d_r0.3" % e,
+                Part.read(os.path.join(MODELS, "issue876_fillet_base.brep")),
+                e, 0.3, "pass", vol, 1e-3, vol_tol=1e-3, bop=True)
 # #273's handle stands on the cylinder's wall two degrees from it: a fillet
 # down either of its front edges ends at the handle's foot in an edge
 # 1.5e-5 long, closed on one vertex. The input has a vertex at 0.03.

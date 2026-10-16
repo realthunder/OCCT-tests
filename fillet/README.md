@@ -3850,7 +3850,7 @@ crossing itself in 51 of their 56 vertex cases and 7 of 8 edge (`E37`,
 `E50`, `E52`, `E58`, `E62`, `E66`, `E69`, tolerance 0.00524); #273's
 `V9` to `V12` at 1 come clean. The same with the library before this
 change: a matter for those corners, not the gap. The BOP baselines
-record them.
+record them. (Not the corners' either: the next section.)
 
 | Case | What it covers |
 |------|----------------|
@@ -3861,6 +3861,47 @@ record them.
 | `boss_drafted_foot_and_top_r1` | the foot and the boss's top edge together |
 | `boss_drafted_two_feet_r1` | two drafted bosses on one side |
 | `boss_drafted_rim_foot_r1` | against a round plate's rim from inside: the side a cylinder |
+
+## A fillet split only where its section is a point (realthunder/FreeCAD#876, 2026-10-17)
+
+The reports of the section above, #876's at 0.3, were not the corners'.
+#876's post stands flush with the plate's sides, its walls -- planes along
+the long sides, cones at the corners -- drafted a degree, and a fillet of
+its foot at 0.3 is 0.005 wide all along. Upstream refuses those edges ("no
+suitable edges"); the fork makes them, and the result was valid, but BOP's
+check found an edge crossing itself, and the result's tolerance was
+0.00524. Edge 52 (the long side's, two planes): the walking gives one
+surface data over the whole edge, and the fillet came out in three faces,
+cut at x = 4.04 and 9.14, each cut one vertex where both of the fillet's
+lines meet, 0.0026 from each.
+
+`ChFi3d_FilBuilder::SplitSurf`. A fillet narrower than 100 times the
+approximation tolerance (`GetMinimalDistance`) is searched for a section
+closing to a point -- a fillet between two faces that touch along a curve
+-- and split there, the section made one vertex, the sides' lines meeting
+in it (its tolerance the section's length). The search solves
+`ChFi3d_SearchSing` for zero: V.(P2 - P1), half the derivative of the
+section's squared length. A root was taken for a point if that function
+was below tolapp3d there -- true of every root it had found. A fillet of
+near constant width has minima of no depth along it, and each one was
+split at. Now the test is the section's length at the root, below
+tolapp3d. Edge 52 comes out one fillet face, its edges at 1.5e-4, BOP's
+check clean, the same volume (8665.783943).
+
+`b4f2f7592c`. The sweeps: only #876's at 0.3 move, edge 16 and vertex 112 --
+`Fillet` and `Fillet001`, edges 10, 37, 50, 52, 58, 62, 66, 69 and their
+vertex cases -- the volume within 8e-4, one to ten faces fewer, the
+tolerance 0.00524 -> 1.2e-4 to 2.9e-4. Two of the four-edge corners
+(`V4:2,4,10,30`, `V37:47,48,50,93`) stay at 0.0192, their corners'. BOP's
+check: 7 edge and 49 vertex cases reported -> clean, all those of the
+section above; the two corners keep an edge too small and a vertex there.
+The chamfer sweeps and New draft's are the same.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_kink_e{52,50,58}_r0.3` | the long side's foot (two planes) and two corners' (a cylinder and a cone): one face, BOP's check |
+| `issue876_corner4_r0.3` | now held to 1e-3 and BOP's check (0.00524 and a too-small edge before) |
+| `issue876_post_foot_e10_r0.3` | now held to 1e-3 (0.00524 before) |
 
 ## Known broken (XFAIL)
 
