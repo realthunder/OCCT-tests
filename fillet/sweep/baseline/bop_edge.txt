@@ -1558,7 +1558,7 @@ issue876_Fillet E8@2 skip
 issue876_Fillet E9@0.3 ok:8662.719584:1.5e-07:56:c
 issue876_Fillet E9@0.8 ok:8644.089474:1.5e-07:56:c
 issue876_Fillet E9@2 skip
-issue876_Fillet E10@0.3 skip
+issue876_Fillet E10@0.3 ok:8665.783946:0.00524:48:c
 issue876_Fillet E10@0.8 ok:8665.783828:0.000159:47:c
 issue876_Fillet E10@2 ok:8665.772769:0.000448:47:c
 issue876_Fillet E11@0.3 ok:8662.719584:1.5e-07:56:c
@@ -1639,7 +1639,7 @@ issue876_Fillet E35@2 skip
 issue876_Fillet E36@0.3 skip
 issue876_Fillet E36@0.8 skip
 issue876_Fillet E36@2 skip
-issue876_Fillet E37@0.3 skip
+issue876_Fillet E37@0.3 ok:8665.783943:0.00524:49:b:Edge/SelfIntersect*2
 issue876_Fillet E37@0.8 ok:8665.786068:0.00027:47:c
 issue876_Fillet E37@2 ok:8665.865017:0.000465:47:c
 issue876_Fillet E38@0.3 skip
@@ -1678,13 +1678,13 @@ issue876_Fillet E48@2 ok:8634.109413:0.000102:47:c
 issue876_Fillet E49@0.3 skip
 issue876_Fillet E49@0.8 skip
 issue876_Fillet E49@2 skip
-issue876_Fillet E50@0.3 skip
+issue876_Fillet E50@0.3 ok:8665.783807:0.00524:52:b:Edge/SelfIntersect*8
 issue876_Fillet E50@0.8 ok:8665.781191:0.0006:47:c
 issue876_Fillet E50@2 ok:8665.805707:0.00026:47:c
 issue876_Fillet E51@0.3 skip
 issue876_Fillet E51@0.8 skip
 issue876_Fillet E51@2 skip
-issue876_Fillet E52@0.3 skip
+issue876_Fillet E52@0.3 ok:8665.783943:0.00524:49:b:Edge/SelfIntersect*2
 issue876_Fillet E52@0.8 ok:8665.786068:0.00027:47:c
 issue876_Fillet E52@2 ok:8665.865017:0.000465:47:c
 issue876_Fillet E53@0.3 skip
@@ -1702,7 +1702,7 @@ issue876_Fillet E56@2 skip
 issue876_Fillet E57@0.3 skip
 issue876_Fillet E57@0.8 skip
 issue876_Fillet E57@2 skip
-issue876_Fillet E58@0.3 skip
+issue876_Fillet E58@0.3 ok:8665.784125:0.00525:51:b:Edge/SelfIntersect*6
 issue876_Fillet E58@0.8 skip
 issue876_Fillet E58@2 skip
 issue876_Fillet E59@0.3 skip
@@ -1714,7 +1714,7 @@ issue876_Fillet E60@2 skip
 issue876_Fillet E61@0.3 skip
 issue876_Fillet E61@0.8 skip
 issue876_Fillet E61@2 skip
-issue876_Fillet E62@0.3 skip
+issue876_Fillet E62@0.3 ok:8665.784202:0.00525:51:b:Edge/SelfIntersect*6
 issue876_Fillet E62@0.8 skip
 issue876_Fillet E62@2 skip
 issue876_Fillet E63@0.3 skip
@@ -1726,7 +1726,7 @@ issue876_Fillet E64@2 skip
 issue876_Fillet E65@0.3 skip
 issue876_Fillet E65@0.8 skip
 issue876_Fillet E65@2 skip
-issue876_Fillet E66@0.3 skip
+issue876_Fillet E66@0.3 ok:8665.784127:0.00525:50:b:Edge/SelfIntersect*4
 issue876_Fillet E66@0.8 skip
 issue876_Fillet E66@2 skip
 issue876_Fillet E67@0.3 skip
@@ -1735,7 +1735,7 @@ issue876_Fillet E67@2 skip
 issue876_Fillet E68@0.3 skip
 issue876_Fillet E68@0.8 skip
 issue876_Fillet E68@2 skip
-issue876_Fillet E69@0.3 skip
+issue876_Fillet E69@0.3 ok:8665.784051:0.00525:50:b:Edge/SelfIntersect*4
 issue876_Fillet E69@0.8 skip
 issue876_Fillet E69@2 skip
 issue876_Fillet E72@0.3 ok:8665.502739:1.5e-07:45:c
@@ -1879,7 +1879,7 @@ issue876_Fillet001 E5@2 skip
 issue876_Fillet001 E6@0.3 skip
 issue876_Fillet001 E6@0.8 skip
 issue876_Fillet001 E6@2 skip
-issue876_Fillet001 E7@0.3 skip
+issue876_Fillet001 E7@0.3 input
 issue876_Fillet001 E7@0.8 skip
 issue876_Fillet001 E7@2 skip
 issue876_Fillet001 E8@0.3 skip
@@ -1903,7 +1903,7 @@ issue876_Fillet001 E13@2 skip
 issue876_Fillet001 E14@0.3 skip
 issue876_Fillet001 E14@0.8 skip
 issue876_Fillet001 E14@2 skip
-issue876_Fillet001 E15@0.3 skip
+issue876_Fillet001 E15@0.3 input
 issue876_Fillet001 E15@0.8 skip
 issue876_Fillet001 E15@2 skip
 issue876_Fillet001 E16@0.3 skip
@@ -2017,7 +2017,7 @@ issue876_Fillet001 E53@2 skip
 issue876_Fillet001 E54@0.3 skip
 issue876_Fillet001 E54@0.8 skip
 issue876_Fillet001 E54@2 skip
-issue876_Fillet001 E55@0.3 skip
+issue876_Fillet001 E55@0.3 input
 issue876_Fillet001 E55@0.8 skip
 issue876_Fillet001 E55@2 skip
 issue876_Fillet001 E56@0.3 skip
@@ -2053,13 +2053,13 @@ issue876_Fillet001 E65@2 input
 issue876_Fillet001 E66@0.3 skip
 issue876_Fillet001 E66@0.8 skip
 issue876_Fillet001 E66@2 skip
-issue876_Fillet001 E67@0.3 skip
+issue876_Fillet001 E67@0.3 input
 issue876_Fillet001 E67@0.8 input
 issue876_Fillet001 E67@2 input
 issue876_Fillet001 E68@0.3 skip
 issue876_Fillet001 E68@0.8 skip
 issue876_Fillet001 E68@2 skip
-issue876_Fillet001 E69@0.3 skip
+issue876_Fillet001 E69@0.3 input
 issue876_Fillet001 E69@0.8 input
 issue876_Fillet001 E69@2 input
 issue876_Fillet001 E70@0.3 skip
@@ -2089,13 +2089,13 @@ issue876_Fillet001 E77@2 input
 issue876_Fillet001 E78@0.3 skip
 issue876_Fillet001 E78@0.8 skip
 issue876_Fillet001 E78@2 skip
-issue876_Fillet001 E79@0.3 skip
+issue876_Fillet001 E79@0.3 input
 issue876_Fillet001 E79@0.8 input
 issue876_Fillet001 E79@2 input
 issue876_Fillet001 E80@0.3 skip
 issue876_Fillet001 E80@0.8 skip
 issue876_Fillet001 E80@2 skip
-issue876_Fillet001 E81@0.3 skip
+issue876_Fillet001 E81@0.3 input
 issue876_Fillet001 E81@0.8 input
 issue876_Fillet001 E81@2 input
 issue876_Fillet001 E82@0.3 skip
@@ -2116,7 +2116,7 @@ issue876_Fillet001 E86@2 input
 issue876_Fillet001 E87@0.3 skip
 issue876_Fillet001 E87@0.8 skip
 issue876_Fillet001 E87@2 skip
-issue876_Fillet001 E88@0.3 skip
+issue876_Fillet001 E88@0.3 input
 issue876_Fillet001 E88@0.8 skip
 issue876_Fillet001 E88@2 skip
 issue876_Fillet001 E89@0.3 skip

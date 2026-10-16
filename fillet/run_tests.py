@@ -2185,14 +2185,91 @@ def boss_flush_csg(name, r):
 boss_flush_csg("boss_flush_csg_r1", 1.0)
 boss_flush_csg("boss_flush_csg_r2", 2.0)
 # Still refused, as they were: a chamfer (its cut reaches the line on the
-# boss tangent to it, a corner of no angle); a drafted boss (it touches the
-# side only at the foot, and the fillet's line on it never reaches the
-# side); the rim's seam through the tangent point (the seam would have to
-# run on up); the boss at a corner of the plate, flush with two sides.
+# boss tangent to it, a corner of no angle); the rim's seam through the
+# tangent point (the seam would have to run on up); the boss at a corner of
+# the plate, flush with two sides.
 fillet_case("boss_flush_chamfer_r1", _flush, _foot(_flush), 1.0, "xfail", chamfer=True)
-_drafted = Part.makeBox(30, 20, 3).fuse(Part.makeCone(5, 4, 10, App.Vector(15, 5, 3)))
-_drafted = _drafted.removeSplitter()
-fillet_case("boss_drafted_flush_foot_r1", _drafted, _foot(_drafted), 1.0, "xfail")
+
+
+# A drafted boss (a cone, radius 5 to 4) flush at its foot: it touches the
+# side only there, and the fillet's line on it never reaches the side. The
+# fillet made on a plate reaching past the side and cut by it is one ring,
+# its lower edge notched by the side's cut below that line; the gap between
+# the fillet's two ends is closed by its surface run on (README.md, "A
+# drafted boss flush with the plate's side"). Refused before
+# ("TopOpeBRepDS_DataStructure::Point"). Each is checked against that
+# construction: valid, BOP's check, no tolerance above 1e-4, within 1e-3 of
+# its volume, nothing of either outside the other.
+def _cone(x, y, turn=0.0, r2=4.0):
+    c = Part.makeCone(5, r2, 10, App.Vector(0, 0, 3))
+    c.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), turn)
+    c.translate(App.Vector(x, y, 0))
+    return c
+
+
+def drafted_csg(name, shape, wide, keep, r, edges=None, chamfer=False, vol_tol=1e-3):
+    """The fillet (chamfer) of the feet of <shape> against the same on
+    <wide>, the plate reaching past the side, in common with <keep>."""
+    try:
+        def op(s, es):
+            es = [s.Edges[i - 1] for i in es]
+            return s.makeChamfer(r, es) if chamfer else s.makeFillet(r, es)
+        f = op(shape, edges[0] if edges else _foot(shape))
+        ref = op(wide, edges[1] if edges else _foot(wide)).common(keep)
+        problems = []
+        if not f.isValid():
+            problems.append("invalid")
+        else:
+            problems += [p for p in [ends_problem(f, widest(shape))] if p]
+            tol = max([e.Tolerance for e in f.Edges] + [v.Tolerance for v in f.Vertexes])
+            if tol > 1e-4:
+                problems.append("tolerance %.3g" % tol)
+            if abs(f.Volume - ref.Volume) > vol_tol:
+                problems.append("volume %.5f != %.5f" % (f.Volume, ref.Volume))
+            a, b = f.cut(ref).Volume, ref.cut(f).Volume
+            if a > 1e-6 or b > 1e-6:
+                problems.append("out %.1e,%.1e" % (a, b))
+            try:
+                f.check(True)
+            except Exception as e:
+                problems.append("bop: " + " ".join(str(e).split())[:60])
+        report(name, not problems, False,
+               "; ".join(problems) if problems else "vol=%.4f ref=%.4f" % (f.Volume, ref.Volume))
+    except Exception as e:
+        report(name, False, False, "EXCEPTION " + str(e).strip().splitlines()[-1])
+
+
+_half = Part.makeBox(100, 100, 100, App.Vector(-20, 0, -20))
+_plate = lambda: Part.makeBox(30, 20, 3)
+_wide = lambda: Part.makeBox(30, 40, 3, App.Vector(0, -20, 0))
+_drafted = _plate().fuse(_cone(15, 5)).removeSplitter()
+_drafted_wide = _wide().fuse(_cone(15, 5)).removeSplitter()
+for r in (0.3, 1.0, 2.0, 4.0):
+    drafted_csg("boss_drafted_flush_foot_r%g" % r, _drafted, _drafted_wide, _half, r)
+# drafted 0.6 deg and 11 deg. Near flush the cut climbs to just under the
+# line on the boss, and the volume's integration over it moves by some
+# 1e-3 with the cut's parameters (0.0029, 0.0038 at 41 and 81 points),
+# where the bump it bounds on the side agrees to 8e-6 (at radius 3).
+for r2, vt in ((4.9, 0.01), (3.0, 1e-3)):
+    _d = _plate().fuse(_cone(15, 5, r2=r2)).removeSplitter()
+    _dw = _wide().fuse(_cone(15, 5, r2=r2)).removeSplitter()
+    drafted_csg("boss_drafted%g_flush_foot_r1" % r2, _d, _dw, _half, 1.0, vol_tol=vt)
+# the cone's seam on the far side; a chamfer (its cut does not reach the
+# line on the boss, as the flush boss's did); the foot and the boss's top
+_dt = _plate().fuse(_cone(15, 5, 180.0)).removeSplitter()
+_dtw = _wide().fuse(_cone(15, 5, 180.0)).removeSplitter()
+drafted_csg("boss_drafted_turned_foot_r1", _dt, _dtw, _half, 1.0)
+drafted_csg("boss_drafted_chamfer_r1", _drafted, _drafted_wide, _half, 1.0, chamfer=True)
+drafted_csg("boss_drafted_foot_and_top_r1", _drafted, _drafted_wide, _half, 1.0,
+            (_foot(_drafted) + _foot(_drafted, 13.0), _foot(_drafted_wide) + _foot(_drafted_wide, 13.0)))
+# two on one side; one against a round plate's rim from inside
+_d2 = Part.makeBox(40, 20, 3).fuse(_cone(10, 5)).fuse(_cone(28, 5)).removeSplitter()
+_d2w = Part.makeBox(40, 40, 3, App.Vector(0, -20, 0)).fuse(_cone(10, 5)).fuse(_cone(28, 5))
+drafted_csg("boss_drafted_two_feet_r1", _d2, _d2w.removeSplitter(), _half, 1.0)
+_dr = _rim(90.0).fuse(_cone(15, 0, 90.0)).removeSplitter()
+_drw = Part.makeCylinder(40, 3).fuse(_cone(15, 0, 90.0)).removeSplitter()
+drafted_csg("boss_drafted_rim_foot_r1", _dr, _drw, Part.makeCylinder(20, 100, App.Vector(0, 0, -20)),
+            1.0)
 _seamrim = _boss(0, 90.0, _rim(0.0))
 fillet_case("boss_rim_seam_foot_r1", _seamrim, _foot(_seamrim), 1.0, "xfail")
 _corner = _boss(5, x=5.0)

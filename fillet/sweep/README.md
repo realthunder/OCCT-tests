@@ -51,7 +51,8 @@ doubled or halved (`SHOW=n` of each).
 
 `baseline/` is OCCT LinkVibe-801 `6de00fea30`, FreeCAD OcctFix `34abfa2dae`,
 2026-10-16: edge 2581 ok, 26 BAD, 1314 EXC; vertex 9522 ok, 6 LOOSE, 152
-BAD, 2562 EXC; no crash or timeout. `6de00fea30` (corner plates held to
+BAD, 2562 EXC; no crash or timeout; `1d642bfaaf` (a drafted boss flush
+with the plate's side) moves no case. `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
 4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
@@ -180,8 +181,12 @@ lists every case whose verdict changed.
     ./compare.py baseline/bop_edge.txt /tmp/b_edge
 
 About four times a sweep's time on the mac: the edge sweep ~10 min, the
-vertex sweep ~75. `baseline/bop_*.txt` is `6de00fea30`'s, on the cases `a2f5c2a5d4`'s
-baseline had valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
+vertex sweep ~75. `baseline/bop_*.txt` is `1d642bfaaf`'s, on the cases its
+own baseline has valid: edge 2398 on clean inputs, 34 reported; vertex
+8858, 223 reported, 3 outlasting the 120 s -- the new reports #876's
+four-edge corners at 0.3, valid since `6de00fea30` (../README.md, the
+drafted boss). `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
+valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
 172 reported, 3 outlasting the 120 s. `5c531f4938`'s: the edge sweep's
 2395 valid results on clean inputs, 28 reported; the vertex sweep's 8849,
 213 reported (two of #962's cases outlast the 120 s), 30 of them at 1e-4
