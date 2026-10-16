@@ -2078,11 +2078,13 @@ for e, vol in ((12, 8559.3314), (14, 8559.3365)):
 # The fillet down edge 5 ends in a corner whose vertex ShapeFix raises to
 # 0.029 to meet the circle beside it; the circle's edge, at 1e-7, has to
 # cover it too (README.md, "Corner plates held to their own miss"). No
-# max_tol: the loose-end check would allow that much.
+# max_tol: the loose-end check would allow that much. The corner on a
+# vertex of 0.03 moves with the compiler: 8559.4856 with MSVC (8559.5048
+# before the fix there, 8559.5148 here), BOP's check the same on both.
 fillet_case("issue273_corner_circle_end_e5_r0.3",
             Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
                                    "issue273_Fillet.brep")),
-            5, 0.3, "pass", 8559.4933, vol_tol=1e-3)
+            5, 0.3, "pass", 8559.4933, vol_tol=0.02)
 # #631's corners of two fillets: a plate approximated to ten times its miss
 # of its boundary left a corner loose enough to swallow a short side --
 # under it an edge too small, its vertices overlapping, in BOP's check.

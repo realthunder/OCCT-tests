@@ -3773,7 +3773,7 @@ corners look as they did.
 | Case | What it covers |
 |------|----------------|
 | `issue631_corner_plate_e{9_21,1_8,15_16}_r0.3` | #631's corners of two fillets: valid, the volume, a tolerance of 1e-3 (9, 21) or 0.02, nothing for BOP's check |
-| `issue273_corner_circle_end_e5_r0.3` | #273's edge 5: the volume, no loose end (no `max_tol`, which would allow it) |
+| `issue273_corner_circle_end_e5_r0.3` | #273's edge 5: the volume within 0.02 (MSVC's is 0.0077 off, as it was 0.01 before), no loose end (no `max_tol`, which would allow it) |
 
 ## Known broken (XFAIL)
 
