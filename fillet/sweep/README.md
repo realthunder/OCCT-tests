@@ -219,10 +219,18 @@ TKFillet (2026-10-17):
   back: upstream refuses them ("no suitable edges"). The two faces are
   1.6 deg from tangent and the fillet a strip 0.009 wide. At its end four
   sharp edges meet (`PerformIntersectionAtEnd`), and the rim's ledge, a
-  plane, cuts the strip along its length rather than across it: the cut
-  runs 5.7 on along the rim before it leaves the strip, and the ledge is
-  made again over 7.0 of its area. A cut by the handle's side would close
-  the end at the strip's own width -- not tried.
+  plane, cuts the strip along its length rather than across it. The walk
+  runs past the vertex as far as `ExtentOneCorner` carries the spine, half
+  the edge (5.5); the line on the handle stops on its edge at the vertex,
+  but the line on the cylinder, 0.004 under the rim and along it, meets no
+  edge and runs on to the walk's end. The cut runs out there, at the
+  surface's end rather than at a line, and an edge of 0.029 closes it to
+  the rim: the ledge made again over 7.0 of its area, tolerance 0.03 --
+  an artefact of the extension's length. The strip's end wants a cap in
+  its section at the vertex (0.009 across, the rim's edge and the
+  handle's split at its corners), a corner the builder has no form for --
+  not tried; refusing a cut that runs off the surface would give
+  upstream's answer.
 - #273's E23 and E24 at 0.8 (2), the rims of the triangular pocket in
   the handle's top: upstream refuses them. The pocket's apex is 22 deg;
   past the fillet's analytic part the walk runs the wall's line to the
