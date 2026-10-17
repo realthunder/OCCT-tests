@@ -240,8 +240,27 @@ TKFillet (2026-10-17):
 None of them a regression of the fork's. Of the 176 vertex reports, 137
 take one of these edges; the other 39 are corners -- #631's 20 (the
 corner plates' section, ../README.md), #962's 12, #474's `Fillet003` 4,
-#876's two four-edge corners at 0.3 and #273's V25:37,38 at 0.3 -- not
-gone through so.
+#876's two four-edge corners at 0.3 and #273's V25:37,38 at 0.3. Made
+again with upstream's TKFillet: 26 reported there as well, 10 invalid or
+refused there, and 3 clean there. #876's two are not the same fillet:
+upstream takes E10 and E50, the post's foot drafted a degree, for
+tangent (`PerformElement`'s 0.1 rad, 0.001 here since `b096b91e74`) and
+leaves them out without a word -- its V4:2,4,10,30 is its V4:2,4,30 to
+the digit, 52 faces. Here the fillet of 0.005 is made, the ordinary
+corner refused, and the corner set back (54 faces, the thin fillet's
+0.00524 end an edge of the corner, too small for its vertices). The one
+upstream makes clean that is made dirty here is #962's V48:67,120 at
+0.3, a
+corner of two fillets that upstream makes as a plate of three sides
+(tolerance 0.0114) and the fork as a filling of four, one side
+degenerate (1e-4), which BOP's check finds crossing itself (where, not
+found: no normal turns over on a 40 x 40 grid, and the surface nears its
+own side on the vertical edge only at its pole). Bisected with
+`pictures/mkold.sh`: `3f7ddd4bcc` (two fillets of opposite concavity
+without a pivot), which made 38 such pairs fillings in place of plates,
+tolerances to 1e-4 from up to 0.18. #876's corner, bisected so: invalid
+(56 faces, a self-intersecting wire) from `b096b91e74` on, refused from
+`68c5d4efd0`, and made by the setback since.
 
 Valid in pieces, and the same? `fsw_ref.py` makes each case of a sweep
 twice, in pieces and on the shape refined, and runs Part's `check(True)`
