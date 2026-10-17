@@ -259,9 +259,16 @@ upstream makes clean that is made dirty here is #962's V48:67,120 at
 0.3, a
 corner of two fillets that upstream makes as a plate of three sides
 (tolerance 0.0114) and the fork as a filling of four, one side
-degenerate (1e-4), which BOP's check finds crossing itself (where, not
-found: no normal turns over on a 40 x 40 grid, and the surface nears its
-own side on the vertical edge only at its pole). Bisected with
+degenerate (1e-4), which BOP's check finds crossing itself. It does not:
+the check (`BOPAlgo_CheckerSI::CheckFaceSelfIntersection`, the face
+intersected with itself by `IntTools_FaceFace`) finds one line of no
+length, 1.4e-4 from the filling's pole, its two parameter points the same
+one, (0.490, 0.9996) -- the surface met at a single point of itself, where
+its u-derivative is down to 1.5e-4. Every face and edge interference is
+clean, and the surface is a plain fan there: its u-isos down to 1e-5 from
+the pole sweep the same 43.66 deg monotonically, and no normal turns
+over. A false report of the check's, on a filling with a degenerate side;
+the plate upstream makes has three sides and none. Bisected with
 `pictures/mkold.sh`: `3f7ddd4bcc` (two fillets of opposite concavity
 without a pivot), which made 38 such pairs fillings in place of plates,
 tolerances to 1e-4 from up to 0.18. #876's corner, bisected so: invalid
