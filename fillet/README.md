@@ -3533,8 +3533,9 @@ Not this, at first: a drafted boss (a cone narrowing upward) touches the
 side only at the foot, and the fillet's line on it never reaches the side
 -- made since, "A drafted boss flush with the plate's side", below. The
 boss at a corner of the plate, flush with two sides, is refused before any
-corner is made; so is the rim's boss turned with its own seam opposite the
-tangent point (the walk fails), both as before.
+corner is made; so was the rim's boss turned with its own seam opposite the
+tangent point (the walk fails; made since `892a10b753`, "A walk past a closed
+spine's end", below).
 
 | Case | What it covers |
 |------|----------------|
@@ -3840,7 +3841,8 @@ end to close against. Still refused (the sweep's `E30`, `E31`, `E32`).
 The README had called that post this case; it is not. Also still
 refused, the cylinder's as well: the boss's own seam through the tangent
 point, and a foot in two equal halves, the seam opposite the point
-(neither reaches `PerformPinchEnds`).
+(neither reaches `PerformPinchEnds`; the halves are made since
+`892a10b753`, "A walk past a closed spine's end", below).
 
 The sweeps: fillet and chamfer, edge and vertex, no case moved (status,
 volume, faces); New draft's the same. BOP's check now runs the cases
@@ -3902,6 +3904,55 @@ The chamfer sweeps and New draft's are the same.
 | `issue876_kink_e{52,50,58}_r0.3` | the long side's foot (two planes) and two corners' (a cylinder and a cone): one face, BOP's check |
 | `issue876_corner4_r0.3` | now held to 1e-3 and BOP's check (0.00524 and a too-small edge before) |
 | `issue876_post_foot_e10_r0.3` | now held to 1e-3 (0.00524 before) |
+
+## A walk past a closed spine's end (2026-10-17)
+
+The flush boss turned a quarter, its seam opposite the tangent point: the
+foot in two equal halves, from the point to the seam and back. Refused at
+every radius ("PerformSurf : Failed approximation!"), the cylinder's and
+the cone's, where the boss turned any other way but through the point is
+made. So was the rim's boss with its seam opposite the point.
+
+The foot's spine is closed, both ends at the tangent point. Each edge's
+fillet is a torus (KPart) from where its line on the plate leaves the
+plate's top at the side, 2.93 from the point at radius 1; the walk does
+the rest on each side, the plate's top run on as a plane past the side
+(`ChFi3d_BuildPlane`, `intl` 5). Forward from 28.49 the walk crosses the
+point at 31.42 and runs on round the spine again, as far as the
+extension lets it -- half the spine past the end, which with equal halves
+is exactly the seam at (15,10). It stops there on the cylinder's
+restriction, the seam edge, and the walk gives that last point the
+guide's parameter of the spine's end, 31.42, after its neighbour's 47.23.
+The line is out of order, and its approximation fails. At a turn of 0
+the walk's line comes back ending free, and `ComputeData` cuts a line
+that is all extension back to a third of the way from its end: to
+35.66, past the side by 1.3, which is what `PerformPinchEnds` needs
+(the walk had gone on to 39.25, the seam there being at 39.27).
+
+`ChFi3d_Builder::ComputeData` (`ChFi3d_Builder_6.cxx`), after the walk:
+an end point whose guide parameter runs back past its neighbour's is
+dropped, while the line keeps more than two points, and the line's
+extremities at that end made the free ones of the point before it. A
+line cannot run backward, so no other line is touched; this one then
+ends free, and is cut back as above. The halves come out at the
+volumes of the boss turned any other way, to the digit: cylinder 2585.9842,
+2591.8420, 2611.2741, 2691.5445 at 0.3, 1, 2, 4; cone 2439.2554,
+2443.9037, 2459.2745, 2522.2233; the rim's boss 4561.6566. Valid, BOP's
+check clean.
+
+Still refused: the boss's seam through the tangent point (a turn of
+three quarters), cylinder and cone, fillet and chamfer -- the foot one
+closed edge there, and the rim's own seam through it (`boss_rim_seam_foot_r1`).
+
+`892a10b753`. The sweeps do not move, line for line: fillet edge and
+vertex, BOP's check, the chamfer sweeps and New draft's. The fillet suite
+616 + 4 XFAIL, frozen and not; draft 105, thickness 378.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_flush_halves_foot_r{0.3,1,2}` | the foot in two equal halves, the boss's seam opposite the point: the volumes of `boss_flush_foot_r*` (refused before) |
+| `boss_drafted_halves_foot_r1` | the drafted boss the same, against the construction |
+| `boss_rim_halves_foot_r1` | the rim's boss with its seam opposite the point (refused before) |
 
 ## Known broken (XFAIL)
 

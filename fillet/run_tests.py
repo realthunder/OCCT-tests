@@ -2291,6 +2291,23 @@ _corner = _boss(5, x=5.0)
 fillet_case("boss_corner_foot_r1", _corner, _foot(_corner), 1.0, "xfail")
 _inset = _boss(8)
 fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
+# The foot in two equal halves, the boss's seam opposite the tangent point:
+# the walk past that point at the stripe's end ran on round the first half
+# to the seam and stopped on it, its last point given the spine's end
+# parameter, out of order, and the line could not be approximated
+# (README.md, "A walk past a closed spine's end"). Refused before; now the
+# volumes of the boss turned any other way. The drafted boss the same, and
+# the rim's boss with its seam opposite the point.
+_halves = _boss(5, 90.0)
+for r, vol in ((0.3, 2585.9842), (1.0, 2591.8420), (2.0, 2611.2741)):
+    fillet_case("boss_flush_halves_foot_r%g" % r, _halves, _foot(_halves), r, "pass", vol, 1e-5,
+                vol_tol=1e-3, bop=True)
+_dh = _plate().fuse(_cone(15, 5, 90.0)).removeSplitter()
+_dhw = _wide().fuse(_cone(15, 5, 90.0)).removeSplitter()
+drafted_csg("boss_drafted_halves_foot_r1", _dh, _dhw, _half, 1.0)
+_rimhalves = _boss(0, 180.0, _rim(90.0))
+fillet_case("boss_rim_halves_foot_r1", _rimhalves, _foot(_rimhalves), 1.0, "pass", 4561.6566, 1e-5,
+            vol_tol=1e-3, bop=True)
 
 
 # x16win's chamfer at a corner of two fillets: a 40x30x10 block, fillet 2 on
