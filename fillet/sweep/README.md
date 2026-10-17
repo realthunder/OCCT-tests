@@ -200,6 +200,41 @@ valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
 213 reported (two of #962's cases outlast the 120 s), 30 of them at 1e-4
 or less. At `8558180119` it was 60 and 423 (../README.md).
 
+The edge sweep's 27 at `e549e29656`, each made again with upstream's
+TKFillet (2026-10-17):
+
+- #474's `Fillet003` E3, E8, E16, E32, E40 at 0.3 and 0.8 (10): the
+  input's sliver (../README.md, "Followed up (2026-10-03)"). Its plane
+  F23 doubles back on itself, E47 lying along E49 for the 2 of their
+  height the sliver face beside them takes; the fillet shortens E47, and
+  its new edge ends on E49's line 7.7e-7 off, no vertex shared. Upstream
+  gives the same result to the digit.
+- #474's `Fillet002` E4 at 0.3 and 0.8 (2): reported upstream as well,
+  at three times the tolerance.
+- #273's E12, E14, E16, E18 at 0.8 and 2 (8), the handle's front edges
+  down to the cylinder's rim: reported upstream as well, or worse --
+  tolerances to 12.6, E16 and E18 at 2 invalid. Here at most 0.03; a
+  closed edge of 3e-4 at the foot is left.
+- #273's E5 and E7 (5), the arcs of the rim under the handle's front and
+  back: upstream refuses them ("no suitable edges"). The two faces are
+  1.6 deg from tangent and the fillet a strip 0.009 wide. At its end four
+  sharp edges meet (`PerformIntersectionAtEnd`), and the rim's ledge, a
+  plane, cuts the strip along its length rather than across it: the cut
+  runs 5.7 on along the rim before it leaves the strip, and the ledge is
+  made again over 7.0 of its area. A cut by the handle's side would close
+  the end at the strip's own width -- not tried.
+- #273's E23 and E24 at 0.8 (2), the rims of the triangular pocket in
+  the handle's top: upstream refuses them. The pocket's apex is 22 deg;
+  past the fillet's analytic part the walk runs the wall's line to the
+  apex while the top's swings across to the other rim, and that last
+  surface folds (Face/SelfIntersect). At 0.3 it is clean.
+
+None of them a regression of the fork's. Of the 176 vertex reports, 137
+take one of these edges; the other 39 are corners -- #631's 20 (the
+corner plates' section, ../README.md), #962's 12, #474's `Fillet003` 4,
+#876's two four-edge corners at 0.3 and #273's V25:37,38 at 0.3 -- not
+gone through so.
+
 Valid in pieces, and the same? `fsw_ref.py` makes each case of a sweep
 twice, in pieces and on the shape refined, and runs Part's `check(True)`
 on both results; `refcmp.py` classes the pairs -- the same, the volume
