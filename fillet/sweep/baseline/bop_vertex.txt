@@ -22,8 +22,8 @@ issue273_Fillet V4:14@0.3 ok:8559.336057:0.03:23:c
 issue273_Fillet V4:14@1 ok:8557.729434:0.03:23:b:Edge/SelfIntersect*3,Edge/TooSmallEdge*2,Vertex/SelfIntersect*1
 issue273_Fillet V5:5,6,12,15@0.3 ok:8559.051536:0.0109:28:b:Edge/SelfIntersect*14,Edge/TooSmallEdge*2,Vertex/SelfIntersect*4
 issue273_Fillet V5:5,6,12,15@1 ok:8554.927727:0.0471:28:b:Edge/SelfIntersect*3,Edge/TooSmallEdge*2,Vertex/SelfIntersect*3
-issue273_Fillet V5:5,6@0.3 skip
-issue273_Fillet V5:5,6@1 skip
+issue273_Fillet V5:5,6@0.3 ok:8558.623065:0.0109:26:b:Edge/SelfIntersect*14,Edge/TooSmallEdge*4,Vertex/SelfIntersect*6
+issue273_Fillet V5:5,6@1 ok:8550.039261:0.0471:26:b:Edge/SelfIntersect*3,Edge/TooSmallEdge*2,Vertex/SelfIntersect*3
 issue273_Fillet V5:5,12@0.3 ok:8559.326634:0.03:25:b:Edge/SelfIntersect*14,Edge/TooSmallEdge*4,Vertex/SelfIntersect*4
 issue273_Fillet V5:5,12@1 ok:8557.698749:0.0471:25:b:Edge/SelfIntersect*3,Edge/TooSmallEdge*2,Vertex/SelfIntersect*3
 issue273_Fillet V5:5,15@0.3 skip

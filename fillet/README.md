@@ -3842,7 +3842,8 @@ The README had called that post this case; it is not. Also still
 refused, the cylinder's as well: the boss's own seam through the tangent
 point, and a foot in two equal halves, the seam opposite the point
 (neither reaches `PerformPinchEnds`; the halves are made since
-`892a10b753`, "A walk past a closed spine's end", below).
+`892a10b753`, "A walk past a closed spine's end", below, the seam through
+the point since `e549e29656`, "The boss's seam through the point").
 
 The sweeps: fillet and chamfer, edge and vertex, no case moved (status,
 volume, faces); New draft's the same. BOP's check now runs the cases
@@ -3942,7 +3943,8 @@ check clean.
 
 Still refused: the boss's seam through the tangent point (a turn of
 three quarters), cylinder and cone, fillet and chamfer -- the foot one
-closed edge there, and the rim's own seam through it (`boss_rim_seam_foot_r1`).
+closed edge there (made since `e549e29656`, the next section) -- and the
+rim's own seam through it (`boss_rim_seam_foot_r1`).
 
 `892a10b753`. The sweeps do not move, line for line: fillet edge and
 vertex, BOP's check, the chamfer sweeps and New draft's. The fillet suite
@@ -3953,6 +3955,57 @@ vertex, BOP's check, the chamfer sweeps and New draft's. The fillet suite
 | `boss_flush_halves_foot_r{0.3,1,2}` | the foot in two equal halves, the boss's seam opposite the point: the volumes of `boss_flush_foot_r*` (refused before) |
 | `boss_drafted_halves_foot_r1` | the drafted boss the same, against the construction |
 | `boss_rim_halves_foot_r1` | the rim's boss with its seam opposite the point (refused before) |
+
+## The boss's seam through the point (2026-10-17)
+
+The flush boss turned three quarters: its seam runs up from the tangent
+point, along the line where the boss touches the side's plane, and the
+foot is one closed edge, its vertex at the point. Refused at every
+radius, cylinder and cone, fillet and the cone's chamfer.
+
+Two things. The walks past the stripe's two ends (as in the section
+above, on the plate's top run on as a plane past the side) each stop on
+the boss's seam, where the seam's line lies at the spine's end. The
+surface each made is all on that plane, and `ChFi3d_Purge` removes such
+a surface data when its other side ends free -- at any other turn it
+does -- but keeps it, shrunk to its line on the boss, when that side ends
+on an arc: here the seam. The stripe then ended in a surface data with
+both ends on arcs, which `PerformPinchEnds` does not take. A seam is no
+end of its face: the walk only stopped where its parameters do. The
+purge now treats an end on the other face's own seam as free.
+
+Then the result: the pinch point, (15,0,4) at radius 1, lies on the
+seam, and the seam was left whole, from the foot to the top; the
+cylinder kept its foot circle and came out unorientable. The seam is now
+split at the point, its stretch from the vertex up to the point under
+the fillet (`PerformPinchEnds`). The drafted boss's gap
+(`PinchGap`) crosses the seam halfway between the fillet's ends instead:
+the boss's line run on is cut in two there, the half past the period
+given its pcurve on the cone a period back, and the seam split at the
+crossing. Both refuse when the point is off the seam by more than ten
+times the tolerance.
+
+`e549e29656`: `ChFi3d_Builder_2.cxx` (`ChFi3d_Purge`), `ChFi3d_Builder.cxx`
+(`PerformPinchEnds`, `PinchGap`). The volumes of the boss turned any
+other way, to the digit: cylinder 2585.9842, 2591.8420, 2611.2741,
+2691.5445 at 0.3, 1, 2, 4; cone 2439.2554, 2443.9037, 2459.2745,
+2522.2233; the cone's chamfer 2453.7582. Valid, BOP's check clean. The
+cylinder's chamfer stays refused (`boss_flush_chamfer_r1`), the rim's
+own seam through the point too (`boss_rim_seam_foot_r1`).
+
+The sweeps (sweep/README.md) move two cases, both made now and refused
+before: `issue273_Fillet V5:5,6` at 0.3 and 1, the two arcs of a
+cylinder's rim at a corner. The walk along the rim ended on that
+cylinder's own seam and is cleaned away now, not kept -- the purge's
+half at work away from any boss; valid, BOP's check reporting what the arc E5 filleted
+alone gets there (baseline/bop_vertex.txt). Every other case the same,
+the BOP and chamfer sweeps and the draft sweeps too; the suites here,
+draft and thickness pass.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_flush_seam_foot_r{0.3,1,2,4}` | the boss's seam through the point: the volumes of `boss_flush_foot_r*` (refused before) |
+| `boss_drafted_seam_foot_r{0.3,1,4}`, `boss_drafted_seam_chamfer_r1` | the drafted boss the same, fillet and chamfer, against the construction |
 
 ## Known broken (XFAIL)
 

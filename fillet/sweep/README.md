@@ -55,7 +55,9 @@ BAD, 2562 EXC; no crash or timeout; `1d642bfaaf` (a drafted boss flush
 with the plate's side) moves no case, `b4f2f7592c` (a fillet split only
 where its section is a point) only #876's at 0.3, edge 16 and vertex 112,
 their tolerance 0.00524 -> 3e-4 at most, the counts the same; `892a10b753`
-(a walk past a closed spine's end) moves no case. `6de00fea30` (corner plates held to
+(a walk past a closed spine's end) moves no case, `e549e29656` (a boss's
+seam through the point) two: `issue273_Fillet V5:5,6` at 0.3 and 1,
+refused -> ok (vertex 9524 ok, 2560 EXC). `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
 4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
@@ -190,7 +192,8 @@ own baseline has valid: edge 2398 on clean inputs, 34 reported; vertex
 four-edge corners at 0.3, valid since `6de00fea30` (../README.md, the
 drafted boss). At `b4f2f7592c` (a fillet split only where its section is
 a point) 7 edge and 49 vertex of those come clean: edge 27 reported,
-vertex 174; at `892a10b753` the same. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
+vertex 174; at `892a10b753` the same; at `e549e29656` vertex 176, the
+two cases it makes reported as the arc E5 alone is. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
 valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
 172 reported, 3 outlasting the 120 s. `5c531f4938`'s: the edge sweep's
 2395 valid results on clean inputs, 28 reported; the vertex sweep's 8849,

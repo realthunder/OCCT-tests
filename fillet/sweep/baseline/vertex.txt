@@ -22,8 +22,8 @@ issue273_Fillet V4:14@0.3 ok:8559.336057:0.03:23
 issue273_Fillet V4:14@1 ok:8557.729434:0.03:23
 issue273_Fillet V5:5,6,12,15@0.3 ok:8559.051536:0.0109:28
 issue273_Fillet V5:5,6,12,15@1 ok:8554.927727:0.0471:28
-issue273_Fillet V5:5,6@0.3 EXC
-issue273_Fillet V5:5,6@1 EXC
+issue273_Fillet V5:5,6@0.3 ok:8558.623065:0.0109:26
+issue273_Fillet V5:5,6@1 ok:8550.039261:0.0471:26
 issue273_Fillet V5:5,12@0.3 ok:8559.326634:0.03:25
 issue273_Fillet V5:5,12@1 ok:8557.698749:0.0471:25
 issue273_Fillet V5:5,15@0.3 BAD:8560.05901:0.0303:25

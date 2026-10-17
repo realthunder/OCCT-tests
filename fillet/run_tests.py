@@ -2308,6 +2308,22 @@ drafted_csg("boss_drafted_halves_foot_r1", _dh, _dhw, _half, 1.0)
 _rimhalves = _boss(0, 180.0, _rim(90.0))
 fillet_case("boss_rim_halves_foot_r1", _rimhalves, _foot(_rimhalves), 1.0, "pass", 4561.6566, 1e-5,
             vol_tol=1e-3, bop=True)
+# The boss's own seam through the tangent point (turned three quarters): the
+# walks past the stripe's ends stopped on the seam, and what they made, all
+# on the plate's top run on past the side, was kept for that point on an
+# arc; then the seam has to be split where the fillet's line meets it
+# (README.md, "The boss's seam through the point"). Refused before; now the
+# volumes of the boss turned any other way. The drafted boss the same, and
+# its chamfer (the cylinder's stays refused: boss_flush_chamfer_r1).
+_seam = _boss(5, 270.0)
+for r, vol in ((0.3, 2585.9842), (1.0, 2591.8420), (2.0, 2611.2741), (4.0, 2691.5445)):
+    fillet_case("boss_flush_seam_foot_r%g" % r, _seam, _foot(_seam), r, "pass", vol, 1e-5,
+                vol_tol=1e-3, bop=True)
+_ds = _plate().fuse(_cone(15, 5, 270.0)).removeSplitter()
+_dsw = _wide().fuse(_cone(15, 5, 270.0)).removeSplitter()
+for r in (0.3, 1.0, 4.0):
+    drafted_csg("boss_drafted_seam_foot_r%g" % r, _ds, _dsw, _half, r)
+drafted_csg("boss_drafted_seam_chamfer_r1", _ds, _dsw, _half, 1.0, chamfer=True)
 
 
 # x16win's chamfer at a corner of two fillets: a 40x30x10 block, fillet 2 on
