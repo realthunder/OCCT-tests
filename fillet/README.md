@@ -4007,6 +4007,61 @@ draft and thickness pass.
 | `boss_flush_seam_foot_r{0.3,1,2,4}` | the boss's seam through the point: the volumes of `boss_flush_foot_r*` (refused before) |
 | `boss_drafted_seam_foot_r{0.3,1,4}`, `boss_drafted_seam_chamfer_r1` | the drafted boss the same, fillet and chamfer, against the construction |
 
+## A fillet run on past its vertex (realthunder/FreeCAD#273, #474, 2026-10-18)
+
+#273's E5 and E7, the arcs of the cylinder's rim under the handle's front
+and back, are filleted between faces 1.6 deg from tangent: a strip 0.009
+wide at 0.3. Upstream refuses them ("no suitable edges",
+`PerformElement` taking the faces for tangent at 0.1 rad; 0.001 here
+since `b096b91e74`). Made here, valid, but BOP's check found faults in
+five of the six (radii 0.3, 0.8, 2): edges crossing themselves, up to 14,
+and at 0.3 a face (E7 at 2 clean). At the strip's end four sharp edges meet
+(`PerformIntersectionAtEnd`). The walk runs past the vertex as far as
+`ExtentOneCorner` carries the spine, half the edge, 5.7. The line on the
+handle stops on its edge at the vertex, but the line on the cylinder,
+0.004 under the rim and along it, meets no edge and runs on to the walk's
+end. That corner (`PerformMoreThreeCorner`) is cut by the rim's ledge
+along the strip, not across it, and runs off the surface's end rather
+than to a line: the ledge made again over 7.0 of its area, an edge of
+0.029 closing it to the rim (sweep/README.md, the edge triage).
+
+The end now refuses a fillet that has one side on an edge of the vertex
+and the other side run on, free, farther from the vertex than ten times
+the fillet's width there (the distance from the end on the edge to the
+other line). Measured over the suite and both sweeps on every case that
+ends on one arc: up to 2.4 times otherwise, and from 34 (#273's E7 at
+radius 2) to 1085 (E5 at 0.3) on the run-on ones -- #273's E5 and E7 at
+every radius, and #474 `Fillet003`'s E2 and E18, the same kind of edge
+(between two faces 1.5 deg apart), which came out invalid or refused. A cap across the strip in its section at the vertex, 0.009
+wide, would be the corner they want; the builder has no form for it.
+
+A refused corner goes to the setback fallback (FreeCAD's
+`FilletCornerSetbackFallback`, `ComputeSetbackFallback`), which sets it
+back from the vertex and makes it again: #474's E2 and E18 come out
+valid and BOP-clean at every radius, #273's E5 and E7 at 0.8 and 2 too.
+At 0.3 #273's are still reported, less: the corner's section edge is
+0.0105 long, its vertices 0.0092 loose (Edge/TooSmallEdge, Vertex/
+SelfIntersect), no face crossing itself. With the fallback off they are
+refused, upstream's answer.
+
+`95a3e143e1`: `ChFi3d_Builder_C1.cxx` (`PerformIntersectionAtEnd`). The
+sweeps (sweep/README.md) move only these edges and the corners holding
+them: edge 5 and vertex 9 results of #474 invalid -> valid, BOP's check
+clean on all 14; vertex 5 invalid -> refused (#273's `V5:5,15` and
+`V7:7,11` at 0.3 and 1, #474's `V10:18,24` at 1); 6 edge and 34 vertex
+results of #273 moved by thousandths of volume, BOP's check now clean on
+3 edge and 15 vertex results it reported; the other 20 report only
+small edges and their vertices, 19 of them results it found edges or
+faces crossing themselves on before. Clean to reported: none. The BOP, chamfer and New draft sweeps otherwise the same,
+line for line; the fillet suite 629 + 4 XFAIL, frozen and not; draft
+105, thickness 378.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_rim_run_on_e{5,7}_r2` | #273's rim arcs, the corner set back: valid, BOP's check clean |
+| `issue474_f003_run_on_e2_r0.3`, `issue474_f003_run_on_e18_r0.8` | #474's step edges, invalid before: valid, BOP's check clean |
+| `issue273_rim_run_on_e5_r0.3_no_fallback` | with the fallback off the fillet is refused |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

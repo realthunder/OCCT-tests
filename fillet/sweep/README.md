@@ -57,7 +57,11 @@ where its section is a point) only #876's at 0.3, edge 16 and vertex 112,
 their tolerance 0.00524 -> 3e-4 at most, the counts the same; `892a10b753`
 (a walk past a closed spine's end) moves no case, `e549e29656` (a boss's
 seam through the point) two: `issue273_Fillet V5:5,6` at 0.3 and 1,
-refused -> ok (vertex 9524 ok, 2560 EXC). `6de00fea30` (corner plates held to
+refused -> ok (vertex 9524 ok, 2560 EXC); `95a3e143e1` (a fillet run on
+past its vertex) #273's E5 and E7 and #474 `Fillet003`'s E2 and E18:
+edge 5 and vertex 9 invalid -> ok, vertex 5 invalid -> refused, 6 edge
+and 34 vertex results of #273 moved by thousandths (edge 2586 ok, 21 BAD,
+1314 EXC; vertex 9533 ok, 6 LOOSE, 138 BAD, 2565 EXC). `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
 4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
@@ -216,7 +220,9 @@ TKFillet (2026-10-17):
   tolerances to 12.6, E16 and E18 at 2 invalid. Here at most 0.03; a
   closed edge of 3e-4 at the foot is left.
 - #273's E5 and E7 (5), the arcs of the rim under the handle's front and
-  back: upstream refuses them ("no suitable edges"). The two faces are
+  back (refused at the end since `95a3e143e1` and set back; three clean,
+  the two at 0.3 still reporting small edges -- ../README.md, "A fillet
+  run on past its vertex"): upstream refuses them ("no suitable edges"). The two faces are
   1.6 deg from tangent and the fillet a strip 0.009 wide. At its end four
   sharp edges meet (`PerformIntersectionAtEnd`), and the rim's ledge, a
   plane, cuts the strip along its length rather than across it. The walk

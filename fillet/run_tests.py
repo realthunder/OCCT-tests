@@ -2090,16 +2090,37 @@ for e, vol in ((12, 8559.3314), (14, 8559.3365)):
                 Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
                                        "issue273_Fillet.brep")),
                 e, 0.3, "pass", vol, 0.031, vol_tol=1e-3, bop=True)
-# The fillet down edge 5 ends in a corner whose vertex ShapeFix raises to
-# 0.029 to meet the circle beside it; the circle's edge, at 1e-7, has to
-# cover it too (README.md, "Corner plates held to their own miss"). No
-# max_tol: the loose-end check would allow that much. The corner on a
-# vertex of 0.03 moves with the compiler: 8559.4856 with MSVC (8559.5048
-# before the fix there, 8559.5148 here), BOP's check the same on both.
-fillet_case("issue273_corner_circle_end_e5_r0.3",
-            Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
-                                   "issue273_Fillet.brep")),
-            5, 0.3, "pass", 8559.4933, vol_tol=0.02)
+# The fillet down edge 5 ended in a corner whose vertex ShapeFix raised to
+# 0.029 to meet the circle beside it; the circle's edge, at 1e-7, had to
+# cover it too (README.md, "Corner plates held to their own miss"). That
+# corner ran on past the vertex and is refused now, the corner set back
+# (README.md, "A fillet run on past its vertex"): 8559.4849, within the
+# 0.02 kept for the compiler (8559.4856 with MSVC before). No max_tol: the
+# loose-end check would allow the input's vertex of 0.03.
+p273f = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue273_Fillet.brep"))
+fillet_case("issue273_corner_circle_end_e5_r0.3", p273f, 5, 0.3, "pass", 8559.4933, vol_tol=0.02)
+# #273's rim arcs and #474's step edges, between faces 1.5 deg apart: the
+# fillet's free side ran on past the vertex as far as the spine was
+# extended, the corner cut along the strip (BOP's check: edges and faces
+# crossing themselves; #474's invalid). Refused at the end, and set back.
+for e, r, vol in ((5, 2, 8559.4279), (7, 2, 8559.4286)):
+    fillet_case("issue273_rim_run_on_e%d_r%g" % (e, r), p273f, e, r, "pass", vol,
+                vol_tol=1e-3, bop=True)
+p474f3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue474_Fillet003.brep"))
+for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
+    fillet_case("issue474_f003_run_on_e%d_r%g" % (e, r), p474f3, e, r, "pass", vol, 1e-3,
+                vol_tol=1e-3, bop=True)
+_part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
+_had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
+_fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
+_part_params.SetFloat("FilletCornerSetbackFallback", 0.0)
+try:
+    refused_case("issue273_rim_run_on_e5_r0.3_no_fallback", p273f, 5, 0.3)
+finally:
+    if _had_fallback:
+        _part_params.SetFloat("FilletCornerSetbackFallback", _fallback)
+    else:
+        _part_params.RemFloat("FilletCornerSetbackFallback")
 # #631's corners of two fillets: a plate approximated to ten times its miss
 # of its boundary left a corner loose enough to swallow a short side --
 # under it an edge too small, its vertices overlapping, in BOP's check.
