@@ -1684,6 +1684,25 @@ is refused, as upstream refuses it.
 
 ![issue474_f003_run_on_e2_r0.3](pictures/issue474_f003_run_on_e2_r0.3.png)
 
+### A set back corner that folds (`31cf3ce134`, realthunder/FreeCAD#273)
+
+#273's handle has a triangular pocket in its top, its apex 22 deg. A
+fillet of 0.8 on either rim ends at the apex, against the other wall; the
+cap that closes it at 0.3 would run off the top here, and upstream
+refuses the fillet. The setback fallback set the corner back and made it
+as a patch of four sides, from the top's edge down to the apex: valid,
+and folded over itself across the apex (BOP's check: the face crosses
+itself). The fallback, and the longer extension tried after it, now
+intersect each face they made with itself, as BOP's check does, and
+refuse a step that leaves a fold -- a line of some length on two sheets
+of the face. None of the steps leaves the patch unfolded, and the fillet
+is refused, upstream's answer: the input stands in for a result. At 0.3
+it is made as before, the cap in the other wall. #962's three-sided
+plate, which BOP's check reports at its pole for a line of no length, is
+no fold and stays made.
+
+![issue273_pocket_apex_fold_e23_r0.8](pictures/issue273_pocket_apex_fold_e23_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
