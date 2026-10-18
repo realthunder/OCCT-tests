@@ -2110,6 +2110,15 @@ p474f3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue47
 for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
     fillet_case("issue474_f003_run_on_e%d_r%g" % (e, r), p474f3, e, r, "pass", vol, 1e-3,
                 vol_tol=1e-3, bop=True)
+# #273's pocket in the handle's top, its rims at 0.8: the fillet's end at
+# the pocket's apex of 22 deg runs off the top, and the corner set back
+# made a patch across the apex that folded over itself (BOP's check).
+# Refused, as upstream refuses it (README.md, "A set back corner that
+# folds"). At 0.3 the end is a cap in the other wall, as upstream's.
+for e in (23, 24):
+    refused_case("issue273_pocket_apex_fold_e%d_r0.8" % e, p273f, e, 0.8)
+fillet_case("issue273_pocket_apex_cap_e23_r0.3", p273f, 23, 0.3, "pass", 8559.3262, 0.031,
+            vol_tol=1e-3, bop=True)
 _part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
 _had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
 _fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)

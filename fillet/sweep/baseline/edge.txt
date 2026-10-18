@@ -59,10 +59,10 @@ issue273_Fillet E22@0.3 ok:8559.425498:0.03:22
 issue273_Fillet E22@0.8 ok:8559.056583:0.03:22
 issue273_Fillet E22@2 EXC
 issue273_Fillet E23@0.3 ok:8559.326234:0.03:22
-issue273_Fillet E23@0.8 ok:8558.63242:0.03:23
+issue273_Fillet E23@0.8 EXC
 issue273_Fillet E23@2 EXC
 issue273_Fillet E24@0.3 ok:8559.326234:0.03:22
-issue273_Fillet E24@0.8 ok:8558.632514:0.03:23
+issue273_Fillet E24@0.8 EXC
 issue273_Fillet E24@2 EXC
 issue273_Fillet E25@0.3 ok:8559.570279:0.03:22
 issue273_Fillet E25@0.8 ok:8560.094668:0.03:22
@@ -220,10 +220,10 @@ issue273_Fillet001 E37@2 EXC
 issue273_Fillet001 E38@0.3 ok:8535.096796:0.712:29
 issue273_Fillet001 E38@0.8 ok:8534.727931:0.712:29
 issue273_Fillet001 E38@2 EXC
-issue273_Fillet001 E39@0.3 ok:8535.012447:0.712:31
+issue273_Fillet001 E39@0.3 EXC
 issue273_Fillet001 E39@0.8 EXC
 issue273_Fillet001 E39@2 EXC
-issue273_Fillet001 E40@0.3 ok:8535.012635:0.712:31
+issue273_Fillet001 E40@0.3 EXC
 issue273_Fillet001 E40@0.8 EXC
 issue273_Fillet001 E40@2 EXC
 issue273_Fillet001 E41@0.3 ok:8535.315889:0.712:29

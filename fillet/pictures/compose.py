@@ -15,8 +15,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cases import (CASES, CHAMFER, EDGES, NAMES, STAGES, UVLABEL, UVLABEL_CASE, VIEW, ZOOM,
-                   ZOOMLABEL)
+from cases import (CASES, CHAMFER, EDGES, NAMES, REFUSED, STAGES, UVLABEL, UVLABEL_CASE, VIEW,
+                   ZOOM, ZOOMLABEL)
 
 P = os.environ["FILLET_WORK"]
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
@@ -60,6 +60,8 @@ FT = ImageFont.truetype(font(True), 19)
 
 
 def status(d, name):
+    if d["ok"] and d.get("refused"):
+        return "refused, as expected", (20, 120, 40)
     if d["ok"]:
         return "valid, volume %.4f" % d["volume"], (20, 120, 40)
     s = "; ".join(x.replace(" BRep_API: command not done", "") for x in d["problems"])
@@ -83,7 +85,8 @@ for name in sys.argv[2:] or list(CASES):
         on = "%d edges (%s)" % (len(ends), EDGES.get(name, "see cases.py"))
     else:
         on = "the edge %s-%s" % (ends[0], ends[1])
-    expect = "expected %.4f" % ref if ref is not None else "expected a valid solid"
+    expect = ("expected refused" if name in REFUSED
+              else "expected %.4f" % ref if ref is not None else "expected a valid solid")
     what = ("chamfer " + " and ".join("%g" % x for x in CHAMFER[name]) if name in CHAMFER
             else "fillet r%g" % radius)
     desc = "%s; %s on %s; %s  (fix: %s)" % (NAMES[sk], what, on, expect, fix)
@@ -119,6 +122,9 @@ for name in sys.argv[2:] or list(CASES):
             meta = json.load(open(pf + ".json")) if os.path.exists(pf + ".json") else {}
             if row == 0 and R[k][name]["problems"] and R[k][name]["problems"][0].startswith("threw"):
                 d.text((x + 10, top + lab + 8), "threw: the input is shown", font=F, fill=(190, 30, 30))
+            if row == 0 and R[k][name].get("refused"):
+                d.text((x + 10, top + lab + 8), "refused: the input is shown", font=F,
+                       fill=(110, 110, 110))
             if row == 1:
                 zl, zc = ZOOMLABEL.get(name, ("the fillet's end", (110, 110, 110)))
                 d.text((x + 10, top + lab + H + 8), zl, font=F, fill=zc)

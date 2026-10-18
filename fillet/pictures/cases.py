@@ -74,6 +74,7 @@ STAGES = {
     "shalves": ("35f297a6d0", "892a10b753"),
     "sseam": ("20b6442003", "e549e29656"),
     "srunon": ("d1b6f7a0c2", "95a3e143e1"),
+    "sfold": ("f0a499fa6d", "31cf3ce134"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -391,6 +392,7 @@ SHAPES = {
     "armnear": lambda: _arm_on_tall_block(split=False, near=True),
     "armtilt": _arm_tilted_under_block,
     "p474": _brep("issue474_fillet003_base.brep"),
+    "p273": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue273_Fillet.brep")),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
@@ -486,6 +488,8 @@ UVFACE = {
     "armtilt": _flat_near(38.5, 27.2, -3.75),
     # the corner's plate at edge 6's top
     "p474": _plate_near(-13, 0, 13),
+    # the patch at the pocket's apex
+    "p273": _plate_near(0, 15.0135, 30.6, 1.5),
     # the plate's side, whose outline ran up to the top and back down
     "postplate": _plane_at("y", -3),
     # the post's cone, carried on below its base by the cut
@@ -629,6 +633,7 @@ NAMES = {
     "armtilt": "the arm fused to an 11.5x17x23.75 block, the arm's top tilted 4.9 deg about "
                "the corner under the block's wall, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
+    "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
     "postdraft": "the post on the plate drafted 1 deg, a cone on the round end's cylinder",
@@ -682,6 +687,7 @@ VIEW = {
     "armnear": ((30, 9, 2), 46.0),
     "armtilt": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
+    "p273": ((0, 2, 16), 44.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
@@ -719,6 +725,7 @@ UVLABEL = {
     "armnear": ("the arm's top", False),
     "armtilt": ("the flat face under the wall", False),
     "p474": ("the corner's plate", False),
+    "p273": ("the patch at the apex", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
@@ -1040,6 +1047,12 @@ CASES = {
     # carried; refused there now, and the corner set back
     "issue474_f003_run_on_e2_r0.3": ("srunon", "p474", ((-13, 0, 13), (-9, 0, 13)), 0.3,
                                      1988.8707, (-13, 0, 13), (-1, -1, 0.6)),
+    # #273's pocket in the handle's top, its apex 22 deg: the fillet's end
+    # ran off the top, and the corner set back made a patch across the apex
+    # that folded over itself; refused now, as upstream refuses it
+    "issue273_pocket_apex_fold_e23_r0.8": ("sfold", "p273", ((0, 15.013479, 31),
+                                                             (1.524712, 7.124642, 31)), 0.8,
+                                           None, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1076,9 +1089,13 @@ STRICT = {
     "boss_flush_halves_foot_r1": (1e-4, 1e-3),
     "boss_flush_seam_foot_r1": (1e-4, 1e-3),
     "issue474_f003_run_on_e2_r0.3": (2e-4, 1e-3),
+    "issue273_pocket_apex_fold_e23_r0.8": (0.031, 1e-3),
 }
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
+# cases whose fix refuses the fillet: refused is the answer expected (the
+# "after" column), a result made is not
+REFUSED = {"issue273_pocket_apex_fold_e23_r0.8"}
 ZOOMLABEL = {
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),

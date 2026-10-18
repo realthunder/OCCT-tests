@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.environ["FILLET_TOOLS"])
 import FreeCAD as App
 import Part
-from cases import CASES, CHAMFER, SHAPES, STRICT, UVFACE, UVFACE_CASE, edge_between
+from cases import CASES, CHAMFER, REFUSED, SHAPES, STRICT, UVFACE, UVFACE_CASE, edge_between
 
 OUT = os.environ["OUT"]
 os.makedirs(OUT, exist_ok=True)
@@ -91,14 +91,20 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
                 p.append("refused by BOP's check")
             if ref is not None and abs(vol - ref) > vol_tol:
                 p.append("%.4f off" % (vol - ref))
+        if name in REFUSED:
+            p.append("made, where it is refused")
         r.exportBrep(os.path.join(OUT, name + ".brep"))
         d["uv"] = uv_outline(r, UVFACE_CASE.get(name, UVFACE[sk]))
         d.update(ok=not p, problems=p, volume=vol)
     except Exception as e:
-        d.update(ok=False, problems=["threw " + str(e).strip().splitlines()[-1]], volume=None)
+        why = "threw " + str(e).strip().splitlines()[-1]
+        if name in REFUSED:  # the answer expected
+            d.update(ok=True, problems=[], volume=None, refused=why)
+        else:
+            d.update(ok=False, problems=[why], volume=None)
     res[name] = d
     emit("%-28s %s %s" % (name, "OK " if d["ok"] else "BAD", "; ".join(d["problems"])
-                          or "vol=%.4f" % d["volume"]))
+                          or d.get("refused") or "vol=%.4f" % d["volume"]))
 json.dump(res, open(os.path.join(OUT, "results.json"), "w"), indent=1)
 emit("DONE")
 os._exit(0)

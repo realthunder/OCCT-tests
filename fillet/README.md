@@ -4062,6 +4062,58 @@ line for line; the fillet suite 629 + 4 XFAIL, frozen and not; draft
 | `issue474_f003_run_on_e2_r0.3`, `issue474_f003_run_on_e18_r0.8` | #474's step edges, invalid before: valid, BOP's check clean |
 | `issue273_rim_run_on_e5_r0.3_no_fallback` | with the fallback off the fillet is refused |
 
+## A set back corner that folds (realthunder/FreeCAD#273, 2026-10-18)
+
+#273's handle has a triangular pocket in its top, 1 deep, its apex 22
+deg. A fillet of 0.8 on either rim (E23, E24) ends at the apex, where the
+other wall stands across its end. At 0.3 the end is a cap in that wall's
+plane, run on past the apex by 0.8 (upstream's result, BOP's check
+clean). At 0.8 the cap would run 2.1 past the apex, off the top: the top's
+outer edge is 1.3 from the apex. The corner fails, upstream refuses the
+fillet, and here the setback fallback set the corner back by the radius
+and made it as a patch of four sides: the fillet's section, the top's
+line, the wall's line on to the apex, and a cut down the other wall. The
+top's line crosses the pocket from one rim to the other, and the patch,
+from it down to the apex at the wall's line, reaches under the top and
+across the apex: valid, and folded over itself (BOP's check:
+Face/SelfIntersect, four lines 0.3 long on the patch, on two sheets).
+#273's `Fillet001`, the same handle with the pocket's edges filleted,
+did the same on its rims at 0.3 (E39, E40), alone and with the edges at
+their ends.
+
+The setback fallback (`ComputeSetbackFallback`), and the longer
+extension tried after it (`ComputeLongExtension`), took a result that was
+valid, had every fillet in it and no edge too loose; they now also want no
+face of it folded. A face is looked at if the computation made it (not on
+a surface of the input), it is not elementary (BOP's check skips planes,
+cylinders, cones, spheres and tori that do not cross themselves), and it
+lies within the setback and twice the radius of a vertex set back
+(anywhere, for the longer extension). It folds if `IntTools_FaceFace` of
+it with itself, as BOP's check computes it, finds a line longer than 1e-4
+whose middle is at two places in (u, v). The length is not scaled to the
+face's tolerance: `Fillet001`'s loose input leaves its patch at 0.038,
+and the lines there are 0.13 long. #962's corner `V48:67,120` at 0.3 is
+made as before: the line found there is a point at the plate's pole, at
+one place in (u, v) (sweep/README.md).
+
+A folded corner is refused at its step and the fallback goes on to the
+next. On these none comes out unfolded, and the fillet is refused, as
+upstream refuses it.
+
+`31cf3ce134`: `ChFi3d_Builder.cxx` (`HasFoldNear`). The sweeps
+(sweep/README.md) move only these: edge 4 results made -> refused (#273's
+`E23` and `E24` at 0.8, `Fillet001`'s `E39` and `E40` at 0.3), vertex 10
+(`Fillet001`'s corners `V23`, `V24` and `V25` holding `E39` or `E40` at
+0.3), and in the BOP sweep only `E23` and `E24`, reported before; no
+other result BOP's check reports changed. The chamfer and New draft
+sweeps the same, line for line; the fillet suite 632 + 4 XFAIL, frozen
+and not; draft 105, thickness 378.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_pocket_apex_fold_e{23,24}_r0.8` | the pocket's rims at 0.8: refused, not folded |
+| `issue273_pocket_apex_cap_e23_r0.3` | at 0.3 the cap in the other wall, BOP's check clean |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

@@ -61,7 +61,11 @@ refused -> ok (vertex 9524 ok, 2560 EXC); `95a3e143e1` (a fillet run on
 past its vertex) #273's E5 and E7 and #474 `Fillet003`'s E2 and E18:
 edge 5 and vertex 9 invalid -> ok, vertex 5 invalid -> refused, 6 edge
 and 34 vertex results of #273 moved by thousandths (edge 2586 ok, 21 BAD,
-1314 EXC; vertex 9533 ok, 6 LOOSE, 138 BAD, 2565 EXC). `6de00fea30` (corner plates held to
+1314 EXC; vertex 9533 ok, 6 LOOSE, 138 BAD, 2565 EXC); `31cf3ce134` (a
+set back corner that folds) #273's E23 and E24 at 0.8 and `Fillet001`'s
+E39 and E40 at 0.3, alone and in the corners holding them: edge 4 and
+vertex 10 ok -> refused (edge 2582 ok, 21 BAD, 1318 EXC; vertex 9523 ok,
+6 LOOSE, 138 BAD, 2575 EXC). `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
 4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
@@ -197,7 +201,9 @@ four-edge corners at 0.3, valid since `6de00fea30` (../README.md, the
 drafted boss). At `b4f2f7592c` (a fillet split only where its section is
 a point) 7 edge and 49 vertex of those come clean: edge 27 reported,
 vertex 174; at `892a10b753` the same; at `e549e29656` vertex 176, the
-two cases it makes reported as the arc E5 alone is. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
+two cases it makes reported as the arc E5 alone is; at `31cf3ce134` (a
+set back corner that folds) edge two fewer, #273's E23 and E24 at 0.8
+refused now. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
 valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
 172 reported, 3 outlasting the 120 s. `5c531f4938`'s: the edge sweep's
 2395 valid results on clean inputs, 28 reported; the vertex sweep's 8849,
@@ -241,7 +247,9 @@ TKFillet (2026-10-17):
   the handle's top: upstream refuses them. The pocket's apex is 22 deg;
   past the fillet's analytic part the walk runs the wall's line to the
   apex while the top's swings across to the other rim, and that last
-  surface folds (Face/SelfIntersect). At 0.3 it is clean.
+  surface folds (Face/SelfIntersect). At 0.3 it is clean. Refused since
+  `31cf3ce134`, upstream's answer (../README.md, "A set back corner that
+  folds").
 
 None of them a regression of the fork's. Of the 176 vertex reports, 137
 take one of these edges; the other 39 are corners -- #631's 20 (the
