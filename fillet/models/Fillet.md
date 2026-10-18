@@ -1511,10 +1511,9 @@ plate, cut by the side's plane -- at radius 1 and 2: nothing of either
 lies outside the other. The same against a round plate's rim, the boss
 inside it.
 
-Not made: a chamfer there (its cut would end in a corner of no angle), a
-drafted boss (it touches the side only at its foot, so its fillet does
-not reach the side at all; #876's post), and a rim whose seam runs
-through the point.
+Not made: a chamfer there (its cut would end in a corner of no angle) and
+a rim whose seam runs through the point. A drafted boss, which touches
+the side only at its foot, is made since `1d642bfaaf` (below).
 
 ![boss_flush_foot_r1](pictures/boss_flush_foot_r1.png)
 
@@ -1582,6 +1581,108 @@ refused before are made.
 
 Still reported: corners whose plate falls back to touching the fillets'
 ends only, 0.04 off them (#631 at radius 1), and a few at 0.3.
+
+### A drafted boss flush with the plate's side (`1d642bfaaf`)
+
+The boss above, drafted: a cone narrowing upward, radius 5 to 4, its foot
+circle touching the plate's top edge at one point. It touches the side's
+plane only there, so the fillet's line on the boss never reaches the
+side; on the plate it reaches the edge on either side of the point, and
+both ends of the fillet came to the one vertex, as the cylinder's had.
+Refused at every radius, with the same error of a point of index 0.
+
+Made again on a plate reaching past the side and cut by it, the fillet
+stays one ring: the cut runs below its line on the boss, a notch in the
+ring's lower edge, not a gap across it. That is what is made now. The
+fillet's two ends stay where its line on the plate meets the edge, and
+the stretch between them is the fillet's own surface carried on round the
+boss, bounded below by the side's cut and above by the line on the boss.
+The side grows a bump over the plate's top under it. Checked against that
+construction at radii 0.3 to 4 and drafts of 0.6 and 11 deg: nothing of
+either lies outside the other, and the volumes agree to 1e-3 (near flush,
+at 0.6 deg, to 0.01: the volume's integration over the cut moves that
+much, where the bump's area agrees to 8e-6). The same with the cone's
+seam turned away, two bosses on one side, a round plate's rim, the foot
+and the boss's top together, and a chamfer -- which the cylinder could
+not have: the chamfer's cut stays below its line on the boss too.
+
+Still refused: a boss leaning out (a cone widening upward, which crosses
+the side), and a seam through the point (made since: the last section
+here). #876's post, which the earlier
+notes called this case, is not: its drafted corners stand flush with the
+plate's rounded corners along an arc, and the fillet carried on would run
+along all of it with no other end to close against.
+
+![boss_drafted_flush_foot_r1](pictures/boss_drafted_flush_foot_r1.png)
+![boss_drafted_chamfer_r1](pictures/boss_drafted_chamfer_r1.png)
+
+### A thin fillet in one piece (`b4f2f7592c`, realthunder/FreeCAD#876)
+
+#876's post stands flush with the plate's sides, its walls drafted a
+degree: a fillet of 0.3 along its foot is 0.005 wide all along. A fillet
+that narrow is searched for a place where it closes to a point -- two
+faces touching along a curve -- and cut there. The test took any place
+where its width stopped shrinking, and along a fillet of nearly constant
+width there are many: it came out in up to six pieces, each cut one
+vertex 0.005 loose that both of the fillet's edges ran through, and BOP's
+check found an edge crossing itself. The test is now the width itself:
+one face, its edges at 3e-4 at most, and BOP's check clean on the long
+side's foot and the corners'. The picture is the long side's: cut at
+x = 4.043 and 9.143 before, zoomed on the first cut. Two of the four-edge
+corners there still carry a side as short as that width, under a patch
+loose by half of it.
+
+![issue876_kink_e52_r0.3](pictures/issue876_kink_e52_r0.3.png)
+
+### A flush boss's foot in two equal halves (`892a10b753`)
+
+The flush bosses above, cylinder or cone, turned a quarter: their seam
+opposite the point where the foot meets the side, the foot two half
+circles. The fillet was refused at every radius. The walk that carries
+it past that point ran on round the first half as far as the seam, and
+came back with its last point numbered as if it were the start: a line
+running backward, which cannot be approximated. That point is dropped
+now, and the fillet is made as for the boss turned any other way -- the
+same volumes, to the digit, and the same shape as the cylinder's above.
+The boss's seam through the point itself: the next section.
+
+![boss_flush_halves_foot_r1](pictures/boss_flush_halves_foot_r1.png)
+
+### The boss's seam through the point (`e549e29656`)
+
+Turned three quarters, the boss's seam runs up from the point where its
+foot meets the side, along the line where it touches the side's plane,
+and the foot is one closed edge. Refused at every radius, cylinder and
+cone. The walks past the fillet's two ends, run on over the plate's top
+carried past the side, stopped on that seam, and what they made was kept
+as if the seam were an edge of the boss: the fillet's ends were then not
+the ones the corner closes. They are dropped now, as at any other turn.
+Then the corner's point, where the fillet's line on the boss meets the
+side, lies on the seam, which is split there, its foot under the fillet;
+on the drafted boss the line carried across the gap crosses the seam,
+and is cut in two there. The same volumes as the boss turned any other
+way, fillet and the cone's chamfer.
+
+![boss_flush_seam_foot_r1](pictures/boss_flush_seam_foot_r1.png)
+
+### A fillet run on past its vertex (`95a3e143e1`, realthunder/FreeCAD#273, #474)
+
+An edge between two faces a degree or two from tangent -- #474's step
+along its top, #273's rim under the handle -- takes a fillet a strip a few
+hundredths wide. Upstream leaves such an edge out ("no suitable edges");
+the fork makes it. At the end, where four sharp edges meet, the strip's
+line on one face stops on an edge there, but the other line, nearly along
+the next face, meets no edge and runs on as far as the fillet's surface
+was carried past the end, half the edge. The face across then cut the
+strip along its length rather than across it: #474's came out invalid,
+#273's crossing themselves by BOP's check. Such an end -- one side on an
+edge, the other free farther than ten times the fillet's width -- is
+refused now, and the corner set back from the vertex (the setback
+fallback): valid, BOP's check clean, except #273's at 0.3, which keeps
+two edges as short as their vertices are loose. With the fallback off it
+is refused, as upstream refuses it.
+
+![issue474_f003_run_on_e2_r0.3](pictures/issue474_f003_run_on_e2_r0.3.png)
 
 ## Making the pictures
 

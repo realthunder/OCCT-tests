@@ -69,6 +69,11 @@ STAGES = {
     "s523e": ("61f59f6842", "1a971d66bc"),
     "sboss": ("af24dcdca0", "b234546fbe"),
     "schamfer": ("4124325682", "a2f5c2a5d4"),
+    "sdraftboss": ("cc0ca7b66a", "1d642bfaaf"),
+    "sthin": ("367e41af85", "b4f2f7592c"),
+    "shalves": ("35f297a6d0", "892a10b753"),
+    "sseam": ("20b6442003", "e549e29656"),
+    "srunon": ("d1b6f7a0c2", "95a3e143e1"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -316,6 +321,34 @@ def _boss_flush():
     return Part.makeBox(30, 20, 3).fuse(Part.makeCylinder(5, 10, V(15, 5, 3))).removeSplitter()
 
 
+def _boss_drafted():
+    """run_tests.py's _drafted: a cone boss, radius 5 to 4 over 10, on a
+    30x20x3 plate, flush with the plate's side y=0 at its foot."""
+    V = App.Vector
+    return Part.makeBox(30, 20, 3).fuse(Part.makeCone(5, 4, 10, V(15, 5, 3))).removeSplitter()
+
+
+def _boss_halves():
+    """run_tests.py's _boss(5, 90.0): the flush boss turned a quarter, its
+    seam at (15,10) opposite the tangent point (15,0): the foot in two equal
+    halves."""
+    V = App.Vector
+    b = Part.makeCylinder(5, 10, V(0, 0, 3))
+    b.rotate(V(0, 0, 0), V(0, 0, 1), 90.0)
+    b.translate(V(15, 5, 0))
+    return Part.makeBox(30, 20, 3).fuse(b).removeSplitter()
+
+
+def _boss_seam():
+    """run_tests.py's _boss(5, 270.0): the flush boss turned three quarters,
+    its seam up from the tangent point (15,0): the foot one closed edge."""
+    V = App.Vector
+    b = Part.makeCylinder(5, 10, V(0, 0, 3))
+    b.rotate(V(0, 0, 0), V(0, 0, 1), 270.0)
+    b.translate(V(15, 5, 0))
+    return Part.makeBox(30, 20, 3).fuse(b).removeSplitter()
+
+
 def _pocket_mouth():
     """run_tests.py's pocket_mouth: a block with a round pocket that widens
     below a step and a slot out of it, the slot's wall split above the step
@@ -374,6 +407,9 @@ SHAPES = {
     "slotslope": _slot_by_slope,
     "pocketmouth": _pocket_mouth,
     "bossflush": _boss_flush,
+    "bossdrafted": _boss_drafted,
+    "bosshalves": _boss_halves,
+    "bossseam": _boss_seam,
     "chfcorner": _chamfer_corner,
     "chfcornerbox": lambda: _chamfer_corner(box=True),
 }
@@ -486,12 +522,19 @@ UVFACE = {
     "pocketmouth": _plane_at("y", 0, {"x": 17.0}),
     # the plate's side the boss is flush with, which grows a peak over the gap
     "bossflush": _plane_at("y", 0),
+    # the same side, which grows a bump under the gap between the fillet's ends
+    "bossdrafted": _plane_at("y", 0),
+    # the same side
+    "bosshalves": _plane_at("y", 0),
+    "bossseam": _plane_at("y", 0),
     # the back face, both fillets flush with it at the corner, whose corner the cut takes off
     "chfcorner": _plane_at("y", 30),
     "chfcornerbox": _plane_at("y", 30),
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the plate's side under the post's long wall, the thin fillet along its top
+    "issue876_kink_e52_r0.3": _plane_at("y", -16.75),
     # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
     "fin_on_block_wall_piece_foot_and_upright_r1": _plane_at("y", 3, None, {"x": 5.0}),
     # the flat face under the block's wall, in the plane of the arm's top
@@ -613,6 +656,12 @@ NAMES = {
                    "slot out of it; the slot's wall split 1.25 from the pocket, the top by the "
                    "circle r16.75",
     "bossflush": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0",
+    "bossdrafted": "a cone boss, r5 to 4, on a 30x20x3 plate, flush at its foot with the "
+                   "plate's side y=0",
+    "bosshalves": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0, "
+                  "turned a quarter: its seam at (15,10), opposite the tangent point",
+    "bossseam": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0, "
+                "turned three quarters: its seam up from the tangent point (15,0)",
     "chfcorner": "a 40x30x10 block (a polygon extruded), fillet 2 on its edges at y=30 and "
                  "on (0,30,0)-(0,0,0)",
     "chfcornerbox": "a 40x30x10 block (makeBox), fillet 2 on its edges at y=30 and on "
@@ -649,6 +698,9 @@ VIEW = {
     "slotslope": ((3, 5, 5), 20.0),
     "pocketmouth": ((14, 0, 6), 24.0),
     "bossflush": ((15, 10, 5), 24.0),
+    "bossdrafted": ((15, 10, 5), 24.0),
+    "bosshalves": ((15, 10, 5), 24.0),
+    "bossseam": ((15, 10, 5), 24.0),
     "chfcorner": ((20, 15, 5), 40.0),
     "chfcornerbox": ((20, 15, 5), 40.0),
 }
@@ -683,11 +735,15 @@ UVLABEL = {
     "slotslope": ("the wall's piece at the block's side", False),
     "pocketmouth": ("the slot's wall beyond the split", False),
     "bossflush": ("the plate's side", False),
+    "bossdrafted": ("the plate's side", False),
+    "bosshalves": ("the plate's side", False),
+    "bossseam": ("the plate's side", False),
     "chfcorner": ("the back face y=30", False),
     "chfcornerbox": ("the back face y=30", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue876_kink_e52_r0.3": ("the plate's side under the long wall", False),
     "fin_on_block_wall_piece_foot_and_upright_r1": ("the fin's wall, its far piece", False),
     "issue962_mouth_y17.1_floor_and_upright_r1.5": ("the slot's floor", False),
     "issue962_e36_r2": ("the flat face under the wall", False),
@@ -731,6 +787,10 @@ _FILLET962 = [((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 1
 #          the point to zoom on, the direction the camera looks from)
 # the top corner of the hexagonal pocket's mouth
 _HEXV = ((38.8, 10.2, 24.4248711),)
+_HALVES_FOOT = [((15, 0, 3), (15, 10, 3), (20, 5, 3)),
+                ((15, 0, 3), (15, 10, 3), (10, 5, 3))]
+_DRAFTED_FOOT = [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
+                 ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))]
 CASES = {
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
                         (2, 0, 10), (0.55, -1, 0.75)),
@@ -957,6 +1017,29 @@ CASES = {
     "boss_flush_foot_r1": ("sboss", "bossflush", [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                                                   ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))],
                            1.0, 2591.8420, (15, 0, 3.5), (0.35, -1, 0.5)),
+    # the same boss drafted, its foot as the cylinder's; filleted and chamfered
+    "boss_drafted_flush_foot_r1": ("sdraftboss", "bossdrafted", _DRAFTED_FOOT, 1.0, 2443.9037,
+                                   (15, 0, 3.5), (0.35, -1, 0.5)),
+    "boss_drafted_chamfer_r1": ("sdraftboss", "bossdrafted", _DRAFTED_FOOT, 1.0, 2453.7582,
+                                (15, 0, 3.5), (0.35, -1, 0.5)),
+    # the post's long wall on #876's plate, drafted 1 deg and flush with the
+    # plate's side at its foot: a fillet 0.005 wide, cut at x=4.043 and 9.143 where it
+    # was not a point
+    "issue876_kink_e52_r0.3": ("sthin", "p876", ((-17, -16.75, 3), (17, -16.75, 3)), 0.3,
+                               8665.7839, (4.043, -16.75, 3), (0.3, -1, 0.4)),
+    # the flush boss turned a quarter: the foot in two equal halves, the walk
+    # past the point stopped at the seam with the spine end's parameter
+    "boss_flush_halves_foot_r1": ("shalves", "bosshalves", _HALVES_FOOT, 1.0, 2591.8420,
+                                  (15, 0, 3.5), (0.35, -1, 0.5)),
+    # turned three quarters: the seam up from the point, split where the
+    # fillet's line meets it
+    "boss_flush_seam_foot_r1": ("sseam", "bossseam", [((15, 0, 3), (15, 0, 3), (20, 5, 3))], 1.0,
+                                2591.8420, (15, 0, 3.5), (0.35, -1, 0.5)),
+    # #474's step along its top, two faces 1.5 deg apart: the fillet's line on
+    # the top ran on past the corner (-13,0,13) as far as the surface was
+    # carried; refused there now, and the corner set back
+    "issue474_f003_run_on_e2_r0.3": ("srunon", "p474", ((-13, 0, 13), (-9, 0, 13)), 0.3,
+                                     1988.8707, (-13, 0, 13), (-1, -1, 0.6)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -972,6 +1055,7 @@ CHAMFER = {
     "chamfer_fillet_corner_poly": (1.0,),
     "chamfer_fillet_corner_box": (1.0,),
     "chamfer_fillet_corner_poly_1_1.5": (1.0, 1.5),
+    "boss_drafted_chamfer_r1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -986,6 +1070,12 @@ STRICT = {
     "chamfer_fillet_corner_poly_1_1.5": (1e-4, 1e-3),
     "fin_on_block_wall_piece_foot_and_upright_r1": (2e-4, 1e-3),
     "issue962_mouth_y17.1_floor_and_upright_r1.5": (2e-4, 1e-3),
+    "boss_drafted_flush_foot_r1": (1e-4, 1e-3),
+    "boss_drafted_chamfer_r1": (1e-4, 1e-3),
+    "issue876_kink_e52_r0.3": (1e-3, 1e-3),
+    "boss_flush_halves_foot_r1": (1e-4, 1e-3),
+    "boss_flush_seam_foot_r1": (1e-4, 1e-3),
+    "issue474_f003_run_on_e2_r0.3": (2e-4, 1e-3),
 }
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
@@ -993,12 +1083,16 @@ ZOOMLABEL = {
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_poly_1_1.5": ("the chamfer's end", (110, 110, 110)),
+    "boss_drafted_chamfer_r1": ("the chamfer's end", (110, 110, 110)),
+    "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "arm_on_tall_block_whole_r0.8": ("the fillet's end, from below", (240, 240, 240)),
     "arm_tilted_under_block_skew_r2": ("the fillet's end, from below", (240, 240, 240)),
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
+    # the fillet is 0.005 wide; the old one's first cut at x=4.043
+    "issue876_kink_e52_r0.3": 0.04,
     "issue962_e36_r2": 1.4,
     "arm_on_tall_block_whole_r0.8": 0.6,
     "arm_tilted_under_block_skew_r2": 1.4,
@@ -1053,14 +1147,20 @@ EDGES = {
                                 "wall, (38.5, 13.7, 32.25)",
     "issue523_bottom_rim_and_edge_a_r1": "the cylinder's rim and the box's bottom edge from it",
     "boss_flush_foot_r1": "the boss's foot, its two arcs",
+    "boss_drafted_flush_foot_r1": "the boss's foot, its two arcs",
+    "boss_drafted_chamfer_r1": "the boss's foot, its two arcs",
+    "boss_flush_halves_foot_r1": "the boss's foot, its two halves",
+    "boss_flush_seam_foot_r1": "the boss's foot, one closed edge",
+    "issue474_f003_run_on_e2_r0.3": "the step's edge along the top, (-13,0,13)-(-9,0,13)",
 }
 
 
 def edge_between(shape, a, b, via=None):
-    """The edge from a to b; of several, the one passing nearest <via>."""
-    want = sorted([tuple(round(c, 6) for c in a), tuple(round(c, 6) for c in b)])
+    """The edge from a to b; of several, the one passing nearest <via>. A
+    closed edge is the one from its vertex to itself, a == b."""
+    want = sorted({tuple(round(c, 6) for c in a), tuple(round(c, 6) for c in b)})
     found = [e for e in shape.Edges
-             if sorted(tuple(round(c, 6) for c in v.Point) for v in e.Vertexes) == want]
+             if sorted({tuple(round(c, 6) for c in v.Point) for v in e.Vertexes}) == want]
     if not found:
         raise ValueError("no edge between %s and %s" % (a, b))
     if via is None or len(found) == 1:
