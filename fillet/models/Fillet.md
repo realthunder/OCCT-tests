@@ -1776,6 +1776,22 @@ strip's to the digit.
 
 ![issue474_f002_sliver_top_r0.3](pictures/issue474_f002_sliver_top_r0.3.png)
 
+### A corner's point a turn round a circle (`76205151c3`, #962's arm)
+
+#962's arm leaves the curved wall, a cylinder of 19.75 about z, where the
+outline turns into the body by 18.6 deg. Fillet the two edges along the
+floor there, the arm's side's foot and the wall's, and the corner of two
+meets their lines on the floor where they cross. The wall's line is a
+circle, and the stripe is carried on past the vertex for the corner, here
+3.4 rad of it; of the crossing's parameter and a turn on, the one nearer
+that far end was taken -- a turn on. The fillet's edge on the floor ran
+8.12 rad, its torus face a turn over itself: invalid, 21233 for 11583 at
+0.3 and 21776 for 11570 at 1, as upstream. A line that does not close is never kept for more than a turn,
+which rules that one out; the result is the two strips mitred at the
+corner by booleans, BOP's difference empty both ways.
+
+![issue962_arm_corner_e25_e26_r1](pictures/issue962_arm_corner_e25_e26_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

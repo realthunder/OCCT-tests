@@ -4347,6 +4347,65 @@ face: a cusp in the input), #962's `E6` (above, upstream's).
 | `issue273_handle_foot_e{11,15}_r{0.3,0.8,2}` | the piece of the rim from the vertex to the line's end, the cut 0.003 off it |
 | `issue474_f002_sliver_top_r{0.3,0.8}` | the cut edge's ends on the fillet's two faces, one each |
 
+## A corner's point a turn round a circle (realthunder/FreeCAD#962, 2026-10-19)
+
+#962's arm leaves the curved wall (a cylinder of 19.75 about z) at an
+upright edge where the outline turns into the body by 18.6 deg. The two
+edges along the floor there -- the arm's side's foot (`E25`, a line) and
+the wall's (`E26`, an arc) -- each fillet alone; together, at 0.3 and 1,
+the result was invalid, 21233 for 11583 at 0.3 and 21776 for 11570 at 1
+(the same at the arm's top,
+`E33`/`E34`, and on the `Chamfer` input's two). Upstream's the same.
+
+The corner of two meets the fillets' lines on the floor where they cross
+(`ChFi3d_IntTraces`). The wall's line is a circle, periodic; of the
+crossing's parameter on it and a period on, the one nearer the line's end
+at the vertex was taken (`recadre`). The stripe is carried on past the
+vertex for the corner, here by 3.4 rad of the circle, and that far end is
+nearer the parameter a turn on (8.12) than the crossing's own (1.84):
+the line runs 0 to 5.15, the vertex at 1.8. The fillet's edge on the
+floor then ran 8.12 rad, its torus face a turn over itself.
+
+Fix `76205151c3`: the point decides how much of the line is kept, from its far
+end to there, and on a stripe that is not closed that is never more than
+a turn. A parameter that would keep more is not taken where the other
+keeps less; else the nearer the end, as before. A whole turn stays: on
+#523's box the rim's fillet meets itself at a point, its line a whole
+circle from -1.571 to 4.712, the parameter a quarter turn past the
+vertex's end and the one on the line its far end (taking the one on the
+line, a first try, made those two invalid). The four
+results are valid and clean by BOP's check; against the input less the two
+strips by booleans, mitred at the bisector of the corner, BOP's difference
+both ways is empty and the volumes near the corner agree to 1e-7 at 0.3,
+2e-6 at 1.
+
+The sweeps (`76205151c3` against `5fe644b95d`): the fillet vertex
+sweep turns 8 invalid results valid -- `Fillet` V18:25,26 and V24:33,34,
+`Chamfer` V13:15,16 and V22:31,32, at 0.3 and 1 -- and nothing else
+moves; the fillet's and the chamfer's edge sweeps and the suites are the
+same.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_arm_corner_e25_e26_r{0.3,1}` | the arm's side's foot and the wall's, at the corner turning into the body |
+| `issue962_arm_corner_e33_e34_r{0.3,1}` | the same at the arm's top |
+
+What is left of the edge sweep's invalid results, looked at since: #474's
+`Fillet002` `E4` at 2 is a coil's end standing on a block. Below the
+vertex the block's corner (`E28`) carries the edge on in line, its faces
+the end face's plane and the coil's inner cylinder's tangent plane: the
+fillet carried on runs along `E28` and never meets it, and the end falls
+back to a plate (`PerformIntersectionAtEnd`, a face's edge the fillet does
+not cross), which digs into the block below the vertex -- loose at every
+radius (0.003 to 0.085), not clean by BOP's check from 0.3, invalid at 2;
+upstream's the same. The right end is flat, in the plane through the
+vertex square to the edge, its edge over the block's two faces and the
+coil's underside: a corner of a kind the builder has none of (the flat
+end at a vertex takes one face beyond). Not made. The vertex sweep's
+pairs on #474's coils, 14 of the 34 whose edges are each valid alone
+(`Fillet` and `Fillet001` V5 and V9, `Fillet003` V1 and V5), are at such
+vertices: an edge carrying another on in line, beside a tangent edge.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

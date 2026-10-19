@@ -391,6 +391,21 @@ for r, vol in ((0.1, 11584.0782), (0.3, 11583.5858)):
 e36 = edge_between(p2, (38.5, 27.2, -3.75), (38.5, 27.2, -9.75))
 e49 = edge_between(p2, (38.5, 10.2, -3.75), (38.5, 10.2, -9.75))
 fillet_case("issue962_e36_e49_r0.8", p2, [e36, e49], 0.8, "pass", 11584.2053)
+# Edges 25 and 26 (and 33 and 34 above them), the arm's side's foot and the
+# curved wall's (a cylinder of 19.75 about z), at the corner where the
+# outline turns into the body by 18.6 deg: the corner's point on the wall's
+# line, a circle the stripe is carried on 3.4 rad past the vertex, was taken
+# a turn on -- the fillet's torus face a turn over itself, 21233 for 11583
+# (README.md, "A corner's point a turn round a circle").
+_v18 = (17.3560383244383, -9.42498985042571)
+_v13 = (-13.6162035198476, -14.3059953063773)
+for z, ea, eb, vols in ((-9.75, 25, 26, (11582.8865, 11570.2997)),
+                        (-3.75, 33, 34, (11582.8839, 11570.2035))):
+    pair = [edge_between(p2, _v18 + (z,), (38.5, 10.2, z)),
+            edge_between(p2, _v13 + (z,), _v18 + (z,))]
+    for r, vol in zip((0.3, 1), vols):
+        fillet_case("issue962_arm_corner_e%d_e%d_r%g" % (ea, eb, r), p2, pair, r, "pass", vol,
+                    1e-4, vol_tol=1e-4, bop=True)
 # and the Fillet itself, all twelve edges
 twelve = [edge_between(p2, a, b) for a, b in (
     ((50, 10.2, -3.75), (50, 10.2, 22)), ((50, 13.7, 22), (50, 13.7, 14)),
