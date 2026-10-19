@@ -77,6 +77,8 @@ STAGES = {
     "sfold": ("f0a499fa6d", "31cf3ce134"),
     "soff": ("2b8b6e4446", "efd99a29b5"),
     "sflat": ("0b618067bb", "cd24623b20"),
+    "shandle": ("cd24623b20", "6fd966afde"),
+    "ssliver": ("6fd966afde", "5fe644b95d"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1066,6 +1068,17 @@ CASES = {
     "issue273_pocket_flat_e23_r0.8": ("sflat", "p273", ((0, 15.013479, 31),
                                                        (1.524712, 7.124642, 31)), 0.8,
                                       8558.3813, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
+    # #273's handle on the cup's top, its side's foot: the fillet ends where
+    # the handle's front stands on the cup's rim, and the piece of the rim
+    # from the vertex to the fillet's end came out the wrong way round
+    "issue273_handle_foot_e11_r0.8": ("shandle", "p273", ((2.3338652, 16.5866083, 18),
+                                                          (5.4331299, -15.8443554, 18)), 0.8,
+                                      8563.6287, (5.5, -15.6, 18.3), (1, -0.8, 0.8)),
+    # #474's Fillet002, the upright edge at the sliver of a top: the piece of
+    # the top's long edge kept was the far end's, the corner left in the top
+    "issue474_f002_sliver_top_r0.3": ("ssliver", "p474b", ((-7.306653, 10.9367647, 13),
+                                                          (-7.306653, 10.9367647, 0)), 0.3,
+                                      1939.2197, (-7.25, 10.9, 12.85), (-0.6, 0.3, 1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1105,6 +1118,8 @@ STRICT = {
     "issue273_pocket_apex_fold_e23_r0.8": (0.031, 1e-3),
     "issue273_pocket_apex_off_e23_r0.8": (0.031, 1e-3),
     "issue273_pocket_flat_e23_r0.8": (0.031, 1e-4),
+    "issue273_handle_foot_e11_r0.8": (0.031, 1e-3),
+    "issue474_f002_sliver_top_r0.3": (1e-4, 1e-4),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
@@ -1135,6 +1150,8 @@ ZOOM = {
     "arm_on_tall_block_r0.3": 0.5,
     "issue962_e33_r0.3": 0.5,
     "arm_on_tall_block_whole_r2": 3.0,
+    # the sliver of a top, 0.155 wide at the vertex
+    "issue474_f002_sliver_top_r0.3": 1.2,
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {

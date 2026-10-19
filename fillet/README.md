@@ -4280,6 +4280,73 @@ cases.
 | `issue273_pocket_flat_e22_e23_r0.8`, `issue273_pocket_flat_e23_e24_r0.8` | with the base; with both rims, the apex a corner of two |
 | `issue273_pocket_flat_chamfer_e23_r{0.5,0.8}` | the chamfer's |
 
+## The end through the faces past a vertex: two pieces turned (2026-10-19)
+
+Two faults of `PerformIntersectionAtEnd`, the end of a fillet at a vertex
+of four edges or more, or whose line runs onto more than one face there.
+Both came out invalid with upstream's files as well.
+
+**A piece of an edge from the vertex to the line's end** (`6fd966afde`).
+Where the fillet's line on one face ends on an edge of the face beyond
+(`oneintersection`), the piece of that edge from the vertex to the line's
+end bounds the cut, and is turned on the face at end to follow the cut on
+from the end they share. That end was the first pairing of ends within
+`tolpt` (1e-4), and with none within it the piece was turned regardless.
+The cut is computed on the face at end carried on and can end farther
+than that from the point on the edge. #273's handle stands on the cup's
+top, its front and back on the cup's rim, carrying the cup's wall on (a
+cone about the axis, 16.75 at the rim, 16.296 at the handle's top): the
+fillets of its sides' feet (`E11`, `E15`) end there, the cut 0.003 from
+the rim point, and the piece of the rim came out the wrong way round in
+both its faces (`BadOrientationOfSubshape`), at every radius. The nearer
+pairing of ends decides now. Each result is the input fused with the
+strip between the faces and the fillet's cylinder, cut to that cone: BOP's
+difference between the two, both ways, is empty. (The volumes are not the
+measure here: integrated adaptively they move by up to 0.1 from the plain
+integration, the faces at 0.03 to 0.19 of tolerance.)
+
+The sweeps (`6fd966afde` against `cd24623b20`): the fillet's edge sweep
+turns 9 invalid results valid (`E11`, `E15` and `Fillet001`'s `E16`, at
+0.3, 0.8 and 2), the vertex sweep 18, and makes 4 refused (`V5:5,15`,
+`V7:7,11` at 0.3 and 1; at 0.3 not clean by BOP's check, as `E5` and `E7`
+alone are not); the chamfer's edge sweep turns the same 9 valid. Nothing
+else moves, and the suites are the same.
+
+**The piece of a cut edge kept** (`5fe644b95d`). A face the cut passes is
+bounded by an edge the cut crosses, and the piece of it on the vertex's
+side is under the fillet: the side was the one of the edge's end on one
+of the fillet's faces, and where both ends were on them, on the same one,
+the end nearer the vertex. #474's `Fillet002` has a sliver of a top beside
+its upright edge (13 high): its edge on one of the fillet's faces is 0.155
+long, its long edge's other end on the other face 2 away, so both ends
+were on the fillet's faces, one on each, and the first test chose the far
+end. The fillet at 0.3 and 0.8 (its line on the narrow side runs on below
+the top, onto the faces past it) kept the 0.035 of the long edge by the
+far vertex and the short edge, and lost the rest: the top open, the
+corner left in it. The nearer end decides whenever both are on the
+fillet's faces. The volumes are the input less the strip between the two
+faces and the fillet's cylinder by booleans, to the digit (the strip,
+carried on through the body, also cuts four slivers out of the steps
+above, 0.00377 each at 0.3 and 0.14648 at 0.8, which the fillet rightly
+leaves).
+
+The sweeps (`5fe644b95d` against `6fd966afde`): the edge sweep turns
+#474's `Fillet002` `E11` at 0.3 and 0.8 valid, the vertex sweep ten sets
+with it, the chamfer's edge sweep the same two; nothing else moves, and
+the suites are the same.
+
+Of the fillet edge sweep's 21 invalid results, 11 are valid now. Left:
+#273's `E38` at 2 (the flat face a segment 1.4 wide, the fillet wider than
+it), `E20` at 2 and `Fillet001`'s `E55` at 2 (inputs not clean by BOP's
+check there), #474's `Fillet002` `E4` at 2, `Fillet003`'s `E49` and `E52`
+(a vertex of five edges, two of them leaving it along one line on one
+face: a cusp in the input), #962's `E6` (above, upstream's).
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_handle_foot_e{11,15}_r{0.3,0.8,2}` | the piece of the rim from the vertex to the line's end, the cut 0.003 off it |
+| `issue474_f002_sliver_top_r{0.3,0.8}` | the cut edge's ends on the fillet's two faces, one each |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

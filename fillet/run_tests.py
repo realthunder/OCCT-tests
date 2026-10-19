@@ -966,6 +966,16 @@ e2 = edge_between(p474b, (-5.4940374, 11.7820012, 13.0), (-5.4940374, 11.7820012
 for r, vol in ((0.1, 1939.439298), (0.3, 1939.216039), (0.5, 1938.769398)):
     fillet_case("issue474_f002_ramp_end_r%g" % r, p474b, e2, r, "pass", vol, 1e-4,
                 vol_tol=1e-5, bop=True)
+# The upright edge at the sliver of a top (13 high): the face beside the vertex
+# on one side ends 0.155 from it, the fillet's line there runs on below, and
+# the top's other long edge is cut by the fillet near its far end -- the piece
+# kept was that end's, the top left open and the corner in it. Volumes: the
+# input less the strip between the two faces and the fillet's cylinder, cut
+# by booleans, to the digit shown.
+e11 = edge_between(p474b, (-7.306653, 10.9367647, 13.0), (-7.306653, 10.9367647, 0.0))
+for r, vol in ((0.3, 1939.2197), (0.8, 1937.8196)):
+    fillet_case("issue474_f002_sliver_top_r%g" % r, p474b, e11, r, "pass", vol, 1e-4,
+                vol_tol=1e-4, bop=True)
 
 # The same foot made small: an arm (a prism of a quadrilateral) fused to a
 # block, the seam between their bottoms running from y=27.2 to y=10.2 -- the
@@ -2112,6 +2122,22 @@ p474f3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue47
 for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
     fillet_case("issue474_f003_run_on_e%d_r%g" % (e, r), p474f3, e, r, "pass", vol, 1e-3,
                 vol_tol=1e-3, bop=True)
+# #273's handle on the cup's top: its sides' feet (E11, E15), each a concave
+# fillet ending where the handle's front and back stand on the cup's rim and
+# carry its wall on. The piece of the rim from the vertex to the fillet's
+# end came out the wrong way round in both its faces (invalid, as upstream).
+# The result is the input fused with the strip between the faces and the
+# fillet's cylinder, cut to the cone the handle's ends lie on: BOP's
+# difference both ways is empty; the volumes are those made, held to 1e-3
+# (the faces' integration differs by more from the plain to the adaptive).
+# Each on a copy of its own: at 2 the fillet raises the tolerance of the
+# rim's vertex, which its input shares with the result (as upstream), and
+# every later case on the same input would carry it.
+for e, r, vol, tol in ((11, 0.3, 8560.0641, 0.031), (11, 0.8, 8563.6287, 0.031),
+                       (11, 2, 8585.0031, 0.19), (15, 0.3, 8560.0709, 0.031),
+                       (15, 0.8, 8563.6332, 0.031), (15, 2, 8585.2381, 0.19)):
+    fillet_case("issue273_handle_foot_e%d_r%g" % (e, r), p273f.copy(), e, r, "pass", vol,
+                tol, vol_tol=1e-3, bop=True)
 # #273's pocket in the handle's top, its rims (E23, E24; E22 the base): the
 # fillet's end at the pocket's apex of 22 deg is a cap in the other wall,
 # as upstream's at 0.3; from 0.49 the cap runs off the top, and the cut is

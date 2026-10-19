@@ -1745,6 +1745,37 @@ shape.
 
 ![issue273_pocket_flat_e23_r0.8](pictures/issue273_pocket_flat_e23_r0.8.png)
 
+### A piece of the rim the wrong way round (`6fd966afde`, #273's handle)
+
+#273's handle stands on the cup's top, its front and back on the cup's rim,
+carrying the cup's wall on up. A fillet along the foot of either side ends
+there, at a vertex of four edges, and its line on the cup's top ends on
+the rim. The piece of the rim from the vertex to that end bounds the cut,
+turned to follow the cut on from the end they share; that end was looked
+for within 1e-4, and the cut, computed on the handle's front carried on,
+ends 0.003 from the rim point. With no end within reach the piece was
+turned regardless, the wrong way round in both its faces: invalid at
+every radius, as upstream. The nearer pairing of ends decides now; the
+result is the boolean one, the strip between the faces and the fillet's
+cylinder cut to the cone the handle's ends lie on.
+
+![issue273_handle_foot_e11_r0.8](pictures/issue273_handle_foot_e11_r0.8.png)
+
+### The far end's piece of a cut edge kept (`5fe644b95d`, #474's sliver of a top)
+
+#474's Fillet002 has a sliver of a top beside an upright edge: the top's
+edge on one side is 0.155 long, on the other 2. Fillet the upright at 0.3
+and its line on the narrow side runs on below the top, so the cut at its
+end crosses the top's third edge near its far end. Of that edge, the
+piece on the vertex's side is under the fillet, told by which of the
+edge's ends lies on the fillet's faces -- and here both do, one on each.
+The far one was chosen: the result kept the stub by the far vertex and the
+short edge, lost the rest, and left the top open with the corner in it.
+The end nearer the vertex decides now, and the volume is the boolean
+strip's to the digit.
+
+![issue474_f002_sliver_top_r0.3](pictures/issue474_f002_sliver_top_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
