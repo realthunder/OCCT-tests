@@ -2160,6 +2160,9 @@ fillet_case("issue273_pocket_flat_e23_e24_r0.8", p273f, [23, 24], 0.8, "pass", 8
 for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
     fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
                 chamfer=True, vol_tol=1e-4, bop=True, flat=True)
+# as wide as the wall: the pocket is 1 deep, the fillet would take the whole
+# wall and meet the floor at its edge -- refused, flat end or not (README.md)
+fillet_case("issue273_pocket_wall_wide_e23_r1", p273f, 23, 1.0, "xfail", flat=True)
 _part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
 _had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
 _fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
