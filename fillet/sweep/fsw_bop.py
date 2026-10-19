@@ -5,12 +5,19 @@
 #      baseline file -- the shape's cases not valid there are not run
 #      ("skip") --, and INPUTS (default baseline/inputs_bop.txt, bopin.py's):
 #      the cases of an input that fails the check itself are "input".
+#      FLAT as fsw.py's.
 # A result is fsw.py's with :c (nothing reported) or :b:<what> added to a
 # valid one, <what> being <shape type>/<BOP's status>*<count>,... A check
 # that outlasts drive.py's TIMEOUT leaves the case TIMEOUT.
 # bopcmp.py classes the results.
-import itertools, os
+import itertools, os, sys
 import Part
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from flat_end import set_flat_end  # noqa: E402
+
+if os.environ.get("FLAT", "0") != "0":
+    set_flat_end(True)
 
 def emit(s):
     os.write(1, ("\n" + s + "\n").encode())

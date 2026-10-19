@@ -76,6 +76,7 @@ STAGES = {
     "srunon": ("d1b6f7a0c2", "95a3e143e1"),
     "sfold": ("f0a499fa6d", "31cf3ce134"),
     "soff": ("2b8b6e4446", "efd99a29b5"),
+    "sflat": ("0b618067bb", "cd24623b20"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1060,6 +1061,11 @@ CASES = {
     "issue273_pocket_apex_off_e23_r0.8": ("soff", "p273", ((0, 15.013479, 31),
                                                            (1.524712, 7.124642, 31)), 0.8,
                                           8558.3169, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
+    # the same with the flat end at a vertex (FLAT): the fillet ends at the
+    # apex in a flat face square to the rim, nothing past the pocket cut
+    "issue273_pocket_flat_e23_r0.8": ("sflat", "p273", ((0, 15.013479, 31),
+                                                       (1.524712, 7.124642, 31)), 0.8,
+                                      8558.3813, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1098,7 +1104,11 @@ STRICT = {
     "issue474_f003_run_on_e2_r0.3": (2e-4, 1e-3),
     "issue273_pocket_apex_fold_e23_r0.8": (0.031, 1e-3),
     "issue273_pocket_apex_off_e23_r0.8": (0.031, 1e-3),
+    "issue273_pocket_flat_e23_r0.8": (0.031, 1e-4),
 }
+# cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
+# ../../flat_end.py), where the OCCT has it
+FLAT = {"issue273_pocket_flat_e23_r0.8"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the

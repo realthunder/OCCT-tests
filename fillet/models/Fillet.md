@@ -1727,6 +1727,24 @@ deep, and a fillet as wide as its wall does not start.
 
 ![issue273_pocket_apex_off_e23_r0.8](pictures/issue273_pocket_apex_off_e23_r0.8.png)
 
+### The end flat at a vertex (`cd24623b20`, an option, realthunder/FreeCAD#273)
+
+The groove above runs out of the pocket: the cap in the other wall is that
+wall carried on past the apex, and it meets the fillet's line on the top
+only beyond the tip, so the cut fills the tip's mirror image, out through
+the handle's end. Upstream's at r 0.3 does the same, only 0.81 long. With
+the flat end on (`ChFi3d_Builder::SetFlatEndAtVertex`, off by default) the
+fillet ends at the apex instead, in a flat face square to the rim through
+the pocket's corner edge, the shape of the groove's own section. Nothing
+past the pocket is cut. The pocket's
+base corners, 79 deg, end flat too. The volume is that of the strip from
+the apex to the base corner, by booleans, to the digit, from 0.1 to 0.95,
+and 0.487, refused before, is made. FreeCAD's Fillet features use it from
+their version 1: a new Fillet has it, one from an older file keeps its
+shape.
+
+![issue273_pocket_flat_e23_r0.8](pictures/issue273_pocket_flat_e23_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -4196,6 +4196,90 @@ the suites are the same.
 | `issue273_pocket_apex_off_e22_e23_r0.8`, `issue273_pocket_apex_off_e22_e24_r0.6` | with the base filleted too |
 | `issue273_pocket_apex_off_chamfer_e{23,24}_r0.8`, `..._e23_r{0.5,0.95}`, `..._e22_e23_r0.8` | the chamfer's end, the same corner |
 
+## The end flat at a vertex (an option, realthunder/FreeCAD#273, 2026-10-19)
+
+The groove of the last section runs out of the pocket, and upstream's at
+0.3 does too, only less far: a fillet that ends at a vertex is closed by
+the face at the end, carried on as far as the fillet's section reaches,
+and at a pocket's acute tip that face meets the fillet's line on the top
+only past the tip. The cut fills the mirror image of the tip beyond it,
+r / sin(22 deg) long. The same happens, shorter, at the pocket's base
+corners (79 deg): the base's wall carried on past them, 0.19 r.
+
+`ChFi3d_Builder::SetFlatEndAtVertex(true)` ends such a fillet flat
+instead (`MakeFlatEnd`, `ChFi3d_Builder_C1.cxx`): in the plane through the
+vertex and the fillet's point on the edge it ends on -- the pocket's corner
+edge --, as square to the spine as that edge allows; here, square to the
+rim. The face it leaves is the groove's own section: between the
+fillet's section, the corner edge's piece above the point, which the
+other wall keeps, and the line on the top from the vertex to the fillet's
+line. Nothing past the vertex is cut, and the cap no longer runs off the
+top, so 0.487 is made as well. It applies at an OnSame end, at a vertex of
+three faces, where the fillet's line on its other face, along its tangent
+at the end, meets the face at end's edge on that face behind the vertex
+and past the vertex's section along the spine: the usual cap would land
+past the vertex, as it does where the open corner between the spine and
+that edge is under 90 deg. Wider, the cap leans back over the fillet and
+cuts nothing past the vertex; at 90 deg the face at end is square to the
+spine already; either way the end is the usual one. (A first test that
+asked only for the edge's side made 13 of the edge sweep's results
+invalid and cut more than the usual end at others: #631's fillets ending
+on a curved face, #309's, #474's corner of 90 deg.) Where the face cannot
+be made (the corner edge not in the plane, the line on the top not
+straight near enough, the section not computed) the end is the usual
+one.
+
+The setting is off by default, as upstream, and the calling thread's own;
+`ChFi3d_SetFlatEndAtVertex(int)` is its C function, for callers that look
+it up at run time, and `../flat_end.py` reaches it from Python. Two static
+functions and a C function are all it adds: no upstream symbol is missing
+and `ChFi3d_Builder`'s layout is upstream's (816 bytes). FreeCAD's Part and
+PartDesign Fillet turn it on from their `_Version` 1, which a new object
+gets; a file's Fillets from before keep their shape.
+
+Each single rim's result is the input less the strip between the rim's
+two faces and the fillet's cylinder (the chamfer's triangle), from the
+apex to the base corner, cut square at both -- made by booleans, to the
+digit:
+
+| r | booleans | flat | the usual end |
+|---|----------|------|---------------|
+| 0.1 | 8559.4677 | 8559.4677 | 8559.4675 |
+| 0.3 | 8559.3297 | 8559.3297 | 8559.3262 |
+| 0.487 | 8559.0759 | 8559.0759 | refused |
+| 0.5 | 8559.0538 | 8559.0538 | 8559.0377 |
+| 0.8 | 8558.3813 | 8558.3813 | 8558.3169 |
+| 0.95 | 8557.9287 | 8557.9287 | 8557.8240 |
+| chamfer 0.5 | 8558.4805 | 8558.4805 | 8558.4246 |
+| chamfer 0.8 | 8556.9137 | 8556.9137 | 8556.6985 |
+
+E24 gives E23's. E22 with either rim: its own end at the other base
+corner flat too. E23 with E24: the apex is a corner of two fillets, as
+before; their ends at the base corners are flat. All three: no end is a
+single fillet's, nothing changes. At 1 the fillet is refused still.
+
+E22 alone, the base rim between the two 79 deg corners, is the input
+less its strip as well: 8559.4260 at 0.3, 8559.0661 at 0.8, against
+8559.4255 and 8559.0566 for the usual end.
+
+The sweeps (`cd24623b20`, on FreeCAD's build of Thundereal's main) with
+the option off are the baselines', to the last result, the fillet's edge
+and vertex sweeps alike. With it on (`FLAT=1` in the sweep's environment,
+read by `fsw.py` and `fsw_bop.py`), the edge sweep moves on #273's three
+rims at 0.3 and 0.8 alone, each by its groove past the vertex, two faces
+more (the flat ends), and every one clean by BOP's check; the vertex sweep
+on the corners of those rims. Fillet001's E39 at 0.3, refused without it,
+is made, 8534.9992, matching the booleans within 2e-4 -- the input is not
+clean by BOP's check itself. The suites -- the fillet's, plain and frozen,
+the draft's and the thickness' -- pass, the option off in all but these
+cases.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_pocket_flat_e23_r{0.1,0.3,0.487,0.8,0.95}`, `issue273_pocket_flat_e24_r0.8` | the end flat at the apex and the base corner, from small to near the wall's depth; 0.487 refused without it |
+| `issue273_pocket_flat_e22_e23_r0.8`, `issue273_pocket_flat_e23_e24_r0.8` | with the base; with both rims, the apex a corner of two |
+| `issue273_pocket_flat_chamfer_e23_r{0.5,0.8}` | the chamfer's |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

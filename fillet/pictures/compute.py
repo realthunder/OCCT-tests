@@ -9,7 +9,10 @@ import sys
 sys.path.insert(0, os.environ["FILLET_TOOLS"])
 import FreeCAD as App
 import Part
-from cases import CASES, CHAMFER, REFUSED, SHAPES, STRICT, UVFACE, UVFACE_CASE, edge_between
+from cases import (CASES, CHAMFER, FLAT, REFUSED, SHAPES, STRICT, UVFACE, UVFACE_CASE,
+                   edge_between)
+sys.path.insert(0, os.path.join(os.environ["FILLET_TOOLS"], "..", ".."))
+from flat_end import FlatEnd, available as flat_available  # noqa: E402
 
 OUT = os.environ["OUT"]
 os.makedirs(OUT, exist_ok=True)
@@ -67,7 +70,11 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
         # them), or a list of such
         pairs = ends if isinstance(ends, list) else [ends]
         edges = [edge_between(s, *e) for e in pairs]
-        r = s.makeChamfer(*CHAMFER[name], edges) if name in CHAMFER else s.makeFillet(radius, edges)
+        # the flat end where the case asks for it and the OCCT has it: an
+        # OCCT from before makes the end it made
+        with FlatEnd(name in FLAT and flat_available()):
+            r = (s.makeChamfer(*CHAMFER[name], edges) if name in CHAMFER
+                 else s.makeFillet(radius, edges))
         p = []
         if (s.isValid(), round(s.Volume, 6)) != before:
             p.append("input changed")

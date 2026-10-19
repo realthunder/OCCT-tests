@@ -22,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MODELS = os.path.join(HERE, "models")
 sys.path.insert(0, os.path.dirname(HERE))
 from loose_ends import loose, widest  # noqa: E402
+from flat_end import FlatEnd  # noqa: E402
 RELTOL = 1e-4
 
 
@@ -130,10 +131,10 @@ def document_case(name, filename, volumes=None):
 # ---------------------------------------------------------------------------
 
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
-                chamfer=False, vol_tol=None, bop=False):
+                chamfer=False, vol_tol=None, bop=False, flat=False):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
     makeChamfer(radius, ...) with chamfer=True, radius a pair for two
-    distances.
+    distances. flat=True: with the flat end at a vertex (../flat_end.py).
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
                     ref_volume when given (within vol_tol when given, else
@@ -153,7 +154,8 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
         indices = edge_index if isinstance(edge_index, list) else [edge_index]
         op = shape.makeChamfer if chamfer else shape.makeFillet
         sizes = radius if isinstance(radius, tuple) else (radius,)
-        r = op(*sizes, [shape.Edges[i - 1] for i in indices])
+        with FlatEnd(flat):
+            r = op(*sizes, [shape.Edges[i - 1] for i in indices])
         problems = []
         if signature(shape) != before:
             problems.append("input changed: valid=%s vol=%.4f" % signature(shape))
@@ -2137,6 +2139,27 @@ for e, r, vol in ((23, 0.5, 8558.4246), (23, 0.8, 8556.6985), (24, 0.8, 8556.698
                 0.031, chamfer=True, vol_tol=1e-4, bop=True)
 fillet_case("issue273_pocket_apex_off_chamfer_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass",
             8555.5159, 0.031, chamfer=True, vol_tol=1e-4, bop=True)
+# The same ends flat (ChFi3d_Builder::SetFlatEndAtVertex, ../flat_end.py;
+# FreeCAD's Fillet features from their version 1): the cap in the other wall
+# would cut into the top past the apex, and at the base corners (79 deg) into
+# the floor's wall past them, so the fillet ends at each in a flat face square
+# to the rim, nothing past the pocket cut. Each single rim's volume is that of
+# the strip from the apex to the base corner cut away by booleans, to the
+# digit shown; 0.487 is refused without the flat end (README.md).
+for e, r, vol in ((23, 0.1, 8559.4677), (23, 0.3, 8559.3297), (23, 0.487, 8559.0759),
+                  (23, 0.8, 8558.3813), (24, 0.8, 8558.3813), (23, 0.95, 8557.9287)):
+    fillet_case("issue273_pocket_flat_e%d_r%g" % (e, r), p273f, e, r, "pass", vol, 0.031,
+                vol_tol=1e-4, bop=True, flat=True)
+# with the base: its own end at the other base corner flat too; both rims:
+# the apex a corner of two fillets, as before, the base corners flat
+fillet_case("issue273_pocket_flat_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass", 8557.9030,
+            0.031, vol_tol=1e-3, bop=True, flat=True)
+fillet_case("issue273_pocket_flat_e23_e24_r0.8", p273f, [23, 24], 0.8, "pass", 8557.2101,
+            0.031, vol_tol=1e-3, bop=True, flat=True)
+# the chamfer's: the triangle from the apex to the base corner
+for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
+    fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
+                chamfer=True, vol_tol=1e-4, bop=True, flat=True)
 _part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
 _had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
 _fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
