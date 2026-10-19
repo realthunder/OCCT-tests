@@ -1699,9 +1699,33 @@ of the face. None of the steps leaves the patch unfolded, and the fillet
 is refused, upstream's answer: the input stands in for a result. At 0.3
 it is made as before, the cap in the other wall. #962's three-sided
 plate, which BOP's check reports at its pole for a line of no length, is
-no fold and stays made.
+no fold and stays made. Since the next section the fillet is made, and
+the picture made again shows it in its last column; this one is as this
+fix left it.
 
 ![issue273_pocket_apex_fold_e23_r0.8](pictures/issue273_pocket_apex_fold_e23_r0.8.png)
+
+### A cut that runs off the face (`efd99a29b5`, realthunder/FreeCAD#273)
+
+The same pocket. A fillet on one rim ends at the apex, where three edges
+meet, and the corner caps it in the other wall's plane, carried on past
+the apex by r / sin(22 deg). The top runs on only 1.30 there before the
+handle's end: from a radius of 0.49 the cap would run off the top, and the
+corner had no form for that -- "cap not written", and upstream refuses
+the fillet. Now the cut is carried on into the handle's end: on the other
+wall's plane from the rim's corner up to where it meets the end face, and
+on the end face from there to where the fillet's line on the top crosses
+its edge. The wall's plane meets the end face between that point and the
+top's edge; the wall's line on the top is carried on to there; and the
+top's edge between that and the fillet's line lies under the fillet. The
+groove the fillet leaves runs out through the handle's end, its end the
+cap in the other wall. The volume is that of the strip cut away, made by
+booleans, to within 5e-4, from 0.49 to 0.95; either rim, and either with
+the base filleted too. A chamfer there ends in the same corner, and is
+made the same way. At 1 the fillet is refused still: the pocket is 1
+deep, and a fillet as wide as its wall does not start.
+
+![issue273_pocket_apex_off_e23_r0.8](pictures/issue273_pocket_apex_off_e23_r0.8.png)
 
 ## Making the pictures
 

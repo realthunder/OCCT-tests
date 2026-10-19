@@ -4111,8 +4111,90 @@ and not; draft 105, thickness 378.
 
 | Case | What it covers |
 |------|----------------|
-| `issue273_pocket_apex_fold_e{23,24}_r0.8` | the pocket's rims at 0.8: refused, not folded |
+| `issue273_pocket_apex_fold_e{23,24}_r0.8` | the pocket's rims at 0.8: refused, not folded -- made since `efd99a29b5`, the next section, and the cases renamed `issue273_pocket_apex_off_*` |
 | `issue273_pocket_apex_cap_e23_r0.3` | at 0.3 the cap in the other wall, BOP's check clean |
+
+## A cut that runs off the face (realthunder/FreeCAD#273, 2026-10-19)
+
+The pocket in #273's handle is a triangle 1 deep, its apex 21.9 deg; its
+rims are E23 and E24, its base E22. Past the apex the top runs on 1.30,
+along the other wall's line, to the handle's end: a B-spline face, its
+edge on the top an arc of radius 16.3 (E17). A fillet on one rim ends at
+the apex, a vertex of three edges, and the corner (`PerformOneCorner`, the
+end OnSame) caps it in the other wall's surface carried on past the apex:
+the cap runs r / sin(21.9 deg) past it, 0.81 at 0.3. From 0.49 it runs
+past the top's edge: the fillet's line on the top, carried on past the
+apex, ends on E17 before it reaches the wall's surface. The corner had no
+cap for that ("bouchon non ecrit") and the fillet was refused, as upstream
+refuses it; the setback fallback made a patch that folded, refused since
+the last section.
+
+Such an end -- the line on the top ending on an edge of the top that is
+not the vertex's -- is now carried on into the face beyond that edge (the
+handle's end, `Fob` in the code):
+
+- P, where the fillet's surface, the wall's surface and the end's surface
+  meet, by Newton's method from the line's end; it must lie on the end
+  face, under the top by more than 1e-6, and off the wall's own face;
+- the cut on the wall's surface from the corner's point on its edge to P,
+  and on the end face from P to the line's end on E17;
+- the wall's surface carried on meets the end face from P to R, where E17
+  crosses the wall's surface; the wall's edge on the top is carried on to
+  R; E17 is cut at R and at the line's end, and between them lies under
+  the fillet.
+
+The groove the fillet leaves runs out through the handle's end, closed by
+the cap in the other wall. The curve from P to R is short just past 0.49
+(2e-4 long at 0.5) and fails as an intersection there; it is then the
+segment, which lies on both surfaces within 1e-7. The new edges' sides:
+at the cut, the cap lies the way of the fillet's outward normal and the
+end face's part kept the other way -- which way the normal runs, the piece
+on the wall says, whose orientation the corner finds as before; across P
+to R, what is kept of the wall lies inside the end face and what is kept
+of the end face outside the wall's plane.
+
+Each single rim's result is the input less the strip between the rim's
+two faces and the fillet's cylinder, cut by the two walls' planes at its
+ends -- made by booleans, to within 5e-4 of the volume:
+
+| r | booleans | fillet |
+|---|----------|--------|
+| 0.3 (the cap on the top) | 8559.3262 | 8559.3262 |
+| 0.49 | 8559.0558 | 8559.0558 |
+| 0.5 | 8559.0377 | 8559.0377 |
+| 0.55 | 8558.9419 | 8558.9416 |
+| 0.7 | 8558.5962 | 8558.5962 |
+| 0.8 | 8558.3169 | 8558.3169 |
+| 0.95 | 8557.8240 | 8557.8240 |
+
+E24 gives E23's volumes, E22 with either rim the same pair's. E23 with
+E24, alone or with E22, were made before -- the apex a corner of two
+fillets -- and are unchanged. At 1 every one is refused: the pocket is 1
+deep, the fillet's line on the wall would lie on the floor's edge, and the
+walk does not start ("StartSol echec") -- a fillet as wide as its face,
+not this corner. 0.487 is refused too: within 0.001 of the radius at which
+the cap just reaches E17, P lies on the top.
+
+A chamfer's end there is the same corner, and is made from 0.5 to 0.95 as
+well, refused before: each single rim's volume is the input less the
+triangle between the rim's two faces, cut the same way, to 1e-4 (8558.4246
+at 0.5, 8556.6985 at 0.8, 8555.5202 at 0.95), E22 with E23 at 0.8
+8555.5159; all clean by BOP's check. E23 with E24 chamfered is refused
+before and after -- the corner of two chamfers, not this one.
+
+The sweeps (`efd99a29b5` against `31cf3ce134`) move on #273's E23@0.8 and
+E24@0.8 alone, refused before -- the fillet sweep's and the chamfer
+sweep's, the fillet's results clean by BOP's check; the vertex sweep's
+radii, 0.3 and 1, are below and at the range made. The draft sweeps and
+the suites are the same.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_pocket_apex_cap_e23_r0.3` | the cap on the top, as upstream's |
+| `issue273_pocket_apex_off_e{23,24}_r0.8` | the cut off the top, into the handle's end |
+| `issue273_pocket_apex_off_e23_r{0.5,0.95}` | near the change (the segment from P to R) and near the wall's depth |
+| `issue273_pocket_apex_off_e22_e23_r0.8`, `issue273_pocket_apex_off_e22_e24_r0.6` | with the base filleted too |
+| `issue273_pocket_apex_off_chamfer_e{23,24}_r0.8`, `..._e23_r{0.5,0.95}`, `..._e22_e23_r0.8` | the chamfer's end, the same corner |
 
 ## Known broken (XFAIL)
 

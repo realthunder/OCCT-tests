@@ -75,6 +75,7 @@ STAGES = {
     "sseam": ("20b6442003", "e549e29656"),
     "srunon": ("d1b6f7a0c2", "95a3e143e1"),
     "sfold": ("f0a499fa6d", "31cf3ce134"),
+    "soff": ("2b8b6e4446", "efd99a29b5"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -725,7 +726,7 @@ UVLABEL = {
     "armnear": ("the arm's top", False),
     "armtilt": ("the flat face under the wall", False),
     "p474": ("the corner's plate", False),
-    "p273": ("the patch at the apex", False),
+    "p273": ("the face at the apex", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
@@ -1049,10 +1050,16 @@ CASES = {
                                      1988.8707, (-13, 0, 13), (-1, -1, 0.6)),
     # #273's pocket in the handle's top, its apex 22 deg: the fillet's end
     # ran off the top, and the corner set back made a patch across the apex
-    # that folded over itself; refused now, as upstream refuses it
+    # that folded over itself; refused at 31cf3ce134, as upstream refuses
+    # it, and made since soff (below)
     "issue273_pocket_apex_fold_e23_r0.8": ("sfold", "p273", ((0, 15.013479, 31),
                                                              (1.524712, 7.124642, 31)), 0.8,
-                                           None, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
+                                           8558.3169, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
+    # the same: the cap in the other wall runs off the top, and the cut is
+    # carried on into the handle's end, the groove running out through it
+    "issue273_pocket_apex_off_e23_r0.8": ("soff", "p273", ((0, 15.013479, 31),
+                                                           (1.524712, 7.124642, 31)), 0.8,
+                                          8558.3169, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1090,12 +1097,13 @@ STRICT = {
     "boss_flush_seam_foot_r1": (1e-4, 1e-3),
     "issue474_f003_run_on_e2_r0.3": (2e-4, 1e-3),
     "issue273_pocket_apex_fold_e23_r0.8": (0.031, 1e-3),
+    "issue273_pocket_apex_off_e23_r0.8": (0.031, 1e-3),
 }
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
 # "after" column), a result made is not
-REFUSED = {"issue273_pocket_apex_fold_e23_r0.8"}
+REFUSED = set()
 ZOOMLABEL = {
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),

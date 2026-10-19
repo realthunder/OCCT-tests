@@ -65,7 +65,9 @@ and 34 vertex results of #273 moved by thousandths (edge 2586 ok, 21 BAD,
 set back corner that folds) #273's E23 and E24 at 0.8 and `Fillet001`'s
 E39 and E40 at 0.3, alone and in the corners holding them: edge 4 and
 vertex 10 ok -> refused (edge 2582 ok, 21 BAD, 1318 EXC; vertex 9523 ok,
-6 LOOSE, 138 BAD, 2575 EXC). `6de00fea30` (corner plates held to
+6 LOOSE, 138 BAD, 2575 EXC); `efd99a29b5` (a cut that runs off the face)
+#273's E23 and E24 at 0.8 made again, edge refused -> ok (edge 2584 ok,
+21 BAD, 1316 EXC; vertex unchanged). `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
 4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
@@ -203,7 +205,9 @@ a point) 7 edge and 49 vertex of those come clean: edge 27 reported,
 vertex 174; at `892a10b753` the same; at `e549e29656` vertex 176, the
 two cases it makes reported as the arc E5 alone is; at `31cf3ce134` (a
 set back corner that folds) edge two fewer, #273's E23 and E24 at 0.8
-refused now. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
+refused now; at `efd99a29b5` they are made again and clean, and the 12
+cases of `Fillet001` refused since `31cf3ce134` read `skip` where they
+read `input`. `6de00fea30`'s, on the cases `a2f5c2a5d4`'s baseline had
 valid: edge 2390 on clean inputs, 27 reported; vertex 8798,
 172 reported, 3 outlasting the 120 s. `5c531f4938`'s: the edge sweep's
 2395 valid results on clean inputs, 28 reported; the vertex sweep's 8849,

@@ -2110,15 +2110,33 @@ p474f3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue47
 for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
     fillet_case("issue474_f003_run_on_e%d_r%g" % (e, r), p474f3, e, r, "pass", vol, 1e-3,
                 vol_tol=1e-3, bop=True)
-# #273's pocket in the handle's top, its rims at 0.8: the fillet's end at
-# the pocket's apex of 22 deg runs off the top, and the corner set back
-# made a patch across the apex that folded over itself (BOP's check).
-# Refused, as upstream refuses it (README.md, "A set back corner that
-# folds"). At 0.3 the end is a cap in the other wall, as upstream's.
-for e in (23, 24):
-    refused_case("issue273_pocket_apex_fold_e%d_r0.8" % e, p273f, e, 0.8)
+# #273's pocket in the handle's top, its rims (E23, E24; E22 the base): the
+# fillet's end at the pocket's apex of 22 deg is a cap in the other wall,
+# as upstream's at 0.3; from 0.49 the cap runs off the top, and the cut is
+# carried on into the handle's end (README.md, "A cut that runs off the
+# face"). Refused before, and a folded patch set back before that. Each
+# single rim's volume is that of the strip cut away by booleans, within
+# 5e-4: 8559.0377 at 0.5, 8558.3169 at 0.8, 8557.8240 at 0.95.
 fillet_case("issue273_pocket_apex_cap_e23_r0.3", p273f, 23, 0.3, "pass", 8559.3262, 0.031,
             vol_tol=1e-3, bop=True)
+for e in (23, 24):
+    fillet_case("issue273_pocket_apex_off_e%d_r0.8" % e, p273f, e, 0.8, "pass", 8558.3169, 0.031,
+                vol_tol=1e-3, bop=True)
+for r, vol in ((0.5, 8559.0377), (0.95, 8557.8240)):
+    fillet_case("issue273_pocket_apex_off_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
+                vol_tol=1e-3, bop=True)
+fillet_case("issue273_pocket_apex_off_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass", 8557.8386,
+            0.031, vol_tol=1e-3, bop=True)
+fillet_case("issue273_pocket_apex_off_e22_e24_r0.6", p273f, [22, 24], 0.6, "pass", 8558.5757,
+            0.031, vol_tol=1e-3, bop=True)
+# The chamfer's end there the same corner: the triangle cut away by booleans
+# to the digit shown.
+for e, r, vol in ((23, 0.5, 8558.4246), (23, 0.8, 8556.6985), (24, 0.8, 8556.6985),
+                  (23, 0.95, 8555.5202)):
+    fillet_case("issue273_pocket_apex_off_chamfer_e%d_r%g" % (e, r), p273f, e, r, "pass", vol,
+                0.031, chamfer=True, vol_tol=1e-4, bop=True)
+fillet_case("issue273_pocket_apex_off_chamfer_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass",
+            8555.5159, 0.031, chamfer=True, vol_tol=1e-4, bop=True)
 _part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
 _had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
 _fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
