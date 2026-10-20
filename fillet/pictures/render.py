@@ -12,6 +12,7 @@
 # linewidth).
 import json
 import os
+import time
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -32,6 +33,15 @@ App.ParamGet("User parameter:BaseApp/Preferences/Document").SetInt("TransactionL
 # over the main window. No navigation cube in them either.
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetInt("RenderCache", 0)
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetBool("ShowNaviCube", False)
+# Progressive loading and the coarse stand-in (on by default since fcad's
+# merge of 2026-10-19) bring a shape's edges in late, after the shot: the
+# pictures of 10-19 evening on were taken without them. Both off, and each
+# shot waits for the GUI to settle (SETTLE below).
+_render = App.ParamGet("User parameter:BaseApp/Preferences/View/Render")
+_render.SetBool("ProgressiveLoad", False)
+_render.SetInt("CoarseTessellation", -1)
+_render.SetInt("CoarseDeferFaces", -1)
+SETTLE = 1.0  # seconds of event processing before a shot
 jobs = json.load(open(os.environ["JOBS"]))
 W, H = jobs["size"]
 
@@ -137,8 +147,10 @@ for job in jobs["panels"]:
     eye.normalize()
     up = V(0, 0, 1) if abs(eye.z) < 0.95 else V(0, 1, 0)
     view.setCamera(camera(eye, up, V(*job["center"]), job["height"]))
-    for _ in range(3):
+    t_end = time.time() + SETTLE
+    while time.time() < t_end:
         Gui.updateGui()
+        time.sleep(0.05)
     view.redraw()
     view.saveImage(job["png"], W, H, "#FFFFFF")
     App.closeDocument(doc.Name)
