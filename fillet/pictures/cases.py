@@ -81,6 +81,7 @@ STAGES = {
     "ssliver": ("6fd966afde", "5fe644b95d"),
     "srec": ("afe81d903f", "76205151c3"),
     "swhole": ("47c882379b", "0fe893a8a6"),
+    "sonto": ("1e2de2a74e", "033a83c84b"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -408,6 +409,7 @@ SHAPES = {
     "ribfoot": _rib_foot,
     "ledge": _ledge,
     "p474b": _brep("issue474_fillet002_base.brep"),
+    "p273b": _brep(os.path.join("..", "sweep", "shapes", "issue273_Fillet001.brep")),
     "pocketsplit": _pocket_by_split,
     "stripbox": _strip_box,
     "slotouter": _slot_outer,
@@ -518,6 +520,9 @@ UVFACE = {
     # the ramp's face that reaches down to z=11.1, one of the two meeting in the long edge
     "p474b": (lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
               and f.BoundBox.ZMin < 12.0 and f.BoundBox.ZMax > 17.5),
+    # the cup's wall, the cylinder r16.75 the rim's fillets run on (not the hollow's)
+    "p273b": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+              and abs(f.Surface.Radius - 16.75) < 1e-6),
     # the front's far piece (x 0..5), which the fillet's line lies on
     "pocketsplit": _plane_at("y", 0, None, {"x": 4.0}),
     # the end face's near piece (y=0, x 0..2), which the corner cuts
@@ -649,6 +654,7 @@ NAMES = {
                "the corner under the block's wall, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
+    "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
     "postdraft": "the post on the plate drafted 1 deg, a cone on the round end's cylinder",
@@ -712,6 +718,7 @@ VIEW = {
     "ribfoot": ((3.5, 3, 2), 16.0),
     "ledge": ((5, 5, 0.5), 16.0),
     "p474b": ((0, 0, 9), 34.0),
+    "p273b": ((0, 2, 16), 44.0),
     "pocketsplit": ((5, 3, 5), 17.0),
     "stripbox": ((5, 5, 2), 17.0),
     "slotouter": ((5, 5, 7), 20.0),
@@ -750,6 +757,7 @@ UVLABEL = {
     "ribfoot": ("the block's top", False),
     "ledge": ("the base's side below the block's", False),
     "p474b": ("the ramp's face beside the long edge", False),
+    "p273b": ("the cup's wall", True),
     "pocketsplit": ("the front's far piece", False),
     "stripbox": ("the end face's near piece", False),
     "slotouter": ("the outer face's piece below the wall", False),
@@ -1108,6 +1116,15 @@ CASES = {
         "swhole", "p474b", [((-7.306653, 10.9367647, 13), (-7.306653, 10.9367647, 0)),
                             ((-7.2412455, 10.7964979, 13), (-7.306653, 10.9367647, 13))], 0.3,
         None, (-7.25, 10.9, 12.85), (-0.6, 0.3, 1)),
+    # #273's Fillet001, the rim beside the handle with the handle's corner edge
+    # at 1, the radius of the input's own fillet on the rim's far half: the
+    # wall's line on that fillet's lower edge, the end taken at its vertex
+    # across the handle; the corner's plate of negative area
+    "issue273_f001_rim_onto_edge_e9_e22_r1": (
+        "sonto", "p273b", [((16.75, 0, 18), (2.33386518011688, 16.5866082524739, 18)),
+                           ((1.947393966, 16.212920582, 30.034899497),
+                            (2.33386518011688, 16.5866082524739, 18))], 1.0, 8524.0432,
+        (2.3, 16.5, 17.8), (0.6, 1, 0.5)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1194,6 +1211,8 @@ EDGES = {
                                                    "the rib and the rib's upright edge",
     "issue962_arm_corner_e25_e26_r1": "the arm's side's foot and the curved wall's",
     "issue474_f002_whole_in_end_r0.3": "the block's upright edge and the top's short edge",
+    "issue273_f001_rim_onto_edge_e9_e22_r1": "the rim beside the handle and the handle's "
+                                             "corner edge",
     "slot_by_slope_floor_inline_r1": "the floor's on the wall, the side's under the slope",
     "slot_by_slope_inline_slope_r1": "the side's under the slope, the slope's on the wall",
     "slot_by_slope_slope_floor_r1": "the slope's on the wall, the floor's on the wall",

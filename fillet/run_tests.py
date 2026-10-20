@@ -2231,6 +2231,27 @@ finally:
         _part_params.SetFloat("FilletCornerSetbackFallback", _fallback)
     else:
         _part_params.RemFloat("FilletCornerSetbackFallback")
+# #273's Fillet001: the rim beside the handle (E9, a quarter of the circle in
+# one spine with E3) at 1, the radius of the fillet the input already has on
+# the rim's other half. The new fillet's line on the wall lies on that one's
+# lower edge (E4, the same circle at z 17); its end was taken where the line
+# runs onto that edge, at its vertex across the handle, 5.2 off: the rim alone
+# 0.07 too deep under the handle's face, with the handle's corner edge E22 a
+# corner plate of negative area (invalid), with its foot E16 refused. The
+# fillet ends at the handle now, the mirror of the input's own. No bop: the
+# input fails BOP's check itself (its vertices at 0.7).
+p273f1 = Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep"))
+for es, vol in (([9], 8525.7820), ([9, 22], 8524.0432), ([9, 16], 8532.5212)):
+    fillet_case("issue273_f001_rim_onto_edge_%s_r1" % "_".join("e%d" % e for e in es), p273f1,
+                es, 1.0, "pass", vol, vol_tol=1e-3)
+# #876's chamfer at 0.3 on the little circle (r 0.69) of Fillet's edge 87 and
+# Fillet001's edge 125: the topological build's repair of an unclosed wire
+# removed edges under its own iterator and read freed memory -- the process
+# died. Made now, and invalid (known broken): the case is that it returns.
+for nm, path, e in (("fillet", ("..", "draft", "sweep", "shapes", "issue876_Fillet.brep"), 87),
+                    ("fillet001", ("sweep", "shapes", "issue876_Fillet001.brep"), 125)):
+    fillet_case("issue876_%s_chamfer_e%d_r0.3_no_crash" % (nm, e),
+                Part.read(os.path.join(HERE, *path)), e, 0.3, "xfail", chamfer=True)
 # #631's corners of two fillets: a plate approximated to ten times its miss
 # of its boundary left a corner loose enough to swallow a short side --
 # under it an edge too small, its vertices overlapping, in BOP's check.

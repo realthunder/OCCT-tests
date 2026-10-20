@@ -4452,9 +4452,82 @@ carries it on. A corner that ends each fillet against the other is a new
 kind, not made. Over the vertex sweep, such pairs -- opposite at four
 sharp edges, each edge valid alone -- are 39 not clean of 327: 21
 invalid (#474's coil pairs above, 10; #962's `V34` to `V39`, 8, known;
-this, 2; #273's `Fillet001` `V8:9,22` at 1), 14 refused (#876, 12; #962,
-2), 4 loose (#273); the plate's quality otherwise, as under "What is left,
-and why" above.
+this, 2; #273's `Fillet001` `V8:9,22` at 1, made valid in the next section),
+14 refused (#876, 12; #962, 2), 4 loose (#273); the plate's quality
+otherwise, as under "What is left, and why" above.
+
+#876's twelve, looked at and left: each is a box edge (90 deg, 16.4 long)
+with, opposite it, a circle edge whose faces meet at 1 deg -- a fillet a few
+thousandths wide, which at 0.3 is refused alone on four of them too. The
+same in the comparison sweep; refused, not invalid.
+
+## A line run onto an edge of its face, not its end (realthunder/FreeCAD#273, 2026-10-20)
+
+#273's `Fillet001`, the cup's rim beside the handle (`E9`, in one spine
+with `E3`: the rim's half from foot to foot) at 1 -- the radius of the
+fillet the input already has on the rim's other half. With the handle's
+corner edge (`E22`) at their vertex `V8`, invalid at 1 only (0.3 to 0.98,
+1.05, 1.2 valid): the corner's plate of negative area, 45 of volume too
+much taken. The rim's fillet is a torus (a kpart: cylinder, plane, circle),
+cut to its faces by hatching its lines on them (`SplitKPart`). At the
+handle, the top's line meets the handle's foot (`E16`); the wall's line
+runs on under the handle, inside the wall, and that side is taken on to
+where its own line leaves its face -- an extension kept for the corner --
+and back when it leaves for a face beyond (`SearchFace`). At 0.98 the
+line crosses the input fillet's end (`E6`), a face beyond: taken back. At
+1 it lies on that fillet's lower edge (`E4`, the same circle at z 17): the
+hatching's domain ends where the line runs onto `E4`, at its vertex `V5`
+across the handle, 5.2 off and at another spine parameter. The end's
+curve ran over the torus from one to the other, and the plate built on it
+folded.
+
+Fix `033a83c84b`: such an end -- the hatching's point at the beginning or
+end of a segment of coincidence (`RunsOnto`) -- is taken back as well, at
+either end and on either side. The rim's fillet ends at the handle, the
+mirror of the input's own (`x` 2.323 against -2.323, `y` 17.913 both).
+
+The sweeps (`033a83c84b` against `0fe893a8a6`): the fillet vertex sweep's
+`V8:9,22@1` invalid to valid (8478.7475 to 8524.0432); two refused results
+made, the rim with the handle's foot (`V2:3,16@1`, `V8:9,16@1`); and three
+valid ones moved, the rim alone and with `E11` (`V2:3@1`, `V8:9@1`,
+`V2:3,11@1`): the old torus ran 0.2 on under the handle's face, 0.07 of
+volume too much, two faces fewer. The new volume is the one the radius
+gives (the rim alone at 0.98 scaled by the square). The edge sweep and the
+chamfer edge sweep do not move; the suites (fillet, draft, thickness) the
+same. No BOP check: the input fails it itself (40 errors, its vertices at
+0.7), every result with it.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_f001_rim_onto_edge_e9_r1` | the rim alone: at the handle, at the volume the radius gives (0.07 deeper before) |
+| `issue273_f001_rim_onto_edge_e9_e22_r1` | the rim with the handle's corner edge: valid (a plate of negative area before) |
+| `issue273_f001_rim_onto_edge_e9_e16_r1` | the rim with the handle's foot: made (refused before) |
+
+## A repair that removed under its own iterator: a crash (realthunder/FreeCAD#876, 2026-10-20)
+
+The chamfer sweep's two crashes, the same in every run kept: #876's
+`Fillet` `E87` and `Fillet001` `E125` (the same edge, a circle of 0.69 in
+the top), chamfered at 0.3. The fillet refuses that edge at every radius
+and the chamfer at 0.8 and 2; at 0.3 the chamfer's data reaches the
+topological build, which makes a face whose wire is not closed. Its repair
+(`CorrectUnclosedWire`, `TopOpeBRepBuild_Merge.cxx`, TKBool, as upstream)
+removed each edge of fewer than two vertices from the wire while iterating
+over that wire: the removal frees the child the iterator stands on, and
+its `Next()` read freed memory -- a jump to a garbage address in
+`MakeFaces`, the process lost. No debugger here (lldb refuses a batch run
+without developer mode): a signal handler printing `backtrace()` with
+`dladdr()`, loaded by the script with `ctypes`, and `atos -i` on the frame
+put it on the `Next()` after `BB.Remove`.
+
+Fix `3a0593e01f`: the edges are gathered first, then removed. Both
+chamfers return: made and invalid, 5 faces and no volume (FreeCAD refuses
+the result). The sweeps (`3a0593e01f` against `033a83c84b`): the two
+crashes invalid, nothing else moves in the fillet edge and vertex sweeps or
+the chamfer edge sweep; the suites the same.
+
+| Case | What it covers |
+|------|----------------|
+| `issue876_fillet_chamfer_e87_r0.3_no_crash`, `issue876_fillet001_chamfer_e125_r0.3_no_crash` | the chamfer returns (XFAIL: invalid); before, the suite died there |
 
 ## Known broken (XFAIL)
 
@@ -4465,6 +4538,7 @@ and why" above.
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
 | `issue273_pocket_wall_wide_e23_r1` | A fillet as wide as its face: #273's pocket is 1 deep, so at r 1 the fillet's line on the wall is the floor's edge and the fillet would take the whole wall. Refused ("StartSol echec"), with the flat end or without; up to 0.999 it is made and clean by BOP's check, from 0.9999 the wall left is a strip narrower than the input's 0.03 tolerance and BOP's check flags it, above 1 refusing is right (the line would lie below the floor). Tried 2026-10-19 and left (decided): a start rolling on the top and the floor's edge (the obstacle mode, `BRepBlend_SurfRstLineBuilder`) walks the whole rim from 1.001, but the stripe then stands on the floor's corner vertices, a cap upstream never wrote ("OneCorner : bouchon non ecrit"), at exactly 1 the lost-contact test (`BRepBlend_SurfRstConstRad::Decroch`) is a tie, and the wall would have to vanish from the result -- several sessions, no promise |
+| `issue876_fillet_chamfer_e87_r0.3_no_crash`, `issue876_fillet001_chamfer_e125_r0.3_no_crash` | #876's little circle in the top (r 0.69) chamfered at 0.3: invalid, 5 faces and no volume. The fillet refuses the edge at every radius, the chamfer at 0.8 and 2; this one reaches the topological build with a wire that does not close. A crash until `3a0593e01f` ("A repair that removed under its own iterator"); why the chamfer's data is wrong not looked into |
 
 ## Pictures
 

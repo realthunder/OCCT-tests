@@ -1786,9 +1786,10 @@ circle, and the stripe is carried on past the vertex for the corner, here
 3.4 rad of it; of the crossing's parameter and a turn on, the one nearer
 that far end was taken -- a turn on. The fillet's edge on the floor ran
 8.12 rad, its torus face a turn over itself: invalid, 21233 for 11583 at
-0.3 and 21776 for 11570 at 1, as upstream. A line that does not close is never kept for more than a turn,
-which rules that one out; the result is the two strips mitred at the
-corner by booleans, BOP's difference empty both ways.
+0.3 and 21776 for 11570 at 1, as upstream. A line that does not close is
+never kept for more than a turn, which rules that one out; the result is
+the two strips mitred at the corner by booleans, BOP's difference empty
+both ways.
 
 ![issue962_arm_corner_e25_e26_r1](pictures/issue962_arm_corner_e25_e26_r1.png)
 
@@ -1805,6 +1806,28 @@ column shows the input; the third row before, the block's side, its wire
 turning back on itself at the corner, top right.
 
 ![issue474_f002_whole_in_end_r0.3](pictures/issue474_f002_whole_in_end_r0.3.png)
+
+### A line run onto an edge of its face (`033a83c84b`, #273's rim at 1)
+
+#273's second fillet: the cup's rim already has a fillet of 1 on the far
+side of the handle; fillet the rim's near half at 1 too, with the handle's
+corner edge where the two meet. The rim's fillet is a torus, its line on
+the wall a circle at z 17 -- the very circle the old fillet's lower edge
+lies on. The fillet's end at the handle was taken on along the wall to
+where its line left the wall, and the line, lying on that edge, "left" at
+the edge's vertex across the handle, 5.2 away. The end ran slantwise over
+the torus, and the corner's plate on it came out of negative area, 45 of
+volume too much taken: invalid at 1 alone (0.98 and 1.05 valid). A line
+running onto an edge of its face is not leaving it; the fillet ends at the
+handle now, the mirror of the old one. The rim alone was valid but cut 0.2
+on under the handle's face; with the handle's foot the pair was refused.
+Upstream fails the same way, with a volume of 36840 for 8524. Before, the
+plate slants from the handle's corner down along the rim, its wire run off
+past the handle; the third row, the cup's wall, its outline with a sliver
+hanging past its edge at the handle (left of pi/2), where after there is
+only the notch of the corner.
+
+![issue273_f001_rim_onto_edge_e9_e22_r1](pictures/issue273_f001_rim_onto_edge_e9_e22_r1.png)
 
 ## Making the pictures
 
