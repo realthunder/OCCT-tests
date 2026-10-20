@@ -33,10 +33,11 @@ App.ParamGet("User parameter:BaseApp/Preferences/Document").SetInt("TransactionL
 # over the main window. No navigation cube in them either.
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetInt("RenderCache", 0)
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetBool("ShowNaviCube", False)
-# Progressive loading and the coarse stand-in (on by default since fcad's
-# merge of 2026-10-19) bring a shape's edges in late, after the shot: the
-# pictures of 10-19 evening on were taken without them. Both off, and each
-# shot waits for the GUI to settle (SETTLE below).
+# The coarse stand-in (CoarseTessellation, on by default since fcad's merge of
+# 2026-10-19) draws a new shape's faces without its edges until the exact
+# tessellation lands, after the shot: the pictures of 10-19 evening on were
+# taken without them. Either the stand-in off or a second's wait brings them
+# (bisected; ProgressiveLoad off alone does not). All three here.
 _render = App.ParamGet("User parameter:BaseApp/Preferences/View/Render")
 _render.SetBool("ProgressiveLoad", False)
 _render.SetInt("CoarseTessellation", -1)
