@@ -4506,8 +4506,8 @@ same. No BOP check: the input fails it itself (40 errors, its vertices at
 ## A repair that removed under its own iterator: a crash (realthunder/FreeCAD#876, 2026-10-20)
 
 The chamfer sweep's two crashes, the same in every run kept: #876's
-`Fillet` `E87` and `Fillet001` `E125` (the same edge, a circle of 0.69 in
-the top), chamfered at 0.3. The fillet refuses that edge at every radius
+`Fillet` `E87` and `Fillet001` `E125` (the same edge, a corner arc of 0.69
+in the top), chamfered at 0.3. The fillet refuses that edge at every radius
 and the chamfer at 0.8 and 2; at 0.3 the chamfer's data reaches the
 topological build, which makes a face whose wire is not closed. Its repair
 (`CorrectUnclosedWire`, `TopOpeBRepBuild_Merge.cxx`, TKBool, as upstream)
@@ -4525,9 +4525,36 @@ the result). The sweeps (`3a0593e01f` against `033a83c84b`): the two
 crashes invalid, nothing else moves in the fillet edge and vertex sweeps or
 the chamfer edge sweep; the suites the same.
 
+Why the chamfer was made at all: the next section (the edge is no edge).
+
+## A periodic pcurve sampled past its first period (realthunder/FreeCAD#876, 2026-10-20)
+
+Those chamfers' edge is no edge: #876's flat top is split along a rounded
+rectangle into two coplanar faces, both facing up, and its corners are
+arcs of 0.69 (`Fillet`'s `E85`, `E87`; `Fillet001`'s `E123`, `E125`, two
+corners each), numbered 2 pi to 5 pi/2 and 5 pi/2 to 3 pi. `ChFi3d::IsTangentFaces` samples the two
+pcurves with `LocalAnalysis_SurfaceContinuity`, which takes only
+parameters within a curve's first and last -- 0 .. 2 pi for the pcurves,
+full circles -- though a periodic curve is defined at any: every sample
+was refused, and with none done the faces were "not tangent". The fillet
+failed later (refused); the chamfer built an invalid result, or crashed
+before `3a0593e01f`.
+
+Fix `ce3b4bff39`: both pcurves periodic with one period, the samples are
+shifted by whole periods into their range. The arcs are tangent, and
+refused at once ("There are no suitable edges for chamfer or fillet").
+The same gap in `LocalAnalysis` stands for its other callers -- sewing,
+`BRepOffset_Analyse`'s own use, `GeomPlate` -- not touched.
+
+The sweeps (`ce3b4bff39` against `3a0593e01f`): the chamfer edge sweep's
+six invalid results on those arcs refused (`E85` and `E123` at 0.3 and
+0.8, `E87` and `E125` at 0.3); the fillet edge and vertex sweeps do not
+move; the thickness sweep (928 runs, `BRepOffset_Analyse` calls
+`IsTangentFaces`) the same with and without it; the suites the same.
+
 | Case | What it covers |
 |------|----------------|
-| `issue876_fillet_chamfer_e87_r0.3_no_crash`, `issue876_fillet001_chamfer_e125_r0.3_no_crash` | the chamfer returns (XFAIL: invalid); before, the suite died there |
+| `issue876_{fillet,fillet001}_chamfer_flat_split_e{85,87,123,125}_r{0.3,0.8}` | the chamfer on a split of a flat face: refused, the input as it was (invalid before; at 0.3 on 87 and 125 the suite died, before `3a0593e01f`) |
 
 ## Known broken (XFAIL)
 
@@ -4538,7 +4565,6 @@ the chamfer edge sweep; the suites the same.
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
 | `issue273_pocket_wall_wide_e23_r1` | A fillet as wide as its face: #273's pocket is 1 deep, so at r 1 the fillet's line on the wall is the floor's edge and the fillet would take the whole wall. Refused ("StartSol echec"), with the flat end or without; up to 0.999 it is made and clean by BOP's check, from 0.9999 the wall left is a strip narrower than the input's 0.03 tolerance and BOP's check flags it, above 1 refusing is right (the line would lie below the floor). Tried 2026-10-19 and left (decided): a start rolling on the top and the floor's edge (the obstacle mode, `BRepBlend_SurfRstLineBuilder`) walks the whole rim from 1.001, but the stripe then stands on the floor's corner vertices, a cap upstream never wrote ("OneCorner : bouchon non ecrit"), at exactly 1 the lost-contact test (`BRepBlend_SurfRstConstRad::Decroch`) is a tie, and the wall would have to vanish from the result -- several sessions, no promise |
-| `issue876_fillet_chamfer_e87_r0.3_no_crash`, `issue876_fillet001_chamfer_e125_r0.3_no_crash` | #876's little circle in the top (r 0.69) chamfered at 0.3: invalid, 5 faces and no volume. The fillet refuses the edge at every radius, the chamfer at 0.8 and 2; this one reaches the topological build with a wire that does not close. A crash until `3a0593e01f` ("A repair that removed under its own iterator"); why the chamfer's data is wrong not looked into |
 
 ## Pictures
 

@@ -1829,6 +1829,22 @@ only the notch of the corner.
 
 ![issue273_f001_rim_onto_edge_e9_e22_r1](pictures/issue273_f001_rim_onto_edge_e9_e22_r1.png)
 
+### A chamfer on a split of a flat face, refused (`ce3b4bff39`, #876's top)
+
+#876's flat top is split along a rounded rectangle into two coplanar
+faces, an inner one and a band round it: the split's edges are edges only
+in name. Chamfer one of its corner arcs (0.69) and there is nothing to
+cut. The builder asks whether the two faces are
+tangent by sampling the edge's curves on them; the arcs are numbered past
+a full turn (2 pi to 3 pi), the sampling took only the first turn, refused
+every sample and answered "not tangent". The chamfer was then built: an
+invalid solid, larger than its input, and on the other arc at 0.3 a crash
+(`3a0593e01f`). The samples are taken a whole number of turns back now:
+the faces are tangent and the chamfer is refused, as the fillet always was
+in the end.
+
+![issue876_fillet_chamfer_flat_split_e85_r0.8](pictures/issue876_fillet_chamfer_flat_split_e85_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -82,6 +82,7 @@ STAGES = {
     "srec": ("afe81d903f", "76205151c3"),
     "swhole": ("47c882379b", "0fe893a8a6"),
     "sonto": ("1e2de2a74e", "033a83c84b"),
+    "speriod": ("76f8b29a56", "ce3b4bff39"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -405,6 +406,7 @@ SHAPES = {
     "postseam": lambda: _post_on_plate(turn=270),
     "postplane": _teardrop_post_on_plate,
     "p876": _brep("issue876_fillet_base.brep"),
+    "p876f": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue876_Fillet.brep")),
     "slantblock": _slant_block,
     "ribfoot": _rib_foot,
     "ledge": _ledge,
@@ -511,6 +513,9 @@ UVFACE = {
                   and f.BoundBox.YMin < -2.0),
     # the set back corner's plate at (17, 16.75, 3)
     "p876": _plate_near(17, 16.75, 3, reach=1.5),
+    # the top's face inside the rounded rectangle (z 20.6, the larger of the two there)
+    "p876f": (lambda f: f.Surface.__class__.__name__ == "Plane" and f.Area > 500
+              and abs(f.BoundBox.ZMin - 20.6) < 1e-6 and abs(f.BoundBox.ZMax - 20.6) < 1e-6),
     # the wall's second piece, which the fillet's line now crosses onto
     "slantblock": _plane_at("y", 0, {"x": 5.5}),
     # the block's top, which the fillet's end now grows into under the rib
@@ -662,6 +667,7 @@ NAMES = {
     "postplane": "the drafted post with a straight wall tangent to its cone 41 deg round "
                  "from the edge's end",
     "p876": "#876's first Fillet input (a PartDesign body, its walls drafted 1 deg)",
+    "p876f": "#876's Fillet input (a PartDesign body; its top split by a rounded rectangle)",
     "slantblock": "a 12x3x10 prism, its top sloping down past x=4, its front wall two faces "
                   "split at x=5",
     "ribfoot": "a 10x6x4 block and on it a 3-thick rib whose underside slopes 45 deg out "
@@ -714,6 +720,7 @@ VIEW = {
     "postseam": ((-4.5, 0, 9), 20.0),
     "postplane": ((-4.5, 0, 9), 20.0),
     "p876": ((0, 0, 10), 46.0),
+    "p876f": ((0, 0, 10), 46.0),
     "slantblock": ((6, 1.5, 5), 14.0),
     "ribfoot": ((3.5, 3, 2), 16.0),
     "ledge": ((5, 5, 0.5), 16.0),
@@ -753,6 +760,7 @@ UVLABEL = {
     "postseam": ("the post's cylinder", True),
     "postplane": ("the post's wall beyond the cone", False),
     "p876": ("the corner's plate", False),
+    "p876f": ("the top inside the split", False),
     "slantblock": ("the wall's second piece", False),
     "ribfoot": ("the block's top", False),
     "ledge": ("the base's side below the block's", False),
@@ -1125,6 +1133,12 @@ CASES = {
                            ((1.947393966, 16.212920582, 30.034899497),
                             (2.33386518011688, 16.5866082524739, 18))], 1.0, 8524.0432,
         (2.3, 16.5, 17.8), (0.6, 1, 0.5)),
+    # #876's top split by a rounded rectangle, a corner arc (r 0.69) between two coplanar planes:
+    # the arc's pcurves sampled past their first period, the faces taken for
+    # not tangent, the chamfer made an invalid result. Refused (REFUSED)
+    "issue876_fillet_chamfer_flat_split_e85_r0.8": (
+        "speriod", "p876f", ((17.692790857, 13.75, 20.6), (17.0, 14.442790857, 20.6)), 0.8, None,
+        (17.3, 14.1, 20.6), (0.3, 0.5, 1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1140,6 +1154,7 @@ CHAMFER = {
     "chamfer_fillet_corner_poly": (1.0,),
     "chamfer_fillet_corner_box": (1.0,),
     "chamfer_fillet_corner_poly_1_1.5": (1.0, 1.5),
+    "issue876_fillet_chamfer_flat_split_e85_r0.8": (0.8,),
     "boss_drafted_chamfer_r1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
@@ -1175,7 +1190,7 @@ FLAT = {"issue273_pocket_flat_e23_r0.8"}
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
 # "after" column), a result made is not
-REFUSED = {"issue474_f002_whole_in_end_r0.3"}
+REFUSED = {"issue474_f002_whole_in_end_r0.3", "issue876_fillet_chamfer_flat_split_e85_r0.8"}
 ZOOMLABEL = {
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),

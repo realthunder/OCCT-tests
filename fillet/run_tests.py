@@ -1242,12 +1242,14 @@ for r, vol, tol, bop in ((0.3, 8665.7840, 1e-3, True), (1.0, 8665.7870, None, Fa
     fillet_case("issue876_corner4_r%g" % r, p876, c876, r, "pass", vol, tol, bop=bop)
 
 
-def refused_case(name, shape, edge_index, radius):
-    """The fillet is refused, and the input left as it was."""
+def refused_case(name, shape, edge_index, radius, chamfer=False):
+    """The fillet (makeChamfer with chamfer=True) is refused, and the input
+    left as it was."""
     before = signature(shape)
     indices = edge_index if isinstance(edge_index, list) else [edge_index]
     try:
-        r = shape.makeFillet(radius, [shape.Edges[i - 1] for i in indices])
+        make = shape.makeChamfer if chamfer else shape.makeFillet
+        r = make(radius, [shape.Edges[i - 1] for i in indices])
         ok, detail = False, "made: valid=%s vol=%.4f" % (r.isValid(), r.Volume)
     except Exception as e:
         ok, detail = True, "refused: " + str(e).strip().splitlines()[-1]
@@ -2244,14 +2246,20 @@ p273f1 = Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.bre
 for es, vol in (([9], 8525.7820), ([9, 22], 8524.0432), ([9, 16], 8532.5212)):
     fillet_case("issue273_f001_rim_onto_edge_%s_r1" % "_".join("e%d" % e for e in es), p273f1,
                 es, 1.0, "pass", vol, vol_tol=1e-3)
-# #876's chamfer at 0.3 on the little circle (r 0.69) of Fillet's edge 87 and
-# Fillet001's edge 125: the topological build's repair of an unclosed wire
-# removed edges under its own iterator and read freed memory -- the process
-# died. Made now, and invalid (known broken): the case is that it returns.
-for nm, path, e in (("fillet", ("..", "draft", "sweep", "shapes", "issue876_Fillet.brep"), 87),
-                    ("fillet001", ("sweep", "shapes", "issue876_Fillet001.brep"), 125)):
-    fillet_case("issue876_%s_chamfer_e%d_r0.3_no_crash" % (nm, e),
-                Part.read(os.path.join(HERE, *path)), e, 0.3, "xfail", chamfer=True)
+# #876's top split along a rounded rectangle, two of its corner arcs (r 0.69;
+# Fillet's 85 and 87, Fillet001's 123 and 125): splits between two coplanar planes, numbered past
+# 2 pi. The tangency test sampled the periodic pcurves outside their first
+# period, every sample refused, and called them edges: the chamfer built an
+# invalid result -- at 0.3 on 87 and 125 a crash, the topological build's
+# repair removing edges under its own iterator (3a0593e01f). Refused now,
+# the edge tangent (ce3b4bff39); before 3a0593e01f the suite died here.
+for nm, path, es in (("fillet", ("..", "draft", "sweep", "shapes", "issue876_Fillet.brep"),
+                      (85, 87)),
+                     ("fillet001", ("sweep", "shapes", "issue876_Fillet001.brep"), (123, 125))):
+    for e in es:
+        for r in (0.3, 0.8):
+            refused_case("issue876_%s_chamfer_flat_split_e%d_r%g" % (nm, e, r),
+                         Part.read(os.path.join(HERE, *path)), e, r, chamfer=True)
 # #631's corners of two fillets: a plate approximated to ten times its miss
 # of its boundary left a corner loose enough to swallow a short side --
 # under it an edge too small, its vertices overlapping, in BOP's check.
