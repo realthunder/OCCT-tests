@@ -12,7 +12,6 @@
 # linewidth).
 import json
 import os
-import time
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -35,16 +34,8 @@ App.ParamGet("User parameter:BaseApp/Preferences/Document").SetInt("TransactionL
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetInt("RenderCache", 0)
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetBool("ShowNaviCube", False)
 # The engine holds a coarse-first shape's edges back until its exact faces
-# land, and a capture did not wait for them: the pictures of 10-19 evening on
-# (fcad's merge of that day) were taken without edges. Either the coarse
-# stand-in off or a second's wait brings them (bisected; ProgressiveLoad off
-# alone does not). fcad 531aa65b47 (x16) makes a capture wait; these four can
-# go once it is in the build.
-_render = App.ParamGet("User parameter:BaseApp/Preferences/View/Render")
-_render.SetBool("ProgressiveLoad", False)
-_render.SetInt("CoarseTessellation", -1)
-_render.SetInt("CoarseDeferFaces", -1)
-SETTLE = 1.0  # seconds of event processing before a shot
+# land; saveImage waits for them since fcad 531aa65b47. A build older than
+# that takes the pictures without edges.
 jobs = json.load(open(os.environ["JOBS"]))
 W, H = jobs["size"]
 
@@ -150,10 +141,6 @@ for job in jobs["panels"]:
     eye.normalize()
     up = V(0, 0, 1) if abs(eye.z) < 0.95 else V(0, 1, 0)
     view.setCamera(camera(eye, up, V(*job["center"]), job["height"]))
-    t_end = time.time() + SETTLE
-    while time.time() < t_end:
-        Gui.updateGui()
-        time.sleep(0.05)
     view.redraw()
     view.saveImage(job["png"], W, H, "#FFFFFF")
     App.closeDocument(doc.Name)
