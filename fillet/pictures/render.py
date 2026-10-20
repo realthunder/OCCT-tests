@@ -27,17 +27,19 @@ def emit(s):
 
 # The transaction log is off: the pictures need no history.
 App.ParamGet("User parameter:BaseApp/Preferences/Document").SetInt("TransactionLog", 0)
-# Coin draws, not the bgfx renderer, so the pictures look alike on every box
-# (Linux renders them under Xvfb). The renderer captures them too, on macOS
-# Metal as well, since FreeCAD stopped leaving a closed document's MDI shell
-# over the main window. No navigation cube in them either.
+# Meant for Coin to draw, so the pictures look alike on every box (Linux
+# renders them under Xvfb); but since fcad 4cb1ee6ad1 (2026-10-09) RenderCache
+# is read only when View/Render/Type is "Legacy", so the render engine has
+# drawn every picture since. Left so, the pictures alike among themselves;
+# Type "Legacy" would bring Coin back. No navigation cube in them either.
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetInt("RenderCache", 0)
 App.ParamGet("User parameter:BaseApp/Preferences/View").SetBool("ShowNaviCube", False)
-# The coarse stand-in (CoarseTessellation, on by default since fcad's merge of
-# 2026-10-19) draws a new shape's faces without its edges until the exact
-# tessellation lands, after the shot: the pictures of 10-19 evening on were
-# taken without them. Either the stand-in off or a second's wait brings them
-# (bisected; ProgressiveLoad off alone does not). All three here.
+# The engine holds a coarse-first shape's edges back until its exact faces
+# land, and a capture did not wait for them: the pictures of 10-19 evening on
+# (fcad's merge of that day) were taken without edges. Either the coarse
+# stand-in off or a second's wait brings them (bisected; ProgressiveLoad off
+# alone does not). fcad 531aa65b47 (x16) makes a capture wait; these four can
+# go once it is in the build.
 _render = App.ParamGet("User parameter:BaseApp/Preferences/View/Render")
 _render.SetBool("ProgressiveLoad", False)
 _render.SetInt("CoarseTessellation", -1)
