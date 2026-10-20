@@ -1838,10 +1838,12 @@ cut. The builder asks whether the two faces are
 tangent by sampling the edge's curves on them; the arcs are numbered past
 a full turn (2 pi to 3 pi), the sampling took only the first turn, refused
 every sample and answered "not tangent". The chamfer was then built: an
-invalid solid, larger than its input, and on the other arc at 0.3 a crash
-(`3a0593e01f`). The samples are taken a whole number of turns back now:
-the faces are tangent and the chamfer is refused, as the fillet always was
-in the end.
+invalid solid (8463 upstream, 8750 and an open shell in the fork, for an
+input of 8666), and on another corner at 0.3 a crash (`3a0593e01f`). The
+samples are taken a whole number of turns back now: the faces are tangent
+and the chamfer is refused, as the fillet always was in the end. Before,
+the whole top comes out invalid, with knots of bad edges at the corner;
+the "after" column shows the input.
 
 ![issue876_fillet_chamfer_flat_split_e85_r0.8](pictures/issue876_fillet_chamfer_flat_split_e85_r0.8.png)
 
