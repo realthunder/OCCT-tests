@@ -4406,6 +4406,56 @@ pairs on #474's coils, 14 of the 34 whose edges are each valid alone
 (`Fillet` and `Fillet001` V5 and V9, `Fillet003` V1 and V5), are at such
 vertices: an edge carrying another on in line, beside a tangent edge.
 
+## A fillet whole in the other's end (realthunder/FreeCAD#474, 2026-10-20)
+
+#474's `Fillet002`, the block's upright edge (`E11`) and the top's edge
+beside it in the same face (`E23`), at their vertex `V7`: a box corner, the
+three faces square, but `E23` is 0.155 long -- the top there is the sliver
+of "The far end's piece of a cut edge kept". Each alone is valid; the two,
+at 0.3 and 1, invalid (BOP's check: the block's side's wire crossing
+itself), upstream as well. The upright's fillet alone runs 0.3 (1) along
+the common face from its edge and takes `E23` whole at its end; the two
+fillets' lines on that face do not meet (`ChFi3d_IsInFront` finds them
+face to face, `OkinterCC` false), the corner by intersection fails, and the
+plate made a corner over the short fillet's own end, which the far end's
+corner made as well.
+
+Fix `0fe893a8a6`: face to face, the lines not meeting, where one fillet's far
+vertex is nearer the vertex than the other's line on the common face is to
+the other's edge, the corner is refused ("a fillet whole in the other's
+end"). The upright alone is made as before. The setback fallback, on as
+FreeCAD has it, makes nothing of it either: refused.
+
+The sweeps (`0fe893a8a6` against `76205151c3`): the fillet vertex sweep's
+two results there, invalid, refused; nothing else moves -- the edge sweep
+and the suites (fillet, draft, thickness) are the same.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f002_whole_in_end_r{0.3,1}` | the two edges: refused (invalid before) |
+| `issue474_f002_upright_alone_r{0.3,1}` | the upright edge alone: made, BOP-clean, at its volume |
+
+Looked at, not fixed: #631's `Fillet` `V11:16,23`, the vertex where the
+arm rising from the base meets the block on top -- the arm's ridge (`E15`)
+and the block's upright edge (`E24`) convex, the two feet (`E16`, `E23`)
+concave, the two filleted ones opposite, with no face in common. A corner
+of two at four sharp edges is a plate (`PerformMoreThreeCorner`); here the
+plate is a B-spline of negative area (invalid at 0.3 and 1), upstream the
+same. The right result is the union of the two fillets made alone (BOP's
+difference with it 2e-5 at 0.3, the plate's sliver; the union valid): each
+fillet's end runs past the vertex onto the other's two faces and crosses
+the other's edge carried on (0.067 past the vertex at 1), the two ends
+passing 0.002 to 0.006 apart, so the plate's opening is turned inside out.
+Ending each stripe as alone (`PerformIntersectionAtEnd` on each, tried)
+leaves four faces open: each end takes the other's edge for a sharp one and
+carries it on. A corner that ends each fillet against the other is a new
+kind, not made. Over the vertex sweep, such pairs -- opposite at four
+sharp edges, each edge valid alone -- are 39 not clean of 327: 21
+invalid (#474's coil pairs above, 10; #962's `V34` to `V39`, 8, known;
+this, 2; #273's `Fillet001` `V8:9,22` at 1), 14 refused (#876, 12; #962,
+2), 4 loose (#273); the plate's quality otherwise, as under "What is left,
+and why" above.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

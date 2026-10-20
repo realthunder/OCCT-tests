@@ -1792,6 +1792,20 @@ corner by booleans, BOP's difference empty both ways.
 
 ![issue962_arm_corner_e25_e26_r1](pictures/issue962_arm_corner_e25_e26_r1.png)
 
+### A fillet whole in the other's end, refused (`0fe893a8a6`, #474's sliver of a top)
+
+The block's upright edge again, at the sliver of a top, now with the top's
+short edge beside it in the same face, 0.155 long, filleted too. The
+upright's fillet alone, 0.3 wide, takes that edge whole at its end: there
+is no corner of the two to make. Their lines on the common face never
+meet, and the plate made a corner over the short fillet's own end, its
+wire on the block's side crossing itself -- invalid, as upstream. Such a
+pair is refused now; the upright alone is made as before. The "after"
+column shows the input; the third row before, the block's side, its wire
+turning back on itself at the corner, top right.
+
+![issue474_f002_whole_in_end_r0.3](pictures/issue474_f002_whole_in_end_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

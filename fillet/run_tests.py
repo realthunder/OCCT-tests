@@ -1270,6 +1270,22 @@ finally:
     else:
         _part_params.RemFloat("FilletCornerSetbackFallback")
 
+# #474's Fillet002 input, a box corner at the top of the block's upright edge
+# (-7.307, 10.937): the edge along the top in the same face is 0.155 long.
+# The upright edge's fillet alone, at 0.3 or 1, takes that edge whole at its
+# end; the two together have no corner to make -- their lines on the common
+# face do not meet -- and the plate made one over the short fillet's own
+# end: invalid, upstream as well. Refused (with the setback fallback on, as
+# FreeCAD has it, too); the upright edge alone is made.
+p474c = Part.read(os.path.join(MODELS, "issue474_fillet002_base.brep"))
+_v7 = (-7.3066530, 10.9367647, 13.0)
+_up = edge_between(p474c, _v7, (-7.3066530, 10.9367647, 0.0))
+_top = edge_between(p474c, (-7.2412455, 10.7964979, 13.0), _v7)
+for r, vol in ((0.3, 1939.2197), (1, 1936.9339)):
+    refused_case("issue474_f002_whole_in_end_r%g" % r, p474c, [_up, _top], r)
+    fillet_case("issue474_f002_upright_alone_r%g" % r, p474c, _up, r, "pass", vol, 1e-4,
+                vol_tol=1e-4, bop=True)
+
 # A post on a plate, the plate's side running tangent into its round end
 # under the post: the plate's top edge along that side ends where the top
 # face pinches out against the post's base. The fillet is cut by the post's

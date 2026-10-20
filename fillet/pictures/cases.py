@@ -80,6 +80,7 @@ STAGES = {
     "shandle": ("cd24623b20", "6fd966afde"),
     "ssliver": ("6fd966afde", "5fe644b95d"),
     "srec": ("afe81d903f", "76205151c3"),
+    "swhole": ("47c882379b", "0fe893a8a6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -550,6 +551,13 @@ UVFACE_CASE = {
     "issue962_e36_r2": _flat_near(38.5, 27.2, -3.75),
     # the floor, its piece under the body (not the arm's end, x 38.5..50)
     "issue962_arm_corner_e25_e26_r1": _plane_at("z", -9.75, None, {"x": 20.0}),
+    # the block's side holding both edges: the plane through their vertex
+    # (-7.307, 10.937, 13) with the normal (0.906, 0.422, 0), not the side across
+    "issue474_f002_whole_in_end_r0.3": (
+        lambda f: f.Surface.__class__.__name__ == "Plane"
+        and abs(f.Surface.Axis.z) < 1e-6 and abs(abs(f.Surface.Axis.x) - 0.906) < 0.01
+        and abs((App.Vector(-7.306653, 10.9367647, 13) - f.Surface.Position).dot(
+            f.Surface.Axis)) < 1e-4),
     "arm_on_tall_block_whole_r0.8": _flat_near(38.5, 27.2, -3.75),
     # the pocket's radial wall at edge 14, its piece beyond the split (r from 16.75)
     "issue962_pocket_edge_r2": (lambda f: f.Surface.__class__.__name__ == "Plane"
@@ -758,6 +766,7 @@ UVLABEL = {
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "issue962_arm_corner_e25_e26_r1": ("the floor", False),
+    "issue474_f002_whole_in_end_r0.3": ("the block's side holding both edges", False),
     "issue876_kink_e52_r0.3": ("the plate's side under the long wall", False),
     "fin_on_block_wall_piece_foot_and_upright_r1": ("the fin's wall, its far piece", False),
     "issue962_mouth_y17.1_floor_and_upright_r1.5": ("the slot's floor", False),
@@ -1091,6 +1100,14 @@ CASES = {
                          ((-13.6162035198476, -14.3059953063773, -9.75),
                           (17.3560383244383, -9.42498985042571, -9.75))], 1.0, 11570.2997,
         (17.356, -9.425, -9.75), (0.8, -0.6, -0.9)),
+    # #474's Fillet002, the upright edge at the sliver of a top with the
+    # top's short edge (0.155) in the same face: the upright's fillet alone
+    # takes that edge whole; the plate made a corner over the short fillet's
+    # end. Refused (REFUSED)
+    "issue474_f002_whole_in_end_r0.3": (
+        "swhole", "p474b", [((-7.306653, 10.9367647, 13), (-7.306653, 10.9367647, 0)),
+                            ((-7.2412455, 10.7964979, 13), (-7.306653, 10.9367647, 13))], 0.3,
+        None, (-7.25, 10.9, 12.85), (-0.6, 0.3, 1)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1141,7 +1158,7 @@ FLAT = {"issue273_pocket_flat_e23_r0.8"}
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
 # "after" column), a result made is not
-REFUSED = set()
+REFUSED = {"issue474_f002_whole_in_end_r0.3"}
 ZOOMLABEL = {
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),
@@ -1165,6 +1182,7 @@ ZOOM = {
     "arm_on_tall_block_whole_r2": 3.0,
     # the sliver of a top, 0.155 wide at the vertex
     "issue474_f002_sliver_top_r0.3": 1.2,
+    "issue474_f002_whole_in_end_r0.3": 1.2,
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
@@ -1175,6 +1193,7 @@ EDGES = {
     "issue962_mouth_y17.1_floor_and_upright_r1.5": "the 0.69 piece of the floor's edge along "
                                                    "the rib and the rib's upright edge",
     "issue962_arm_corner_e25_e26_r1": "the arm's side's foot and the curved wall's",
+    "issue474_f002_whole_in_end_r0.3": "the block's upright edge and the top's short edge",
     "slot_by_slope_floor_inline_r1": "the floor's on the wall, the side's under the slope",
     "slot_by_slope_inline_slope_r1": "the side's under the slope, the slope's on the wall",
     "slot_by_slope_slope_floor_r1": "the slope's on the wall, the floor's on the wall",
