@@ -4554,7 +4554,55 @@ move; the thickness sweep (928 runs, `BRepOffset_Analyse` calls
 
 | Case | What it covers |
 |------|----------------|
-| `issue876_{fillet,fillet001}_chamfer_flat_split_e{85,87,123,125}_r{0.3,0.8}` | the chamfer on a split of a flat face: refused, the input as it was (invalid before; at 0.3 on 87 and 125 the suite died, before `3a0593e01f`) |
+| `issue876_fillet_chamfer_flat_split_e{85,87}_r{0.3,0.8}`, `issue876_fillet001_chamfer_flat_split_e{123,125}_r{0.3,0.8}` | the chamfer on a split of a flat face: refused, the input as it was (invalid before; at 0.3 on 87 and 125 the suite died, before `3a0593e01f`) |
+
+## An audit of the work (2026-10-21)
+
+The fork's fillet, corner, draft and thickness changes (31 500 lines over
+149 files since upstream's `b8f597c677`) were read through end to end,
+the thickness chain for the first time on this box. Three commits of the
+fork carry what it found, none with a case of its own -- a fault that
+changes a result on an input the suites have, and hardenings of paths
+they do not reach:
+
+- `017f9991f1` (TKBool, TKTopAlgo): `BRepCheck_Analyzer` printed a bare
+  line number to stderr for every invalid sub-shape; `BRepAlgo_Loop` read
+  `BREPALGO_LOOP_WALK` from the environment on every face; `BRepAlgo_Image`
+  handed out a plain static list; `BRepFill_Filling` left C1 and C2 at G0.
+- `333ae78a2d` (TKFillet): `ChFi3d_EdgesCoverTheirEnds` moved a located
+  curve's point by the edge's location a second time (a placed shape's
+  tolerance fix skipped); the long-extension flag was put back by hand,
+  not on every way out; a four-edge corner with no edge to extend and
+  `PerformIntersectionAtEnd` called each other until the stack ran out;
+  `EdgesToArc`'s walk of ten; four unchecked lookups (`Extrema`, a
+  projection sequence, a pcurve, a vertex's parameters on a face without
+  it); `IsTangentFaces` shifted a straddling range by one period;
+  `ChFiDS_FilSpine::Law` walked past its laws.
+- `6c218d2662` (TKOffset): a draft refused for a vertex at a touch came
+  back Done when another draft ran in between; a refused draft kept the
+  refused shape; `TrimEdge`'s skip of the edge's ends depended on the
+  vertices' order; a null test of C1 made twice where one was C2.
+
+The harnesses got the same reading: a refused case passed on any Python
+error (the sub-shape lookups are outside the `try` now, and only
+`Part.OCCError` is a refusal); the thickness `nocrash_case` could not fail;
+its determinism cases passed on eight refusals alike; the document cases
+and the thickness and BOP sweeps did not apply `loose_ends.py`, and the
+BOP sweep skipped every `LOOSE` baseline result; `issue962_e56_r0.8`'s
+picture carried the volume from before 2026-10-13; the thickness README
+called a fixed case broken and had non-ASCII; two case lists here expanded
+to names that do not exist. Suites after: fillet 678 PASS 5 XFAIL, draft
+105, thickness 378.
+
+Read and left as they are, for a case that would show them: in-place
+pcurve edits of edges handed to `BRepAlgo_Loop` (harmless while every such
+edge is a fresh piece), a second crossing vertex at one point, the
+thickness context intersections ignoring their `ExtentContext`/`InSide`
+arguments since the port, `EdgeInter`'s end-hit mode dropping interior
+crossings, `ExtentFace`'s step edges in hash order, `ContextIntByArc`'s
+second image, the glue of a stay face's first image only, and
+`Precision::Confusion()` where a vertex's tolerance belongs in
+`BRepOffset_MakeLoops`.
 
 ## Known broken (XFAIL)
 

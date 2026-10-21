@@ -114,6 +114,8 @@ def document_case(name, filename, volumes=None):
                 s = o.getPropertyByName("Shape")
                 if hasattr(s, "isValid") and not s.isNull() and not s.isValid():
                     bad.append("%s:invalid-shape" % o.Name)
+                elif hasattr(s, "isValid") and not s.isNull() and loose(s)[0]:
+                    bad.append("%s:loose-end %.3g" % (o.Name, loose(s)[0]))
             if not bad and volumes:
                 for oname, vol in volumes.items():
                     got = doc.getObject(oname).Shape.Volume
@@ -220,8 +222,9 @@ def nocrash_case(name, shape, edge_index, radius):
     must be left as it was either way. A crash ends the run: the missing
     summary line is the failure."""
     before = signature(shape)
+    edges = [shape.Edges[edge_index - 1]]
     try:
-        r = shape.makeFillet(radius, [shape.Edges[edge_index - 1]])
+        r = shape.makeFillet(radius, edges)
         detail = "valid=%s vol=%.4f" % (r.isValid(), r.Volume)
     except Exception as e:
         detail = "refused: " + str(e).strip().splitlines()[-1]
@@ -234,16 +237,19 @@ def sound_case(name, shape, edge_index, radius, expect="pass", chamfer=False):
     it makes must be a valid solid with one closed shell; the input must be
     left as it was either way."""
     before = signature(shape)
+    # the edges looked up outside the try: a wrong index is the case's fault,
+    # not a refusal
+    indices = edge_index if isinstance(edge_index, list) else [edge_index]
+    edges = [shape.Edges[i - 1] for i in indices]
+    op = shape.makeChamfer if chamfer else shape.makeFillet
     try:
-        indices = edge_index if isinstance(edge_index, list) else [edge_index]
-        op = shape.makeChamfer if chamfer else shape.makeFillet
-        r = op(radius, [shape.Edges[i - 1] for i in indices])
+        r = op(radius, edges)
         ok = r.isValid() and len(r.Shells) == 1 and r.Shells[0].isClosed()
         detail = "vol=%.4f" % r.Volume if ok else "invalid result, vol=%.4g" % r.Volume
         loose_end = ends_problem(r, widest(shape)) if ok else None
         if loose_end:
             ok, detail = False, loose_end
-    except Exception as e:
+    except Part.OCCError as e:
         ok = True
         detail = "refused: " + str(e).strip().splitlines()[-1]
     if signature(shape) != before:
@@ -1247,11 +1253,14 @@ def refused_case(name, shape, edge_index, radius, chamfer=False):
     left as it was."""
     before = signature(shape)
     indices = edge_index if isinstance(edge_index, list) else [edge_index]
+    # the edges looked up outside the try: a wrong index is the case's fault,
+    # not a refusal; only the kernel's own refusal (Part.OCCError) counts
+    edges = [shape.Edges[i - 1] for i in indices]
+    make = shape.makeChamfer if chamfer else shape.makeFillet
     try:
-        make = shape.makeChamfer if chamfer else shape.makeFillet
-        r = make(radius, [shape.Edges[i - 1] for i in indices])
+        r = make(radius, edges)
         ok, detail = False, "made: valid=%s vol=%.4f" % (r.isValid(), r.Volume)
-    except Exception as e:
+    except Part.OCCError as e:
         ok, detail = True, "refused: " + str(e).strip().splitlines()[-1]
     if signature(shape) != before:
         ok, detail = False, "input changed; " + detail

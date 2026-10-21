@@ -1,7 +1,9 @@
 # The thickness sweep: 24 solids, every face removed in turn, +1 and -1,
 # intersection off and on, the Arc and the Intersection join -- 928 runs.
 # Run under FreeCADCmd (sweep.sh restarts it after a crash). One line a run:
-#   R <k> <tag> OK|BAD:<why>|EXC <what> [vol=.. solids=.. shells=..] [INPUT-CHANGED]
+#   R <k> <tag> OK|LOOSE:<gap>|BAD:<why>|EXC <what> [vol=.. solids=.. shells=..] [INPUT-CHANGED]
+# LOOSE is a valid result with an edge whose curve ends short of its vertex
+# (loose_ends.py): check.py counts it wrong, as it does BAD.
 # env: MODES="nj0 Ij2 ..." to restrict, START=<k>, THICK_FREEZE=1 to freeze
 # shape values (unfrozen by default, as run_tests.py), SWEEP_PLACE=placed to
 # give every solid a location (an object's placement) or =baked to turn and
@@ -9,8 +11,12 @@
 # SWEEP_PLACEMENT="x y z ax ay az degrees" is where, (3 4 5) and 40 degrees
 # about (1 2 3) when not given.
 import os
+import sys
 import FreeCAD
 import Part
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from loose_ends import loose, widest  # noqa: E402
 
 V = FreeCAD.Vector
 FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
@@ -102,6 +108,7 @@ for name, mk in SHAPES.items():
                     os.write(2, ("CASE %d %s\n" % (k, tag)).encode())
                     s = make(mk)
                     sig = signature(s)
+                    inloose = widest(s)  # a result may be as loose as its input
                     try:
                         r = s.makeThickness([s.Faces[i]], off, 1e-3, inter, False, 0, join)
                         p = []
@@ -112,8 +119,9 @@ for name, mk in SHAPES.items():
                         sol = r.Solids
                         if not all(sh.isClosed() for x in sol for sh in x.Shells):
                             p.append("open")
-                        res = ("OK" if not p else "BAD:" + ",".join(p)) + (
-                            " vol=%.3f solids=%d shells=%d" % (r.Volume, len(sol), len(r.Shells)))
+                        gap = loose(r, inloose)[0] if not p else 0.0
+                        st = "BAD:" + ",".join(p) if p else "LOOSE:%.3g" % gap if gap else "OK"
+                        res = st + " vol=%.3f solids=%d shells=%d" % (r.Volume, len(sol), len(r.Shells))
                     except Exception as e:
                         text = str(e).strip()
                         res = "EXC " + (text.splitlines()[-1][:40] if text else type(e).__name__)

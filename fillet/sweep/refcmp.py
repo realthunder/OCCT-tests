@@ -17,7 +17,7 @@ show = int(os.environ.get("SHOW", "400"))
 cnt = Counter(); lst = defaultdict(list)
 def parse(x):
     w = x.split(":")
-    if w[0] in ("ok", "BAD"): return w[0], float(w[1]), float(w[2]), w[3], (w[4] if len(w) > 4 else "")
+    if w[0] in ("ok", "LOOSE", "BAD"): return w[0], float(w[1]), float(w[2]), w[3], (w[4] if len(w) > 4 else "")
     return w[0], None, None, None, (w[1] if len(w) > 1 else "")
 for f in sorted(glob.glob(os.path.join(d, "*.txt"))):
     n = os.path.basename(f)[:-4]

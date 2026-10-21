@@ -619,8 +619,8 @@ did not apply, because the faces at the joint's ends are split too, and the
 box came back, 480. The closure now takes the piece beside the removed
 face; the wall it needs is not built yet, and the call is refused.
 
-**Still wrong** after this section, and marked so in the suite (XFAIL)
-until the next one: the half dome's other side inward (an invalid result);
+**Still wrong** after this section, and marked so in the suite (XFAIL) at
+the time, until the next one: the half dome's other side inward (an invalid result);
 the half dome with the Intersection join, bottom outward (67.0206) and a
 side either way; the split box with the Intersection join (440 and 276).
 All refused or invalid; none the input.
@@ -1801,7 +1801,8 @@ It stops here for now, with nothing known broken.
 **What holds**, on the fork at `d0c9abd649`, with shape values frozen and
 not:
 
-- The suite: 377 cases pass, none marked `XFAIL`.
+- The suite: 377 cases pass, none marked `XFAIL` (378 with
+  `case5829_fillet_in`, added after).
 - The sweep: 928 runs of 928 right -- 24 solids, every face, +/-1,
   intersection off and on, both joins -- plain, under a location, and turned
   in space at three placements.

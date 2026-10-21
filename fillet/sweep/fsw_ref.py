@@ -8,8 +8,11 @@
 # with :<edges found>/<edges asked> -- the edges are found again by their
 # middles, and one that is gone was a split itself -- or is "noedge".
 # refcmp.py classes the results.
-import itertools, os
+import itertools, os, sys
 import Part
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from loose_ends import loose, widest  # noqa: E402
 
 
 def emit(s):
@@ -32,6 +35,7 @@ ref = s.removeSplitter()
 rbrep = ref.exportBrepToString()
 redges = ref.Edges
 rmap = {}
+inloose, rinloose = widest(s), widest(ref)  # a result may be as loose as its input
 
 
 def refedge(i):
@@ -47,7 +51,7 @@ def free(e):
     return not e.Degenerated and len(s.ancestorsOfType(e, Part.Face)) == 2
 
 
-def stat(f):
+def stat(f, inloose):
     if f.isNull():
         return "NULL"
     tol = max([y.Tolerance for y in f.Edges] + [y.Tolerance for y in f.Vertexes])
@@ -58,7 +62,9 @@ def stat(f):
         b = "c"
     except Exception:
         b = "b"
-    return "ok:%.10g:%.3g:%s" % (f.Volume, tol, b)
+    # LOOSE: valid, with an edge's curve short of its vertex (loose_ends.py)
+    st = "LOOSE" if loose(f, inloose)[0] else "ok"
+    return "%s:%.10g:%.3g:%s" % (st, f.Volume, tol, b)
 
 
 cases = []
@@ -85,7 +91,7 @@ for n in range(start, len(cases)):
     x = Part.Shape()
     x.importBrepFromString(brep, False)
     try:
-        a = stat(x.makeFillet(r, [x.Edges[i - 1] for i in st]))
+        a = stat(x.makeFillet(r, [x.Edges[i - 1] for i in st]), inloose)
     except Exception:
         a = "EXC"
     red = []
@@ -99,7 +105,7 @@ for n in range(start, len(cases)):
         y = Part.Shape()
         y.importBrepFromString(rbrep, False)
         try:
-            b = stat(y.makeFillet(r, [y.Edges[k] for k in red]))
+            b = stat(y.makeFillet(r, [y.Edges[k] for k in red]), rinloose)
         except Exception:
             b = "EXC"
         b += ":%d/%d" % (len(red), len(st))

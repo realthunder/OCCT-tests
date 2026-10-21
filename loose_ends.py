@@ -17,6 +17,7 @@
 # from each), and a result may be as loose as its input (case 5829's fillet,
 # made while a plate was held tangent whatever it missed, has two walls
 # meeting 0.38 from their vertex, and its thickness keeps them).
+import math
 
 
 def loose(shape, allowed=0.0):
@@ -24,9 +25,11 @@ def loose(shape, allowed=0.0):
     <allowed>), with its edge's index; (0, 0) when there is none."""
     worst = (0.0, 0)
     for i, e in enumerate(shape.Edges, 1):
-        if e.Degenerated:
-            continue
         a, b = e.ParameterRange
+        # an unbounded edge (a document's axis, +-2e100 and no vertex) has no
+        # end to check
+        if e.Degenerated or not e.Vertexes or math.isinf(a) or math.isinf(b):
+            continue
         ends = ((e.valueAt(a), e.firstVertex(False)), (e.valueAt(b), e.lastVertex(False)))
         for p, v in ends:
             gap = (p - v.Point).Length
@@ -42,9 +45,9 @@ def widest(shape):
     it; the thickness's new edges are not, and the gap shows there)."""
     worst = 0.0
     for e in shape.Edges:
-        if e.Degenerated:
-            continue
         a, b = e.ParameterRange
+        if e.Degenerated or not e.Vertexes or math.isinf(a) or math.isinf(b):
+            continue
         for p, v in ((e.valueAt(a), e.firstVertex(False)), (e.valueAt(b), e.lastVertex(False))):
             worst = max(worst, (p - v.Point).Length)
     return worst

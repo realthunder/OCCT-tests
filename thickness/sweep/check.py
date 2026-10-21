@@ -37,7 +37,8 @@ def load(path):
 
 
 def outcome(text):
-    """(status, volume, solids, shells) of a sweep line's result."""
+    """(status, volume, solids, shells) of a sweep line's result. A LOOSE
+    result (valid, an edge's curve short of its vertex) is BAD here."""
     m = re.match(r"OK vol=(-?[\d.]+) solids=(\d+) shells=(\d+)$", text)
     if m:
         return ("OK", float(m.group(1)), int(m.group(2)), int(m.group(3)))

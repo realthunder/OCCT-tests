@@ -21,8 +21,10 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   `run_tests.py`, the sweep, the captured models, `models/Thickness.md`
   (every fix, before and after) and its pictures.
 - `fillet/` -- the fillet suite, laid out the same way, `models/Fillet.md`.
-- `draft/` -- the draft (`BRepOffsetAPI_DraftAngle`) suite: `run_tests.py`
-  and its README; its models are `occ-issues/`'s.
+- `draft/` -- the draft (`BRepOffsetAPI_DraftAngle`) suite: `run_tests.py`,
+  its README, `models/Draft.md` and a few models of its own; most of its
+  models are `occ-issues/`'s. The fillet and draft suites also read each
+  other's `models/` and the draft sweep's `sweep/shapes/`.
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
 - `math/` -- checks of `TKMath` the work on the others led to: a C++

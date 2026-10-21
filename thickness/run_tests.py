@@ -113,6 +113,8 @@ def document_case(name, filename, volumes=None):
                     try:
                         if not o.Shape.isValid():
                             bad.append("%s:invalid-shape" % o.Name)
+                        elif loose(o.Shape)[0]:
+                            bad.append("%s:loose-end %.3g" % (o.Name, loose(o.Shape)[0]))
                     except Exception:
                         bad.append("%s:check-threw" % o.Name)
             if not bad and volumes:
@@ -383,13 +385,18 @@ thickness_case("tshape_bar_top_in", tshape, 2, -1.0, "pass", 215.5708)
 # this input no longer reaches the guarded code; it throws (its walls are
 # twice the thickness, the offsets coincide).
 def nocrash_case(name, shape, face_index, value, inter, join):
+    """The call may fail, but must not take the process down (a crash ends
+    the run: the missing summary line is the failure), and must leave its
+    input as it was."""
+    before = signature(shape)
+    faces = [shape.Faces[face_index - 1]]
     try:
-        r = shape.makeThickness([shape.Faces[face_index - 1]], value, 1e-7, inter, False, 0,
-                                join)
+        r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         detail = "valid=%s vol=%.4f" % (r.isValid(), r.Volume)
     except Exception as e:
         detail = "EXCEPTION " + type(e).__name__
-    report(name, True, False, "no crash; " + detail)
+    problems = input_problems(shape, before)
+    report(name, not problems, False, "; ".join(problems) if problems else "no crash; " + detail)
 
 
 # Intersection on, the Intersection join, a face of the L-box's top or the T's
@@ -831,14 +838,15 @@ thickness_case("topsplit_top_piece_join_in",  topsplit, topsplit_top, -1.0, "pas
 # the removed faces whole again (outward).
 def never_the_input_case(name, shape, face_index, value, inter=False, join=0):
     before = signature(shape)
+    faces = [shape.Faces[face_index - 1]]
     try:
-        r = shape.makeThickness([shape.Faces[face_index - 1]], value, 1e-7, inter, False, 0, join)
+        r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         back = r.isValid() and abs(r.Volume - shape.Volume) <= RELTOL * abs(shape.Volume)
         problems = input_problems(shape, before)
         if back:
             problems.append("the input back, vol=%.4f" % r.Volume)
         report(name, not problems, False, "; ".join(problems) if problems else "vol=%.4f" % r.Volume)
-    except Exception:
+    except Part.OCCError:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
@@ -853,12 +861,14 @@ never_the_input_case("halfdome_side_join_out_not_the_input", halfdome, 3, +0.5, 
 # models/Thickness.md sec 15).
 def refused_case(name, shape, face_indices, value, inter=False, join=0):
     before = signature(shape)
+    # the faces looked up outside the try: a wrong index is the case's fault,
+    # not a refusal; only the kernel's own refusal (Part.OCCError) counts
+    faces = [shape.Faces[i - 1] for i in face_indices]
     try:
-        r = shape.makeThickness([shape.Faces[i - 1] for i in face_indices], value, 1e-7,
-                                inter, False, 0, join)
+        r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         report(name, False, False, "answered: %s valid=%s vol=%.4f" % (
             r.ShapeType, r.isValid(), r.Volume))
-    except Exception:
+    except Part.OCCError:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
@@ -927,7 +937,9 @@ def determinism_case(name, make, face_index, value, runs=8):
             outcomes.add("valid=%s vol=%.4f" % (r.isValid(), r.Volume))
         except Exception as e:
             outcomes.add("EXCEPTION " + type(e).__name__)
-    report(name, len(outcomes) == 1, False, "; ".join(sorted(outcomes)))
+    # one outcome, and a valid one: eight refusals alike are not the point
+    ok = len(outcomes) == 1 and next(iter(outcomes)).startswith("valid=True")
+    report(name, ok, False, "; ".join(sorted(outcomes)))
 
 
 determinism_case("arc_inter_boss_same_every_run",

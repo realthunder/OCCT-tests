@@ -13,8 +13,10 @@
 import itertools, os, sys
 import Part
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from flat_end import set_flat_end  # noqa: E402
+from loose_ends import loose, widest  # noqa: E402
 
 if os.environ.get("FLAT", "0") != "0":
     set_flat_end(True)
@@ -41,11 +43,12 @@ mode = os.environ.get("MODE", "edge")
 start = int(os.environ.get("START", "0"))
 radii = [float(x) for x in os.environ.get("RADII", "0.3 0.8 2" if mode == "edge" else "0.3 1").split()]
 name = os.environ["NAME"]
-sweep = os.environ.get("SWEEP", os.path.expanduser("~/works/sw/occt/tests/fork/fillet/sweep"))
+sweep = os.environ.get("SWEEP", HERE)
 run = set()
 for l in open(os.environ["SKIP"]):
     w = l.split()
-    if len(w) == 3 and w[0] == name and w[2].startswith("ok:"):
+    # the valid results, the loose ones among them: those most want the check
+    if len(w) == 3 and w[0] == name and (w[2].startswith("ok:") or w[2].startswith("LOOSE:")):
         run.add(w[1])
 inbad = False
 for l in open(os.environ.get("INPUTS", os.path.join(sweep, "baseline", "inputs_bop.txt"))):
@@ -55,6 +58,7 @@ for l in open(os.environ.get("INPUTS", os.path.join(sweep, "baseline", "inputs_b
 s = Part.read(os.environ["SHAPE"])
 brep = s.exportBrepToString()
 edges = s.Edges
+inloose = widest(s)  # a result may be as loose as its input
 
 
 def free(e):
@@ -90,7 +94,9 @@ for n in range(start, len(cases)):
             res = "NULL"
         else:
             tol = max([y.Tolerance for y in f.Edges] + [y.Tolerance for y in f.Vertexes])
-            res = "%s:%.10g:%.3g:%d" % ("ok" if f.isValid() else "BAD", f.Volume, tol, len(f.Faces))
+            gap = loose(f, inloose)[0] if f.isValid() else 0.0
+            res = "%s:%.10g:%.3g:%d" % ("BAD" if not f.isValid() else "LOOSE" if gap else "ok",
+                                        f.Volume, tol, len(f.Faces))
             if f.isValid():
                 res += ":" + bop(f)
     except Exception:

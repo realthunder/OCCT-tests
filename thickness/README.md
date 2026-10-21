@@ -1,7 +1,7 @@
 # MakeThickSolid / offset regression tests
 
 Regression suite for the fork's `BRepOffset_MakeOffset` ("MakeThickSolid") fix
-chain — the code that makes thickness/offset work on shapes with **concave
+chain -- the code that makes thickness/offset work on shapes with **concave
 removed faces**, which upstream OCCT does not support. The chain rewrites
 loop building (`BRepAlgo_Loop`), offset-edge intersection
 (`BRepOffset_Inter2d/3d`) and face rebuilding (`BRepAlgo_FaceRestrictor`),
@@ -25,7 +25,7 @@ tolerance grown).
 
 Exit code 0 = no regression (every expected-pass case passed). Known-broken
 cases are marked `XFAIL` in the script; when one starts passing the suite
-prints `UNEXPECTED-PASS` — promote it to `pass` with its reference volume and
+prints `UNEXPECTED-PASS` -- promote it to `pass` with its reference volume and
 update this file.
 
 Reference volumes were captured on `LinkVibe-801` after the fixes listed
@@ -41,9 +41,9 @@ reference volume.
 | Case | Model | Issue | What it covers |
 |------|-------|-------|----------------|
 | `issue1_ellipse_thickness` | PartDesign Pad of an ellipse profile + Thickness | realthunder/OCCT#1 | MakeThickSolid on an elliptic-profile pad: exercises the concave-face loop rebuild (`BRepAlgo_Loop` cut/const edge classification) |
-| `issue2_broken_loft` | PartDesign AdditiveLoft (ring sketch → rectangle) | realthunder/OCCT#2 | Thrusection regression guard: the fork reverts upstream 4607bd0747f (`myPercent` 0.01); the loft breaks if that revert is lost |
+| `issue2_broken_loft` | PartDesign AdditiveLoft (ring sketch -> rectangle) | realthunder/OCCT#2 | Thrusection regression guard: the fork reverts upstream 4607bd0747f (`myPercent` 0.01); the loft breaks if that revert is lost |
 | `issue3_pad_thickness` | PartDesign Pad + Thickness | realthunder/OCCT#3 | MakeThickSolid producing hollow walls from a padded profile (volume reference detects silently-wrong results, e.g. non-hollowed solid) |
-| `issue4_revolution_thickness` | Part Revolution (quarter revolve, two sphere caps) + Thickness, planar faces removed | realthunder/OCCT#4 | Offset of periodic faces: sphere caps with **degenerated pole edges** + seam handling. Historically: 7.7.2 produced an invalid solid; the 8.0.1 port initially threw `StdFail_NotDone` (hash-order nondeterminism); both fixed on `LinkVibe-801` — result must now be a fully valid single-shell solid |
+| `issue4_revolution_thickness` | Part Revolution (quarter revolve, two sphere caps) + Thickness, planar faces removed | realthunder/OCCT#4 | Offset of periodic faces: sphere caps with **degenerated pole edges** + seam handling. Historically: 7.7.2 produced an invalid solid; the 8.0.1 port initially threw `StdFail_NotDone` (hash-order nondeterminism); both fixed on `LinkVibe-801` -- result must now be a fully valid single-shell solid |
 
 `issue2_broken_loft` also broke -- volume 2055.8 -- while FreeCAD built
 sketch edges on reversed curves (2026-08-23 to 2026-09-30, fixed there,
@@ -51,20 +51,20 @@ FreeCAD docs/TransactionLog.md sec 27.87): the ring's radii come from the
 ends of an external edge, which came in reversed.
 
 Fix history for these (branch `LinkVibe-801`):
-- `1789444318` — port of the 7.7.2 MakeThickSolid fix chain to 8.0.1
-- `756262b692` — deterministic wire nesting in `BRepAlgo_FaceRestrictor`
-- `933803af41` — hash-order determinism (`myCutEdges`/wire-set iteration) + latent-bug fixes (`AsDes::Replace(x,x)`, vertex chain compression, `Bubble` dedup, `GetCenter`, unguarded `MakeWire`)
-- `72aae3644f` — degenerated pole edges re-embedded into the wire crossing the singularity (turns issue4 from invalid to fully valid)
+- `1789444318` -- port of the 7.7.2 MakeThickSolid fix chain to 8.0.1
+- `756262b692` -- deterministic wire nesting in `BRepAlgo_FaceRestrictor`
+- `933803af41` -- hash-order determinism (`myCutEdges`/wire-set iteration) + latent-bug fixes (`AsDes::Replace(x,x)`, vertex chain compression, `Bubble` dedup, `GetCenter`, unguarded `MakeWire`)
+- `72aae3644f` -- degenerated pole edges re-embedded into the wire crossing the singularity (turns issue4 from invalid to fully valid)
 
-## Programmatic cases (plain solids — the "don't break normal thickness" guard)
+## Programmatic cases (plain solids -- the "don't break normal thickness" guard)
 
 The fix chain used to break thickness on ordinary solids. These cases build
 primitives in-code (no model files) and hollow them removing **one face at a
 time**, both outward (`+1`) and inward (`-1`), with mode=Skin, join=Arc:
 
-- `cyl_*` — `Part.makeCylinder(4, 20)`: Face1 = lateral (has a seam edge),
+- `cyl_*` -- `Part.makeCylinder(4, 20)`: Face1 = lateral (has a seam edge),
   Face2 = bottom, Face3 = top.
-- `hole_*` — `makeCylinder(5, 10).cut(makeCylinder(2, 10))`: Face1 = outer
+- `hole_*` -- `makeCylinder(5, 10).cut(makeCylinder(2, 10))`: Face1 = outer
   lateral, Face2 = bottom, Face3 = top, Face4 = hole lateral (reversed
   orientation, seam edge).
 
@@ -523,9 +523,15 @@ refuses a run none of the four confirms: a changed value needs a hand value
 or a suite case before it can become the reference.
 
 The sweep has no cone with its apex, no shape cut across a seam, and no
-ball wedge from pole to pole on more than half a turn, whose sphere removed
-is still wrong (`models/Thickness.md`, sec 21, "Known broken");
+ball wedge from pole to pole on more than half a turn (its sphere removed,
+wrong at sec 21, is right since sec 22 and in the suite as `ball270_*`);
 what it does not cover it does not vouch for (sec 14, sec 16).
+
+Since 2026-10-21 a valid run with an edge whose curve ends short of its
+vertex (`loose_ends.py`) is reported `LOOSE:<gap>` in place of `OK`, and
+`check.py` counts it wrong as it does `BAD`; the sweep has not been run since
+that change (the fillet sweep, which has marked `LOOSE` since 2026-10-15,
+has such results, the thickness one may).
 
 ## Pictures
 
