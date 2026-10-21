@@ -529,9 +529,9 @@ what it does not cover it does not vouch for (sec 14, sec 16).
 
 Since 2026-10-21 a valid run with an edge whose curve ends short of its
 vertex (`loose_ends.py`) is reported `LOOSE:<gap>` in place of `OK`, and
-`check.py` counts it wrong as it does `BAD`; the sweep has not been run since
-that change (the fillet sweep, which has marked `LOOSE` since 2026-10-15,
-has such results, the thickness one may).
+`check.py` counts it wrong as it does `BAD`. Run so the same day: 928 of
+928 right, none `LOOSE` (the fillet sweep, which has marked `LOOSE` since
+2026-10-15, has such results; the thickness one has none).
 
 ## Pictures
 
