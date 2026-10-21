@@ -2538,6 +2538,69 @@ for r in (0.3, 1):
     for k in range(4):
         sound_case("mini_ab_r3_chamfer_V1_%g_%d" % (r, k), abr3, [1, 3, 6, 11], r, chamfer=True)
 
+# Two fillets ending at a vertex of four edges on no common face -- the
+# filleted edges opposite round the vertex, a sharp edge between them on
+# each side -- get the corner plate; where that result is invalid the
+# opposite corner stands in: each fillet ended as alone, the two ends
+# sharing the vertex as the union of the two made alone has it (README.md,
+# "The opposite corner"). The reference is that union, made here of the two
+# single fillets, which take the ordinary path.
+def opposite_case(name, shape, edges, radius, vol_tol=None, max_tol=None, bop=True,
+                  expect="pass"):
+    try:
+        a, b = (shape.makeFillet(radius, [shape.Edges[i - 1]]) for i in edges)
+        ref = a.common(b).fuse(a.cut(shape)).fuse(b.cut(shape))
+        if not ref.isValid():
+            report(name, False, False, "the union of the two alone is invalid")
+            return
+    except Exception as e:
+        report(name, False, False,
+               "EXCEPTION on a fillet alone: " + str(e).strip().splitlines()[-1])
+        return
+    fillet_case(name, shape, list(edges), radius, expect, ref.Volume, max_tol, vol_tol=vol_tol,
+                bop=bop)
+
+
+def roof_block(sx=1.204, sy=1.127):
+    """#631's V11 in miniature: a 13x22x40 block standing on a hip roof -- z <=
+    sx x and z <= sy y, the ridge through the origin -- its corner on the
+    ridge. The block's two feet, from the origin along x and along y, are
+    filleted edges opposite round the vertex with no face in common; the
+    block's corner edge and the ridge are the sharp edges between them."""
+    def halfspace(n):
+        n = V(n)
+        n.normalize()
+        b = Part.makeBox(400, 400, 400, V(-200, -200, -400))
+        b.Placement = App.Placement(V(), App.Rotation(V(0, 0, 1), n))
+        return b
+    base = Part.makeBox(40, 40, 60, V(-20, -20, -40))
+    roof = base.common(halfspace((-sx, 0, 1))).common(halfspace((0, -sy, 1)))
+    return roof.fuse(Part.makeBox(13, 22, 40, V(0, 0, -20))).removeSplitter()
+
+
+_roof = roof_block()
+_feet = [edge_between(_roof, (0, 0, 0), (0, 20, 0)), edge_between(_roof, (0, 0, 0), (13, 0, 0))]
+for r in (0.3, 1.0, 2.0, 3.0):
+    # the foot along y given first: the plate invalid at every radius; the
+    # corner exact (1e-10)
+    opposite_case("roof_block_feet_r%g" % r, _roof, _feet, r, vol_tol=1e-6)
+    # the foot along x first: the plate's result is valid, loose (0.028 at
+    # 1) and within 0.1 of the union (0.09 at 3), so it stands -- the
+    # opposite corner only takes the place of an invalid one
+    opposite_case("roof_block_feet_x_first_r%g" % r, _roof, _feet[::-1], r, vol_tol=0.1,
+                  max_tol=0.05)
+# #631's V11, the Fillet's input: edges 16 and 23, the plate invalid at 0.3
+# and 1, the corner within 2e-8 of the union
+for r in (0.3, 1.0):
+    opposite_case("issue631_opposite_e16_e23_r%g" % r, p631f, [16, 23], r, vol_tol=1e-4)
+# #474's Fillet003, V5: edges 5 and 21, the plate invalid at 0.3 and 1. Not
+# mended: neither fillet's cap reaches the other's spine edge (edge 5 is a
+# coil, 82 long, back on the vertex's line), and on both sharp edges the
+# nearer contact is the vertex itself -- the ends are not two ends alone, the
+# corner is refused and the plate's result stands (README.md)
+opposite_case("issue474_f003_opposite_e5_e21_r0.3", p474, [5, 21], 0.3, vol_tol=0.1,
+              expect="xfail")
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

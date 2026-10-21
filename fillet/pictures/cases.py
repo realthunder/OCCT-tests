@@ -24,6 +24,7 @@ STAGES = {
     "s523b": ("1e8eb69f6a", "efbe5c99fd"),
     "s876": ("f9d329a663", "538ce9f99a"),
     "s876b": ("fa8d202b81", "5310ff9d59"),
+    "sopp": ("ee6432d318", "e9bd6ed68f"),
     "s876c": ("5310ff9d59", "c34722ef01"),
     "s876d": ("e25bcf2525", "2a623612a8"),
     "s894": ("5c81764cc5", "0ff4092766"),
@@ -87,6 +88,7 @@ STAGES = {
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
     "s962d": "TKFillet TKGeomAlgo",
+    "sopp": "TKFillet TKBool",
 }
 # Upstream: the toolkit's files that differ from the fork, at 91be8c4c71 (an
 # upstream commit 60 before 8.0.1, b8f597c677, which the branch stands on) --
@@ -386,7 +388,24 @@ def _chamfer_corner(box=False):
     return b.makeFillet(2, [edge_between(b, a, c) for a, c in ends])
 
 
+def _roof_block(sx=1.204, sy=1.127):
+    # run_tests.py's roof_block: #631's V11 in miniature, a block standing on
+    # a hip roof with its corner on the ridge
+    V = App.Vector
+
+    def halfspace(n):
+        n = V(n)
+        n.normalize()
+        b = Part.makeBox(400, 400, 400, V(-200, -200, -400))
+        b.Placement = App.Placement(V(), App.Rotation(V(0, 0, 1), n))
+        return b
+    base = Part.makeBox(40, 40, 60, V(-20, -20, -40))
+    roof = base.common(halfspace((-sx, 0, 1))).common(halfspace((0, -sy, 1)))
+    return roof.fuse(Part.makeBox(13, 22, 40, V(0, 0, -20))).removeSplitter()
+
+
 SHAPES = {
+    "roof": _roof_block,
     "boxcyl": _brep("issue523_box_cylinder.brep"),
     "arch": _arch_on_plate,
     "archsplit": lambda: _arch_on_plate(split=True),
@@ -469,6 +488,9 @@ def _flat_near(x, y, z, reach=1.0):
 
 # shape -> the face whose (u, v) outline the third row draws, found in a result
 UVFACE = {
+    # the block's side x=0: the foot along y is filleted on it, and the other
+    # foot's fillet is capped on it
+    "roof": _plane_at("x", 0),
     # the corner's cylinder, not a fillet of the same radius
     "boxcyl": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
                and abs(f.Surface.Radius - 2) < 1e-6 and abs(abs(f.Surface.Axis.z) - 1) < 1e-9),
@@ -641,6 +663,7 @@ UVFACE_CASE = {
                                       and abs(abs(f.Surface.Axis.y) - 0.970) < 0.01),
 }
 NAMES = {
+    "roof": "a 13x22x40 block on a hip roof, its corner on the ridge (#631's V11 in miniature)",
     "boxcyl": "10 box with a 3/4 cylinder r2 at a corner (#523, Part Connect)",
     "arch": "a half cylinder r10, 2 thick, on a 12x20x2 plate whose ends are tangent to it",
     "archsplit": "the arch on its plate, the plate's ends split under the arch's end face",
@@ -701,6 +724,7 @@ NAMES = {
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
+    "roof": ((0, 0, -5), 50.0),
     "boxcyl": ((4, 4, 5), 19.0),  # the box and cylinder span -2..10 on each axis
     "arch": ((-4, 0, 3), 30.0),
     "archsplit": ((-4, 0, 3), 30.0),
@@ -741,6 +765,7 @@ VIEW = {
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
+    "roof": ("the block's side x=0", False),
     "boxcyl": ("the cylinder face", True),
     "arch": ("the arch's cylinder", False),
     "archsplit": ("the arch's cylinder", False),
@@ -832,6 +857,8 @@ _HALVES_FOOT = [((15, 0, 3), (15, 10, 3), (20, 5, 3)),
 _DRAFTED_FOOT = [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                  ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))]
 CASES = {
+    "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
+                           1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
                         (2, 0, 10), (0.55, -1, 0.75)),
     "seam_end_bottom_r1": ("s523", "boxcyl", ((2, 0, 0), (10, 0, 0)), 1.0, 1092.5263,

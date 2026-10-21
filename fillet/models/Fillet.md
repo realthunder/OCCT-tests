@@ -1847,6 +1847,29 @@ the "after" column shows the input.
 
 ![issue876_fillet_chamfer_flat_split_e85_r0.8](pictures/issue876_fillet_chamfer_flat_split_e85_r0.8.png)
 
+### The opposite corner (`e9bd6ed68f`, #631's V11)
+
+A block standing on a hip roof with its corner on the ridge, #631's V11 in
+miniature: four edges meet at the vertex -- the block's two feet, its
+corner edge, and the ridge. Fillet the two feet together. They are
+opposite round the vertex and their faces there share nothing, so the
+builder closed the corner with a plate held to both fillets' ends, and the
+plate had nothing to span: each fillet, alone, ends in a cap carried out of
+the faces beyond the vertex, and the two caps lie on each other's faces.
+Before, the result was invalid at every radius (#631's V11 at 0.3 and 1,
+and the miniature). Now the plate's result is
+checked, and where it is invalid the corner is built again: each fillet
+ended as it would be alone, and the four edges told how the ends share the
+vertex -- each foot keeps its stub to the other fillet's cap, each sharp
+edge keeps the piece from the vertex to its nearer cap (concave between
+the two) and loses the piece between the caps, where they meet on one
+plane. The result is the union of the two fillets made alone, to 1e-10
+here and 2e-8 on #631. It stands in only for a plate that failed: of the
+vertex sweep's 392 opposite pairs the plate did not refuse, running the
+corner first broke 61 and mended 7.
+
+![roof_block_feet_r1](pictures/roof_block_feet_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

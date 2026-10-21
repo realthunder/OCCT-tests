@@ -4604,10 +4604,77 @@ second image, the glue of a stay face's first image only, and
 `Precision::Confusion()` where a vertex's tolerance belongs in
 `BRepOffset_MakeLoops`.
 
+## The opposite corner (`e9bd6ed68f`, realthunder/FreeCAD#631, 2026-10-21)
+
+Two fillets ending at a vertex of four edges whose faces there share
+nothing -- the filleted edges opposite round the vertex, a sharp edge
+between them on each side: #631's V11, #474's Fillet003 at V5, #962's
+V34-V39, 21 invalid pairs of the vertex sweep. The builder took them for a
+corner of two stripes and closed it with the plate (`PerformMoreThreeCorner`),
+which has nothing to span: each fillet, alone, ends in a cap carried out of
+the faces beyond the vertex (`PerformIntersectionAtEnd`), and the two caps
+lie on each other's faces. The right result is the union of the two
+fillets made alone (`opp/` of the vertex sweep: the fuse of the two, the
+same to 1e-10).
+
+`ChFi3d_Builder::PerformOppositeCorner` builds that: each stripe ended as
+alone, then the DS told how the ends share the vertex. Of the four edges,
+each spine's keeps its stub from the vertex to the other fillet's cap (a
+vertex interference at the vertex, the spine's own side under its fillet);
+each sharp edge keeps the piece from the vertex to its nearer cap -- a
+concave edge between the two caps, bounding its faces from the other side,
+so a curve of its own in the DS, reversed on both -- loses the piece
+between its two caps, where they meet on one plane, and keeps what lies
+past the farther. TopOpeBRepBuild dropped the vertex's own pave on an edge
+carried on past it (`TopOpeBRepBuild_PaveSet::Prepare`, an interference
+vertex at the edge's end oriented the other way); it keeps it, beside the
+other, when the fillet asks (`TopOpeBRepBuild_PaveSet_PastEndPaves`, this
+computation only). The ends must come out as two ends alone -- one new
+point on each spine edge beyond the vertex, two on each sharp edge -- or the
+corner is refused.
+
+It is a fallback (`ComputeOppositeCorners`), never the first try: run first
+on the vertex sweep's 392 opposite pairs that are not refused, it broke 61
+the plate had right or loose (#631's and #962's with volumes far out) and
+mended 7. So the plate runs as before, then the setback fallback where the
+computation failed at a vertex, and where the result is still invalid or
+missing the computation is made again with the opposite corner at every
+such vertex, kept on the setback fallback's terms (valid, every fillet
+made, no edge looser than the input's or a twentieth of the radius, no
+fold); otherwise the computation as it was. The setback fallback goes first
+because it makes some of these corners where the plate fails -- the floor
+and the inline edge of a slot by a slope (`slot_by_slope_floor_inline_*`,
+`issue962_floor_corner_*_floor_inline_r1`), #962's V34-V39 fillet pairs at 1
+-- and, run after the opposite corner had failed, it failed on all of them
+(8 suite cases and 22 vertex sweep results refused in the first build).
+Mended: the miniature at every radius and #631's V11 at 0.3 and 1 (exact).
+Which result the plate gives depends on the order the edges are given: the
+miniature's feet with the one along y first leave the plate invalid, and the
+corner is made; along x first the plate's result is valid, loose (0.028 at
+1) and up to 0.09 off the union (at 3), and it stands. #962's V34-V39 stay invalid: the pattern there is
+not two ends alone (one spine's new point at the vertex itself, a sharp edge
+with one contact), and the corner refuses them, so the plate's result
+stands. So does #474's Fillet003 at V5 (edges 5 and 21, invalid at 0.3 and
+1): neither fillet's cap reaches the other's spine edge -- edge 5 is a coil
+82 long that comes back to the vertex's line -- and on both sharp edges the
+nearer contact is the vertex itself. The debugging build of the corner
+mended it (0.07 of 1983.6); the corner as committed refuses it. Taking a
+spine edge with no new point as having no stub, and dropping a nearer
+contact at the vertex, makes the corner build, but the result is not the
+union (an edge of 0.26 at 0.3, the fillets not found in it): the checks
+throw it out. Measured 2026-10-21, left as XFAIL.
+
+| Case | What it covers |
+|------|----------------|
+| `roof_block_feet_r{0.3,1,2,3}` | the miniature's two feet, the one along y first: valid, the union of the two alone to 1e-6, BOP clean (invalid before at every radius) |
+| `roof_block_feet_x_first_r{0.3,1,2,3}` | the same feet, the one along x first: the plate's own result, valid, edges within 0.05, within 0.1 of the union (as before) |
+| `issue631_opposite_e16_e23_r{0.3,1}` | #631's V11: the union to 1e-4 (invalid before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
+| `issue474_f003_opposite_e5_e21_r0.3` | #474's Fillet003 V5, two fillets on no common face: the plate's result, invalid, as before. The opposite corner refuses it -- the caps reach neither spine edge, the nearer contact on each sharp edge is the vertex. See "The opposite corner" |
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
