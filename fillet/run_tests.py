@@ -2594,12 +2594,13 @@ for r in (0.3, 1.0, 2.0, 3.0):
 for r in (0.3, 1.0):
     opposite_case("issue631_opposite_e16_e23_r%g" % r, p631f, [16, 23], r, vol_tol=1e-4)
 # #474's Fillet003, V5: edges 5 and 21, the plate invalid at 0.3 and 1. Not
-# mended: neither fillet's cap reaches the other's spine edge (edge 5 is a
-# coil, 82 long, back on the vertex's line), and on both sharp edges the
-# nearer contact is the vertex itself -- the ends are not two ends alone, the
-# corner is refused and the plate's result stands (README.md)
-opposite_case("issue474_f003_opposite_e5_e21_r0.3", p474, [5, 21], 0.3, vol_tol=0.1,
-              expect="xfail")
+# the opposite corner's: neither fillet's cap reaches the other's spine edge
+# (edge 5 is a coil, 82 long, back on the vertex's line), and on both sharp
+# edges the nearer contact is the vertex itself -- the ends are not two ends
+# alone, the corner is refused. The plate's invalid result set back since
+# (README.md, "Corners set back where the plate's result is invalid"): valid,
+# clean by BOP's check, 0.07 under the union
+opposite_case("issue474_f003_opposite_e5_e21_r0.3", p474, [5, 21], 0.3, vol_tol=0.1)
 # #962's rail, V36 to V39: the top's edge and the slope's edge of a tooth,
 # at 0.3 the plate invalid. One spine's edge meets the other's cap at the
 # vertex only, the other's lies in the plane of the first's cap; each sharp
@@ -2611,6 +2612,44 @@ for _v, _es in ((36, (52, 74)), (37, (52, 82)), (38, (54, 84)), (39, (54, 92))):
                   Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
                                          "issue962_Fillet.brep")),
                   list(_es), 0.3, vol_tol=1e-4)
+
+
+# A result built but invalid where a corner was the plate: those corners set
+# back by the setback fallback, as where the computation fails at them
+# (README.md, "Corners set back where the plate's result is invalid").
+def sweep_shape(name):
+    return Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", name + ".brep"))
+
+
+# #962's groove between two teeth: the floor's edge at the mouth (convex) and
+# a wall's foot (concave, carried on along the wall's pieces), a corner of
+# opposite concavity at four edges, the slope overhanging the mouth. The
+# plate's result invalid at 0.3 and 1 (5.8 too much at 0.3; upstream's
+# invalid at 0.3, refused at 1);
+# set back, valid and clean by BOP's check, 2e-3 under the union of the two
+# alone at 0.3 and 0.06 at 1 -- a patch where the union stands the wall's
+# fillet over the floor edge's round
+for _inp, _rows in (("issue962_Fillet", ((36, (52, 80), 11584.2958, 11585.8637),
+                                         (37, (52, 81), 11584.2958, 11585.8637),
+                                         (38, (54, 90), 11584.2958, 11585.8648),
+                                         (39, (54, 91), 11584.2958, 11585.8652))),
+                    ("issue962_Chamfer", ((34, (49, 72), 11697.9881, 11699.5560),
+                                          (35, (49, 73), 11697.9881, 11699.5560),
+                                          (36, (51, 82), 11697.9881, 11699.5572),
+                                          (37, (51, 83), 11697.9882, 11699.5576)))):
+    for _v, _es, _v03, _v1 in _rows:
+        for _r, _vol in ((0.3, _v03), (1.0, _v1)):
+            fillet_case("issue962_%s_groove_v%d_e%d_e%d_r%g"
+                        % ((_inp[9:].lower(), _v) + _es + (_r,)),
+                        sweep_shape(_inp), list(_es), _r, "pass", _vol, vol_tol=1e-3, bop=True)
+# #474's coil standing on the block: the coil's edge with the block's upright
+# edge, which carries it on in line, beside a tangent edge (V5 and V9 of the
+# Fillet's input; README.md). Invalid at 0.3 and 1, set back now, clean by
+# BOP's check
+fillet_case("issue474_coil_v5_e5_e20_r0.3", sweep_shape("issue474_Fillet"), [5, 20], 0.3,
+            "pass", 1881.6755, vol_tol=1e-3, bop=True)
+fillet_case("issue474_coil_v9_e12_e25_r1", sweep_shape("issue474_Fillet"), [12, 25], 1.0,
+            "pass", 1844.2334, vol_tol=1e-3, bop=True)
 
 counts = {}
 for _, verdict, _ in results:

@@ -4719,11 +4719,75 @@ not mended by it.
 |------|----------------|
 | `issue962_opposite_v{36,37,38,39}_e*_r0.3` | #962's rail: the union to 1e-4 (invalid before) |
 
+## Corners set back where the plate's result is invalid (`e352f81743`, realthunder/FreeCAD#962, #474, 2026-10-22)
+
+#962's rail has grooves between its teeth: a floor (`F27`, z 14) between
+two teeth's walls, open at x 38.5 onto the body's side (`F17`), the teeth's
+slopes (`F26` and its like) overhanging the mouth. The floor's edge at the
+mouth (`E54`, convex) and a wall's foot (`E90`, concave, carried on along
+the wall's pieces to the groove's end, `E89` and `E88`) are each made
+alone; together, at 0.3 and 1, the result was invalid -- 5.8 of volume too
+much at 0.3 -- at the groove's four corners (`V36` to `V39`) and at the
+`Chamfer` input's four (`V34` to `V37`). Upstream's is invalid at 0.3
+and refused at 1.
+
+The corner is one of opposite concavity at four edges: the slope stands
+in, above the floor, for the outer face of the corner of three that
+`PerformTwoCorner` makes (its edges with the side face and with the wall
+are the two sharp edges more), so the plate made it. The floor edge's
+fillet runs on past the vertex on the side face, which goes on under the
+tooth: its line there ends on the side face's far edge, 10 away, and the
+plate, built over that end, cut into the tooth.
+
+The computation's result was taken as it came; the setback fallback ran
+only where the computation failed. The vertices where it builds a plate
+are recorded now (`PerformMoreThreeCorner`, `ChFi3d_PlateCorners`), and
+where the first computation's result is built but invalid
+(`BRepCheck_Analyzer`) and a fillet ends at one of them, the fallback sets
+those corners back as it does where the computation fails there -- on its
+own terms for a result it hands back. When it finds nothing valid it
+computes the result as it was, as after a failure. It runs after the
+opposite corner, which mends an opposite pair's invalid plate better (the
+union of the two alone). The check costs a `BRepCheck_Analyzer` of the
+result, and only where a plate was built; a chamfer is left as it was (the
+fallback sets back fillets only), and so is everything with FreeCAD's
+`FilletCornerSetbackFallback` at 0.
+
+The groove's corners come out valid and clean by BOP's check, a set-back
+patch between the floor edge's fillet, the wall's and the slope. The union
+of the two alone is no reference here: in it the wall's fillet stands over
+the floor edge's round, the floor under it a face upside down; the set-back
+corner is 2e-3 under it at 0.3 and 0.06 at 1.
+
+The sweeps (`e352f81743` against `224c0a90f8`): 60 invalid results
+valid, nothing else moves. Vertex 57: the groove's 16; #474's coil pairs
+at `V5` and `V9` of `Fillet` and `Fillet001` (24, clean by BOP's check;
+"an edge carrying another on in line, beside a tangent edge", above); and
+`Fillet003`'s corners at `V1`, `V5`, `V26`, `V27` (17), among them `V5`'s
+opposite pair, which the opposite corner refuses (0.07 under the union at
+0.3, the case no longer known broken). Edge 3: `Fillet003`'s `E52` at 0.3
+and 0.8 (clean) and `Fillet002`'s `E4` at 2. Nine of the 60 are valid and
+not clean by BOP's check, a self-intersection: `Fillet003`'s `V26:44,52`,
+`V26:52,53`, `V27:46,52`, `V27:52,56` at both radii, and `Fillet002`'s
+`E4` at 2 -- invalid before, the input clean. The suites: fillet 711 PASS
+5 XFAIL, draft 105, thickness 378; the thickness sweep 928 of 928.
+
+Not mended by it: #962's `E6` (its end at a ledge 0.05 wide, which faces
+down: the cap the fillet needs faces up, in its plane) and the sets that
+hold it, and #474 `Fillet002`'s `V2:1,5`, `V2:2,5`, `V4:4,14` -- the
+fallback finds nothing valid there, and the result is the invalid one it
+was, after the fallback's computations.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_{fillet,chamfer}_groove_v*_e*_e*_r{0.3,1}` | the groove's four corners on both inputs: valid, clean by BOP's check, the volume to 1e-3 (invalid before) |
+| `issue474_coil_v5_e5_e20_r0.3`, `issue474_coil_v9_e12_e25_r1` | #474's coil with the block's upright edge carrying it on: valid, clean by BOP's check (invalid before) |
+| `issue474_f003_opposite_e5_e21_r0.3` | `Fillet003`'s `V5`, made now, within 0.1 of the union (known broken before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
-| `issue474_f003_opposite_e5_e21_r0.3` | #474's Fillet003 V5, two fillets on no common face: the plate's result, invalid, as before. The opposite corner refuses it -- the caps reach neither spine edge, the nearer contact on each sharp edge is the vertex. See "The opposite corner" |
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |

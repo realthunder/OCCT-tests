@@ -1891,6 +1891,26 @@ valid and stand.
 
 ![issue962_opposite_v38_e54_e84_r0.3](pictures/issue962_opposite_v38_e54_e84_r0.3.png)
 
+### Corners set back where the plate's result is invalid (`e352f81743`, #962's groove)
+
+Between two teeth of #962's rail runs a groove, open onto the body's side,
+the teeth's slopes overhanging its mouth. Fillet the floor's edge at the
+mouth and a wall's foot together: one convex, one concave, at a vertex of
+four edges, so the builder made the corner with its plate. The floor
+edge's fillet runs on past the vertex on the body's side, which goes on
+under the tooth, and the plate built over that end cut into the tooth: the
+result was invalid at 0.3 and 1 (upstream's invalid at 0.3, refused at
+1). Until now an invalid
+result was taken as it came, and the setback fallback ran only where the
+computation failed outright. Now, where a result is invalid and a corner
+was a plate, the fallback sets those corners back as it would after a
+failure; when it finds nothing valid, the result is the one it was. The
+groove's corners come out valid, a patch between the two fillets and the
+slope, and so do 44 other invalid results of the sweep -- #474's coil on
+its block among them; nothing that was valid or refused moves.
+
+![issue962_groove_v38_e54_e90_r1](pictures/issue962_groove_v38_e54_e90_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
