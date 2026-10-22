@@ -1870,6 +1870,27 @@ corner first broke 61 and mended 7.
 
 ![roof_block_feet_r1](pictures/roof_block_feet_r1.png)
 
+### The opposite corner, ends that pass the vertex by (`224c0a90f8`, #962's rail)
+
+#962's rail is a row of teeth, each with a top along the rail and a slope
+rising from it. Fillet a tooth's top edge and the slope's edge together at
+0.3: they are opposite round the vertex, and the plate's result was
+invalid. The opposite corner refused it, for the ends are not quite the
+miniature's: each fillet alone ends square to its edge, so the slope's edge
+lies in the plane of the top fillet's end, the top's edge touches the slope
+fillet's end only at the vertex, and on the short edge across the step the
+nearer contact is the top fillet's own line ending there, which the
+builder adds after the corners. Now an edge with no stub is taken out from
+the vertex on, and that line's end is taken as the nearer contact. On the
+way, two faults of the builder: an edge's mark went nowhere when the edge
+was new to the computation, and the plate's failed attempt left a vertex of
+the input at a tolerance of 3.82 for the corner's attempt to keep. The
+result is the union of the two fillets made alone, to 1e-4, on all four
+teeth and on the Chamfer input's same rail; at 1 the plate's results are
+valid and stand.
+
+![issue962_opposite_v38_e54_e84_r0.3](pictures/issue962_opposite_v38_e54_e84_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

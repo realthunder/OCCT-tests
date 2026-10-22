@@ -2600,6 +2600,17 @@ for r in (0.3, 1.0):
 # corner is refused and the plate's result stands (README.md)
 opposite_case("issue474_f003_opposite_e5_e21_r0.3", p474, [5, 21], 0.3, vol_tol=0.1,
               expect="xfail")
+# #962's rail, V36 to V39: the top's edge and the slope's edge of a tooth,
+# at 0.3 the plate invalid. One spine's edge meets the other's cap at the
+# vertex only, the other's lies in the plane of the first's cap; each sharp
+# edge has one contact from the caps, the short one's nearer contact the
+# first fillet's own line ending on it. The union to 1e-4. At 1 the plate's
+# result is valid (0.63 off the union) and stands
+for _v, _es in ((36, (52, 74)), (37, (52, 82)), (38, (54, 84)), (39, (54, 92))):
+    opposite_case("issue962_opposite_v%d_e%d_e%d_r0.3" % ((_v,) + _es),
+                  Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                                         "issue962_Fillet.brep")),
+                  list(_es), 0.3, vol_tol=1e-4)
 
 counts = {}
 for _, verdict, _ in results:

@@ -4651,10 +4651,10 @@ Mended: the miniature at every radius and #631's V11 at 0.3 and 1 (exact).
 Which result the plate gives depends on the order the edges are given: the
 miniature's feet with the one along y first leave the plate invalid, and the
 corner is made; along x first the plate's result is valid, loose (0.028 at
-1) and up to 0.09 off the union (at 3), and it stands. #962's V34-V39 stay invalid: the pattern there is
+1) and up to 0.09 off the union (at 3), and it stands. #962's V34-V39 stayed invalid: the pattern there was
 not two ends alone (one spine's new point at the vertex itself, a sharp edge
-with one contact), and the corner refuses them, so the plate's result
-stands. So does #474's Fillet003 at V5 (edges 5 and 21, invalid at 0.3 and
+with one contact), and the corner refused them, so the plate's result
+stood -- made since (next section). So does #474's Fillet003 at V5 (edges 5 and 21, invalid at 0.3 and
 1): neither fillet's cap reaches the other's spine edge -- edge 5 is a coil
 82 long that comes back to the vertex's line -- and on both sharp edges the
 nearer contact is the vertex itself. The debugging build of the corner
@@ -4669,6 +4669,55 @@ throw it out. Measured 2026-10-21, left as XFAIL.
 | `roof_block_feet_r{0.3,1,2,3}` | the miniature's two feet, the one along y first: valid, the union of the two alone to 1e-6, BOP clean (invalid before at every radius) |
 | `roof_block_feet_x_first_r{0.3,1,2,3}` | the same feet, the one along x first: the plate's own result, valid, edges within 0.05, within 0.1 of the union (as before) |
 | `issue631_opposite_e16_e23_r{0.3,1}` | #631's V11: the union to 1e-4 (invalid before) |
+
+## The opposite corner, ends that pass the vertex by (`224c0a90f8`, realthunder/FreeCAD#962, 2026-10-22)
+
+#962's rail, V36 to V39 of the `Fillet` input (V34 to V37 of the `Chamfer`
+input, the same rail): the edge along the top of a tooth (`E52`, `E54`) and
+the edge up its slope (`E74`, `E82`, `E84`, `E92`), opposite round the
+vertex. At 0.3 the plate's result is invalid (edge tolerances to 7.36), and
+the opposite corner refused them. Each fillet alone ends square to its
+spine, its cap in the plane of one of the other's faces, so the ends are
+not quite two ends alone:
+
+- the slope's spine edge lies in the plane of the top fillet's cap, and the
+  top's spine edge meets the slope fillet's cap at the vertex only: no stub
+  on either. A spine edge with no stub is now taken as gone from the vertex
+  on (a vertex interference at the vertex, its own side out). Without it the
+  edge has no interference, the builder takes its state from the vertex,
+  where the curves of a cap are kept, and the slope's whole tangent chain
+  came back as a face round the top fillet's cap;
+- the sharp edge along the top under the slope gets one contact, from the
+  slope fillet's line; its nearer contact is the vertex, there is no piece
+  to keep, and it is gone to the contact and kept past it;
+- the short sharp edge across the step gets one contact from the caps, the
+  slope fillet's line ending on it; its nearer contact is the top fillet's
+  own line ending on it, which FilDS puts on the edge after the corners.
+  That point is now taken as the nearer contact: the piece from the vertex
+  to it a curve of its own, reversed on both faces, as before, and the
+  stripe's common point taken off the edge (FilDS would put it back, and the
+  edge is to be gone from the vertex to the farther contact).
+
+Two faults of the builder showed on the way. An interference put on an edge
+with `DStr.ChangeShapeInterferences(anE).Append(...DStr.AddShape(anE)...)`
+went nowhere when the edge was not yet in the DS: the list is taken before
+the argument adds the edge (the order is the compiler's). And the first
+computation's plate raised an input vertex 3.5 from V36 to 3.82 in place --
+the result shares the input's vertices -- and the corner's computation,
+made after on the same input, kept it. The input's vertex and edge
+tolerances are now taken when the computation starts and put back by
+`Reset()` before each computation a fallback makes.
+
+The sweeps (against `e9bd6ed68f`): the vertex sweep's 8 results there,
+invalid, are the union of the two alone (11583.6228, 11697.3152), tolerance
+1e-4; nothing else moves in either sweep; the suites are the same; the
+thickness sweep 928 of 928. At 1 the plate's results are valid, 0.63 off the
+union, and stand; V37 at 1 is refused as before. #474's Fillet003 at V5 is
+not mended by it.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_opposite_v{36,37,38,39}_e*_r0.3` | #962's rail: the union to 1e-4 (invalid before) |
 
 ## Known broken (XFAIL)
 

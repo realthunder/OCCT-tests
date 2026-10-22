@@ -84,6 +84,7 @@ STAGES = {
     "swhole": ("47c882379b", "0fe893a8a6"),
     "sonto": ("1e2de2a74e", "033a83c84b"),
     "speriod": ("76f8b29a56", "ce3b4bff39"),
+    "sopp2": ("80dd9f3a2c", "224c0a90f8"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -575,6 +576,8 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the ledge between the steps, the slope fillet's cap joined to it past the step
+    "issue962_opposite_v38_e54_e84_r0.3": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
     # the plate's side under the post's long wall, the thin fillet along its top
     "issue876_kink_e52_r0.3": _plane_at("y", -16.75),
     # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
@@ -806,6 +809,7 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue962_opposite_v38_e54_e84_r0.3": ("the ledge along the top", False),
     "issue962_arm_corner_e25_e26_r1": ("the floor", False),
     "issue474_f002_whole_in_end_r0.3": ("the block's side holding both edges", False),
     "issue876_kink_e52_r0.3": ("the plate's side under the long wall", False),
@@ -857,6 +861,10 @@ _HALVES_FOOT = [((15, 0, 3), (15, 10, 3), (20, 5, 3)),
 _DRAFTED_FOOT = [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                  ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))]
 CASES = {
+    "issue962_opposite_v38_e54_e84_r0.3": (
+        "sopp2", "p962", [((38.5, 20.3, 14), (38.5, 23.7, 14)),
+                          ((38.5, 20.3, 14), (35.470838, 20.3, 17.029162))],
+        0.3, 11583.6228, (38.5, 20.3, 14), (-1, 0.9, 0.8)),
     "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
                            1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
@@ -1245,6 +1253,7 @@ ZOOM = {
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "
                                                "and the block's top edge on the side x=10",
     "fin_on_block_wall_piece_foot_and_upright_r1": "the 0.7 piece of the edge under the fin's "
