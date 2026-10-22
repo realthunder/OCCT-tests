@@ -2651,6 +2651,20 @@ fillet_case("issue474_coil_v5_e5_e20_r0.3", sweep_shape("issue474_Fillet"), [5, 
 fillet_case("issue474_coil_v9_e12_e25_r1", sweep_shape("issue474_Fillet"), [12, 25], 1.0,
             "pass", 1844.2334, vol_tol=1e-3, bop=True)
 
+# #474's Fillet003, the coil leaving its block: the block's top edge (V1) or
+# bottom edge (V5) beside the coil's foot, a corner of opposite concavity at
+# four edges, the plate's. The block edge's line on the block's top runs on
+# past the vertex to the block's far end; the plate took that end's parameter
+# on the far edge as one on the sharp edge beside it, and the stripe's end
+# out there, the corner across the fillet. At 1 the setback fallback finds
+# nothing valid; the plates made again, stepped back on their sharp edges
+# only to points on them (README.md, "A common point on another edge"):
+# valid, clean by BOP's check
+for _v, _es, _vol in ((1, (6, 10), 1988.4351), (5, (6, 21), 1988.6625)):
+    fillet_case("issue474_f003_coilfoot_v%d_e%d_e%d_r1" % ((_v,) + _es),
+                sweep_shape("issue474_Fillet003"), list(_es), 1.0, "pass", _vol,
+                vol_tol=1e-3, bop=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

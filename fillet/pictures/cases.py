@@ -86,6 +86,7 @@ STAGES = {
     "speriod": ("76f8b29a56", "ce3b4bff39"),
     "sopp2": ("80dd9f3a2c", "224c0a90f8"),
     "sinvsb": ("224c0a90f8", "e352f81743"),
+    "sonarc": ("e352f81743", "55f74fd428"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -580,6 +581,8 @@ UVFACE_CASE = {
     # the ledge between the steps, the slope fillet's cap joined to it past the step
     "issue962_opposite_v38_e54_e84_r0.3": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
     "issue962_groove_v38_e54_e90_r1": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
+    # the corner's plate, its vertices up to 1.4 from the vertex at 1
+    "issue474_f003_coilfoot_v1_e6_e10_r1": _plate_near(-13, 0, 13, 2.0),
     # the plate's side under the post's long wall, the thin fillet along its top
     "issue876_kink_e52_r0.3": _plane_at("y", -16.75),
     # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
@@ -864,6 +867,13 @@ _HALVES_FOOT = [((15, 0, 3), (15, 10, 3), (20, 5, 3)),
 _DRAFTED_FOOT = [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                  ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))]
 CASES = {
+    # #474's coil leaving its block: the block's top edge beside the coil's
+    # foot, the plate's corner; the top edge's line ran on to the block's far
+    # end, and the plate took that end's parameter on the far edge for one on
+    # the sharp edge beside it. Nothing valid set back; the plate made again
+    "issue474_f003_coilfoot_v1_e6_e10_r1": (
+        "sonarc", "p474", [((-13, 0, 11), (-13, 0, 13)), ((-13, 0, 13), (-17, 0, 13))],
+        1.0, 1988.4351, (-13, 0, 13), (-1, 1.0, 0.8)),
     "issue962_groove_v38_e54_e90_r1": (
         "sinvsb", "p962", [((38.5, 20.3, 14), (38.5, 23.7, 14)),
                            ((38.5, 20.3, 14), (39.197318, 20.3, 14))],
@@ -1262,6 +1272,7 @@ ZOOM = {
 EDGES = {
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
+    "issue474_f003_coilfoot_v1_e6_e10_r1": "the coil's foot and the block's top edge beside it",
     "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "
                                                "and the block's top edge on the side x=10",
     "fin_on_block_wall_piece_foot_and_upright_r1": "the 0.7 piece of the edge under the fin's "

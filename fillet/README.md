@@ -4784,6 +4784,59 @@ was, after the fallback's computations.
 | `issue474_coil_v5_e5_e20_r0.3`, `issue474_coil_v9_e12_e25_r1` | #474's coil with the block's upright edge carrying it on: valid, clean by BOP's check (invalid before) |
 | `issue474_f003_opposite_e5_e21_r0.3` | `Fillet003`'s `V5`, made now, within 0.1 of the union (known broken before) |
 
+## A common point on another edge (`55f74fd428`, realthunder/FreeCAD#474, 2026-10-22)
+
+#474's `Fillet003` coil leaves a block (x -17 to -9, y -4 to 0, z 11 to
+13): its outer side (`F2`, x -13 at the block) rises from the block's
+front (`F7`, y 0) at an upright edge (`E6`, concave), its top runs on from
+the block's top (`F3`) across an edge 1.6 deg sharp (`E2`, along x). The
+block's top edge (`E10`) and the coil's foot (`E6`) are each made alone;
+together the corner at `V1` (-13,0,13) was invalid at 1 -- the block's top
+face a wire crossing itself, 0.73 under the union of the two alone -- and
+the same at the bottom (`E21` with `E6` at `V5`). At 0.3 the first result
+was invalid as well, and the setback fallback mended it (above).
+
+Four sharp edges, two fillets on a common face: the plate makes the
+corner. `E10`'s line on the block's top runs on past the vertex as far as
+the face does, to its far end (x -9), and the stripe's common point there
+is on that end's edge (`E8`). Where a stripe's common point lies farther
+from the vertex than the sharp edge's point, the plate steps the sharp
+edge back to it, by the point's parameter on its arc -- here `E8`'s,
+taken on `E2`: `E2`'s point at 1.09 along it, and the stripe's end out at
+x -9. The plate's edge on the fillet ran diagonally from there to the
+fillet's contact with `E6`'s, 5.2 long, and the top face was pinched in
+two at its corner.
+
+A common point on another edge has no parameter on this one. Stepped back
+only to points on the edge, the sharp edge's point stays at the vertex,
+the stripe's end where it meets the other fillet, and the plate is a
+compact corner (picture). That is not the better corner everywhere: at
+#474's coil on its block's upright edge (`Fillet` and `Fillet001`, `V5`
+and `V9`) both neighbours of the sharp edge are stripes, and the plate,
+kept at the vertex, spans the stripes as far as they run past it -- valid,
+clean, 0.46 over the union at 0.3 where the set-back patch is 0.06 under
+it, several radii long. Made the old way those corners are invalid and the
+setback fallback mends them; at #962's groove the plate came out creased
+where the set-back patch is smooth; and at #876's `E30` and the edges like
+it (one fillet at the corner) the plate is invalid where the old step
+made the corner refused. So the step is corrected only as a last resort:
+where the result is invalid at a corner the plate made, after the setback
+fallback, the plates are made again stepped back on their sharp edges only
+to points on them (`ChFi3d_PlateStepBackOnEdge`), and the result is kept
+where valid by the setback fallback's measure (the tolerance bound, every
+fillet made, no fold within three radii); else it is computed as it was.
+
+The sweeps (`55f74fd428` against `e352f81743`): the two invalid results
+valid (`V1:6,10` and `V5:6,21` at 1, clean by BOP's check, 0.23 and 0.10
+over the union of the two alone, which keeps a step where the concave
+fillet stands above the convex one's round), nothing else moves, not a
+volume; the chamfer's edge sweep is the same. The suites: fillet 713 PASS
+5 XFAIL, draft 105, thickness 378; the thickness sweep 928 of 928.
+
+| Case | What it covers |
+|------|----------------|
+| `issue474_f003_coilfoot_v{1_e6_e10,5_e6_e21}_r1` | `Fillet003`'s coil foot with the block's top or bottom edge: valid, clean by BOP's check (invalid before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

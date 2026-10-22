@@ -1911,6 +1911,26 @@ its block among them; nothing that was valid or refused moves.
 
 ![issue962_groove_v38_e54_e90_r1](pictures/issue962_groove_v38_e54_e90_r1.png)
 
+### A common point on another edge (`55f74fd428`, #474's coil foot)
+
+#474's coil leaves a block: its side rises from the block's front at an
+upright edge, its top runs on from the block's top across an edge barely
+sharp. Fillet the block's top edge and the coil's foot together at 1:
+convex and concave at a vertex of four edges, the plate's corner. The top
+edge's fillet runs on past the vertex over the block's top to its far end,
+and the plate stepped the barely-sharp edge back to the fillet's point
+there by that point's parameter -- on the far end's edge, not this one.
+The fillet's end went out with it, the plate ran across the fillet, and
+the block's top came out pinched in two: invalid, and the setback found
+nothing valid. Stepped back only to points on the edge itself the corner
+is a compact plate. That is the worse corner elsewhere -- where fillets lie
+on both sides of the edge the plate spans them far past the vertex, and
+the old step's invalid corner, set back, is the better result -- so it is a
+last resort: tried only where the result is invalid at a plate after the
+setback, and kept only where valid.
+
+![issue474_f003_coilfoot_v1_e6_e10_r1](pictures/issue474_f003_coilfoot_v1_e6_e10_r1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
