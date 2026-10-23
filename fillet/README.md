@@ -4837,6 +4837,33 @@ volume; the chamfer's edge sweep is the same. The suites: fillet 713 PASS
 |------|----------------|
 | `issue474_f003_coilfoot_v{1_e6_e10,5_e6_e21}_r1` | `Fillet003`'s coil foot with the block's top or bottom edge: valid, clean by BOP's check (invalid before) |
 
+## A bisection that could not end (`0198e783ae`, realthunder/FreeCAD#273, 2026-10-23)
+
+#273's `Fillet001`, edge 12 at 0.3 -- a B-spline wall's edge on the plane
+at z 18 (`F2` and `F10`) -- ran 17 hours before it was stopped. Sampled,
+it was in the setback fallback's corner of more than three edges, which
+projects a curve on a B-spline surface (`CurveHermite`,
+`ProjLib_CompProjectedCurve`). Where the projection leaves the surface,
+`DichExactBound` bisects between the last parameter projected and the first
+that is not until the two are `Tol` apart, and `Tol` is the surface's
+tolerance over the projection's speed on it: near a singular point it can
+be below the spacing of doubles at the parameter. The middle is then one
+of the ends, the interval no longer shrinks, and the loop never ended. It
+now stops there; the fillet is refused in 2 seconds, as it is when the
+input is written out and read back.
+
+That is why the sweep never saw it: every case fillets a copy read back
+from the input's text, and written out, two planes' axes change in their
+last digits -- enough that the projection never came to that point. The case reads the file as it is.
+
+The sweeps (`0198e783ae` against `55f74fd428`): byte-identical, every case
+and volume; the suites: fillet 714 PASS 5 XFAIL, draft 105, thickness 378;
+the thickness sweep 928 of 928.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_f001_e12_r0.3_ends` | `Fillet001`'s edge 12 at 0.3: refused in seconds (it never ended before); a hang is the failure, the summary line missing |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

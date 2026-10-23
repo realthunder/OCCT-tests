@@ -2665,6 +2665,17 @@ for _v, _es, _vol in ((1, (6, 10), 1988.4351), (5, (6, 21), 1988.6625)):
                 sweep_shape("issue474_Fillet003"), list(_es), 1.0, "pass", _vol,
                 vol_tol=1e-3, bop=True)
 
+# #273's Fillet001: edge 12, a B-spline wall's edge on the plane at z 18, at
+# 0.3. The setback fallback's corner of more than three edges projects a curve
+# on a B-spline surface (CurveHermite), and the projection's search for where
+# it leaves the surface bisected for ever: its tolerance there was below the
+# spacing of doubles (README.md, "A
+# bisection that could not end"). Read as it is: written out and read back,
+# two planes' axes change in their last digits and it never got there. Refused
+# now, in seconds; a hang is this case's failure, the summary line missing
+sound_case("issue273_f001_e12_r0.3_ends",
+           Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 12, 0.3)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

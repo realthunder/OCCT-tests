@@ -1931,6 +1931,20 @@ setback, and kept only where valid.
 
 ![issue474_f003_coilfoot_v1_e6_e10_r1](pictures/issue474_f003_coilfoot_v1_e6_e10_r1.png)
 
+### A bisection that could not end (`0198e783ae`, #273's Fillet001)
+
+A fillet of 0.3 on one edge of #273's `Fillet001` -- a B-spline wall's edge
+on a flat floor -- never came back: stopped after 17 hours. A corner of the
+fillet projects a curve on a B-spline surface, and where the curve leaves
+the surface the projection bisects for the point until the two ends are
+within a tolerance -- here one smaller than a double can tell apart at
+that parameter, so the ends stopped moving and the loop went on for ever.
+It now stops where its middle no longer moves, and the fillet is refused
+in two seconds. No picture: there is no result to show, before or after.
+The same input written out and read back never hung -- two planes' axes
+change in their last digits -- which is why the sweep, filleting such a
+copy, never saw it.
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
