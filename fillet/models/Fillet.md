@@ -1962,6 +1962,18 @@ is taken only from a line that reaches it.
 
 ![issue273_f001_apex_off_round_e39_r0.3](pictures/issue273_f001_apex_off_round_e39_r0.3.png)
 
+### The cut off the face from the line's end (`57ca3587ff`, #273's Fillet001)
+
+The mirror rim, refused above, is made now. Its fillet stops where its side
+on the wall reaches the apex's edge, before its side on the top reaches the
+top's end; but its line on the top does run on to the top's end. That end
+is now taken as where the cut runs off the top, as if the fillet had
+stopped there, and the corner is cut into the round as the first rim's is.
+Both rims together are valid too. At 0.8 the apex is now cut the same way,
+and what still refuses the rim there is its other end, at the base.
+
+![issue273_f001_apex_line_end_e40_r0.3](pictures/issue273_f001_apex_line_end_e40_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

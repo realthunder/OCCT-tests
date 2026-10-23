@@ -4907,6 +4907,46 @@ thickness 378; the thickness sweep 928 of 928.
 |------|----------------|
 | `issue273_f001_apex_off_round_e39_r0.3` | `Fillet001`'s pocket rim `E39` at 0.3, its apex end cut off the top into the round: valid (refused before) |
 
+(`E40` made since: next section.)
+
+## The cut off the face from the line's end (`57ca3587ff`, realthunder/FreeCAD#273, 2026-10-23)
+
+`E40`, `E39`'s mirror on `Fillet001`, at 0.3. Its stripe ends where its
+side on the wall (`F21`) meets the apex's edge `E45`; its common point on
+the top is then the section's other end, (-0.29, 15.07, 31), inside the top,
+0.26 short of `E34`. The fillet's line on the top is a line, and its range
+runs on to `E34` (the line's end 2e-15 from it): it is the line, not the
+stripe, that reaches the top's end. The corner carries the line on to the
+other wall's plane, which it crosses past the top -- no crossing in the
+range, so not the usual cap -- and the cut off the top (above) is taken only
+from a common point on an edge of the top. `E39`'s side on the top reached
+`E34` before its side on the wall reached `E45`; `E40`'s did not, and it was
+refused: "OneCorner : bouchon non ecrit".
+
+Where no crossing is found and the common point lies inside `Fop`, the
+line's end is looked for on an edge of `Fop` (not one of the vertex's,
+between two faces, within its tolerance or ten times the approximation
+tolerance): found, the common point is put there, on that edge, with the
+transition a walk gives a line ending on an arc, and the cut off `Fop` is
+tried from it as from `E39`'s. The point is taken back when that cut is not
+made. `E40` at 0.3: valid, 8534.9958 (`E39` 8534.9956); both rims at once
+8534.8383, within 0.005 of the two alone; with the base rim `E38` too,
+8534.7655 (`E38` alone is still refused). At 0.8 the apex corner is now
+made too, and the base corner refuses it ("Failed to find edge"); at 2 not
+traced.
+
+The sweeps (`57ca3587ff` against `5847016bbd`): five refused results made,
+nothing else moves -- `E40@0.3` and its vertices' sets (`V24:40`,
+`38,40`, `40,43`, `38,40,43`; `V25:40`), each within 0.0003 of its mirror
+among `E39`'s (8534.9291 for 8534.9289, 8535.0295 for 8535.0294, 8534.9677
+for 8534.9675). The suites: fillet 717 PASS 5 XFAIL, draft 105, thickness
+378; the thickness sweep 928 of 928.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_f001_apex_line_end_e40_r0.3` | `Fillet001`'s pocket rim `E40` at 0.3, its stripe ending on the apex's edge, the cut off the top from its line's end on the top's edge: valid (refused before) |
+| `issue273_f001_apex_both_rims_e39_e40_r0.3` | both rims at once: valid (refused before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

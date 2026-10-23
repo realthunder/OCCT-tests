@@ -2686,6 +2686,18 @@ sound_case("issue273_f001_e12_r0.3_ends",
 fillet_case("issue273_f001_apex_off_round_e39_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 39, 0.3,
             "pass", 8534.9956, vol_tol=1e-3)
+# Its mirror E40: the stripe ends where its side on the wall meets the
+# apex's edge (E45), its point on the top 0.26 short of the top's end, and
+# the cut off the top was taken only from a point on the top's edge --
+# refused. Its line on the top runs on to that edge: its end there is the
+# point now (README.md, "The cut off the face from the line's end"). As E39,
+# 0.0002 apart; both rims at once 8534.8383, within 0.005 of the two alone.
+fillet_case("issue273_f001_apex_line_end_e40_r0.3",
+            Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 40, 0.3,
+            "pass", 8534.9958, vol_tol=1e-3)
+fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
+            Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
+            0.3, "pass", 8534.8383, vol_tol=1e-3)
 
 counts = {}
 for _, verdict, _ in results:

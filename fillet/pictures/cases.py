@@ -88,6 +88,7 @@ STAGES = {
     "sinvsb": ("224c0a90f8", "e352f81743"),
     "sonarc": ("e352f81743", "55f74fd428"),
     "soffround": ("0198e783ae", "5847016bbd"),
+    "soffend": ("5847016bbd", "57ca3587ff"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -588,6 +589,9 @@ UVFACE_CASE = {
     "issue273_f001_apex_off_round_e39_r0.3": (
         lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
         and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
+    "issue273_f001_apex_line_end_e40_r0.3": (
+        lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
+        and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
     # the plate's side under the post's long wall, the thin fillet along its top
     "issue876_kink_e52_r0.3": _plane_at("y", -16.75),
     # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
@@ -820,6 +824,7 @@ UVLABEL = {
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
+    "issue273_f001_apex_line_end_e40_r0.3": ("the round at the top's end", False),
     "issue962_opposite_v38_e54_e84_r0.3": ("the ledge along the top", False),
     "issue962_groove_v38_e54_e90_r1": ("the groove's floor", False),
     "issue962_arm_corner_e25_e26_r1": ("the floor", False),
@@ -879,6 +884,12 @@ CASES = {
     "issue273_f001_apex_off_round_e39_r0.3": (
         "soffround", "p273b", ((0, 15.013479, 31), (1.524712, 7.124642, 31)), 0.3,
         8534.9956, (0.05, 15.25, 30.9), (1, -0.5, 1.1)),
+    # its mirror E40: the stripe ended where its side on the wall met the
+    # apex's edge, short of the top's end; its line on the top runs on to it,
+    # and the cut off the top is now taken from the line's end
+    "issue273_f001_apex_line_end_e40_r0.3": (
+        "soffend", "p273b", ((-1.524712, 7.124642, 31), (0, 15.013479, 31)), 0.3,
+        8534.9958, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
     # #474's coil leaving its block: the block's top edge beside the coil's
     # foot, the plate's corner; the top edge's line ran on to the block's far
     # end, and the plate took that end's parameter on the far edge for one on
@@ -1268,6 +1279,7 @@ ZOOMLABEL = {
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
+    "issue273_f001_apex_line_end_e40_r0.3": 2.0,
     # the fillet is 0.005 wide; the old one's first cut at x=4.043
     "issue876_kink_e52_r0.3": 0.04,
     "issue962_e36_r2": 1.4,
