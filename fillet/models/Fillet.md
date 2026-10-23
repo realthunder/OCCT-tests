@@ -1974,6 +1974,22 @@ and what still refuses the rim there is its other end, at the base.
 
 ![issue273_f001_apex_line_end_e40_r0.3](pictures/issue273_f001_apex_line_end_e40_r0.3.png)
 
+### The spike of #360 (`fb9200b0fd`)
+
+#360's spike, looked at now: four edges round the side of a block that
+stands out of a part's front, filleted at 4. Where the rounded foot meets
+the inside corner beside the front, the corner is a patch built to fit its
+boundary; it missed it, and its surface ran out of the part, more than
+20 mm past it (above in the reporter's file, below with OCCT 8.0.1). In the
+picture that patch is not drawn -- by its own measure it has no area --
+and the corner shows open, red where it should be. Since a patch that misses its boundary is built again more
+loosely (`fb9200b0fd`, 2026-10-03), the fillet is right -- nothing new was
+needed, only the check. The reporter's file also holds a vertex with a
+tolerance of 37 mm from the pad before, made by their 2021 build; the pad
+recomputed now has none.
+
+![issue360_f008_four_edges_r4](pictures/issue360_f008_four_edges_r4.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -4947,6 +4947,43 @@ for 8534.9675). The suites: fillet 717 PASS 5 XFAIL, draft 105, thickness
 | `issue273_f001_apex_line_end_e40_r0.3` | `Fillet001`'s pocket rim `E40` at 0.3, its stripe ending on the apex's edge, the cut off the top from its line's end on the top's edge: valid (refused before) |
 | `issue273_f001_apex_both_rims_e39_e40_r0.3` | both rims at once: valid (refused before) |
 
+## #360: the spike made no more (`fb9200b0fd`, realthunder/FreeCAD#360, 2026-10-23)
+
+"Fillet produces a spike in the model": the `Support` body's `Fillet008`,
+four edges of the side (x -53.2) of a block standing out of the front
+(`F15`, y -70.5) at 4 -- the foot `E29`, the upright `E31`, the slope
+`E30`, all convex, and `E28`, concave, between the side and the front.
+`E29` runs on, tangent, round `Fillet007`'s r3 and up the slope's foot to
+`E28`'s lower end, where the convex chain meets the concave edge. The
+stored result reaches z 51.4 on a part 10 to 30 high. No code change: the
+spike is not made on the fork, and has not been since `fb9200b0fd` (a
+corner plate that misses its boundary is built again at G0) -- found by
+running the fillet on each picture stage's library: `6d61205cc1` and
+upstream 8.0.1 make it, invalid, about 550 points of its faces out of the
+part (to z -14.6), `1e6f5a464c` and on do not.
+
+The stored input has a vertex at a tolerance of 37.2 (`E28`'s lower end:
+`Pad016`'s, as the reporter's 2021 build stored it -- `Pad016` recomputed
+now has 1e-7 everywhere, the same volume); BOP's check fails on that
+input for it, 306 vertices. On it the fillet is valid, 85451.6916, inside
+the part; on the input recomputed (`Pad016`, then `Fillet007` at 3) the
+same volume, clean by BOP's check, and the three convex edges at once
+equal to the boolean of their single fillets (85420.6738). With `E28` the
+boolean is no reference: the corner's blend is 0.3 to 0.6 off it. The
+document's full recompute was stopped at 25 minutes for memory on the 8 GB
+box (../occ-issues/README.md), and is not looked into here.
+
+`fillet_case` takes `within=True` now: the result's tessellation inside
+the input's bounding box. A fillet takes material away or fills a concave
+corner, and makes nothing outside; a spike does, at a volume it hardly
+changes. On the stored result 2620 points are outside.
+
+| Case | What it covers |
+|------|----------------|
+| `issue360_f008_four_edges_r4` | #360's four edges on the input recomputed: valid, clean by BOP's check, the volume, inside the input's box |
+| `issue360_f008_convex_three_r4` | the three convex ones: the same, and equal to the boolean |
+| `issue360_f008_stored_input_r4` | the four on the input as stored (a vertex at 37.2): valid, the volume, inside the box |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

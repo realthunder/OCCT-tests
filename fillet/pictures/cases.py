@@ -430,6 +430,7 @@ SHAPES = {
     "postseam": lambda: _post_on_plate(turn=270),
     "postplane": _teardrop_post_on_plate,
     "p876": _brep("issue876_fillet_base.brep"),
+    "p360": _brep("issue360_fillet007_base.brep"),
     "p876f": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue876_Fillet.brep")),
     "slantblock": _slant_block,
     "ribfoot": _rib_foot,
@@ -493,6 +494,8 @@ def _flat_near(x, y, z, reach=1.0):
 
 # shape -> the face whose (u, v) outline the third row draws, found in a result
 UVFACE = {
+    # #360's block, its side x=-53.2 that the four filleted edges bound
+    "p360": _plane_at("x", -53.2),
     # the block's side x=0: the foot along y is filleted on it, and the other
     # foot's fillet is capped on it
     "roof": _plane_at("x", 0),
@@ -707,6 +710,7 @@ NAMES = {
     "postplane": "the drafted post with a straight wall tangent to its cone 41 deg round "
                  "from the edge's end",
     "p876": "#876's first Fillet input (a PartDesign body, its walls drafted 1 deg)",
+    "p360": "#360's Fillet008 input (the Support body's Fillet007, recomputed now)",
     "p876f": "#876's Fillet input (a PartDesign body; its top split by a rounded rectangle)",
     "slantblock": "a 12x3x10 prism, its top sloping down past x=4, its front wall two faces "
                   "split at x=5",
@@ -747,6 +751,7 @@ VIEW = {
     "archsplit": ((-4, 0, 3), 30.0),
     "slotwall": ((5, 5, 7), 20.0),
     "p962": ((16, 4, 11), 62.0),
+    "p360": ((0, -5.7, 20), 160.0),
     "fin": ((5, 5, 7), 20.0),
     "finwall": ((5, 5, 7), 20.0),
     "armfoot": ((30, 9, -6.75), 42.0),
@@ -802,6 +807,7 @@ UVLABEL = {
     "postseam": ("the post's cylinder", True),
     "postplane": ("the post's wall beyond the cone", False),
     "p876": ("the corner's plate", False),
+    "p360": ("the block's side", False),
     "p876f": ("the top inside the split", False),
     "slantblock": ("the wall's second piece", False),
     "ribfoot": ("the block's top", False),
@@ -878,6 +884,16 @@ _HALVES_FOOT = [((15, 0, 3), (15, 10, 3), (20, 5, 3)),
 _DRAFTED_FOOT = [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
                  ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))]
 CASES = {
+    # #360's Fillet008: a block standing out of the front, four edges of its
+    # side at 4, the convex chain round its foot meeting the concave edge
+    # beside the front; the corner plate missed its boundary and ran out of
+    # the part (the reporter's spike), made again at G0 since fb9200b0fd
+    "issue360_f008_four_edges_r4": (
+        "s962e", "p360", [((-53.2, -74.214963, 10), (-53.2, -81.9, 10)),
+                          ((-53.2, -81.9, 20), (-53.2, -81.9, 10)),
+                          ((-53.2, -81.9, 20), (-53.2, -70.5, 30)),
+                          ((-53.2, -70.5, 20), (-53.2, -70.5, 30))], 4.0,
+        85451.6916, (-53.2, -75, 18), (1, -1, 0.6)),
     # #273's Fillet001, the handle's top rounded since: the pocket's rim at its
     # apex, the cut off the top carried into the round at the top's end; the
     # fillet and the round touched there, and their curve was not found
@@ -1278,6 +1294,7 @@ ZOOMLABEL = {
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
+    "issue360_f008_four_edges_r4": 30.0,
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
     "issue273_f001_apex_line_end_e40_r0.3": 2.0,
     # the fillet is 0.005 wide; the old one's first cut at x=4.043
@@ -1295,6 +1312,7 @@ ZOOM = {
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "issue360_f008_four_edges_r4": "the four edges of the block's side x=-53.2",
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
     "issue474_f003_coilfoot_v1_e6_e10_r1": "the coil's foot and the block's top edge beside it",

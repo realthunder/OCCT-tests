@@ -55,7 +55,7 @@ the table above come first:
 | 309 | fixed (see above) |
 | 333 | no crash; Sketch006 "No planar face in AttachEngine3D" (its support remapped to a curved face) |
 | 334 | no crash; Draft003 invalid, Body invalid. Draft001 and Draft003, recomputed alone, are **refused now** (`ca766a8a92`): a drafted ledge whose corner a bevel touches needs a new edge, which a draft cannot make, and it gave an invalid shape; see `../draft/` |
-| 360 | not finished: the recompute ran 25 min and the scan was stopped for memory on the 8 GB box |
+| 360 | not finished: the recompute ran 25 min and the scan was stopped for memory on the 8 GB box. **Fillet008's spike fixed** (2026-10-23 check): made since `fb9200b0fd`, upstream 8.0.1 still makes it; the stored `Pad016` has a vertex at tolerance 37.2 (old build), recomputed now 1e-7. `../fillet/`, "#360" |
 | 474 | no crash; Fillet003 and four sketches in error |
 | 523 | Fillet invalid -- **fixed**, `../fillet/` |
 | 631 | valid (10005.3404, alt 42806.4887): wrong-but-valid needs a geometric check |

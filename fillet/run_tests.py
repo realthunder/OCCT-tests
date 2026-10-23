@@ -133,7 +133,7 @@ def document_case(name, filename, volumes=None):
 # ---------------------------------------------------------------------------
 
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
-                chamfer=False, vol_tol=None, bop=False, flat=False):
+                chamfer=False, vol_tol=None, bop=False, flat=False, within=False):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
     makeChamfer(radius, ...) with chamfer=True, radius a pair for two
     distances. flat=True: with the flat end at a vertex (../flat_end.py).
@@ -142,7 +142,11 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
                     ref_volume when given (within vol_tol when given, else
                     RELTOL of it), and no edge or vertex tolerance above
                     max_tol when given; with bop=True, nothing BOP's argument
-                    check (Shape.check(True)) reports.
+                    check (Shape.check(True)) reports; with within=True, the
+                    result's tessellation inside the input's bounding box (a
+                    fillet takes material away, or fills a concave corner:
+                    nothing it makes lies outside -- a spike does, at a
+                    volume a spike hardly changes).
     expect='xfail': known broken (see README.md); an exception, an invalid
                     shape, a loose end or an open shell counts as the
                     expected failure.
@@ -183,6 +187,14 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
                 r.check(True)
             except Exception as e:
                 problems.append("bop: " + " ".join(str(e).split())[:80])
+        if not problems and within:
+            box = shape.BoundBox
+            box.enlarge(1e-3)
+            out = [p for f in r.Faces for p in f.tessellate(0.05)[0] if not box.isInside(p)]
+            if out:
+                far = max(out, key=lambda p: box.Center.distanceToPoint(p))
+                problems.append("%d points outside the input's box, one at (%.3f, %.3f, %.3f)"
+                                % (len(out), far.x, far.y, far.z))
         ok = not problems
         detail = "; ".join(problems) if problems else "vol=%.4f" % r.Volume
     except Exception as e:
@@ -2698,6 +2710,25 @@ fillet_case("issue273_f001_apex_line_end_e40_r0.3",
 fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
             0.3, "pass", 8534.8383, vol_tol=1e-3)
+# realthunder/FreeCAD#360 ("Fillet produces a spike"): the Support body's
+# Fillet008, four edges of a block standing out of the front at 4 on
+# Fillet007. The stored result runs to z 51.4 on a part 10 to 30 high. Its
+# input, as stored, has a vertex at a tolerance of 37.2 (Pad016's, the
+# reporter's 2021 build; Pad016 recomputed now is at 1e-7): that one is
+# kept as it was stored (_stored, BOP's check fails on the input itself),
+# and the chain recomputed now is the other (_base). Both made without
+# the spike now, the same volume; on the recomputed input clean by BOP's
+# check, the convex three equal to the boolean of single fillets. No code
+# change: the spike is not made on the fork (README.md, "#360").
+fillet_case("issue360_f008_four_edges_r4",
+            Part.read(os.path.join(MODELS, "issue360_fillet007_base.brep")), [28, 29, 30, 31],
+            4.0, "pass", 85451.6916, vol_tol=1e-3, bop=True, within=True)
+fillet_case("issue360_f008_convex_three_r4",
+            Part.read(os.path.join(MODELS, "issue360_fillet007_base.brep")), [28, 29, 30],
+            4.0, "pass", 85420.6738, vol_tol=1e-3, bop=True, within=True)
+fillet_case("issue360_f008_stored_input_r4",
+            Part.read(os.path.join(MODELS, "issue360_fillet007_stored.brep")), [29, 31, 30, 28],
+            4.0, "pass", 85451.6916, vol_tol=1e-3, within=True)
 
 counts = {}
 for _, verdict, _ in results:
