@@ -4864,6 +4864,49 @@ the thickness sweep 928 of 928.
 |------|----------------|
 | `issue273_f001_e12_r0.3_ends` | `Fillet001`'s edge 12 at 0.3: refused in seconds (it never ended before); a hang is the failure, the summary line missing |
 
+## The cut off the face into a round (`5847016bbd`, realthunder/FreeCAD#273, 2026-10-23)
+
+#273's `Fillet001` is the handle of "A cut that runs off the face" after
+the Fillet: the top's edges rounded at 1 -- a B-spline round (`F14`) across
+its end (`E34`, y 15.30), cylinders (`F15`, `F16`) along its sides. The
+pocket's rims are `E38` (the base), `E39` and `E40` (apex 22 deg at (0,
+15.01, 31), 0.29 short of the end). A rim at 0.3 ends at the apex as in the
+handle: its cap in the other wall runs off the top, and the cut is carried
+on into the face beyond `Eob` -- the round now, not a plane. The round is
+tangent to the top across `E34`, and so is the fillet across its line on
+the top: the two touch where that line meets `E34` (Q). `GeomInt_IntSS`
+found no line between them and the walk did not start from its middle, and
+the corner was refused (the fillet's curve on `Fob` from Q to P).
+
+Where it is not found, it is made of their points: between Q and P, each on
+the plane across the chord at it, by `PointOnThree` (P's own solver: the
+fillet's (u, v) such that the point lies on the round and the plane),
+interpolated by chord length. Its pcurve on the fillet goes through the
+points' (u, v) on the same parameters -- P lies past the fillet's bounds,
+where a projection finds nothing -- and on the round it is projected. It
+is kept within ten times the approximation tolerance, as the segment from P
+to R is (1e-7 here). `E39` at 0.3: valid, 0.162 off, the rim's strip about
+0.155 with its ends; its base corner (79 deg, the top 0.29 wide there, the
+fillet's line running onto the side's round) set back.
+
+`E40`, its mirror, is still refused, and not for this: its stripe ends
+where its side on the wall meets the apex's edge (`E45`), its line on the
+top 0.06 past the apex and on no edge, and the cut off the top is taken
+only from a line that ends on the top's edge (`E39`'s ran on to `E34`). At
+0.8 and 2 both rims are still refused, not traced.
+
+The sweeps (`5847016bbd` against `0198e783ae`): six refused results made,
+nothing else moves -- `E39@0.3` and its vertices' sets (`V23:39`,
+`38,39`, `39,42`, `38,39,42`; `V25:39`). BOP's references fail on this
+input (it fails BOP's check itself); each set is within 0.006 of the sum of
+its single fillets' volume changes (-0.229 for -0.223, -0.128 for -0.134,
+-0.190 for -0.195). The suites: fillet 715 PASS 5 XFAIL, draft 105,
+thickness 378; the thickness sweep 928 of 928.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_f001_apex_off_round_e39_r0.3` | `Fillet001`'s pocket rim `E39` at 0.3, its apex end cut off the top into the round: valid (refused before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

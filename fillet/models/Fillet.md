@@ -1945,6 +1945,23 @@ The same input written out and read back never hung -- two planes' axes
 change in their last digits -- which is why the sweep, filleting such a
 copy, never saw it.
 
+### The cut off the face into a round (`5847016bbd`, #273's Fillet001)
+
+#273's handle with its pocket, after the next fillet rounded the edges of
+its top: the pocket's apex is now 0.29 from a round at the top's end, not
+an edge. A fillet of 0.3 on a rim of the pocket ends at the apex with a cap
+in the other wall that runs off the top, and the cut is carried on into
+the face beyond, as in the handle before -- but that face is now the
+round, and the round and the fillet are both tangent to the top: they
+touch where the fillet's line meets the top's end, and no intersection
+found the curve between them. It is now made of their points, each found
+where the two meet a plane across the chord, and kept where it lies on
+both within tolerance (1e-7 here). The other rim, the mirror, is still
+refused: its fillet stops short of the top's end, and the cut off the top
+is taken only from a line that reaches it.
+
+![issue273_f001_apex_off_round_e39_r0.3](pictures/issue273_f001_apex_off_round_e39_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

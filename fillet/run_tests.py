@@ -2675,6 +2675,17 @@ for _v, _es, _vol in ((1, (6, 10), 1988.4351), (5, (6, 21), 1988.6625)):
 # now, in seconds; a hang is this case's failure, the summary line missing
 sound_case("issue273_f001_e12_r0.3_ends",
            Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 12, 0.3)
+# #273's Fillet001, the handle's top rounded since (F14 at its end, F15 and
+# F16 along it): the pocket's rim E39 at 0.3. Its end at the apex is cut off
+# the top as in the handle (above), into the round beyond: the fillet and
+# the round, both tangent to the top, touch where the fillet's line meets
+# the top's end, and no intersection found their curve -- refused. The
+# curve now through their points (README.md, "The cut off the face into a
+# round"); the base corner set back. 0.162 off, the rim's strip about 0.155
+# with its ends. No bop: the input fails BOP's check itself.
+fillet_case("issue273_f001_apex_off_round_e39_r0.3",
+            Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 39, 0.3,
+            "pass", 8534.9956, vol_tol=1e-3)
 
 counts = {}
 for _, verdict, _ in results:
