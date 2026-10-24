@@ -2231,11 +2231,37 @@ for e, r, vol in ((23, 0.1, 8559.4677), (23, 0.3, 8559.3297), (23, 0.487, 8559.0
     fillet_case("issue273_pocket_flat_e%d_r%g" % (e, r), p273f, e, r, "pass", vol, 0.031,
                 vol_tol=1e-4, bop=True, flat=True)
 # with the base: its own end at the other base corner flat too; both rims:
-# the apex a corner of two fillets, as before, the base corners flat
-fillet_case("issue273_pocket_flat_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass", 8557.9030,
+# where two rims meet at an acute corner -- the apex, a base corner -- the
+# corner's upright edge is filleted too, the three making the corner in it
+# (README.md, "Both rims: the tip filleted"); the two alone met past it
+# (8557.9030 and 8557.2101 before), the other ends flat
+fillet_case("issue273_pocket_flat_e22_e23_r0.8", p273f, [22, 23], 0.8, "pass", 8558.2038,
             0.031, vol_tol=1e-3, bop=True, flat=True)
-fillet_case("issue273_pocket_flat_e23_e24_r0.8", p273f, [23, 24], 0.8, "pass", 8557.2101,
+fillet_case("issue273_pocket_flat_e23_e24_r0.8", p273f, [23, 24], 0.8, "pass", 8560.4721,
             0.031, vol_tol=1e-3, bop=True, flat=True)
+fillet_case("issue273_pocket_flat_e23_e24_r0.3", p273f, [23, 24], 0.3, "pass", 8559.5564,
+            0.031, vol_tol=1e-3, bop=True, flat=True)
+# the same with the upright asked for too: the same result
+fillet_case("issue273_pocket_flat_e23_e24_e30_r0.8", p273f, [23, 24, 30], 0.8, "pass",
+            8560.4721, 0.031, vol_tol=1e-3, bop=True, flat=True)
+# without the flat end, as before: the two meet past the apex
+fillet_case("issue273_pocket_both_rims_e23_e24_r0.8", p273f, [23, 24], 0.8, "pass", 8557.2006,
+            0.031, vol_tol=1e-3, flat=False)
+
+
+# A rectangular pocket's corner, both rims at it, the flat end on: a right
+# angle is no narrow tip, and its upright is not filleted -- as without.
+def _rect_pocket_rims():
+    s = Part.makeBox(30, 30, 10).cut(Part.makeBox(10, 10, 1, V(10, 10, 9))).removeSplitter()
+    c = V(20, 20, 10)
+    return s, [i + 1 for i, e in enumerate(s.Edges)
+               if any(v.Point.distanceToPoint(c) < 1e-9 for v in e.Vertexes)
+               and abs(e.Vertexes[0].Point.z - e.Vertexes[-1].Point.z) < 1e-9]
+
+
+_rp, _rims = _rect_pocket_rims()
+fillet_case("pocket_rect_corner_flat_rims_r0.3", _rp, _rims, 0.3, "pass", 8899.6111,
+            vol_tol=1e-3, bop=True, flat=True)
 # the chamfer's: the triangle from the apex to the base corner
 for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
     fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
@@ -2716,15 +2742,16 @@ fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
 # the stripe's point to the top's end; the flat end took the line's end for
 # the point, found it on the top's edge, and was not made (the cut above
 # instead) -- the point is now found on the line (README.md, "The flat end
-# where the line runs on"). Both rims: the apex a corner of the two
-# fillets, as without.
+# where the line runs on"). Both rims: the apex's edge E45 filleted too, the
+# three making the corner in the tip (README.md, "Both rims: the tip
+# filleted"; 8534.8383 before, as without the flat end).
 for e, vol in ((39, 8534.9992), (40, 8534.9994)):
     fillet_case("issue273_f001_apex_flat_e%d_r0.3" % e,
                 Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), e,
                 0.3, "pass", vol, vol_tol=1e-3, flat=True)
 fillet_case("issue273_f001_apex_flat_both_rims_e39_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
-            0.3, "pass", 8534.8383, vol_tol=1e-3, flat=True)
+            0.3, "pass", 8535.2232, vol_tol=1e-3, flat=True)
 # The base rim E38 the same: its line runs on past both base corners (79
 # deg), and with the flat end the cut ran past each, 0.05 at 0.3, 0.15 at
 # 0.8; now flat at both, nothing past them (8535.096796 and 8534.727931

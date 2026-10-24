@@ -5007,7 +5007,7 @@ past both base corners (79 deg), was refused the flat end at both and cut
 0.05 past each at 0.3, 0.15 at 0.8; it now ends flat at both, nothing past
 them. Both rims at the apex together are a corner of the two fillets, flat
 end or not (8534.8383): it rounds over the tip, 0.05 deep to 0.13 past it,
-gone by 0.27.
+gone by 0.27 -- with the flat end, until the next section.
 
 The sweeps with `FLAT=1` (`2a8844e8e6` against `57ca3587ff`): only
 `Fillet001` moves, all valid before and after -- `E40@0.3`, `E38@0.3`,
@@ -5022,6 +5022,65 @@ runs only with it on.
 | `issue273_f001_apex_flat_e40_r0.3` | its mirror `E40`, whose line runs on past its point: ends at the apex (cut into the round before) |
 | `issue273_f001_apex_flat_both_rims_e39_e40_r0.3` | both rims, the flat end on: the corner of the two, as without |
 | `issue273_f001_base_flat_e38_r0.3`, `_r0.8` | the base rim `E38`: flat at both base corners (cut past them before) |
+
+## Both rims: the tip filleted (`aeed3655f6`, realthunder/FreeCAD#273, 2026-10-24)
+
+With the flat end at a vertex on, one rim ending at a pocket's narrow tip
+ends flat; both rims at once met there as a corner of two fillets, flat
+end or not, and that corner ran out past the tip into the top: on #273's
+handle 0.27 at 0.3 and 0.76 at 0.8, on a clean 22 deg pocket 1.36 and
+2.81, on a 60 deg one 0.55 and 1.52 (how far the cut, deeper than 1e-3,
+reaches along the pocket's axis past the tip). Asked for instead (the
+user, 2026-10-24): the tip's own edge -- the upright the flat end would lie
+on -- filleted too, so the three fillets make the corner inside the tip,
+unless the two leave no face there.
+
+`ChFi3d_FilBuilder::ComputeWithFlatEndCorners`, which
+`BRepFilletAPI_MakeFillet::Build` calls for `Compute`: with the flat end
+on, at each vertex of three faces where two contours end -- on its two
+convex edges, at an acute angle between them, its third edge concave and
+in no contour -- that edge is added, at the radius both contours have at
+that end (`ChFiDS_FilSpine::RadiusAtEnd`, the constant one or the one set
+at the end's parameter, as `BRepFilletAPI_MakeFillet::Add` sets it; equal,
+or nothing is added). Not done with it, the edges added are removed and it
+is computed again without them, on a topological builder of its own. A
+right angle or more is no narrow tip: a rectangular pocket's corner is as
+before. Without the flat end nothing is added.
+
+On `Fillet001` the three were refused, though valid: at the base corners
+the setback fallback made them, and `AreFilletsMade` turned the result
+down. It asks each filleted edge's middle to lie off the result's faces by
+half of what a fillet moves it, r (1 / cos(a / 2) - 1): for the tip's edge,
+concave at 22 deg, 1.28 at 0.3 -- but the tip filled, its middle is 0.5
+from the top and the floor, the pocket being 1 deep. It now asks at most
+half the radius; a fillet dropped leaves the middle on a face, still found.
+That changes what it asks only where the faces meet under 60 deg or over
+300.
+
+Results, rims only, the flat end on: the tip's edge filleted, nothing cut
+past the tip -- the handle 8559.5564 at 0.3, 8560.4721 at 0.8 (the same as
+with the upright asked for), `Fillet001` 8535.2232 at 0.3 (at 0.8 still
+refused, by its base corners, as the rims alone); the handle's base rim
+with a side rim (`E22`, `E23`) meets at a base corner of 79 deg, filleted
+there too, 8558.2038.
+
+The sweeps (`aeed3655f6` against `2a8844e8e6`, the flat end off against
+`57ca3587ff`): the edge sweep (3921) unchanged, off and on -- one edge
+ends no two contours. The vertex sweep (12242), off: 3 EXC -> ok,
+`Fillet001`'s `V25` with its upright (`E45`) and one or both rims at 0.3,
+by the cap; on: those 3, and the two-rim tips `V14`, `V15`, `V16` of the
+handle and `V23`, `V24` of `Fillet001` at 0.3, valid before and after,
+with the tip's edge added (volume up, one or two faces more); none worse.
+The fillet suite 729 PASS 5 XFAIL, the cases below among them.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_pocket_flat_e23_e24_r0.3`, `_r0.8` | the handle's both rims, the flat end on: the apex's edge filleted too (the two met past it before) |
+| `issue273_pocket_flat_e23_e24_e30_r0.8` | the same with the apex's edge asked for: the same |
+| `issue273_pocket_flat_e22_e23_r0.8` | a base rim and a side rim, the flat end on: the base corner's edge filleted too |
+| `issue273_pocket_both_rims_e23_e24_r0.8` | both rims without the flat end: as before |
+| `issue273_f001_apex_flat_both_rims_e39_e40_r0.3` | `Fillet001`'s both rims: the tip's edge filleted (refused with it before, by `AreFilletsMade`) |
+| `pocket_rect_corner_flat_rims_r0.3` | a rectangular pocket's corner, both rims, the flat end on: nothing added |
 
 ## Known broken (XFAIL)
 

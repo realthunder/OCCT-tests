@@ -2011,13 +2011,32 @@ fillet's end lies, and the mirror ends at the apex as the first rim does:
 the two within 0.0002 of each other, cutting nothing more than 0.05 past
 the apex (the flat face is square to the rim, not to the pocket). The base
 rim, whose line runs on past both base corners, was cut past each the same
-way, and ends flat at both now. Both rims at once are a corner of the two
-fillets, flat end or not: it rounds over the tip, 0.05 deep to 0.13 past
-it and fading out by 0.27. In the picture the round is the input's own
+way, and ends flat at both now. Both rims at once were a corner of the two
+fillets, flat end or not: it rounded over the tip, 0.05 deep to 0.13 past
+it and fading out by 0.27 (with the flat end, see "Both rims: the tip
+filleted"). In the picture the round is the input's own
 face in the last column, untouched (the dark mark on its edge is how that
 face is drawn); before, it was cut.
 
 ![issue273_f001_apex_flat_e40_r0.3](pictures/issue273_f001_apex_flat_e40_r0.3.png)
+
+### Both rims: the tip filleted (`aeed3655f6`, #273)
+
+With the flat end on, one rim ends flat at the pocket's tip; but both rims
+at once met there as a corner of two fillets, and that corner ran out past
+the tip into the top -- 0.76 on the handle at 0.8, 2.8 on a clean pocket
+of the same 22 deg. Now, with the flat end on, where two fillets end at a
+narrow tip (their edges convex, at an acute angle, the third edge
+concave), the tip's own edge is filleted too, at their radius: the three
+make the corner inside the tip, and nothing is cut past it. Where that
+cannot be made, the two make it as before. A right-angled corner is no
+narrow tip, and stays as it was; without the flat end nothing changes.
+On the cup's `Fillet001` the three were refused, though the result was
+valid: the check that each fillet was made asked the middle of the tip's
+edge to lie 0.64 inside the filled tip, and the pocket is only 1 deep, its
+top and floor 0.5 from that middle. It asks half the radius at most now.
+
+![issue273_pocket_flat_tip_e23_e24_r0.8](pictures/issue273_pocket_flat_tip_e23_e24_r0.8.png)
 
 ## Making the pictures
 

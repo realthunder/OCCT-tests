@@ -90,6 +90,7 @@ STAGES = {
     "soffround": ("0198e783ae", "5847016bbd"),
     "soffend": ("5847016bbd", "57ca3587ff"),
     "sflatline": ("57ca3587ff", "2a8844e8e6"),
+    "sflattip": ("2a8844e8e6", "aeed3655f6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1200,6 +1201,13 @@ CASES = {
     "issue273_pocket_flat_e23_r0.8": ("sflat", "p273", ((0, 15.013479, 31),
                                                        (1.524712, 7.124642, 31)), 0.8,
                                       8558.3813, (0.2, 14.6, 30.7), (1, -0.5, 1.1)),
+    # both rims with the flat end (FLAT): the two fillets met past the apex,
+    # cutting into the top beyond the pocket; the apex's edge is filleted
+    # too now, and the three make the corner inside the tip
+    "issue273_pocket_flat_tip_e23_e24_r0.8": (
+        "sflattip", "p273", [((0, 15.013479, 31), (1.524712, 7.124642, 31)),
+                             ((-1.524712, 7.124642, 31), (0, 15.013479, 31))], 0.8,
+        8560.4721, (0, 14.6, 30.7), (0.6, -0.8, 1.1)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1282,13 +1290,15 @@ STRICT = {
     "issue273_pocket_apex_fold_e23_r0.8": (0.031, 1e-3),
     "issue273_pocket_apex_off_e23_r0.8": (0.031, 1e-3),
     "issue273_pocket_flat_e23_r0.8": (0.031, 1e-4),
+    "issue273_pocket_flat_tip_e23_e24_r0.8": (0.031, 1e-4),
     "issue273_handle_foot_e11_r0.8": (0.031, 1e-3),
     "issue474_f002_sliver_top_r0.3": (1e-4, 1e-4),
     "issue962_arm_corner_e25_e26_r1": (1e-4, 1e-4),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
-FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3"}
+FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
+        "issue273_pocket_flat_tip_e23_e24_r0.8"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
@@ -1325,6 +1335,7 @@ ZOOM = {
 }
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "issue273_pocket_flat_tip_e23_e24_r0.8": "both rims of the pocket at its apex",
     "issue360_f008_four_edges_r4": "the four edges of the block's side x=-53.2",
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
