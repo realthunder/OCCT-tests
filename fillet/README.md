@@ -5082,6 +5082,48 @@ The fillet suite 729 PASS 5 XFAIL, the cases below among them.
 | `issue273_f001_apex_flat_both_rims_e39_e40_r0.3` | `Fillet001`'s both rims: the tip's edge filleted (refused with it before, by `AreFilletsMade`) |
 | `pocket_rect_corner_flat_rims_r0.3` | a rectangular pocket's corner, both rims, the flat end on: nothing added |
 
+## The tip's edge at a smaller radius (`f5902943f4`, realthunder/FreeCAD#273, 2026-10-24)
+
+Where the tip's edge cannot be filleted at the rims' radius, the section
+above leaves the corner as the two rims make it -- and they meet far past
+the tip. Filleted at r, a concave edge between faces at a fills the tip
+r (1 / sin(a / 2) - 1) back along its axis: a 10 deg tip, 8 long, at 0.8
+8.4, past its walls; the two alone cut 5.6 past the apex there. Probed over
+V pockets 8 long (10 to 80 deg, 1 and 3 deep, 0.2 to 2.5): only such tips
+failed -- 10 deg from 0.8, 22 deg 3 deep at 2.5 -- and with the edge's own
+radius smaller they were all made, the corner of three inside the tip (at
+10 deg 1 deep, 0.8 on the rims: the edge at 0.1 to 0.7 cut nothing past the
+tip, at 0.05 0.23; at 22 deg 3 deep, 2.5: 1 and 1.5 nothing, 0.5 0.24, 2
+refused). Asked for (the user, 2026-10-24): a smaller radius for the tip's
+edge.
+
+`ComputeWithFlatEndCorners` now, before removing the edges it added, tries
+them again at half their radius, then a quarter, then an eighth, each from
+a topological builder of its own; a corner of fillets of two radii is made
+as one of one. Halving lands inside the clean range above: 0.4 at 10 deg,
+1.25 at 22 deg. Only the added edges are halved, all of them at once, and
+only where the computation at the full radius failed: nothing made before
+changes.
+
+Results, rims only, the flat end on, each valid and clean by BOP's check,
+nothing past the tip: 10 deg 1 deep 8994.8063 at 0.8, 8995.2424 at 0.95;
+10 deg 3 deep 8986.7907 at 0.8, 8982.7652 at 1.5 (the two alone failed
+BOP's check there, flat end or not), 8987.7699 at 2.5; 22 deg 3 deep
+8969.0308 at 2.5; 5 deg 1 deep 8996.9606 at 0.8.
+
+The vertex sweep with the flat end on (12242, `f5902943f4` against
+`aeed3655f6`): unchanged -- a first version, setting the radius in
+place, crashed at the six two-rim tips at 1, where the rims themselves
+fail. Without the flat end
+nothing is added. The fillet suite 732 PASS 5 XFAIL, the cases below among
+them.
+
+| Case | What it covers |
+|------|----------------|
+| `pocket_v10_d1_flat_tip_rims_r0.8` | a 10 deg pocket's both rims, the flat end on: the tip's edge at half the radius (the two met 5.6 past the apex before) |
+| `pocket_v10_d3_flat_tip_rims_r1.5` | the same 3 deep at 1.5: the tip's edge at half (the two alone failed BOP's check) |
+| `pocket_v22_d3_flat_tip_rims_r2.5` | a 22 deg pocket 3 deep at 2.5: the tip's edge at half |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

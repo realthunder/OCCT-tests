@@ -2029,7 +2029,7 @@ of the same 22 deg. Now, with the flat end on, where two fillets end at a
 narrow tip (their edges convex, at an acute angle, the third edge
 concave), the tip's own edge is filleted too, at their radius: the three
 make the corner inside the tip, and nothing is cut past it. Where that
-cannot be made, the two make it as before. A right-angled corner is no
+cannot be made, the two make it as before (but see the next section). A right-angled corner is no
 narrow tip, and stays as it was; without the flat end nothing changes.
 On the cup's `Fillet001` the three were refused, though the result was
 valid: the check that each fillet was made asked the middle of the tip's
@@ -2037,6 +2037,22 @@ edge to lie 0.64 inside the filled tip, and the pocket is only 1 deep, its
 top and floor 0.5 from that middle. It asks half the radius at most now.
 
 ![issue273_pocket_flat_tip_e23_e24_r0.8](pictures/issue273_pocket_flat_tip_e23_e24_r0.8.png)
+
+### The tip's edge at a smaller radius (`f5902943f4`, #273)
+
+In a narrower tip the three could not be made at one radius: a concave
+edge filleted at r fills a tip of angle a r (1 / sin(a / 2) - 1) back, and
+a 10 deg tip 8 long at 0.8 would be filled 8.4 back, past its walls. The
+two rims were then left to make the corner alone, the two fillets meeting
+each other with no corner face between them -- and running 5.6 past the
+apex into the top. Now the tip's edge is tried again at half the rims'
+radius, then a quarter, then an eighth, before it is given up; a corner of
+fillets of two radii is made as one of one. In the picture the two rims
+are 0.8 and the tip's edge 0.4: the corner of three sits inside the tip,
+nothing cut past it. Only where the full radius failed does anything
+change.
+
+![pocket_v10_d1_flat_tip_rims_r0.8](pictures/pocket_v10_d1_flat_tip_rims_r0.8.png)
 
 ## Making the pictures
 

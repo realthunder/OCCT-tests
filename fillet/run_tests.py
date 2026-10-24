@@ -2262,6 +2262,31 @@ def _rect_pocket_rims():
 _rp, _rims = _rect_pocket_rims()
 fillet_case("pocket_rect_corner_flat_rims_r0.3", _rp, _rims, 0.3, "pass", 8899.6111,
             vol_tol=1e-3, bop=True, flat=True)
+
+
+# V pockets too narrow for the tip's edge at the rims' radius: filleted at 0.8
+# a 10 deg tip fills 8.4 back, past its walls' 8, and the two rims met 5.6
+# past the apex without it; the edge is filleted at half the radius now (a
+# quarter, an eighth, where half is not made). At 10 deg 3 deep, 1.5, the two
+# alone were refused by BOP's check
+def _v_pocket_rims(deg, depth):
+    h = math.radians(deg / 2.0)
+    pts = [(15 - 8 * math.tan(h), 8), (15 + 8 * math.tan(h), 8), (15, 16)]
+    w = Part.makePolygon([App.Vector(x, y, 10) for x, y in pts]
+                         + [App.Vector(pts[0][0], pts[0][1], 10)])
+    s = Part.makeBox(30, 30, 10).cut(
+        Part.Face(w).extrude(App.Vector(0, 0, -depth))).removeSplitter()
+    c = App.Vector(15, 16, 10)
+    return s, [i + 1 for i, e in enumerate(s.Edges)
+               if any(v.Point.distanceToPoint(c) < 1e-9 for v in e.Vertexes)
+               and abs(e.Vertexes[0].Point.z - e.Vertexes[-1].Point.z) < 1e-9]
+
+
+for deg, depth, r, vol in ((10, 1, 0.8, 8994.8063), (10, 3, 1.5, 8982.7652),
+                           (22, 3, 2.5, 8969.0308)):
+    _vp, _vrims = _v_pocket_rims(deg, depth)
+    fillet_case("pocket_v%d_d%g_flat_tip_rims_r%g" % (deg, depth, r), _vp, _vrims, r, "pass",
+                vol, vol_tol=1e-3, bop=True, flat=True)
 # the chamfer's: the triangle from the apex to the base corner
 for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
     fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,

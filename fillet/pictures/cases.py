@@ -91,6 +91,7 @@ STAGES = {
     "soffend": ("5847016bbd", "57ca3587ff"),
     "sflatline": ("57ca3587ff", "2a8844e8e6"),
     "sflattip": ("2a8844e8e6", "aeed3655f6"),
+    "stiphalf": ("aeed3655f6", "f5902943f4"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -367,6 +368,17 @@ def _boss_seam():
     return Part.makeBox(30, 20, 3).fuse(b).removeSplitter()
 
 
+def _v_pocket(deg, depth):
+    """A V pocket in a 30x30x10 block's top: <deg> at its apex (15, 16, 10),
+    8 long, <depth> deep."""
+    import math
+    V = App.Vector
+    h = math.radians(deg / 2.0)
+    pts = [(15 - 8 * math.tan(h), 8), (15 + 8 * math.tan(h), 8), (15, 16)]
+    w = Part.makePolygon([V(x, y, 10) for x, y in pts] + [V(pts[0][0], pts[0][1], 10)])
+    return Part.makeBox(30, 30, 10).cut(Part.Face(w).extrude(V(0, 0, -depth))).removeSplitter()
+
+
 def _pocket_mouth():
     """run_tests.py's pocket_mouth: a block with a round pocket that widens
     below a step and a slot out of it, the slot's wall split above the step
@@ -427,6 +439,7 @@ SHAPES = {
     "armtilt": _arm_tilted_under_block,
     "p474": _brep("issue474_fillet003_base.brep"),
     "p273": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue273_Fillet.brep")),
+    "pv10": lambda: _v_pocket(10, 1.0),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
@@ -532,6 +545,7 @@ UVFACE = {
     "p474": _plate_near(-13, 0, 13),
     # the patch at the pocket's apex
     "p273": _plate_near(0, 15.0135, 30.6, 1.5),
+    "pv10": _plate_near(15, 16, 9.6, 1.5),
     # the plate's side, whose outline ran up to the top and back down
     "postplate": _plane_at("y", -3),
     # the post's cone, carried on below its base by the cut
@@ -707,6 +721,7 @@ NAMES = {
                "the corner under the block's wall, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
+    "pv10": "a 30x30x10 block, a V pocket in its top 10 deg at the apex, 8 long, 1 deep",
     "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
@@ -766,6 +781,7 @@ VIEW = {
     "armtilt": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
     "p273": ((0, 2, 16), 44.0),
+    "pv10": ((15, 15, 5), 40.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
@@ -807,6 +823,7 @@ UVLABEL = {
     "armtilt": ("the flat face under the wall", False),
     "p474": ("the corner's plate", False),
     "p273": ("the face at the apex", False),
+    "pv10": ("the face at the apex", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
@@ -1208,6 +1225,13 @@ CASES = {
         "sflattip", "p273", [((0, 15.013479, 31), (1.524712, 7.124642, 31)),
                              ((-1.524712, 7.124642, 31), (0, 15.013479, 31))], 0.8,
         8560.4721, (0, 14.6, 30.7), (0.6, -0.8, 1.1)),
+    # both rims of a 10 deg pocket at 0.8 (FLAT): the apex's edge filleted at
+    # 0.8 would fill the tip 8.4 back, past the walls' 8, and the two rims
+    # met 5.6 past the apex without it; it is filleted at half, 0.4, now
+    "pocket_v10_d1_flat_tip_rims_r0.8": (
+        "stiphalf", "pv10", [((15, 16, 10), (15.699909, 8, 10)),
+                             ((14.300091, 8, 10), (15, 16, 10))], 0.8,
+        8994.8063, (15, 17.5, 9.5), (0.6, -0.8, 1.1)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1298,6 +1322,7 @@ STRICT = {
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
 FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
+        "pocket_v10_d1_flat_tip_rims_r0.8",
         "issue273_pocket_flat_tip_e23_e24_r0.8"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
@@ -1317,6 +1342,7 @@ ZOOMLABEL = {
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
     "issue360_f008_four_edges_r4": 30.0,
+    "pocket_v10_d1_flat_tip_rims_r0.8": 10.0,
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
     "issue273_f001_apex_line_end_e40_r0.3": 2.0,
     "issue273_f001_apex_flat_e40_r0.3": 2.0,
@@ -1336,6 +1362,7 @@ ZOOM = {
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
     "issue273_pocket_flat_tip_e23_e24_r0.8": "both rims of the pocket at its apex",
+    "pocket_v10_d1_flat_tip_rims_r0.8": "both rims of the pocket at its apex",
     "issue360_f008_four_edges_r4": "the four edges of the block's side x=-53.2",
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
