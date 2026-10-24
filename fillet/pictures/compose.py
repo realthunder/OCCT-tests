@@ -15,8 +15,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cases import (CASES, CHAMFER, EDGES, NAMES, REFUSED, STAGES, UVLABEL, UVLABEL_CASE, VIEW,
-                   ZOOM, ZOOMLABEL)
+from cases import (CASES, CHAMFER, EDGES, FLAT, NAMES, REFUSED, STAGES, UVLABEL, UVLABEL_CASE,
+                   VIEW, ZOOM, ZOOMLABEL)
 
 P = os.environ["FILLET_WORK"]
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
@@ -89,6 +89,8 @@ for name in sys.argv[2:] or list(CASES):
               else "expected %.4f" % ref if ref is not None else "expected a valid solid")
     what = ("chamfer " + " and ".join("%g" % x for x in CHAMFER[name]) if name in CHAMFER
             else "fillet r%g" % radius)
+    if name in FLAT:
+        on += ", the flat end at a vertex on"
     desc = "%s; %s on %s; %s  (fix: %s)" % (NAMES[sk], what, on, expect, fix)
     words, line, lines = desc.split(" "), "", []
     for wd in words:

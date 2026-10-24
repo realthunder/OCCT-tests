@@ -2710,6 +2710,29 @@ fillet_case("issue273_f001_apex_line_end_e40_r0.3",
 fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
             0.3, "pass", 8534.8383, vol_tol=1e-3)
+# The same with the flat end at a vertex, as FreeCAD's Fillets from version 1
+# make them: each rim ends at the apex, nothing cut past it into the round,
+# 0.0036 less taken than the cut above. E40's line on the top runs on past
+# the stripe's point to the top's end; the flat end took the line's end for
+# the point, found it on the top's edge, and was not made (the cut above
+# instead) -- the point is now found on the line (README.md, "The flat end
+# where the line runs on"). Both rims: the apex a corner of the two
+# fillets, as without.
+for e, vol in ((39, 8534.9992), (40, 8534.9994)):
+    fillet_case("issue273_f001_apex_flat_e%d_r0.3" % e,
+                Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), e,
+                0.3, "pass", vol, vol_tol=1e-3, flat=True)
+fillet_case("issue273_f001_apex_flat_both_rims_e39_e40_r0.3",
+            Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
+            0.3, "pass", 8534.8383, vol_tol=1e-3, flat=True)
+# The base rim E38 the same: its line runs on past both base corners (79
+# deg), and with the flat end the cut ran past each, 0.05 at 0.3, 0.15 at
+# 0.8; now flat at both, nothing past them (8535.096796 and 8534.727931
+# before).
+for r, vol, tol in ((0.3, 8535.09671, 2e-5), (0.8, 8534.7369, 1e-3)):
+    fillet_case("issue273_f001_base_flat_e38_r%g" % r,
+                Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 38,
+                r, "pass", vol, vol_tol=tol, flat=True)
 # realthunder/FreeCAD#360 ("Fillet produces a spike"): the Support body's
 # Fillet008, four edges of a block standing out of the front at 4 on
 # Fillet007. The stored result runs to z 51.4 on a part 10 to 30 high. Its

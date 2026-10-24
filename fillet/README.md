@@ -4984,6 +4984,45 @@ changes. On the stored result 2620 points are outside.
 | `issue360_f008_convex_three_r4` | the three convex ones: the same, and equal to the boolean |
 | `issue360_f008_stored_input_r4` | the four on the input as stored (a vertex at 37.2): valid, the volume, inside the box |
 
+## The flat end where the line runs on (`2a8844e8e6`, realthunder/FreeCAD#273, 2026-10-24)
+
+The two sections before #360 make `Fillet001`'s pocket rims with the flat
+end at a vertex off (OCCT's default, and a FreeCAD Fillet's from an older
+file): the cut runs out of the pocket past the apex, into the round at the
+top's end. With it on (`cd24623b20`, a FreeCAD Fillet from version 1), the
+fillet is to end at the apex, flat. `E39` did; `E40` did not. `MakeFlatEnd`
+took the parameter of the end of the fillet's line on the top
+(`Fio.Parameter`) for the stripe's common point there, but `E40`'s line,
+a KPart's, runs on 0.26 past that point, to the top's end `E34` (above).
+The point it classified, the line's end, was on `E34`, not inside the top,
+and the flat end was refused -- the usual cap instead,
+the cut 0.44 past the apex along the rim. Where the common point does not
+lie at the line's parameter, it is now projected onto the line (within the
+line's range, ten times the approximation tolerance), and the interference
+is set to that parameter. `E40` ends at the apex: 8534.9994, `E39`
+8534.9992, 0.0036 less taken than without the flat end, and nothing deeper
+than 1e-3 more than 0.05 past the apex (the flat face is square to the rim,
+not to the pocket's axis). The base rim `E38`, whose line runs on
+past both base corners (79 deg), was refused the flat end at both and cut
+0.05 past each at 0.3, 0.15 at 0.8; it now ends flat at both, nothing past
+them. Both rims at the apex together are a corner of the two fillets, flat
+end or not (8534.8383): it rounds over the tip, 0.05 deep to 0.13 past it,
+gone by 0.27.
+
+The sweeps with `FLAT=1` (`2a8844e8e6` against `57ca3587ff`): only
+`Fillet001` moves, all valid before and after -- `E40@0.3`, `E38@0.3`,
+`E38@0.8` and the vertex sets with `E40` or `E38` at 0.3 (11 of 12242),
+each with one or two faces more. The fillet suite 725 PASS 5 XFAIL, the
+cases below among them. Without the flat end nothing changes: the code
+runs only with it on.
+
+| Case | What it covers |
+|------|----------------|
+| `issue273_f001_apex_flat_e39_r0.3` | `Fillet001`'s rim `E39` at 0.3, the flat end on: ends at the apex |
+| `issue273_f001_apex_flat_e40_r0.3` | its mirror `E40`, whose line runs on past its point: ends at the apex (cut into the round before) |
+| `issue273_f001_apex_flat_both_rims_e39_e40_r0.3` | both rims, the flat end on: the corner of the two, as without |
+| `issue273_f001_base_flat_e38_r0.3`, `_r0.8` | the base rim `E38`: flat at both base corners (cut past them before) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

@@ -1960,6 +1960,12 @@ both within tolerance (1e-7 here). The other rim, the mirror, is still
 refused: its fillet stops short of the top's end, and the cut off the top
 is taken only from a line that reaches it.
 
+This, and the next section, is the end with the flat end at a vertex off:
+OCCT's default, and that of a FreeCAD Fillet from an older file. The cut
+runs out of the pocket here, which is what the flat end is for: a new
+Fillet has it on, and ends at the apex instead ("The flat end where the
+line runs on").
+
 ![issue273_f001_apex_off_round_e39_r0.3](pictures/issue273_f001_apex_off_round_e39_r0.3.png)
 
 ### The cut off the face from the line's end (`57ca3587ff`, #273's Fillet001)
@@ -1970,7 +1976,8 @@ top's end; but its line on the top does run on to the top's end. That end
 is now taken as where the cut runs off the top, as if the fillet had
 stopped there, and the corner is cut into the round as the first rim's is.
 Both rims together are valid too. At 0.8 the apex is now cut the same way,
-and what still refuses the rim there is its other end, at the base.
+and what still refuses the rim there is its other end, at the base. The
+flat end off again; with it on, see "The flat end where the line runs on".
 
 ![issue273_f001_apex_line_end_e40_r0.3](pictures/issue273_f001_apex_line_end_e40_r0.3.png)
 
@@ -1989,6 +1996,28 @@ tolerance of 37 mm from the pad before, made by their 2021 build; the pad
 recomputed now has none.
 
 ![issue360_f008_four_edges_r4](pictures/issue360_f008_four_edges_r4.png)
+
+### The flat end where the line runs on (`2a8844e8e6`, #273's Fillet001)
+
+The two rims above with the flat end at a vertex on (`cd24623b20`), as
+FreeCAD's Fillets have it from their version 1: each should end at the
+apex, flat, and cut nothing past the pocket. The first rim did. The mirror
+did not: the flat end takes the point where the fillet's line on the top
+ends, and took the line's own end -- the line that runs on past the
+fillet's end to the top's end (above) -- found it on the top's edge, not
+inside the top, gave up, and the cut ran into the round as with the flat
+end off, 0.44 past the apex. The point is now found on the line, where the
+fillet's end lies, and the mirror ends at the apex as the first rim does:
+the two within 0.0002 of each other, cutting nothing more than 0.05 past
+the apex (the flat face is square to the rim, not to the pocket). The base
+rim, whose line runs on past both base corners, was cut past each the same
+way, and ends flat at both now. Both rims at once are a corner of the two
+fillets, flat end or not: it rounds over the tip, 0.05 deep to 0.13 past
+it and fading out by 0.27. In the picture the round is the input's own
+face in the last column, untouched (the dark mark on its edge is how that
+face is drawn); before, it was cut.
+
+![issue273_f001_apex_flat_e40_r0.3](pictures/issue273_f001_apex_flat_e40_r0.3.png)
 
 ## Making the pictures
 

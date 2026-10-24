@@ -89,6 +89,7 @@ STAGES = {
     "sonarc": ("e352f81743", "55f74fd428"),
     "soffround": ("0198e783ae", "5847016bbd"),
     "soffend": ("5847016bbd", "57ca3587ff"),
+    "sflatline": ("57ca3587ff", "2a8844e8e6"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -595,6 +596,9 @@ UVFACE_CASE = {
     "issue273_f001_apex_line_end_e40_r0.3": (
         lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
         and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
+    "issue273_f001_apex_flat_e40_r0.3": (
+        lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
+        and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
     # the plate's side under the post's long wall, the thin fillet along its top
     "issue876_kink_e52_r0.3": _plane_at("y", -16.75),
     # the fin's wall, its far piece (x 0..9.3), where the two fillets' lines meet
@@ -831,6 +835,7 @@ UVLABEL = {
 UVLABEL_CASE = {
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
     "issue273_f001_apex_line_end_e40_r0.3": ("the round at the top's end", False),
+    "issue273_f001_apex_flat_e40_r0.3": ("the round at the top's end", False),
     "issue962_opposite_v38_e54_e84_r0.3": ("the ledge along the top", False),
     "issue962_groove_v38_e54_e90_r1": ("the groove's floor", False),
     "issue962_arm_corner_e25_e26_r1": ("the floor", False),
@@ -906,6 +911,13 @@ CASES = {
     "issue273_f001_apex_line_end_e40_r0.3": (
         "soffend", "p273b", ((-1.524712, 7.124642, 31), (0, 15.013479, 31)), 0.3,
         8534.9958, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
+    # the same with the flat end at a vertex (FLAT), as a new FreeCAD Fillet
+    # makes it: the flat end took the line's end, on the top's edge, for the
+    # stripe's point and was not made, the cut run into the round instead;
+    # the point found on the line, the fillet ends at the apex, flat
+    "issue273_f001_apex_flat_e40_r0.3": (
+        "sflatline", "p273b", ((-1.524712, 7.124642, 31), (0, 15.013479, 31)), 0.3,
+        8534.9994, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
     # #474's coil leaving its block: the block's top edge beside the coil's
     # foot, the plate's corner; the top edge's line ran on to the block's far
     # end, and the plate took that end's parameter on the far edge for one on
@@ -1276,7 +1288,7 @@ STRICT = {
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
-FLAT = {"issue273_pocket_flat_e23_r0.8"}
+FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
@@ -1297,6 +1309,7 @@ ZOOM = {
     "issue360_f008_four_edges_r4": 30.0,
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
     "issue273_f001_apex_line_end_e40_r0.3": 2.0,
+    "issue273_f001_apex_flat_e40_r0.3": 2.0,
     # the fillet is 0.005 wide; the old one's first cut at x=4.043
     "issue876_kink_e52_r0.3": 0.04,
     "issue962_e36_r2": 1.4,
