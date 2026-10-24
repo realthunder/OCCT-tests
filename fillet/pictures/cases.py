@@ -92,6 +92,7 @@ STAGES = {
     "sflatline": ("57ca3587ff", "2a8844e8e6"),
     "sflattip": ("2a8844e8e6", "aeed3655f6"),
     "stiphalf": ("aeed3655f6", "f5902943f4"),
+    "sloftend": ("f5902943f4", "2bde18d4b5"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -440,6 +441,7 @@ SHAPES = {
     "p474": _brep("issue474_fillet003_base.brep"),
     "p273": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue273_Fillet.brep")),
     "pv10": lambda: _v_pocket(10, 1.0),
+    "p631l": _brep("issue631_loft_joint.brep"),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
@@ -546,6 +548,7 @@ UVFACE = {
     # the patch at the pocket's apex
     "p273": _plate_near(0, 15.0135, 30.6, 1.5),
     "pv10": _plate_near(15, 16, 9.6, 1.5),
+    "p631l": _plate_near(2.6, -9, 15.9, 10.0),
     # the plate's side, whose outline ran up to the top and back down
     "postplate": _plane_at("y", -3),
     # the post's cone, carried on below its base by the cut
@@ -722,6 +725,7 @@ NAMES = {
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
     "pv10": "a 30x30x10 block, a V pocket in its top 10 deg at the apex, 8 long, 1 deep",
+    "p631l": "#631's Loft (a PartDesign body: a loft on a pad, its faces planes made B-splines)",
     "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
@@ -782,6 +786,7 @@ VIEW = {
     "p474": ((-1.4, 0, 24.3), 34.0),
     "p273": ((0, 2, 16), 44.0),
     "pv10": ((15, 15, 5), 40.0),
+    "p631l": ((-13, -15, 25), 70.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
@@ -824,6 +829,7 @@ UVLABEL = {
     "p474": ("the corner's plate", False),
     "p273": ("the face at the apex", False),
     "pv10": ("the face at the apex", False),
+    "p631l": ("the plate at the end", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
@@ -1232,6 +1238,12 @@ CASES = {
         "stiphalf", "pv10", [((15, 16, 10), (15.699909, 8, 10)),
                              ((14.300091, 8, 10), (15, 16, 10))], 0.8,
         8994.8063, (15, 17.5, 9.5), (0.6, -0.8, 1.1)),
+    # #631's joint of the loft and the pad, filleted at 15: its end on the
+    # loft's side, past the side's B-spline bounds, was a plate bulging out of
+    # the pad's side; the face is extended for the cut now, as a plane runs on
+    "issue631_loft_joint_e18_r15": ("sloftend", "p631l", ((4.022164, -10, 16.501574),
+                                                         (-18.88777, -10, 16.501574)), 15,
+                                    9919.5607, (4, -12, 17), (1, -0.8, -0.4)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1343,6 +1355,7 @@ ZOOMLABEL = {
 ZOOM = {
     "issue360_f008_four_edges_r4": 30.0,
     "pocket_v10_d1_flat_tip_rims_r0.8": 10.0,
+    "issue631_loft_joint_e18_r15": 36.0,
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
     "issue273_f001_apex_line_end_e40_r0.3": 2.0,
     "issue273_f001_apex_flat_e40_r0.3": 2.0,

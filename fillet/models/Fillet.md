@@ -2054,6 +2054,22 @@ change.
 
 ![pocket_v10_d1_flat_tip_rims_r0.8](pictures/pocket_v10_d1_flat_tip_rims_r0.8.png)
 
+### A face's B-spline bounds at the fillet's end (`2bde18d4b5`, #631)
+
+#631's loft stands on a pad, and its joint with the pad -- the crease under
+the loft's overhang -- is filleted at 15. The report: from about 3 on, the
+result is valid and wrong. The loft's faces are flat, but each is a
+B-spline patch, and a B-spline ends at its bounds where a plane runs on.
+The fillet's end on the loft's side lies just past that side's bottom
+edge, outside the patch: the cut there was not found, and the end was
+closed by a plate instead, which bulged out of the pad's side -- 85 over
+at 15, the fillet itself 118. Now the patch is extended for the cut, as a
+plane would be, and the fillet ends on the pad's side and the loft's, flat
+both: the same volume, at every radius, as the loft rebuilt with plane
+faces.
+
+![issue631_loft_joint_e18_r15](pictures/issue631_loft_joint_e18_r15.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

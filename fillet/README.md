@@ -5124,6 +5124,44 @@ them.
 | `pocket_v10_d3_flat_tip_rims_r1.5` | the same 3 deep at 1.5: the tip's edge at half (the two alone failed BOP's check) |
 | `pocket_v22_d3_flat_tip_rims_r2.5` | a 22 deg pocket 3 deep at 2.5: the tip's edge at half |
 
+## A face's B-spline bounds at the fillet's end (`2bde18d4b5`, realthunder/FreeCAD#631, 2026-10-24)
+
+#631: "Fillet at a loft edge joint gives a wrong but valid shape (radius >
+3 mm)". The document's `Loft` stands on a pad; its `Fillet` (15) takes the
+joint of the two (`E18` of the loft's solid, concave, under the loft's
+overhang), a line ending at two vertices of four edges: on the pad's side
+and the loft's. The loft's faces are planes, as a loft between two
+rectangles with parallel sides makes them, but each a B-spline of 2 x 2
+poles. Filleted, the joint's volume over the loft's went with the radius
+as r squared times 0.523 at 1, 0.509 at 3, then 0.572 at 4, 0.719 at 10,
+0.904 at 15; the loft rebuilt with its faces planes gives 0.529 to 0.526,
+as a straight edge between planes does. At the end at x = 4.02 a face of
+the fillet's own came out, 5.3 at 4, 128 at 15, reaching x = 8.14, past the
+solid: a bulge out of the pad's side, valid, 85 over at 15 (the fillet
+itself 118).
+
+The end (`PerformIntersectionAtEnd`, a vertex of four edges) cuts the
+fillet on each face it crosses, between the points found on the edges
+there. On the loft's side the cut lies past the side's bottom edge, outside
+the B-spline's parameter range (u -10 to 0, the cut from -10 to -10.09 at 1,
+to -11.42 at 15); `ChFi3d_BoundFac` keeps the box within those bounds, the
+intersection found nothing, and the end was given to the plate
+(`PerformMoreThreeCorner`). A plane has no bounds: the same cut on it is
+found. Now a B-spline or Bezier face, not periodic, whose cut's ends lie
+outside its bounds is extended first (`ChFi3d_ExtendSurface`, as the end's
+other branches extend a face), the cut made on the extension, and the face
+takes the extended surface, as it would a plane's.
+
+Results, the joint at 0.3 to 20: the volume the planes' loft gives, to
+1e-4, 15 faces, valid and clean by BOP's check at every radius; the
+document's `Fillet` 9919.5607 (10004.5590 before). The edge and vertex
+sweeps, flat end off and on, the edge sweep at 4 and 10, and the chamfer's
+edge sweep: nothing moved.
+
+| Case | What it covers |
+|------|----------------|
+| `issue631_loft_joint_e18_r{1,4,10,15}` | #631's loft joint: the volume of the loft rebuilt with plane faces, to 1e-3 (a bulge out of the pad's side from 4 before), clean by BOP's check |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

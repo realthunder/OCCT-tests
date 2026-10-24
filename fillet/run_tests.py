@@ -2287,6 +2287,20 @@ for deg, depth, r, vol in ((10, 1, 0.8, 8994.8063), (10, 3, 1.5, 8982.7652),
     _vp, _vrims = _v_pocket_rims(deg, depth)
     fillet_case("pocket_v%d_d%g_flat_tip_rims_r%g" % (deg, depth, r), _vp, _vrims, r, "pass",
                 vol, vol_tol=1e-3, bop=True, flat=True)
+
+# #631: a loft on a pad, the fillet of their joint (concave, under the loft's
+# overhang) ending on the pad's side and the loft's -- a plane, as a loft
+# makes it, a B-spline of 2 x 2 poles. Its cut on the loft's side lies past
+# the B-spline's bounds, where a plane runs on; bounded, it was not found
+# and the end was a plate bulging out of the pad's side from 4 on (the
+# report: "wrong but valid, radius > 3"), 85 over at 15, the fillet itself
+# 118. Now the face is extended for the cut: the volume is the one of the
+# loft rebuilt with its faces planes, to 1e-4, at every radius.
+p631l = Part.read(os.path.join(MODELS, "issue631_loft_joint.brep"))
+e631l = edge_between(p631l, (4.022164, -10, 16.501574), (-18.88777, -10, 16.501574))
+for r, vol in ((1, 9801.8039), (4, 9809.7324), (10, 9853.978), (15, 9919.5607)):
+    fillet_case("issue631_loft_joint_e18_r%g" % r, p631l, e631l, r, "pass", vol, vol_tol=1e-3,
+                bop=True)
 # the chamfer's: the triangle from the apex to the base corner
 for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
     fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
