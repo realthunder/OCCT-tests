@@ -5255,17 +5255,25 @@ with the library before it (`2bde18d4b5`), radius by radius:
 |------|-------------|-----------------------|
 | #273 `Fillet` E38, `Fillet001` E55 | 1.39 (invalid from 1.41) | The ceiling's arc of a blind D-shaped hole (a cylinder of radius 3.15, a flat at x = -1.75, the ceiling at z = 16). The fillet's line on the ceiling is a circle of radius 3.15 - r: past 1.4 it misses the flat altogether, and the fillet cannot end there -- it would run on round the flat side, the flat's ceiling edge (E42) with it. Before the refusal, a torus out through the flat |
 | #273 `Fillet` E20 | 1.2 (invalid from 1.3) | The top's side edge beside the triangular pocket in the top: the fillet's line on the top lies r from E20, and the pocket's corner (1.52, 7.12) about 1.26 from it. Past that the fillet runs into the pocket's rim -- a fillet over another feature's edge, which the builder does not make |
-| #474 `Fillet003` E52 | 1.8 (invalid at 2) | The side of a rib's top 2 wide (F28, 2 x 4): at 2 the fillet's line on the top is the rib's other edge, the whole face taken -- as `issue273_pocket_wall_wide_e23_r1` (Known broken) |
-| #474 `Fillet003` E49 | refused at 0.3 | A cusp in the input itself |
+| #474 `Fillet003` E52 | 1.99 (invalid from 2) | The coil's leg goes down through the coil's band and ends flush with its underside: E52 is where the leg's bottom (F28, its 2 x 4 section) meets the band's underside, 4 deg off flush. The band is 2 thick, and the fillet fails from exactly that radius |
+| #474 `Fillet003` E49 | none: invalid at every radius, 0.1 too | Not a limit of the shape, and no cusp (an earlier note's word): the leg's corner, whose lower end is a vertex of five faces where the corner runs on straight as E47 -- the leg's side F26 going on below as the band's end face F21, in the same plane -- and the leg's bottom meets the band's underside 5 deg off flush. The fillet runs on along E47 and comes out invalid there, its end piece and the leg's side. A failure of the builder's, left: below |
 | #962 `Fillet` E6 (and E9) | refused at 0.3, 0.8, 2 | Its end past a ledge 0.05 wide: made by FreeCAD, which takes the ledge out (above, "Sliver faces taken out") |
 
 The vertex sweep's refusals of the same kind are corners holding such edges:
 #474 `Fillet002`'s at the coil that comes out of its leg with no height;
-`Fillet003`'s V27 and V28 at E49, and V25 at E42 -- the coil's edge on the
+`Fillet003`'s V27 and V28 at E49, and V25 at E42 -- the band's top on the
 leg's side (F23, the face E49 bounds too), refused alone at every radius
-before and since; #962's at the gap. What is left to do in the kernel here
-is the fillet that runs over another feature's edge (E20), a capability of
-its own.
+before and since. At V25 the input has a face of no area (F22, 1e-6),
+bounded by two coincident edges up the leg's corner (E45, E48) and one of no
+length; #962's at the gap. What is left to do in the kernel here is #474's
+E49, a fillet run on through a vertex where two coplanar faces join and a
+crease 5 deg off flush ends, and the fillet that runs over another feature's
+edge (E20), a capability of its own.
+
+`models/pictures/issue474_refusals.png` shows #474's: the leg in the band
+with E52, E42, E49 and F22 marked, E52 at 1.99 and at 2, and `Fillet002`'s
+coil leaving its leg (made by hand from the GUI's renders, not by
+`make_pictures.sh`).
 
 ## Known broken (XFAIL)
 
