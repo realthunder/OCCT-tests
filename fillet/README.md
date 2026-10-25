@@ -5290,6 +5290,18 @@ the feature cut or fused after.
 Fillet at 1.5, 2 and 2.5 (not made by `make_pictures.sh`: the kernel alone
 refuses it).
 
+Over the edge sweep's 1321 refusals at 0.3, 0.8 and 2, a PartDesign Fillet
+with both fallbacks on (2026-10-25, the whole run 159 s, no case over 4.7
+s; before the limits to elementary faces cases ran 88 to 103 s):
+339 are edges between two faces smooth across them (coplanar pieces of one
+wall), which the kernel refuses ("no suitable edges") and FreeCAD leaves as
+they are; 591 are edges FreeCAD does not take (tangent, not C0), 197 at each
+radius; 7 are made, valid and clean by BOP's check -- #273 E20 and E21 at 2
+(one line; the pocket), #962 E6 at 0.3, 0.8 and 2 and E9 at 0.3 and 0.8 (one
+ring; the ledge). The 384 left fail in the builder: 58 at 0.3 (#273
+`Fillet001` 9, #474 `Fillet002` 12 and `Fillet003` 11, #876 `Fillet` and
+`Fillet001` 12 each, #962 `Fillet` 2), 67 at 0.8 and 259 at 2.
+
 ## The sweeps' last refusals at 0.3, 0.8 and 2: each a limit of the shape (2026-10-25)
 
 Since `6271a7f719` no sweep has an invalid result. The edges the edge sweep
