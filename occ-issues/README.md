@@ -51,16 +51,16 @@ the table above come first:
 
 | # | Now (fork before `16df68d224`) |
 |---|---|
-| 273 | Body valid; Pad003 invalid, Sketch003 in error (both files). The chamfer crash needs the interactive chamfer scripted |
+| 273 | Body valid; Pad003 invalid, Sketch003 in error (both files). The chamfer crash needs the interactive chamfer scripted **Rescan 2026-10-25** (`d602360242`): both files recompute with every Fillet valid (8544.4503; 8535.1578, 8525.7094) and Pad003 valid; the one error left is Sketch004's. |
 | 309 | fixed (see above) |
 | 333 | no crash; Sketch006 "No planar face in AttachEngine3D" (its support remapped to a curved face) |
 | 334 | no crash; Draft003 invalid, Body invalid. Draft001 and Draft003, recomputed alone, are **refused now** (`ca766a8a92`): a drafted ledge whose corner a bevel touches needs a new edge, which a draft cannot make, and it gave an invalid shape; see `../draft/` |
 | 360 | not finished: the recompute ran 25 min and the scan was stopped for memory on the 8 GB box. **Fillet008's spike fixed** (2026-10-23 check): made since `fb9200b0fd`, upstream 8.0.1 still makes it; the stored `Pad016` has a vertex at tolerance 37.2 (old build), recomputed now 1e-7. `../fillet/`, "#360" |
-| 474 | no crash; Fillet003 and four sketches in error |
+| 474 | no crash; Fillet003 and four sketches in error **Rescan 2026-10-25** (`d602360242`): Fillet, Fillet001, Fillet002 valid; Fillet003 errs because its edge reference is lost (`?Edge41`), Sketch017's attachment failing upstream ("No planar face") -- a document error, not the fillet's; on its stored base it is a suite case (`../fillet/`). |
 | 523 | Fillet invalid -- **fixed**, `../fillet/` |
 | 631 | valid (10005.3404, alt 42806.4887): wrong-but-valid needs a geometric check. **Fixed** (2026-10-24, `2bde18d4b5`): the Fillet (15, the loft-pad joint, `Edge18` of the loft) bulged out of the pad's side -- its end on the loft's side, a plane made a B-spline, lay past the B-spline's bounds and went to a plate; now 9919.5607, the volume of the loft with plane faces. The alt document (four fillets, r 39 to 49, on an S-bent bar's bends) is unchanged, 42806.4889, and renders clean. `../fillet/`, "A face's B-spline bounds" |
-| 876 | valid by `isValid()` and the BOP check through Fillet001; the Pocket result is the 3-face 475.17 solid, still wrong. Its first fillets moved by 0.0173 with the #523 fix (right period, closer to tangent) |
-| 962 | Fillet, Fillet003, Fillet004 invalid; Body001 invalid. The recompute stops at Sketch004 ("malformed constraints" after an element remap), so these are the stored shapes. Fillet's five failing edges (101, 102, 104, 105, 50) **fixed**, `../fillet/` (`cf96757c36`: corners on walls split in coplanar pieces); and with all twelve edges since `b38f0d910c` (the pair 36 + 49 rewrote one coplanar seam twice): 11552.7830, `issue962_fillet_r0.8` |
+| 876 | valid by `isValid()` and the BOP check through Fillet001; the Pocket result is the 3-face 475.17 solid, still wrong. Its first fillets moved by 0.0173 with the #523 fix (right period, closer to tangent) **Rescan 2026-10-25** (`d602360242`): the whole document recomputes clean; the Pocket cuts, 8558.5252, 69 faces, valid. |
+| 962 | Fillet, Fillet003, Fillet004 invalid; Body001 invalid. The recompute stops at Sketch004 ("malformed constraints" after an element remap), so these are the stored shapes. Fillet's five failing edges (101, 102, 104, 105, 50) **fixed**, `../fillet/` (`cf96757c36`: corners on walls split in coplanar pieces); and with all twelve edges since `b38f0d910c` (the pair 36 + 49 rewrote one coplanar seam twice): 11552.7830, `issue962_fillet_r0.8` **Rescan 2026-10-25** (`d602360242`): the stored Fillet, Fillet003 and Fillet004 are shapes from before the recompute broke at Sketch004. Recomputed one by one (each on the one before, the edge references remapped), all three are valid and clean by BOP's check -- 11552.7711, 11540.4466, 11532.3264 -- and Fillet004's corners at the ring's gap (r 1.3) render sound. |
 
 ## Recomputes clean — needs a scripted repro (the bug is in a step, not the stored state)
 
