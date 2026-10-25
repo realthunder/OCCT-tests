@@ -5316,6 +5316,23 @@ other, its angle jumping from 89 deg to 1 at the vertex. A crease of 1 deg
 alone is made at 0.3, 2 and 10 (and of 0.5 deg), so it is that vertex, the
 flush post's corner, again.
 
+The 259 at 2 (2026-10-25): 63 are edges refused at a smaller radius too.
+Of the 196 refused only at 2, each was measured -- the largest radius made
+(bisection from 0.8, to 0.04), the fillet's width on each face (r tan of
+half the angle between the faces' normals) and the room there (the distance
+from the edge to the face's other edges that touch neither of its ends):
+
+| Edges | Why |
+|-------|-----|
+| 120 | A face beside the edge narrower than the fillet: made up to within 10% of the room (5% over it at most) |
+| 38 | A face exactly as wide as the fillet at 2 (room 2.000): made to 1.96 -- the fillet as wide as its face, as `issue273_pocket_wall_wide_e23_r1` (XFAIL) |
+| 15 | Made past one face's room, refused at the other's or at a face exactly 2 wide (#876's 1.414 corners at 1.96, #962 E67 to E69 and E128 at 1.48 against a 1.5 face, #273 `Fillet001` E38 at 0.99 against a 1.0 face, #474 `Fillet002` E11 on the coil at 1.44) |
+| 2 + 1 + 1 | Known: the D-hole (#273 E38, `Fillet001` E55, 1.36), the band 2 thick (#474 `Fillet003` E52), the ledge (#962 E9) |
+| 4 | #962 E26 and E34 (and the `Chamfer` input's E16, E32): the ring's outer rim from the gap's end face to where the arm leaves it, made up to 1.025. Plane and cylinder only, with room 3 and 6: **a builder failure**, reproduced on a ring (radii 19.75 and 16.75, 6 high) with an arm whose side leaves the rim at (17.356, -9.425) and a gap whose end face, through the axis, meets the rim at (-13.616, -14.306): the arm's side leaving the rim 10 deg off its tangent refuses the rim at every radius, 18.6 deg (the input's) from 1.05, 5, 30 or 45 deg makes it at 0.5 to 2; with the gap alone or the arm alone it is made |
+| 4 | #273 `Fillet001` E11, E22, E30, E33: made up to 1.29, the four meeting at the corner (4.98, -15.55, 30.04) on the handle's B-splines -- not looked at further |
+| 6 | Hole rims refused at exactly 2 with room 3 on both faces: #876's holes of radius 5.25 in the 3 thick plate (E6, E14; `Fillet001` E36, E42), #523's 270 deg notch of radius 2 (E11, E13) -- not looked at further |
+| 5 | #474 `Fillet003` E3, E8, E16, E32, E40: the coil band's end, made up to 1.74 where the band is 1.992 thick -- on the coil whose input is faulty |
+
 ## The sweeps' last refusals at 0.3, 0.8 and 2: each a limit of the shape (2026-10-25)
 
 Since `6271a7f719` no sweep has an invalid result. The edges the edge sweep
