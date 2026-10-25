@@ -2818,6 +2818,20 @@ fillet_case("issue360_f008_convex_three_r4",
 fillet_case("issue360_f008_stored_input_r4",
             Part.read(os.path.join(MODELS, "issue360_fillet007_stored.brep")), [29, 31, 30, 28],
             4.0, "pass", 85451.6916, vol_tol=1e-3, within=True)
+# A result BRepCheck finds invalid is refused (README.md, "An invalid result
+# refused"): #962's floor edge E6 at 0.3 and 0.8, #273's E38 at 2, #876's
+# chamfer of E100 at 0.8, each made invalid before.
+for _inp, _e, _r, _ch in (("issue962_Fillet", 6, 0.3, False), ("issue962_Fillet", 6, 0.8, False),
+                          ("issue273_Fillet", 38, 2.0, False),
+                          ("issue876_Fillet", 100, 0.8, True)):
+    refused_case("%s_invalid_refused_e%d_r%g%s" % (_inp[:8], _e, _r, "_chamfer" if _ch else ""),
+                 sweep_shape(_inp), _e, _r, chamfer=_ch)
+# #474's Fillet003, E2 and E18 at 10: invalid before (tolerance 0.097 and
+# 0.055); refused now, the long extension is tried after, and it makes them.
+for _e, _vol in ((2, 1988.8725), (18, 1988.8729)):
+    fillet_case("issue474_f003_invalid_long_extension_e%d_r10" % _e,
+                sweep_shape("issue474_Fillet003"), _e, 10.0, "pass", _vol, vol_tol=1e-3,
+                bop=True)
 
 counts = {}
 for _, verdict, _ in results:

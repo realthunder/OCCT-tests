@@ -69,7 +69,9 @@ vertex 10 ok -> refused (edge 2582 ok, 21 BAD, 1318 EXC; vertex 9523 ok,
 #273's E23 and E24 at 0.8 made again, edge refused -> ok (edge 2584 ok,
 21 BAD, 1316 EXC; vertex unchanged). `6de00fea30` (corner plates held to
 their own miss, ../README.md) made edge 16 and vertex 112 `LOOSE` -> ok,
-4 vertex refused -> valid. Before it, `a2f5c2a5d4`,
+4 vertex refused -> valid. At `6271a7f719` (an invalid result
+refused, ../README.md; 2026-10-25), the flat end off or on: edge 2600 ok,
+1321 EXC; vertex 9654 ok, 2588 EXC -- no `BAD` or `LOOSE` left. Before it, `a2f5c2a5d4`,
 2026-10-16: edge 2565 ok, 16 LOOSE, 26 BAD, 1314 EXC; vertex 9406 ok, 118
 LOOSE, 152 BAD, 2566 EXC; no crash or timeout. `a2f5c2a5d4` (a stripe
 whose faces turn tangent at its end stops once both its sides are on the

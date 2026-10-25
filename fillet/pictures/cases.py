@@ -93,6 +93,7 @@ STAGES = {
     "sflattip": ("2a8844e8e6", "aeed3655f6"),
     "stiphalf": ("aeed3655f6", "f5902943f4"),
     "sloftend": ("f5902943f4", "2bde18d4b5"),
+    "srefuse": ("2bde18d4b5", "6271a7f719"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -602,6 +603,13 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # the gap's end face holding #962's E6, the plane through it with the
+    # normal (0.316, 0.949, 0)
+    "issue962_invalid_refused_e6_r0.3": (
+        lambda f: f.Surface.__class__.__name__ == "Plane"
+        and abs(f.Surface.Axis.z) < 1e-6 and abs(abs(f.Surface.Axis.y) - 0.9488) < 0.001
+        and abs((App.Vector(-14.706671913, 4.895283573, -5.8) - f.Surface.Position).dot(
+            f.Surface.Axis)) < 1e-4),
     # the ledge between the steps, the slope fillet's cap joined to it past the step
     "issue962_opposite_v38_e54_e84_r0.3": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
     "issue962_groove_v38_e54_e90_r1": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
@@ -857,6 +865,7 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
     "issue273_f001_apex_line_end_e40_r0.3": ("the round at the top's end", False),
     "issue273_f001_apex_flat_e40_r0.3": ("the round at the top's end", False),
@@ -1286,6 +1295,13 @@ CASES = {
     "issue876_fillet_chamfer_flat_split_e85_r0.8": (
         "speriod", "p876f", ((17.692790857, 13.75, 20.6), (17.0, 14.442790857, 20.6)), 0.8, None,
         (17.3, 14.1, 20.6), (0.3, 0.5, 1)),
+    # #962's E6, the cone's edge on the end face of the pocket's ring at its
+    # gap, at 0.3: the fillet's end at z -7 runs past a 0.05 ledge; made
+    # invalid before, a self-intersecting wire on the end face. Refused
+    # (REFUSED), as every result BRepCheck finds invalid now
+    "issue962_invalid_refused_e6_r0.3": (
+        "srefuse", "p962", ((-15.845252964, 5.274273268, -7.0), (-14.706671913, 4.895283573, -5.8)),
+        0.3, None, (-15.7, 5.25, -6.6), (0.443, -0.886, -0.6)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1340,8 +1356,10 @@ FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
 # "after" column), a result made is not
-REFUSED = {"issue474_f002_whole_in_end_r0.3", "issue876_fillet_chamfer_flat_split_e85_r0.8"}
+REFUSED = {"issue474_f002_whole_in_end_r0.3", "issue876_fillet_chamfer_flat_split_e85_r0.8",
+           "issue962_invalid_refused_e6_r0.3"}
 ZOOMLABEL = {
+    "issue962_invalid_refused_e6_r0.3": ("the fillet's end, from below", (240, 240, 240)),
     "chamfer_fillet_corner_poly": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_box": ("the chamfer's end", (110, 110, 110)),
     "chamfer_fillet_corner_poly_1_1.5": ("the chamfer's end", (110, 110, 110)),
@@ -1353,6 +1371,7 @@ ZOOMLABEL = {
 }
 # case -> the zoomed row's height, when 4 r + 3 shows too little (a shallow edge)
 ZOOM = {
+    "issue962_invalid_refused_e6_r0.3": 3.2,
     "issue360_f008_four_edges_r4": 30.0,
     "pocket_v10_d1_flat_tip_rims_r0.8": 10.0,
     "issue631_loft_joint_e18_r15": 36.0,

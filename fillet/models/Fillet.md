@@ -2070,6 +2070,24 @@ faces.
 
 ![issue631_loft_joint_e18_r15](pictures/issue631_loft_joint_e18_r15.png)
 
+### An invalid result refused (`6271a7f719`, #962's ring)
+
+The builder gave back whatever it, or the last of its fallbacks, had
+made, valid or not; FreeCAD's features check the result and fail, but the
+long extension, the last fallback, never had its chance at such a result,
+and a direct caller of the API got an invalid shape with `IsDone`. Now a
+result BRepCheck finds invalid is refused, the long extension tried first:
+of every edge and vertex the sweeps fillet, 37 invalid results are refused,
+19 more at the radii 4 and 10 and 2 there made valid by the long extension,
+and 115 of the chamfer's -- no sweep has an invalid result left. Here #962's ring, its
+cone's edge on the gap's end face at 0.3: the fillet's end runs past a
+ledge 0.05 wide at z -7, and the result is invalid, upstream and in the
+fork alike -- a sheet out of the ring, red, a face of no area, and on the
+end face (third row) its outline open at two joints (circled). The "after"
+column shows the input.
+
+![issue962_invalid_refused_e6_r0.3](pictures/issue962_invalid_refused_e6_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

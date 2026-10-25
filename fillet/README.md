@@ -5170,11 +5170,46 @@ edge sweep: nothing moved.
 |------|----------------|
 | `issue631_loft_joint_e18_r{1,4,10,15}` | #631's loft joint: the volume of the loft rebuilt with plane faces, to 1e-3 (a bulge out of the pad's side from 4 before), clean by BOP's check |
 
+## An invalid result refused (`6271a7f719`, 2026-10-25)
+
+`ChFi3d_Builder::Compute` gave back whatever it, or the last of its
+fallbacks, had made: the caller got `IsDone` with a shape BRepCheck rejects,
+and `makeFillet` returned it. FreeCAD's features check the result and fail,
+but the fallbacks that come after (the long extension) never had their
+chance, and a direct caller of the API had to check for itself. Now a result
+BRepCheck finds invalid is no result: the computation not done, the shape
+kept for `BadShape()`, `HasResult()` true. The check runs before the long
+extension, which then gets to try, and again after it, should it give the
+invalid result back as it was.
+
+Measured against `2bde18d4b5`, every move is an invalid result, and no
+sweep has one left:
+
+| Sweep | Invalid -> refused | Invalid -> valid |
+|-------|--------------------|------------------|
+| edge, flat end off and on | 7 | 0 |
+| vertex, flat end off and on | 30 | 0 |
+| edge at 4 and 10 | 19 | 2 |
+| chamfer edge | 115 | 0 |
+
+The two made: #474 `Fillet003`'s E2 and E18 at 10, invalid with tolerances
+of 0.097 and 0.055, now made by the long extension at 0.007 and 0.002. Of the suite's XFAIL cases two that
+were invalid are refused now: `issue962_rib_chamfer_1.2` and
+`boss_corner_foot_r1`, which its row below calls refused -- it was invalid
+at `2bde18d4b5`. The
+time added is a BRepCheck of each result made: the suite took 214 s with
+it, 233 s at `2bde18d4b5`.
+
+| Case | What it covers |
+|------|----------------|
+| `issue962_invalid_refused_e6_r{0.3,0.8}`, `issue273_invalid_refused_e38_r2`, `issue876_invalid_refused_e100_r0.8_chamfer` | invalid results before, refused now, the input left as it was |
+| `issue474_f003_invalid_long_extension_e{2,18}_r10` | invalid before, made by the long extension now, clean by BOP's check |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
-| `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
+| `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 (refused since `6271a7f719`) -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
