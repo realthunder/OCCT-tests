@@ -2122,6 +2122,26 @@ the pocket and the pocket cuts into it, a little further each time.
 
 ![issue273_past_pocket_e20](pictures/issue273_past_pocket_e20.png)
 
+### A fillet whose line misses the face at its end (`117c549667`, #962's ring)
+
+#962's ring, its outer rim at the floor from the gap's end face to where an
+arm leaves the rim, is refused from 1.05, with room 3 and 6 on its faces.
+The floor runs on under the arm, so the fillet's end is the cap in the
+arm's side, carried back. That side leaves the rim 18.6 deg off its
+tangent and, carried back, passes the ring's axis at R cos 18.6 deg; the
+fillet's line on the floor, a circle of radius R - r, meets it only while
+r < R (1 - cos 18.6 deg) = 1.03. Past that, nothing can end the fillet
+there. With the flat end at a vertex on, as FreeCAD's Fillets have it, the
+fillet now ends flat at the vertex, square to the rim -- but only once
+everything else has failed. The builder's own fallbacks come first, and one
+of them still takes #273's D-hole, whose fillet's line misses the hole's
+cylinder the same way, smoothly round into the cylinder: the corner setback
+fallback, the fillet's end set back from the vertex and the corner made
+again. Here at 2, valid and clean by BOP's check; upstream and the fork
+before refuse it (the input, greyed).
+
+![issue962_ring_rim_flat_e26_r2](pictures/issue962_ring_rim_flat_e26_r2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

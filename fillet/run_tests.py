@@ -2833,6 +2833,60 @@ for _e, _vol in ((2, 1988.8725), (18, 1988.8729)):
                 sweep_shape("issue474_Fillet003"), _e, 10.0, "pass", _vol, vol_tol=1e-3,
                 bop=True)
 
+
+# realthunder/FreeCAD#962's ring, its outer rim at the floor (the sweep's
+# E26, E34 at the top) from the gap's end face to where an arm leaves the
+# rim, 18.6 deg off its tangent. The floor runs on under the arm, and the
+# fillet's end is cut by the arm's side carried back: its line on the floor,
+# a circle of radius R - r, meets that plane only up to r = R (1 - cos 18.6
+# deg), 1.03; past it nothing ends the fillet, and it was refused. With the
+# flat end the fillet ends square to the rim at the vertex instead, once
+# everything else failed (README.md, "A fillet whose line misses the face at
+# its end"); without, still refused.
+# Here a ring of the same radii and height, the arm's side at 18.6 deg and at
+# 10 deg (1 - cos 10 deg: refused from 0.3 before).
+def ring_with_arm(dev):
+    R, Ri, z0, h = 19.75, 16.75, -9.75, 6.0
+    th = math.atan2(-9.425, 17.356)
+    a = V(R * math.cos(th), R * math.sin(th), z0)
+    tang = V(-math.sin(th), math.cos(th), 0)
+    d = tang * math.cos(math.radians(dev)) + V(math.cos(th), math.sin(th), 0) * math.sin(
+        math.radians(dev))
+    arm = Part.Face(Part.makePolygon([a, a + d * 30, V(0, 0, z0), a])).extrude(V(0, 0, h))
+    s = Part.makeCylinder(R, h, V(0, 0, z0)).fuse(arm).cut(Part.makeCylinder(Ri, h, V(0, 0, z0)))
+    g = math.atan2(-14.306, -13.616)
+    gap = Part.Face(Part.makePolygon([V(0, 0, z0),
+                                      V(60 * math.cos(g - math.radians(20)),
+                                        60 * math.sin(g - math.radians(20)), z0),
+                                      V(60 * math.cos(g), 60 * math.sin(g), z0),
+                                      V(0, 0, z0)])).extrude(V(0, 0, h))
+    s = s.cut(gap).removeSplitter()
+    rim = [i + 1 for i, e in enumerate(s.Edges)
+           if isinstance(e.Curve, Part.Circle) and abs(e.Curve.Radius - R) < 1e-6
+           and abs(e.BoundBox.ZMax - z0) < 1e-6
+           and min(v.Point.distanceToPoint(a) for v in e.Vertexes) < 1e-6]
+    return s, rim[0]
+
+
+for _dev, _cases in ((18.6, ((1.05, 2724.4306), (1.5, 2715.7058), (2.0, 2702.5092),
+                             (2.9, 2669.6706))),
+                     (10.0, ((0.5, 2680.6549), (1.0, 2674.9018), (2.0, 2652.1975)))):
+    _ring, _rim = ring_with_arm(_dev)
+    for _r, _vol in _cases:
+        fillet_case("ring_arm_%g_flat_r%g" % (_dev, _r), _ring, _rim, _r, "pass", _vol,
+                    vol_tol=1e-3, bop=True, flat=True)
+    refused_case("ring_arm_%g_r%g_refused" % (_dev, _cases[0][0]), _ring, _rim, _cases[0][0])
+for _e in (26, 34):
+    fillet_case("issue962_ring_rim_flat_e%d_r2" % _e, sweep_shape("issue962_Fillet"), _e, 2.0,
+                "pass", 11553.7502, vol_tol=1e-3, bop=True, flat=True)
+# #273's D-hole, the rim of its flat at the bottom (E36): the line on the
+# bottom face passes the hole's cylinder too, and the corner finds no cap,
+# but the corner setback fallback, the end set back, goes round into the
+# cylinder; with the flat end on that is still the result, the flat end only
+# the last resort
+fillet_case("issue273_dhole_rim_flat_e36_r2", sweep_shape("issue273_Fillet"), 36, 2.0, "pass",
+            8557.2427, vol_tol=1e-3, bop=True, flat=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

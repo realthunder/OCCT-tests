@@ -5328,7 +5328,7 @@ from the edge to the face's other edges that touch neither of its ends):
 | 38 | A face exactly as wide as the fillet at 2 (room 2.000): made to 1.96 -- the fillet as wide as its face, as `issue273_pocket_wall_wide_e23_r1` (XFAIL) |
 | 15 | Made past one face's room, refused at the other's or at a face exactly 2 wide (#876's 1.414 corners at 1.96, #962 E67 to E69 and E128 at 1.48 against a 1.5 face, #273 `Fillet001` E38 at 0.99 against a 1.0 face, #474 `Fillet002` E11 on the coil at 1.44) |
 | 2 + 1 + 1 | Known: the D-hole (#273 E38, `Fillet001` E55, 1.36), the band 2 thick (#474 `Fillet003` E52), the ledge (#962 E9) |
-| 4 | #962 E26 and E34 (and the `Chamfer` input's E16, E32): the ring's outer rim from the gap's end face to where the arm leaves it, made up to 1.025. Plane and cylinder only, with room 3 and 6: **a builder failure**, reproduced on a ring (radii 19.75 and 16.75, 6 high) with an arm whose side leaves the rim at (17.356, -9.425) and a gap whose end face, through the axis, meets the rim at (-13.616, -14.306): the arm's side leaving the rim 10 deg off its tangent refuses the rim at every radius, 18.6 deg (the input's) from 1.05, 5, 30 or 45 deg makes it at 0.5 to 2; with the gap alone or the arm alone it is made |
+| 4 | #962 E26 and E34 (and the `Chamfer` input's E16, E32): the ring's outer rim from the gap's end face to where the arm leaves it, made up to 1.025. Plane and cylinder only, with room 3 and 6: **a builder failure**, reproduced on a ring (radii 19.75 and 16.75, 6 high) with an arm whose side leaves the rim at (17.356, -9.425) and a gap whose end face, through the axis, meets the rim at (-13.616, -14.306): the arm's side leaving the rim 10 deg off its tangent refuses the rim at every radius, 18.6 deg (the input's) from 1.05, 5, 30 or 45 deg makes it at 0.5 to 2; with the gap alone or the arm alone it is made. Made with the flat end since `117c549667` (below, "A fillet whose line misses the face at its end") |
 | 4 | #273 `Fillet001` E11, E22, E30, E33: made up to 1.29, the four meeting at the corner (4.98, -15.55, 30.04) on the handle's B-splines -- not looked at further |
 | 6 | Hole rims refused at exactly 2 with room 3 on both faces: #876's holes of radius 5.25 in the 3 thick plate (E6, E14; `Fillet001` E36, E42), #523's 270 deg notch of radius 2 (E11, E13) -- not looked at further |
 | 5 | #474 `Fillet003` E3, E8, E16, E32, E40: the coil band's end, made up to 1.74 where the band is 1.992 thick -- on the coil whose input is faulty |
@@ -5364,6 +5364,58 @@ tried removes.
 with E52, E42, E49 and F22 marked, E52 at 1.99 and at 2, and `Fillet002`'s
 coil leaving its leg (made by hand from the GUI's renders, not by
 `make_pictures.sh`).
+
+## A fillet whose line misses the face at its end (`117c549667`, realthunder/FreeCAD#962, 2026-10-25)
+
+Found sorting the edge sweep's refusals at 2 (above): #962's ring, its
+outer rim at the floor (`E26`, and `E34` at the top) from the gap's end
+face to where an arm leaves the rim, is made up to 1.025 and refused from
+1.05, plane and cylinder only, with room 3 and 6 on its faces. At the
+arm's end the floor runs on under the arm (the end is OnSame), and the
+fillet's end is the cap in the arm's side, carried back. That side leaves
+the rim 18.6 deg off its tangent, so carried back it passes the ring's axis
+at R cos 18.6 deg = 18.72, and the fillet's line on the floor, a circle of
+radius R - r, meets it only while r < R (1 - cos 18.6 deg) = 1.03. Past it
+the line meets that plane nowhere: `IntersUpdateOnSame` finds nothing, and
+"OneCorner : bouchon non ecrit". A ring of the same radii with the side at
+10 deg is refused from 0.30 (0.5 on), at 30 and 45 deg made to 2; with the
+arm alone or the gap alone, made -- the D-hole's limit (#273's E38, above)
+is the same kind of end.
+
+No cap can be made there, so the fork's flat end (`MakeFlatEnd`, used
+where FreeCAD asks for it, as its new Fillet features do) takes it too:
+where Fo's line, a line or a conic, carried on whole meets the face at end
+nowhere, the fillet ends square to the rim at the vertex, the flat face
+between the section, the rim's vertical edge (`E48`) up to the fillet and
+the line in to the fillet's line on the floor. But only as the last resort:
+the corner marks the end it found no cap at (`ChFi3d_UncappedEnd`) and
+fails as before, and only where everything after it fails as well -- the
+builder's own fallbacks, the corner edges `ComputeWithFlatEndCorners` adds
+-- is the whole computed once more with such ends made flat
+(`ChFi3d_MissedFlatEnd`). Taken at once, the end took #273's D-hole too:
+the rim of its flat at the bottom (`E36`), whose line on the bottom face
+passes the hole's cylinder (3.75 from the axis, the cylinder 3.15), and
+whose fillet the corner setback fallback (above), the end set back from
+the vertex, takes round into the cylinder -- a smooth end where the flat one leaves a step (Fillet.md has
+pictures). Two things the pocket's tip,
+the flat end's first use, never met: the fillet's point on the floor at
+that end is not yet the line's (the line runs on 340 deg round, past the
+gap), so the crossing of the line and the flat plane nearest the vertex is
+taken, not the one nearest that point; and the section, a torus cut by a
+plane through its axis, ran the long way round the tube (three quarters of
+a circle, a face of area -232), so it is computed on the fillet's surface
+about its two ends only. Both only where the new case applies.
+
+On the ring at 18.6 deg the fillet is now made at 1.05, 1.5, 2 and 2.9, at
+10 deg at 0.5, 1 and 2, valid and clean by BOP's check; the volume taken is
+the section's area, r^2 (1 - pi/4), swept along the rim at its centroid's
+radius (30.39 at 2: 0.858 x 19.30 x 1.834). On #962 `E26` and `E34` are made
+at 1.5, 2 and 2.5 (11553.7502 at 2), valid and clean. Without the flat end
+all of them are refused as before. The sweeps are unchanged without the
+flat end; with it, only #962's `E26` and `E34` (and the same rim in
+`issue962_Chamfer`, `E16` and `E32`) go from refused to made. Cases
+`ring_arm_*`, `issue962_ring_rim_flat_e{26,34}_r2`, and
+`issue273_dhole_rim_flat_e36_r2` (the D-hole still taken round).
 
 ## Known broken (XFAIL)
 
