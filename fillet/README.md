@@ -4776,7 +4776,15 @@ Not mended by it: #962's `E6` (its end at a ledge 0.05 wide, which faces
 down: the cap the fillet needs faces up, in its plane) and the sets that
 hold it, and #474 `Fillet002`'s `V2:1,5`, `V2:2,5`, `V4:4,14` -- the
 fallback finds nothing valid there, and the result is the invalid one it
-was, after the fallback's computations.
+was, after the fallback's computations. (2026-10-25: `Fillet002`'s cases all hold `E5` or `E14`,
+the coil's top-outer and bottom-inner corners, refused alone. The coil
+starts on its leg's top, overlapping it, and over the leg's width of 2 the
+helix rises 0.12: the coil's outer face comes out of the leg's top as a
+wedge of no height at `V2`, the leg's top left as a sliver of 0.103 beside
+it. The chain over the four turns is computed and only `V2` fails
+(`BRepFilletAPI_MakeFillet`'s faulty vertex): a radius of 0.3 has no side
+there to roll on. A one-turn coil of the same section, built without the leg,
+fillets at every long edge at 0.3 and 1.)
 
 | Case | What it covers |
 |------|----------------|
