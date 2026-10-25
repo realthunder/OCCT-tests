@@ -5205,6 +5205,46 @@ it, 233 s at `2bde18d4b5`.
 | `issue962_invalid_refused_e6_r{0.3,0.8}`, `issue273_invalid_refused_e38_r2`, `issue876_invalid_refused_e100_r0.8_chamfer` | invalid results before, refused now, the input left as it was |
 | `issue474_f003_invalid_long_extension_e{2,18}_r10` | invalid before, made by the long extension now, clean by BOP's check |
 
+## Sliver faces taken out, in FreeCAD (`4e3ee3d5c7`; fcad `3292264f25`, `967a0656f0`, realthunder/FreeCAD#962, 2026-10-25)
+
+#962's E6, the ring's cone edge at the gap's end face, refused at 0.3, 0.8
+and 2 since `6271a7f719` (invalid before): the fillet's end runs past a
+ledge 0.05 wide at z -7, a step between the cone (down to r 16.7) and the
+bore below it (r 16.75). Ending there would take a face facing up beside the
+ledge facing down, which no end of the builder makes. The ledge is no
+modeling intent: two features meant to meet. Of the sweeps' shapes only
+three have a face under 0.1 wide, and each sits at one of the sweeps'
+remaining failures: #962's ledge; #474 `Fillet002`'s face of the coil's
+leg, 0.05 wide, where the coil comes out of the leg's top with no height;
+#474 `Fillet003`'s face of no area at its cusp.
+
+The rule lives in FreeCAD, which decides to change a user's model, not in
+the kernel: where a PartDesign Fillet or Chamfer fails on some edges, the
+faces at those edges narrower than a quarter of the radius (twice the area
+over the perimeter) are taken out with upstream's `BRepAlgoAPI_Defeaturing`
+(`TopoShape::makESliverFree`), the edges found again through its history,
+and the dress-up built again; kept only when fewer edges fail. The removal
+itself is kept only when every sliver went, the shape passes BRepCheck and
+BOP's check, and its volume moved no more than the slivers' width times
+their area. On #962: the cone runs on to the bore (r 16.75 at z -7.05, 0.108
+of volume more), and E6 is made at 0.3, 0.8 and 2, E9 at 0.3 and 0.8, valid
+and clean by BOP's check. #474 `Fillet002`'s sliver cannot be taken out
+(defeaturing leaves the shape as it was), and `Fillet003`'s leaves a shape
+BOP's check finds dirty: both stay refused.
+
+A refusal of an invalid result names no faulty contour, which FreeCAD's
+partial build (`makEFillet`) took for success: it now builds each edge
+alone to find the ones that fail, as its chamfer does. And building again
+after such a refusal gave the input back, done: `Reset()` leaves the builder
+of the result (`myCoup`) with the pieces of the computation before; each
+`Compute` now starts with a fresh one, as the fallbacks did
+(`4e3ee3d5c7`; the suite and the sweeps unchanged).
+
+`models/pictures/issue962_sliver_removed_e6.png`: the input and FreeCAD's
+Fillet at 0.3 and 0.8 (not made by `make_pictures.sh`: the kernel alone
+refuses it). FreeCAD's `PartDesignTests.TestFillet.TestFilletSlivers` covers
+it on a block with a 0.05 step.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

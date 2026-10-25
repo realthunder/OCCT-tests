@@ -2088,6 +2088,21 @@ column shows the input.
 
 ![issue962_invalid_refused_e6_r0.3](pictures/issue962_invalid_refused_e6_r0.3.png)
 
+### A sliver taken out, in FreeCAD (`4e3ee3d5c7`; fcad `967a0656f0`, #962's ring)
+
+The ring's edge at the gap, refused above: its fillet's end runs past a
+ledge 0.05 wide, a step left where the ring's cone meets the bore below it
+-- two features meant to meet. FreeCAD's Fillet and Chamfer now take such a
+face out where they fail (`RemoveSlivers`, on by default): a face at the
+failed edges narrower than a quarter of the radius, removed by upstream's
+defeaturing, the cone run on to the bore, and the fillet made again --
+kept only when fewer edges fail, and only when the shape left is valid and
+clean by BOP's check. The kernel still refuses it; the picture is
+FreeCAD's feature, the input on the left. The ledge, the doubled line under
+the slope, is gone, and the fillet ends in the bore's wall.
+
+![issue962_sliver_removed_e6](pictures/issue962_sliver_removed_e6.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
