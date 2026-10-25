@@ -5302,6 +5302,20 @@ ring; the ledge). The 384 left fail in the builder: 58 at 0.3 (#273
 `Fillet001` 9, #474 `Fillet002` 12 and `Fillet003` 11, #876 `Fillet` and
 `Fillet001` 12 each, #962 `Fillet` 2), 67 at 0.8 and 259 at 2.
 
+The 58 at 0.3, by cause, none new: #273 `Fillet001`'s are at its face F3,
+a B-spline 0.3 wide whose edges' tolerance is 0.71, over the radius (not a
+sliver by the rule; defeatured by hand it runs 89 s and changes nothing);
+#474's are the coil's leg (above, "The sweeps' last refusals"); #962's E2
+and E3 are the 0.05 ledge's own edges (E2 made at 0.1); #876's are its
+post. There the foot (89 deg, `E30` to `E32`, `E91` to `E94`) and a ring of
+1 deg creases (`E42`, `E53` on the plate's corner cylinder where the
+drafted corner stands flush with it; `E56`, `E60`, `E64`, `E68` where the
+plate's walls run on as the post's drafted ones) meet: `E91` and `E42` are
+two pieces of one arc of radius 3, so a chain from either runs on into the
+other, its angle jumping from 89 deg to 1 at the vertex. A crease of 1 deg
+alone is made at 0.3, 2 and 10 (and of 0.5 deg), so it is that vertex, the
+flush post's corner, again.
+
 ## The sweeps' last refusals at 0.3, 0.8 and 2: each a limit of the shape (2026-10-25)
 
 Since `6271a7f719` no sweep has an invalid result. The edges the edge sweep
