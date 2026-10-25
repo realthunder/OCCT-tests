@@ -51,7 +51,7 @@ the table above come first:
 
 | # | Now (fork before `16df68d224`) |
 |---|---|
-| 273 | Body valid; Pad003 invalid, Sketch003 in error (both files). The chamfer crash needs the interactive chamfer scripted **Rescan 2026-10-25** (`d602360242`): both files recompute with every Fillet valid (8544.4503; 8535.1578, 8525.7094) and Pad003 valid; the one error left is Sketch004's. |
+| 273 | Body valid; Pad003 invalid, Sketch003 in error (both files). The chamfer crash needs the interactive chamfer scripted **Rescan 2026-10-25** (`d602360242`): both files recompute with every Fillet valid (8544.4503; 8535.1578, 8525.7094) and Pad003 valid; the one error left is Sketch004's. The sweep's E20 (the top's side edge beside the pocket in the top), refused from about 1.26, is made at 1.5, 2 and 2.5 by FreeCAD's PartDesign Fillet, the pocket taken out and cut back (`PastFeatures`, fcad `386a9ab57b`; fillet README, "Features past which a fillet runs"). |
 | 309 | fixed (see above) |
 | 333 | no crash; Sketch006 "No planar face in AttachEngine3D" (its support remapped to a curved face) |
 | 334 | no crash; Draft003 invalid, Body invalid. Draft001 and Draft003, recomputed alone, are **refused now** (`ca766a8a92`): a drafted ledge whose corner a bevel touches needs a new edge, which a draft cannot make, and it gave an invalid shape; see `../draft/` |

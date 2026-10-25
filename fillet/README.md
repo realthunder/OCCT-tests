@@ -5245,6 +5245,51 @@ Fillet at 0.3 and 0.8 (not made by `make_pictures.sh`: the kernel alone
 refuses it). FreeCAD's `PartDesignTests.TestFillet.TestFilletSlivers` covers
 it on a block with a 0.05 step.
 
+## Features past which a fillet runs, in FreeCAD (fcad `0559e4b1b2`, `386a9ab57b`, realthunder/FreeCAD#273, 2026-10-25)
+
+#273's E20, the top's side edge beside the triangular pocket in the top, is
+made up to 1.2 and refused from about 1.26: the fillet's line on the top
+lies r from E20 and reaches the pocket's corner, and past it the fillet
+would run over the pocket's rim -- a fillet over another feature's edge,
+which the builder does not make (the refusals' table below). Modeled by
+hand, the pocket comes after the fillet and cuts into it. That order is
+what FreeCAD now tries: where a PartDesign Fillet or Chamfer still fails on
+some edges after RemoveSlivers, the features near them are taken out
+(`TopoShape::makEFeatureFree`), the dress-up built again, and the features
+put back -- the material a pocket took cut from the result, a boss's fused
+to it. Kept only when fewer edges fail and the result is valid and clean,
+with as many solids as before (property `PastFeatures`, on by default).
+
+A feature is a set of faces joined by edges, grown from a face within the
+radius of a failed edge (a bounding box test first, the exact distance
+after), bounded by the faces that hold a failed edge or touch one of its
+vertices -- those stay. One with more than 12 faces, a face beyond four
+radii, or a face that, with the faces beside it, is not a plane, cylinder,
+cone, sphere or torus is not taken: on B-splines `BRepAlgoAPI_Defeaturing`
+ran over two minutes (#273 `Fillet001` E26 at 2, 137 s; 0.1 s now, still
+refused). Each feature is taken out alone first and kept when the shape left
+is clean; those kept are taken out together. The edges are found again
+through the removal's history, an edge split by it as the piece through its
+middle.
+
+Clean here is BRepCheck on the whole shape and BOP's check only on the faces
+the removal made (`Part::RegionBooleanCheck`), each step given 3 seconds at
+most: BOP's check of all of #273 `Fillet001` took 170 s. RemoveSlivers uses
+the same check and the same limit to elementary surfaces now.
+
+On #273 `Fillet` E20, by the feature: 1.2 is made directly (8550.3805, the
+fallback not used); 1.5, 2 and 2.5 are made past the pocket, 8545.2476,
+8534.1852 and 8520.1466, each valid and clean by BOP's check, in about half
+a second; with `PastFeatures` off each fails as before. #962's E6 and E9 are
+as with RemoveSlivers alone (E6 at 0.3, 0.8 and 2; E9 at 2 still refused).
+FreeCAD's `PartDesignTests.TestFillet.TestFilletPastFeatures` covers a pocket
+and a boss beside a filleted edge, each against the fillet made first and
+the feature cut or fused after.
+
+`models/pictures/issue273_past_pocket_e20.png`: the input and FreeCAD's
+Fillet at 1.5, 2 and 2.5 (not made by `make_pictures.sh`: the kernel alone
+refuses it).
+
 ## The sweeps' last refusals at 0.3, 0.8 and 2: each a limit of the shape (2026-10-25)
 
 Since `6271a7f719` no sweep has an invalid result. The edges the edge sweep
@@ -5254,7 +5299,7 @@ with the library before it (`2bde18d4b5`), radius by radius:
 | Edge | Valid up to | Why no fillet past it |
 |------|-------------|-----------------------|
 | #273 `Fillet` E38, `Fillet001` E55 | 1.39 (invalid from 1.41) | The ceiling's arc of a blind D-shaped hole (a cylinder of radius 3.15, a flat at x = -1.75, the ceiling at z = 16). The fillet's line on the ceiling is a circle of radius 3.15 - r: past 1.4 it misses the flat altogether, and the fillet cannot end there -- it would run on round the flat side, the flat's ceiling edge (E42) with it. Before the refusal, a torus out through the flat |
-| #273 `Fillet` E20 | 1.2 (invalid from 1.3) | The top's side edge beside the triangular pocket in the top: the fillet's line on the top lies r from E20, and the pocket's corner (1.52, 7.12) about 1.26 from it. Past that the fillet runs into the pocket's rim -- a fillet over another feature's edge, which the builder does not make |
+| #273 `Fillet` E20 | 1.2 (invalid from 1.3) | The top's side edge beside the triangular pocket in the top: the fillet's line on the top lies r from E20, and the pocket's corner (1.52, 7.12) about 1.26 from it. Past that the fillet runs into the pocket's rim -- a fillet over another feature's edge, which the builder does not make. Made by FreeCAD at 1.5, 2 and 2.5, the pocket taken out and cut back (above, "Features past which a fillet runs") |
 | #474 `Fillet003` E52 | 1.99 (invalid from 2) | The coil's leg goes down through the coil's band and ends flush with its underside: E52 is where the leg's bottom (F28, its 2 x 4 section) meets the band's underside, 4 deg off flush. The band is 2 thick, and the fillet fails from exactly that radius |
 | #474 `Fillet003` E49 | none: invalid at every radius, 0.1 too | A defect of the input, at the leg's corner: over the band's thickness (z 27.66 to 29.66) the leg's side F23 is a slit -- the band touches the leg across it, solid on both sides (sampled at z 28.66; above the band only the leg's side is solid) -- and the corner line holds two coincident edges there, E49 (F23, F26) and E47 (F23, the band's end face F21, in F26's plane). The lower 2 of E49 is no corner, and the fillet cut into the slit. A refine, a fuse with itself, a cut and fuse at the band's top all leave the slit as it is |
 | #962 `Fillet` E6 (and E9) | refused at 0.3, 0.8, 2 | Its end past a ledge 0.05 wide: made by FreeCAD, which takes the ledge out (above, "Sliver faces taken out") |
@@ -5267,7 +5312,8 @@ before and since. At V25 the input has a face of no area (F22, 1e-6),
 bounded by two coincident edges up the leg's corner (E45, E48) and one of no
 length -- the band's end against the leg's other corner, as the slit is at
 E49's; #962's at the gap. What is left to do in the kernel here is the
-fillet that runs over another feature's edge (E20), a capability of its own;
+fillet that runs over another feature's edge (E20), a capability of its own
+-- made in FreeCAD for now by taking the feature out and putting it back;
 #474's junction of coil and leg is two defects of the input that no healing
 tried removes.
 

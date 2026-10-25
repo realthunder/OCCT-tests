@@ -2103,6 +2103,25 @@ the slope, is gone, and the fillet ends in the bore's wall.
 
 ![issue962_sliver_removed_e6](pictures/issue962_sliver_removed_e6.png)
 
+### A pocket taken out and put back, in FreeCAD (fcad `386a9ab57b`, #273)
+
+#273's top side edge runs past a triangular pocket in the top. Its fillet
+is made up to 1.2; from about 1.26 the fillet's line on the top reaches the
+pocket's corner, and past it the fillet would have to run over the
+pocket's rim, which the builder does not do. Modeled by hand, the pocket
+would come after the fillet and cut into it, and that is what FreeCAD's
+Fillet and Chamfer now try where an edge still fails (`PastFeatures`, on by
+default). The features near the edge -- faces within the radius, grown
+into a pocket or a boss of at most 12 plane, cylinder, cone, sphere or
+torus faces -- are taken out by upstream's defeaturing, the edge is
+filleted, and the pocket is cut back from the result (a boss is fused
+back). This is kept only when fewer edges fail and the result is valid and
+clean. The kernel still refuses these radii; the picture is FreeCAD's
+feature at 1.5, 2 and 2.5, the input on the left. The fillet passes under
+the pocket and the pocket cuts into it, a little further each time.
+
+![issue273_past_pocket_e20](pictures/issue273_past_pocket_e20.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
