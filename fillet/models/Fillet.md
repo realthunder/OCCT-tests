@@ -2142,7 +2142,7 @@ before refuse it (the input, greyed).
 
 ![issue962_ring_rim_flat_e26_r2](pictures/issue962_ring_rim_flat_e26_r2.png)
 
-### A fillet whose line runs off its face short of the vertex (`4316324037`, #876's post)
+### A fillet whose line runs off its face short of the vertex (`4316324037`, `5c11250d99`, #876's post)
 
 #876's post stands on a plate whose long sides are flush with the post's
 and whose corner arcs are the post's own, until the plate's rim leaves the
@@ -2155,13 +2155,13 @@ post's own wall where it is straight -- and the fillet was refused. With
 the flat end at a vertex on, as FreeCAD's Fillets have it, the fillet now
 runs on to the vertex, cut by the plate's side carried up, which rises in
 a small curved triangle to meet it; at the vertex, where the post leans
-off the plate's side by its degree of draft, a sliver closes the end. Only
-once everything else has failed. Where the post stands straight, the
-plate's side touching it along a line, the fillet ends flat where its line
-meets the rim instead (`5ab71bc3ea`), the foot kept sharp from there to
-the vertex, and the plate's top, touching itself at that point, is split
-in two as #523's is. Here at 0.8, valid and clean by BOP's check; upstream
-and the fork before refuse it (the input, greyed).
+off the plate's side by its degree of draft, a sliver closes the end; where
+the post stands straight, the plate's side touching it along a line, the
+fillet's edge on the post ends on that line (`5c11250d99`). Only once
+everything else has failed, and where the run-on cannot be made the
+fillet ends flat where its line meets the rim (`5ab71bc3ea`). Here at
+0.8, valid and clean by BOP's check; upstream and the fork before refuse
+it (the input, greyed).
 
 ![issue876_post_foot_flat_e91_r0.8](pictures/issue876_post_foot_flat_e91_r0.8.png)
 

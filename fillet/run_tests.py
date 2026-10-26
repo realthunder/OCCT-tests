@@ -2895,10 +2895,8 @@ fillet_case("issue273_dhole_rim_flat_e36_r2", sweep_shape("issue273_Fillet"), 36
 # at end, the plate's side carried up, misses the line on the post (drafted)
 # or meets it only tangent to it (flush): refused. With the flat end, once
 # everything else failed, the fillet runs on to the vertex, cut by the
-# plate's side carried up (drafted), or ends flat in its section where the
-# line meets the rim, the foot kept sharp from there to the vertex (flush)
-# (README.md, "A fillet whose line runs off its face short of the vertex");
-# without, still refused.
+# plate's side carried up (README.md, "A fillet whose line runs off its face
+# short of the vertex"); without, still refused.
 # Here the post a rounded rectangle 40 x 33.5, its corners of radius 3, on a
 # plate whose long sides are the post's and whose corner arcs are the
 # post's from 90 to 45 deg, then run on tangent out to x=+-28; the post
@@ -2969,21 +2967,14 @@ def post_flush_run_on_added(draft, r):
             .common(wedge).Volume)
 
 
-# The undrafted post: the fillet adds r^2 (1 - pi/4) swept along the foot at
-# its section's centroid, r (10 - 3 pi) / (3 (4 - pi)) out from the foot, from
-# one flat end to the other: on each corner arc 45 deg - acos(3 / (3 + r))
-# (where the line on the top, of radius 3 + r, meets the rim, 3 from the
-# corner's centre), and the 27.5 along x=20 between.
+# The undrafted post, run on to the vertices: the volume the booleans' above
+# (within 1e-5)
 _pf, _pfe = post_flush_on_plate(0.0)
 for _r in (0.3, 1.0):
-    _cen = 3 + _r * (10 - 3 * math.pi) / (3 * (4 - math.pi))
-    _th = math.radians(45) - math.acos(3 / (3 + _r))
     fillet_case("post_flush_on_plate_flat_r%g" % _r, _pf, _pfe, _r, "pass",
-                _pf.Volume + _r * _r * (1 - math.pi / 4) * (2 * _cen * _th + 27.5), vol_tol=1e-4,
-                bop=True, flat=True)
+                _pf.Volume + post_flush_run_on_added(0.0, _r), vol_tol=1e-4, bop=True, flat=True)
 refused_case("post_flush_on_plate_r0.3_refused", _pf, _pfe, 0.3)
-# Drafted 1 deg: run on to the vertices, the volume the booleans' above
-# (within 2.2e-4 at 0.3, 7e-5 at 1)
+# Drafted 1 deg: the same (within 1.8e-4 at 0.3, 1e-4 at 1)
 _pd, _pde = post_flush_on_plate(1.0)
 for _r in (0.3, 1.0):
     fillet_case("post_flush_draft_on_plate_flat_r%g" % _r, _pd, _pde, _r, "pass",
@@ -2991,7 +2982,7 @@ for _r in (0.3, 1.0):
 refused_case("post_flush_draft_on_plate_r0.3_refused", _pd, _pde, 0.3)
 # #876's own: the post's foot along x=+20 (E91 and on) and x=-20 (E30 and
 # on), 1 deg drafted, at 0.3 and 0.8, run on to the vertices
-for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.7696)):
+for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.7698)):
     fillet_case("issue876_post_foot_flat_e%d_r%g" % (_e, _r), sweep_shape("issue876_Fillet"), _e,
                 _r, "pass", _vol, vol_tol=1e-3, bop=True, flat=True)
 refused_case("issue876_post_foot_e91_r0.3_refused", sweep_shape("issue876_Fillet"), 91, 0.3)

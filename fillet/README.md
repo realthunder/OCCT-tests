@@ -5473,8 +5473,9 @@ edge 3.2e-4 long between, and cut off, it made a face of no area. Unlike
 the flat end, the split applies to every result; the sweeps below say what
 it changes.
 
-On the model the volumes are those of the section swept along the foot
-from one flat end to the other: r^2 (1 - pi/4) at its centroid, r (10 - 3
+With the flat end (the run-on below has taken its place on these models)
+the volumes were those of the section swept along the foot from one flat
+end to the other: r^2 (1 - pi/4) at its centroid, r (10 - 3
 pi) / (3 (4 - pi)) out from the foot, over 45 deg - acos(3 / (3 + r)) of
 each corner arc and the 27.5 between -- 0.57328 at 0.3 and 5.98824 at 1,
 the result's to the last digit; drafted, the faces at 91 deg, within 2e-4
@@ -5501,7 +5502,7 @@ None of that now.
 
 | Case | What it covers |
 |------|----------------|
-| `post_flush_on_plate_flat_r{0.3,1}` | the post straight: made flat at both ends, the volume swept as above |
+| `post_flush_on_plate_flat_r{0.3,1}` | the post straight: run on to the vertices (below), the volume the booleans' |
 | `post_flush_draft_on_plate_flat_r{0.3,1}` | the post drafted 1 deg: run on to the vertices (below), the volume the booleans' |
 | `post_flush_on_plate_r0.3_refused`, `post_flush_draft_on_plate_r0.3_refused` | without the flat end, refused as before |
 | `issue876_post_foot_flat_e91_r{0.3,0.8}`, `issue876_post_foot_flat_e30_r0.3` | #876's post's foot, made, run on to the vertices (below) |
@@ -5530,17 +5531,30 @@ in the solid from its surface's: the fillet's as the SurfData, the side's
 as the plate's side.
 
 Where the plate's side touches the post along the line up from the vertex
-(the post straight), the cut ends on the post's line there, tangent to it,
-a face with a corner of no angle, which the topology made no closed wire
-of: that end stays flat. So does any end the run-on cannot make.
+(the post straight), the plate's side is tangent to the fillet where the
+fillet's line on the post crosses the end plane, at a saddle of the
+corner's torus: the cut runs into that point along one of its asymptotic
+directions, at an angle to the line, and ends there, the line up from the
+vertex the edge between the post and the side carried up, no sliver
+(`5c11250d99`). There the corner's fillet is the exact torus, which stops at
+the section through the point on the rim with no walk past it; the torus,
+its line on the post and that line's pcurves, circles and lines, are
+carried on to the end plane. Any end the run-on cannot make still ends
+flat (above).
 
-On the drafted model the volume is that of booleans that build the same
-thing -- the fillet's material on a plate wide all round, kept within the
-plate's footprint and between the vertices' end planes: 0.57826 at 0.3
-against 0.57804, 6.26539 at 1 against 6.26532, valid and clean by BOP's
-check. On #876 the foot along x=20 is made at 0.3 (+0.57179, 0.01377 more
-than flat at each end) and 0.8 (+3.98573), along x=-20 at 0.3 and 0.8,
-valid and clean.
+The plate's side and its rise to the fillet are two faces of one plane
+across the rim's piece; the run-on records that edge and the result has
+the two made one, nothing else (`ShapeUpgrade_UnifySameDomain` with every
+other edge kept; `5c11250d99`), as the booleans' `removeSplitter` has them.
+
+On the models the volume is that of booleans that build the same thing --
+the fillet's material on a plate wide all round, kept within the plate's
+footprint and between the vertices' end planes: straight, 0.60169 at 0.3
+and 6.51373 at 1 against 6.51374; drafted, 0.57822 at 0.3 against 0.57804
+and 6.26522 at 1 against 6.26532; valid and clean by BOP's check, the same
+faces as the booleans' (21 straight). On #876 the foot along x=20 is made
+at 0.3 (+0.57175, 0.01375 more than flat at each end) and 0.8 (+3.98586),
+along x=-20 at 0.3 and 0.8, valid and clean.
 
 The flat sweeps change only in #876's foot: the same 24 edge and 128
 vertex cases made, now run on; on `issue876_Fillet001` BOP's check still
