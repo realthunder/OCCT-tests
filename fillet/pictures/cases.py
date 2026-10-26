@@ -95,6 +95,7 @@ STAGES = {
     "sloftend": ("f5902943f4", "2bde18d4b5"),
     "srefuse": ("2bde18d4b5", "6271a7f719"),
     "smissed": ("117f0aa8af", "117c549667"),
+    "srimend": ("117c549667", "5ab71bc3ea"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -604,6 +605,12 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # #876's plate's top beside the post, x > 19: in two now, the strip kept
+    # beside the foot touching the rest at the point on the rim
+    "issue876_post_foot_flat_e91_r0.8": (
+        lambda f: f.Surface.__class__.__name__ == "Plane"
+        and abs(abs(f.Surface.Axis.z) - 1) < 1e-6 and abs(f.Surface.Position.z - 3) < 1e-6
+        and f.BoundBox.XMin > 19),
     # the floor of #962's ring and arm, z = -9.75, the fillet's line on it
     # ending at the flat end
     "issue962_ring_rim_flat_e26_r2": (
@@ -871,6 +878,7 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "issue876_post_foot_flat_e91_r0.8": ("the plate's top beside the post", False),
     "issue962_ring_rim_flat_e26_r2": ("the floor z = -9.75", False),
     "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
@@ -1318,6 +1326,15 @@ CASES = {
         "smissed", "p962", ((-13.6162035198476, -14.3059953063773, -9.75),
                             (17.3560383244383, -9.42498985042571, -9.75)), 2.0, 11553.7502,
         (17.356, -9.425, -9.75), (0.43, -0.69, -0.6)),
+    # #876's post, its foot along x=20 (E91 and on): the plate's rim runs
+    # flush into the post's corner, tangent to its arc, and the top narrows
+    # to nothing at (19.24, 15.75); the fillet's line on the top meets the
+    # rim short of it, and nothing closed the fillet: refused. Ended flat
+    # where the line meets the rim now, the foot sharp from there, once
+    # everything else failed (FLAT)
+    "issue876_post_foot_flat_e91_r0.8": (
+        "srimend", "p876f", ((20.0, 13.750014, 3.0), (19.238761, 15.746985, 3.0)), 0.8,
+        8669.4704, (19.9, 14.6, 3.3), (1, 0.7, 0.9)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1367,7 +1384,8 @@ STRICT = {
 # ../../flat_end.py), where the OCCT has it
 FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
         "pocket_v10_d1_flat_tip_rims_r0.8",
-        "issue273_pocket_flat_tip_e23_e24_r0.8", "issue962_ring_rim_flat_e26_r2"}
+        "issue273_pocket_flat_tip_e23_e24_r0.8", "issue962_ring_rim_flat_e26_r2",
+        "issue876_post_foot_flat_e91_r0.8"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the

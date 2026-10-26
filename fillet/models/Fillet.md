@@ -2142,6 +2142,26 @@ before refuse it (the input, greyed).
 
 ![issue962_ring_rim_flat_e26_r2](pictures/issue962_ring_rim_flat_e26_r2.png)
 
+### A fillet whose line runs off its face short of the vertex (`5ab71bc3ea`, #876's post)
+
+#876's post stands on a plate whose long sides are flush with the post's
+and whose corner arcs are the post's own, until the plate's rim leaves the
+post tangent to the arc. The plate's top narrows to nothing there, between
+the post's foot and the rim, and the fillet along the foot has its line on
+the top a radius out: it reaches the rim short of the vertex, and past it
+there is no top to carry the fillet. Nothing could close the fillet --
+the plate's side carried up misses the post, drafted 1 deg, or is the
+post's own wall where it is straight -- and the fillet was refused. With
+the flat end at a vertex on, as FreeCAD's Fillets have it, the fillet now
+ends flat where its line meets the rim, square to the foot, and the foot
+is kept sharp from there to the vertex; only once everything else has
+failed. The plate's top then touches itself at that point, two regions of
+one face meeting there, and is split in two as #523's top is. Here at 0.8,
+valid and clean by BOP's check; upstream and the fork before refuse it
+(the input, greyed).
+
+![issue876_post_foot_flat_e91_r0.8](pictures/issue876_post_foot_flat_e91_r0.8.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

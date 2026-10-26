@@ -2887,6 +2887,98 @@ for _e in (26, 34):
 fillet_case("issue273_dhole_rim_flat_e36_r2", sweep_shape("issue273_Fillet"), 36, 2.0, "pass",
             8557.2427, vol_tol=1e-3, bop=True, flat=True)
 
+# A post on a plate whose rim runs flush into the post's rounded corner
+# (#876's post, its foot at y=+-15.7): the plate's top narrows to nothing
+# at the vertex where the rim, tangent to the post's corner arc there,
+# leaves the post, and the fillet's line on the top runs off it over the
+# rim short of that vertex (at r 0.3, 24.6 deg of the arc short). The face
+# at end, the plate's side carried up, misses the line on the post (drafted)
+# or meets it only tangent to it (flush): refused. With the flat end the
+# fillet ends flat in its section where the line meets the rim, the foot
+# kept sharp from there to the vertex, once everything else failed
+# (README.md, "A fillet whose line runs off its face short of the vertex");
+# without, still refused.
+# Here the post a rounded rectangle 40 x 33.5, its corners of radius 3, on a
+# plate whose long sides are the post's and whose corner arcs are the
+# post's from 90 to 45 deg, then run on tangent out to x=+-28; the post
+# straight or drafted 1 deg.
+def post_flush_on_plate(draft):
+    c = 0.5 ** 0.5
+
+    def arc(cx, cy, a0, a1, z=0.0):
+        m = math.radians(0.5 * (a0 + a1))
+        return Part.Arc(V(cx + 3 * math.cos(math.radians(a0)), cy + 3 * math.sin(math.radians(a0)), z),
+                        V(cx + 3 * math.cos(m), cy + 3 * math.sin(m), z),
+                        V(cx + 3 * math.cos(math.radians(a1)), cy + 3 * math.sin(math.radians(a1)),
+                          z)).toShape()
+
+    a = V(17 + 3 * c, 13.75 + 3 * c, 0)
+    b = a + V(c, -c, 0) * ((28 - a.x) / c)
+    rim = [Part.LineSegment(V(-17, 16.75, 0), V(17, 16.75, 0)).toShape(), arc(17, 13.75, 90, 45),
+           Part.LineSegment(a, b).toShape(), Part.LineSegment(b, V(28, -b.y, 0)).toShape(),
+           Part.LineSegment(V(28, -b.y, 0), V(a.x, -a.y, 0)).toShape(), arc(17, -13.75, -45, -90),
+           Part.LineSegment(V(17, -16.75, 0), V(-17, -16.75, 0)).toShape(),
+           arc(-17, -13.75, -90, -135), Part.LineSegment(V(-a.x, -a.y, 0), V(-28, -b.y, 0)).toShape(),
+           Part.LineSegment(V(-28, -b.y, 0), V(-28, b.y, 0)).toShape(),
+           Part.LineSegment(V(-28, b.y, 0), V(-a.x, a.y, 0)).toShape(), arc(-17, 13.75, 135, 90)]
+    plate = Part.Face(Part.Wire(Part.__sortEdges__(rim))).extrude(V(0, 0, 3))
+
+    def rounded(off, z):
+        hx, hy, r = 20 - off, 16.75 - off, 3 - off
+        return Part.Wire(Part.__sortEdges__([
+            Part.LineSegment(V(-hx + r, -hy, z), V(hx - r, -hy, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(hx - r, -hy + r, z), V(0, 0, 1), r), -math.pi / 2,
+                             0).toShape(),
+            Part.LineSegment(V(hx, -hy + r, z), V(hx, hy - r, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(hx - r, hy - r, z), V(0, 0, 1), r), 0,
+                             math.pi / 2).toShape(),
+            Part.LineSegment(V(hx - r, hy, z), V(-hx + r, hy, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(-hx + r, hy - r, z), V(0, 0, 1), r), math.pi / 2,
+                             math.pi).toShape(),
+            Part.LineSegment(V(-hx, hy - r, z), V(-hx, -hy + r, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(-hx + r, -hy + r, z), V(0, 0, 1), r), math.pi,
+                             1.5 * math.pi).toShape()]))
+
+    post = Part.makeLoft([rounded(0, 3), rounded(17.6 * math.tan(math.radians(draft)), 20.6)],
+                         True, True)
+    s = plate.fuse(post).removeSplitter()
+    # the foot's arc at the corner (17, 13.75), the chain's end: its
+    # tangent run along x=20 and round the corner (17, -13.75) is the spine
+    return s, edge_between(s, (20, 13.75, 3), (17 + 3 * c, 13.75 + 3 * c, 3))
+
+
+# The undrafted post: the fillet adds r^2 (1 - pi/4) swept along the foot at
+# its section's centroid, r (10 - 3 pi) / (3 (4 - pi)) out from the foot, from
+# one flat end to the other: on each corner arc 45 deg - acos(3 / (3 + r))
+# (where the line on the top, of radius 3 + r, meets the rim, 3 from the
+# corner's centre), and the 27.5 along x=20 between.
+_pf, _pfe = post_flush_on_plate(0.0)
+for _r in (0.3, 1.0):
+    _cen = 3 + _r * (10 - 3 * math.pi) / (3 * (4 - math.pi))
+    _th = math.radians(45) - math.acos(3 / (3 + _r))
+    fillet_case("post_flush_on_plate_flat_r%g" % _r, _pf, _pfe, _r, "pass",
+                _pf.Volume + _r * _r * (1 - math.pi / 4) * (2 * _cen * _th + 27.5), vol_tol=1e-4,
+                bop=True, flat=True)
+refused_case("post_flush_on_plate_r0.3_refused", _pf, _pfe, 0.3)
+# Drafted 1 deg: the faces at 91 deg, the section's area r^2 (cot 45.5 deg -
+# 44.5 deg in radians), its line on the top r cot 45.5 deg out; swept as
+# above, the centroid taken as at 90 deg (within 2e-4 of the result)
+_pd, _pde = post_flush_on_plate(1.0)
+_cot = 1 / math.tan(math.radians(45.5))
+for _r in (0.3, 1.0):
+    _cen = 3 + _r * (10 - 3 * math.pi) / (3 * (4 - math.pi))
+    _th = math.radians(45) - math.acos(3 / (3 + _r * _cot))
+    fillet_case("post_flush_draft_on_plate_flat_r%g" % _r, _pd, _pde, _r, "pass",
+                _pd.Volume + _r * _r * (_cot - math.radians(44.5)) * (2 * _cen * _th + 27.5),
+                vol_tol=1e-3, bop=True, flat=True)
+refused_case("post_flush_draft_on_plate_r0.3_refused", _pd, _pde, 0.3)
+# #876's own: the post's foot along x=+20 (E91 and on) and x=-20 (E30 and
+# on), 1 deg drafted, at 0.3 and 0.8
+for _e, _r, _vol in ((91, 0.3, 8666.3282), (30, 0.3, 8666.3282), (91, 0.8, 8669.4704)):
+    fillet_case("issue876_post_foot_flat_e%d_r%g" % (_e, _r), sweep_shape("issue876_Fillet"), _e,
+                _r, "pass", _vol, vol_tol=1e-3, bop=True, flat=True)
+refused_case("issue876_post_foot_e91_r0.3_refused", sweep_shape("issue876_Fillet"), 91, 0.3)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

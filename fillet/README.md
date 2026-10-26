@@ -5417,6 +5417,95 @@ flat end; with it, only #962's `E26` and `E34` (and the same rim in
 `ring_arm_*`, `issue962_ring_rim_flat_e{26,34}_r2`, and
 `issue273_dhole_rim_flat_e36_r2` (the D-hole still taken round).
 
+## A fillet whose line runs off its face short of the vertex (`5ab71bc3ea`, realthunder/FreeCAD#876, 2026-10-26)
+
+The last of the sweep's refusals at 0.3 sorted above: #876's post, its
+foot (`E30` to `E32`, `E91` to `E94`, 89 deg) refused at 0.3 and 0.8. The
+plate's long sides are flush with the post's, and the plate's corner arcs
+are the post's (radius 3) from the long side to 41.6 deg, where the plate's
+rim leaves the post, tangent to the arc. The plate's top narrows to
+nothing at that vertex, between the foot and the rim, and the fillet's
+line on the top, r out from the foot, meets the rim short of it -- 24.6
+deg of the arc short at 0.3 (where 3 / (3 + r) is the cosine). Past that
+there is no top to carry the fillet. The face at end, the plate's side
+carried up, is tangent to the post's corner at its foot: with the post
+drafted (#876's, 1 deg) the post leans away from it and the line on the
+post never meets it ("OneCorner : cap not written", the vertex of four
+sharp edges with the 1 deg crease between the post's corner and the
+plate's, `PerformIntersectionAtEnd`); with the post straight the plate's
+side carried up is the post's own wall, met by the line only tangent to
+it, and the corner, whose walk stopped at the rim, went to the plate
+(`CurveHermite`). A model of it, a post 40 x 33.5 with corners of radius 3
+on a plate whose rim runs on tangent from 45 deg, refused the same, drafted
+or not, at 0.3 and 1.
+
+With the flat end at a vertex (`MakeRimFlatEnd`) the fillet ends flat in
+its section, square to the spine, through the point where its line meets
+the rim: the flat face lies between the section, the line on the top from
+the foot out to the rim, and the line up the post to the fillet's line on
+it. The foot is kept sharp from there to the vertex, and the top's strip
+between the foot and the rim with it. As the ring's flat end (above), only
+the last resort: such an end is marked as the corner meets it, and only
+where everything else failed is the whole computed once more with such
+ends flat (`ChFi3d_MissedFlatEnd`), the other ends as they were. Marked
+whether or not the corner there fails: on #876's foot it throws at one end
+and is made at the other, its mirror image, and on the drafted model it is
+made at both, and the result refused each time. Not where the face beyond
+the edge has no width: #474's `Fillet003` has a needle at the top of its
+edge 51, a plane of no area between two edges on one line, and its fillets
+that end there (`E1`, `E15`, `E31`, `E39`) would cut the one edge, its
+piece kept lying on the other: made so, BOP's check found them
+self-intersecting. Refused as before.
+
+The top then touches itself at the point on the rim: the strip kept beside
+the foot and the top beyond the fillet's line meet there and only there.
+The builder made them one face whose wire passes that vertex twice, which
+BRepCheck lets be and BOP's check calls unorientable. The fork's split of a
+face that is two regions touching at a point (#523, above), which took a
+wire through two coincident vertices, now takes one through a single vertex
+twice as well: a face for each loop of the wire, the face's other wires
+(#876's bolt hole in the top) to the piece they lie in, and that run again
+until no face is pinched (a fillet made flat so at both its ends on one
+face). Not where a loop is no longer than ten times what the vertex covers,
+as the coincident vertices' rule has it: #273's handle at 0.8 has a fillet
+face whose wire passes a vertex of tolerance 0.011 twice with a loop of one
+edge 3.2e-4 long between, and cut off, it made a face of no area. Unlike the flat end, the split applies to every result; the sweeps
+below say what it changes.
+
+On the model the volumes are those of the section swept along the foot
+from one flat end to the other: r^2 (1 - pi/4) at its centroid, r (10 - 3
+pi) / (3 (4 - pi)) out from the foot, over 45 deg - acos(3 / (3 + r)) of
+each corner arc and the 27.5 between -- 0.57328 at 0.3 and 5.98824 at 1,
+the result's to the last digit; drafted, the faces at 91 deg, within 2e-4
+of the same estimate. On #876 the foot along x=20 is made at 0.3
+(+0.54425) and 0.8 (+3.68648), along x=-20 at 0.3, valid and clean by BOP's
+check; without the flat end refused as before. At 2 the line on the top
+meets the rim before the corner's arc begins, on the straight foot, and
+the end is not this one: refused as before.
+
+The sweeps without the flat end are unchanged, the edge and vertex sweeps,
+the edge sweep at 4 and 10 and the chamfer's. With it, only #876's post's
+foot goes from refused to made: on `issue876_Fillet` `E30` to `E32` and
+`E91`, `E93`, `E94` at 0.3 and 0.8, and their vertices (`V27`, `V28` and
+the two at the other end, 64 cases at 0.3 and 1), valid and clean by BOP's
+check; on `issue876_Fillet001`, the next fillet's input, the same foot
+(`E99` to `E101`, `E107`, `E110`, `E111`, 64 vertex cases), valid, BOP's
+check reporting only the input's own five edges off their faces. Taken
+first without the needle's guard, the split's loop length, and with the
+end's SurfData of no face dropped as the corner looked at it: #474's
+`Fillet003` was made self-intersecting at the needle, #273's handle at 0.8
+gained a face of no area and lost another case's fault for a different
+one, and #474's `E22`, made at vertex 15 before, came out another way.
+None of that now.
+
+| Case | What it covers |
+|------|----------------|
+| `post_flush_on_plate_flat_r{0.3,1}` | the post straight: made flat at both ends, the volume swept as above |
+| `post_flush_draft_on_plate_flat_r{0.3,1}` | the post drafted 1 deg: the same, within 1e-3 of the estimate |
+| `post_flush_on_plate_r0.3_refused`, `post_flush_draft_on_plate_r0.3_refused` | without the flat end, refused as before |
+| `issue876_post_foot_flat_e91_r{0.3,0.8}`, `issue876_post_foot_flat_e30_r0.3` | #876's post's foot, made |
+| `issue876_post_foot_e91_r0.3_refused` | without the flat end, refused |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
