@@ -2893,16 +2893,17 @@ fillet_case("issue273_dhole_rim_flat_e36_r2", sweep_shape("issue273_Fillet"), 36
 # leaves the post, and the fillet's line on the top runs off it over the
 # rim short of that vertex (at r 0.3, 24.6 deg of the arc short). The face
 # at end, the plate's side carried up, misses the line on the post (drafted)
-# or meets it only tangent to it (flush): refused. With the flat end the
-# fillet ends flat in its section where the line meets the rim, the foot
-# kept sharp from there to the vertex, once everything else failed
+# or meets it only tangent to it (flush): refused. With the flat end, once
+# everything else failed, the fillet runs on to the vertex, cut by the
+# plate's side carried up (drafted), or ends flat in its section where the
+# line meets the rim, the foot kept sharp from there to the vertex (flush)
 # (README.md, "A fillet whose line runs off its face short of the vertex");
 # without, still refused.
 # Here the post a rounded rectangle 40 x 33.5, its corners of radius 3, on a
 # plate whose long sides are the post's and whose corner arcs are the
 # post's from 90 to 45 deg, then run on tangent out to x=+-28; the post
-# straight or drafted 1 deg.
-def post_flush_on_plate(draft):
+# straight or drafted 1 deg. The plate's face and the post apart.
+def post_flush_parts(draft):
     c = 0.5 ** 0.5
 
     def arc(cx, cy, a0, a1, z=0.0):
@@ -2921,7 +2922,7 @@ def post_flush_on_plate(draft):
            arc(-17, -13.75, -90, -135), Part.LineSegment(V(-a.x, -a.y, 0), V(-28, -b.y, 0)).toShape(),
            Part.LineSegment(V(-28, -b.y, 0), V(-28, b.y, 0)).toShape(),
            Part.LineSegment(V(-28, b.y, 0), V(-a.x, a.y, 0)).toShape(), arc(-17, 13.75, 135, 90)]
-    plate = Part.Face(Part.Wire(Part.__sortEdges__(rim))).extrude(V(0, 0, 3))
+    plate = Part.Face(Part.Wire(Part.__sortEdges__(rim)))
 
     def rounded(off, z):
         hx, hy, r = 20 - off, 16.75 - off, 3 - off
@@ -2939,12 +2940,33 @@ def post_flush_on_plate(draft):
             Part.ArcOfCircle(Part.Circle(V(-hx + r, -hy + r, z), V(0, 0, 1), r), math.pi,
                              1.5 * math.pi).toShape()]))
 
-    post = Part.makeLoft([rounded(0, 3), rounded(17.6 * math.tan(math.radians(draft)), 20.6)],
-                         True, True)
-    s = plate.fuse(post).removeSplitter()
+    return plate, Part.makeLoft(
+        [rounded(0, 3), rounded(17.6 * math.tan(math.radians(draft)), 20.6)], True, True)
+
+
+def post_flush_on_plate(draft):
+    c = 0.5 ** 0.5
+    plate, post = post_flush_parts(draft)
+    s = plate.extrude(V(0, 0, 3)).fuse(post).removeSplitter()
     # the foot's arc at the corner (17, 13.75), the chain's end: its
     # tangent run along x=20 and round the corner (17, -13.75) is the spine
     return s, edge_between(s, (20, 13.75, 3), (17 + 3 * c, 13.75 + 3 * c, 3))
+
+
+# What the fillet run on to the vertices adds, by booleans: the fillet's
+# material along x=20 on a plate wide all round, kept within the plate's
+# footprint and between the vertices' end planes (through the corners'
+# axes at 45 deg)
+def post_flush_run_on_added(draft, r):
+    plate, post = post_flush_parts(draft)
+    wide = Part.makeBox(80, 80, 3, V(-40, -40, 0)).fuse(post).removeSplitter()
+    foot = [e for e in wide.Edges if abs(e.BoundBox.ZMin - 3) < 1e-7
+            and abs(e.BoundBox.ZMax - 3) < 1e-7 and abs(e.BoundBox.XMin - 20) < 1e-7
+            and abs(e.BoundBox.XMax - 20) < 1e-7]
+    wedge = Part.Face(Part.makePolygon([V(17, 13.75, 0), V(57, 53.75, 0), V(57, -53.75, 0),
+                                        V(17, -13.75, 0), V(17, 13.75, 0)])).extrude(V(0, 0, 10))
+    return (wide.makeFillet(r, foot).cut(wide).common(plate.extrude(V(0, 0, 10)))
+            .common(wedge).Volume)
 
 
 # The undrafted post: the fillet adds r^2 (1 - pi/4) swept along the foot at
@@ -2960,21 +2982,16 @@ for _r in (0.3, 1.0):
                 _pf.Volume + _r * _r * (1 - math.pi / 4) * (2 * _cen * _th + 27.5), vol_tol=1e-4,
                 bop=True, flat=True)
 refused_case("post_flush_on_plate_r0.3_refused", _pf, _pfe, 0.3)
-# Drafted 1 deg: the faces at 91 deg, the section's area r^2 (cot 45.5 deg -
-# 44.5 deg in radians), its line on the top r cot 45.5 deg out; swept as
-# above, the centroid taken as at 90 deg (within 2e-4 of the result)
+# Drafted 1 deg: run on to the vertices, the volume the booleans' above
+# (within 2.2e-4 at 0.3, 7e-5 at 1)
 _pd, _pde = post_flush_on_plate(1.0)
-_cot = 1 / math.tan(math.radians(45.5))
 for _r in (0.3, 1.0):
-    _cen = 3 + _r * (10 - 3 * math.pi) / (3 * (4 - math.pi))
-    _th = math.radians(45) - math.acos(3 / (3 + _r * _cot))
     fillet_case("post_flush_draft_on_plate_flat_r%g" % _r, _pd, _pde, _r, "pass",
-                _pd.Volume + _r * _r * (_cot - math.radians(44.5)) * (2 * _cen * _th + 27.5),
-                vol_tol=1e-3, bop=True, flat=True)
+                _pd.Volume + post_flush_run_on_added(1.0, _r), vol_tol=1e-3, bop=True, flat=True)
 refused_case("post_flush_draft_on_plate_r0.3_refused", _pd, _pde, 0.3)
 # #876's own: the post's foot along x=+20 (E91 and on) and x=-20 (E30 and
-# on), 1 deg drafted, at 0.3 and 0.8
-for _e, _r, _vol in ((91, 0.3, 8666.3282), (30, 0.3, 8666.3282), (91, 0.8, 8669.4704)):
+# on), 1 deg drafted, at 0.3 and 0.8, run on to the vertices
+for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.7696)):
     fillet_case("issue876_post_foot_flat_e%d_r%g" % (_e, _r), sweep_shape("issue876_Fillet"), _e,
                 _r, "pass", _vol, vol_tol=1e-3, bop=True, flat=True)
 refused_case("issue876_post_foot_e91_r0.3_refused", sweep_shape("issue876_Fillet"), 91, 0.3)

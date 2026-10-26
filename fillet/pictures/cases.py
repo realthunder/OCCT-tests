@@ -95,7 +95,7 @@ STAGES = {
     "sloftend": ("f5902943f4", "2bde18d4b5"),
     "srefuse": ("2bde18d4b5", "6271a7f719"),
     "smissed": ("117f0aa8af", "117c549667"),
-    "srimend": ("117c549667", "5ab71bc3ea"),
+    "srimend": ("117c549667", "4316324037"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1329,12 +1329,12 @@ CASES = {
     # #876's post, its foot along x=20 (E91 and on): the plate's rim runs
     # flush into the post's corner, tangent to its arc, and the top narrows
     # to nothing at (19.24, 15.75); the fillet's line on the top meets the
-    # rim short of it, and nothing closed the fillet: refused. Ended flat
-    # where the line meets the rim now, the foot sharp from there, once
-    # everything else failed (FLAT)
+    # rim short of it, and nothing closed the fillet: refused. Run on to the
+    # vertex now, cut by the plate's side carried up, once everything else
+    # failed (FLAT)
     "issue876_post_foot_flat_e91_r0.8": (
         "srimend", "p876f", ((20.0, 13.750014, 3.0), (19.238761, 15.746985, 3.0)), 0.8,
-        8669.4704, (19.9, 14.6, 3.3), (1, 0.7, 0.9)),
+        8669.7696, (19.9, 14.6, 3.3), (1, 0.7, 0.9)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)

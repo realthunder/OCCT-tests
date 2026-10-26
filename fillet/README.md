@@ -5469,8 +5469,9 @@ until no face is pinched (a fillet made flat so at both its ends on one
 face). Not where a loop is no longer than ten times what the vertex covers,
 as the coincident vertices' rule has it: #273's handle at 0.8 has a fillet
 face whose wire passes a vertex of tolerance 0.011 twice with a loop of one
-edge 3.2e-4 long between, and cut off, it made a face of no area. Unlike the flat end, the split applies to every result; the sweeps
-below say what it changes.
+edge 3.2e-4 long between, and cut off, it made a face of no area. Unlike
+the flat end, the split applies to every result; the sweeps below say what
+it changes.
 
 On the model the volumes are those of the section swept along the foot
 from one flat end to the other: r^2 (1 - pi/4) at its centroid, r (10 - 3
@@ -5501,10 +5502,50 @@ None of that now.
 | Case | What it covers |
 |------|----------------|
 | `post_flush_on_plate_flat_r{0.3,1}` | the post straight: made flat at both ends, the volume swept as above |
-| `post_flush_draft_on_plate_flat_r{0.3,1}` | the post drafted 1 deg: the same, within 1e-3 of the estimate |
+| `post_flush_draft_on_plate_flat_r{0.3,1}` | the post drafted 1 deg: run on to the vertices (below), the volume the booleans' |
 | `post_flush_on_plate_r0.3_refused`, `post_flush_draft_on_plate_r0.3_refused` | without the flat end, refused as before |
-| `issue876_post_foot_flat_e91_r{0.3,0.8}`, `issue876_post_foot_flat_e30_r0.3` | #876's post's foot, made |
+| `issue876_post_foot_flat_e91_r{0.3,0.8}`, `issue876_post_foot_flat_e30_r0.3` | #876's post's foot, made, run on to the vertices (below) |
 | `issue876_post_foot_e91_r0.3_refused` | without the flat end, refused |
+
+### Run on to the vertex (`4316324037`, 2026-10-26)
+
+The flat end left the foot sharp from the rim to the vertex and a step in
+the fillet there; what is wanted is the fillet run on to the vertex, cut by
+the plate's side carried up, the side rising in a curved triangle to meet
+it. The walk already goes on past the rim: where a side's line runs off its
+face at a stripe's end, the builder walks on on that face's tangent plane
+to the spine's end (`ChFi3d_BuildPlane`), a SurfData of no face on that
+side (the surplus the corner skips), or the same walk kept in the end's
+SurfData, its line on the top ending at the rim and the other running on
+(#876's foot along `E91`). `MakeRimRunOn` cuts that surface by the plate's
+side surface from the point on the rim to Q, where the cut reaches the
+plane through the vertex square to the spine, and ends it there. The
+plate's side carried up is a face of its own, between the rim's piece from
+the point to the vertex, the cut and the line up from the vertex in that
+plane; the post, drafted, leans off it there, by 1 deg, and a sliver in
+the end plane (the vertex, Q and the post's line there) closes the rest --
+0.17 high at 1, the section's drop 0.017 out from the post. The foot is
+filleted to the vertex and nothing of it kept. Each new face takes its way
+in the solid from its surface's: the fillet's as the SurfData, the side's
+as the plate's side.
+
+Where the plate's side touches the post along the line up from the vertex
+(the post straight), the cut ends on the post's line there, tangent to it,
+a face with a corner of no angle, which the topology made no closed wire
+of: that end stays flat. So does any end the run-on cannot make.
+
+On the drafted model the volume is that of booleans that build the same
+thing -- the fillet's material on a plate wide all round, kept within the
+plate's footprint and between the vertices' end planes: 0.57826 at 0.3
+against 0.57804, 6.26539 at 1 against 6.26532, valid and clean by BOP's
+check. On #876 the foot along x=20 is made at 0.3 (+0.57179, 0.01377 more
+than flat at each end) and 0.8 (+3.98573), along x=-20 at 0.3 and 0.8,
+valid and clean.
+
+The flat sweeps change only in #876's foot: the same 24 edge and 128
+vertex cases made, now run on; on `issue876_Fillet001` BOP's check still
+reports only the input's own five edges. The sweeps without the flat end
+do not reach it.
 
 ## Known broken (XFAIL)
 
