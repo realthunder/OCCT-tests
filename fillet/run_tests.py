@@ -2305,9 +2305,12 @@ for r, vol in ((1, 9801.8039), (4, 9809.7324), (10, 9853.978), (15, 9919.5607)):
 for r, vol in ((0.5, 8558.4805), (0.8, 8556.9137)):
     fillet_case("issue273_pocket_flat_chamfer_e23_r%g" % r, p273f, 23, r, "pass", vol, 0.031,
                 chamfer=True, vol_tol=1e-4, bop=True, flat=True)
-# as wide as the wall: the pocket is 1 deep, the fillet would take the whole
-# wall and meet the floor at its edge -- refused, flat end or not (README.md)
-fillet_case("issue273_pocket_wall_wide_e23_r1", p273f, 23, 1.0, "xfail", flat=True)
+# as wide as the wall: the pocket is 1 deep, the fillet takes the whole wall
+# and meets the floor at its edge -- refused, flat end or not, until the
+# radius a hair smaller and the sliver made one with the floor's edge
+# (README.md, "A face exactly as wide as the fillet")
+fillet_case("issue273_pocket_wall_wide_e23_r1", p273f, 23, 1.0, "pass", 8557.7608, vol_tol=1e-3,
+            bop=True, flat=True)
 _part_params = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part")
 _had_fallback = "FilletCornerSetbackFallback" in _part_params.GetFloats()
 _fallback = _part_params.GetFloat("FilletCornerSetbackFallback", 2.0)
@@ -2994,6 +2997,37 @@ for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.
     fillet_case("issue876_post_foot_flat_e%d_r%g" % (_e, _r), sweep_shape("issue876_Fillet"), _e,
                 _r, "pass", _vol, vol_tol=1e-3, bop=True, flat=True)
 refused_case("issue876_post_foot_e91_r0.3_refused", sweep_shape("issue876_Fillet"), 91, 0.3)
+
+# A face exactly as wide as the fillet: a wall 2 wide on a base, its top's
+# outer edge at 2 -- the fillet's line on the top lies on the top's other
+# edge, and the fillet takes the whole top -- and its two top edges at 1, a
+# full round. Refused before (StartSol: no section inside both faces). Now,
+# the last resort, computed a hair smaller (a tenth of the tolerance) and
+# the sliver of the top left made one with the edge beside it (README.md,
+# "A face exactly as wide as the fillet"); the volumes the exact ones, r^2
+# (1 - pi/4) over the wall's 10, twice that at 1. Past the width refused.
+def wall_on_base():
+    s = Part.makeBox(20, 10, 5).fuse(Part.makeBox(2, 10, 10)).removeSplitter()
+    return (s, edge_between(s, (0, 0, 10), (0, 10, 10)),
+            edge_between(s, (2, 0, 10), (2, 10, 10)))
+
+
+_wb, _wbo, _wbi = wall_on_base()
+fillet_case("wall_top_exact_r2", _wb, _wbo, 2.0, "pass",
+            _wb.Volume - 4 * (1 - math.pi / 4) * 10, vol_tol=1e-3, bop=True)
+fillet_case("wall_full_round_r1", _wb, [_wbo, _wbi], 1.0, "pass",
+            _wb.Volume - 2 * (1 - math.pi / 4) * 10, vol_tol=1e-3, bop=True)
+refused_case("wall_top_past_r2.01", _wb, _wbo, 2.01)
+# the sweeps' own: #876's plate's bottom edge at 2, the post's cavity 2 in
+# from its flush sides; #523's boss rim of radius 2 at 2, nothing of the top
+# left inside; #273's ledge 1 deep below the top round the pocket's tip,
+# its three edges at 1, three slivers in a run collapsed the same way
+fillet_case("issue876_bottom_cavity_e6_r2", sweep_shape("issue876_Fillet"), 6, 2.0, "pass",
+            8531.640656, vol_tol=1e-3, bop=True)
+fillet_case("issue523_boss_rim_e11_r2", sweep_shape("issue523_box"), 11, 2.0, "pass",
+            1087.964645, vol_tol=1e-3, bop=True)
+fillet_case("issue273_ledge_e27_e29_e31_r1", sweep_shape("issue273_Fillet"), [27, 29, 31], 1.0,
+            "pass", 8561.8395, vol_tol=1e-3, bop=True)
 
 counts = {}
 for _, verdict, _ in results:

@@ -97,6 +97,7 @@ STAGES = {
     "smissed": ("117f0aa8af", "117c549667"),
     "srimend": ("117c549667", "5c11250d99"),
     "srimpast": ("5c11250d99", "840f4a2b71"),
+    "ssnap": ("91d481e2f1", "a71a397df2"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -144,6 +145,11 @@ def _fin_wall():
     # the fin, its wall split 0.7 from the outer face as the slot's
     V = App.Vector
     return _fin().generalFuse([Part.LineSegment(V(9.3, 3, 5), V(9.3, 3, 20)).toShape()])[0].Solids[0]
+
+
+def _wall_on_base():
+    # run_tests.py's wall 2 wide on a base, flush with its side x=0
+    return Part.makeBox(20, 10, 5).fuse(Part.makeBox(2, 10, 10)).removeSplitter()
 
 
 def _arm_on_tall_block(split=True, near=False):
@@ -443,6 +449,7 @@ SHAPES = {
     "armnear": lambda: _arm_on_tall_block(split=False, near=True),
     "armtilt": _arm_tilted_under_block,
     "p474": _brep("issue474_fillet003_base.brep"),
+    "wallbase": _wall_on_base,
     "p273": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue273_Fillet.brep")),
     "pv10": lambda: _v_pocket(10, 1.0),
     "p631l": _brep("issue631_loft_joint.brep"),
@@ -530,6 +537,8 @@ UVFACE = {
                   and abs(f.Surface.Radius - 10) < 1e-6),
     # the slot's floor, where the fillet ends
     "slotwall": _plane_at("z", 5),
+    # the end face, the wall and the base in one: the fillet's section
+    "wallbase": _plane_at("y", 0),
     # the slot's floor at e101's foot (y 13.7..17.1); for e50 see UVFACE_CASE
     "p962": _plane_at("z", 14, {"y": 13.0}, {"y": 17.1}),
     # the fin's outer face, which the fillet's line runs on
@@ -606,6 +615,9 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
+    # #273's pocket's floor, 1 below the top: the fillet as deep as the
+    # pocket meets it, the wall gone
+    "issue273_pocket_wall_wide_e23_r1": _plane_at("z", 30, {"x": -2, "y": 5}, {"x": 2, "y": 16}),
     # #876's plate's top beside the post, x > 19, the fillet's line on it
     # ending at the rim
     "issue876_post_foot_flat_e91_r0.8": (
@@ -750,6 +762,7 @@ NAMES = {
                "the corner under the block's wall, the block's side y=27.2 one face",
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
+    "wallbase": "20x10x5 base, a wall 2 wide and 10 high on it flush with its side x=0",
     "pv10": "a 30x30x10 block, a V pocket in its top 10 deg at the apex, 8 long, 1 deep",
     "p631l": "#631's Loft (a PartDesign body: a loft on a pad, its faces planes made B-splines)",
     "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
@@ -811,6 +824,7 @@ VIEW = {
     "armtilt": ((30, 9, 2), 46.0),
     "p474": ((-1.4, 0, 24.3), 34.0),
     "p273": ((0, 2, 16), 44.0),
+    "wallbase": ((10, 5, 5), 26.0),
     "pv10": ((15, 15, 5), 40.0),
     "p631l": ((-13, -15, 25), 70.0),
     "postplate": ((-4.5, 0, 9), 20.0),
@@ -854,6 +868,7 @@ UVLABEL = {
     "armtilt": ("the flat face under the wall", False),
     "p474": ("the corner's plate", False),
     "p273": ("the face at the apex", False),
+    "wallbase": ("the end face y=0", False),
     "pv10": ("the face at the apex", False),
     "p631l": ("the plate at the end", False),
     "postplate": ("the plate's side", False),
@@ -884,6 +899,7 @@ UVLABEL = {
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "issue876_post_foot_flat_e91_r0.8": ("the plate's top beside the post", False),
+    "issue273_pocket_wall_wide_e23_r1": ("the pocket's floor", False),
     "issue876_post_foot_flat_e91_r2": ("the plate's top beside the post", False),
     "issue962_ring_rim_flat_e26_r2": ("the floor z = -9.75", False),
     "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
@@ -1350,6 +1366,18 @@ CASES = {
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
+    # a face exactly as wide as the fillet: #273's pocket 1 deep, its rim at
+    # 1 -- the fillet's line on the wall is the floor's edge, and the
+    # fillet takes the whole wall. Refused (no section inside both faces).
+    # Computed a hair smaller now, the last resort, and the strip of wall
+    # left made one with the floor's edge (FLAT, as the suite has it)
+    "issue273_pocket_wall_wide_e23_r1": ("ssnap", "p273", ((0, 15.013479, 31),
+                                                          (1.524712, 7.124642, 31)), 1.0,
+                                         8557.7608, (0.8, 11, 30.6), (-0.6, -0.2, 1)),
+    # a wall 2 wide, its two top edges at 1: a full round, the top gone
+    "wall_full_round_r1": ("ssnap", "wallbase", [((0, 0, 10), (0, 10, 10)),
+                                                 ((2, 0, 10), (2, 10, 10))], 1.0,
+                           1095.7077, (1, 0, 9.5), (0.5, -1, 0.6)),
     "chamfer_fillet_corner_poly": ("schamfer", "chfcorner", ((0, 0, 10), (0, 28, 10)), 1.0,
                                    11909.6170, (2.4, 30, 7.6), (-0.5, 1, 0.6)),
     "chamfer_fillet_corner_box": ("schamfer", "chfcornerbox", ((0, 0, 10), (0, 28, 10)), 1.0,
@@ -1391,13 +1419,16 @@ STRICT = {
     "issue273_handle_foot_e11_r0.8": (0.031, 1e-3),
     "issue474_f002_sliver_top_r0.3": (1e-4, 1e-4),
     "issue962_arm_corner_e25_e26_r1": (1e-4, 1e-4),
+    "issue273_pocket_wall_wide_e23_r1": (0.031, 1e-3),
+    "wall_full_round_r1": (1e-4, 1e-3),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
 FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
         "pocket_v10_d1_flat_tip_rims_r0.8",
         "issue273_pocket_flat_tip_e23_e24_r0.8", "issue962_ring_rim_flat_e26_r2",
-        "issue876_post_foot_flat_e91_r0.8", "issue876_post_foot_flat_e91_r2"}
+        "issue876_post_foot_flat_e91_r0.8", "issue876_post_foot_flat_e91_r2",
+        "issue273_pocket_wall_wide_e23_r1"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
@@ -1458,6 +1489,7 @@ EDGES = {
                                              "corner edge",
     "slot_by_slope_floor_inline_r1": "the floor's on the wall, the side's under the slope",
     "slot_by_slope_inline_slope_r1": "the side's under the slope, the slope's on the wall",
+    "wall_full_round_r1": "the wall's two top edges",
     "slot_by_slope_slope_floor_r1": "the slope's on the wall, the floor's on the wall",
     "slot_split_both_floor_and_end_r1": "the floor's along the wall, the floor's on the outer "
                                         "face",

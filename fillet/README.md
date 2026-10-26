@@ -5325,13 +5325,16 @@ from the edge to the face's other edges that touch neither of its ends):
 | Edges | Why |
 |-------|-----|
 | 120 | A face beside the edge narrower than the fillet: made up to within 10% of the room (5% over it at most) |
-| 38 | A face exactly as wide as the fillet at 2 (room 2.000): made to 1.96 -- the fillet as wide as its face, as `issue273_pocket_wall_wide_e23_r1` (XFAIL) |
+| 38 | A face exactly as wide as the fillet at 2 (room 2.000): made to 1.96 -- the fillet as wide as its face, as `issue273_pocket_wall_wide_e23_r1`; snapped since `a71a397df2` (after the table) |
 | 15 | Made past one face's room, refused at the other's or at a face exactly 2 wide (#876's 1.414 corners at 1.96, #962 E67 to E69 and E128 at 1.48 against a 1.5 face, #273 `Fillet001` E38 at 0.99 against a 1.0 face, #474 `Fillet002` E11 on the coil at 1.44) |
 | 2 + 1 + 1 | Known: the D-hole (#273 E38, `Fillet001` E55, 1.36), the band 2 thick (#474 `Fillet003` E52), the ledge (#962 E9) |
 | 4 | #962 E26 and E34 (and the `Chamfer` input's E16, E32): the ring's outer rim from the gap's end face to where the arm leaves it, made up to 1.025. Plane and cylinder only, with room 3 and 6: **a builder failure**, reproduced on a ring (radii 19.75 and 16.75, 6 high) with an arm whose side leaves the rim at (17.356, -9.425) and a gap whose end face, through the axis, meets the rim at (-13.616, -14.306): the arm's side leaving the rim 10 deg off its tangent refuses the rim at every radius, 18.6 deg (the input's) from 1.05, 5, 30 or 45 deg makes it at 0.5 to 2; with the gap alone or the arm alone it is made. Made with the flat end since `117c549667` (below, "A fillet whose line misses the face at its end") |
 | 4 | #273 `Fillet001` E11, E22, E30, E33: made up to 1.29, the four meeting at the corner (4.98, -15.55, 30.04) on the handle's B-splines. Looked at (2026-10-26): room enough on every face (10.4 and 32.2 beside `E11`, 8.6 and 30.8 beside `E30`, against a fillet 1.59 and 0.97 wide at 2); from 1.35 the walk along `E11` on the handle's B-spline face comes back twisted on it (`BlendFunc_ConstRad::TwistOnS1`, the point on the face going back against the spine), at 2 on both faces near the foot, the last SurfData, so nothing to mend it from ("adjustment by reprocessing the non-written points: no neighbor"). The handle face curves gently there (radius 16.3 to 16.8 along `E11`); whether the twist is the surface's or its parameters' is open |
-| 6 | Refused at exactly 2, room 3 on both faces at the edge -- each a limit of the shape (looked at 2026-10-26): #876's E6, E14 (`Fillet001` E36, E42) are not hole rims but the bottom edges of the plate's ends, arcs of radius 5.25; their chain runs on round the plate's whole bottom outline, and the post is hollow from below, its cavity 2 in from the flush sides (the bottom face's inner wire, 2.000 from the outline at (-17, -16.75)): there the bottom face is exactly as wide as the fillet at 2 (the walk fails from that corner; made to 1.99), as in the row above. #523's E11, E13 are the top rims of a 270 deg boss of radius 2: a fillet of 2 leaves nothing of the top inside its line (made to 1.99) |
+| 6 | Refused at exactly 2, room 3 on both faces at the edge -- each a limit of the shape (looked at 2026-10-26): #876's E6, E14 (`Fillet001` E36, E42) are not hole rims but the bottom edges of the plate's ends, arcs of radius 5.25; their chain runs on round the plate's whole bottom outline, and the post is hollow from below, its cavity 2 in from the flush sides (the bottom face's inner wire, 2.000 from the outline at (-17, -16.75)): there the bottom face is exactly as wide as the fillet at 2 (the walk fails from that corner; made to 1.99), as in the row above. #523's E11, E13 are the top rims of a 270 deg boss of radius 2: a fillet of 2 leaves nothing of the top inside its line (made to 1.99). All six made since `a71a397df2` |
 | 5 | #474 `Fillet003` E3, E8, E16, E32, E40: the coil band's end, made up to 1.74 where the band is 1.992 thick -- on the coil whose input is faulty |
+
+Since `a71a397df2` the sweep makes 66 of the refusals at 2 (below, "A face
+exactly as wide as the fillet").
 
 ## The sweeps' last refusals at 0.3, 0.8 and 2: each a limit of the shape (2026-10-25)
 
@@ -5606,6 +5609,99 @@ before.
 | `issue876_post_foot_flat_e{91,30}_r2` | #876's foot at 2, made |
 | `post_flush_on_plate_flat_r2_refused` | the straight model at 2, refused with the flat end on |
 
+## A face exactly as wide as the fillet (`a71a397df2`, realthunder/FreeCAD#273, #876, #523, 2026-10-27)
+
+A fillet whose line on a face beside it lies on that face's other edge --
+a wall's top 2 wide, its outer edge filleted at 2; the wall's two top edges
+at 1, a full round -- was refused: the walk starts nowhere ("StartSol
+echec", no section inside both faces), the line being where the face ends.
+A hair smaller it is made, and leaves a strip of the face as wide as the
+difference; a hair larger the line would lie past the face, and refusing is
+right. Parasolid's blends snap there: the strip goes, and the fillet meets
+the face beyond. Now the fork does the same, as the last resort:
+
+- `ChFi3d_FilBuilder::ComputeWithFlatEndCorners`, everything else refused
+  and every radius constant (FreeCAD's `makeFillet` gives each edge the law
+  (0, r), (1, r), constant too), computes once more with each radius a tenth
+  of the approximation tolerance smaller (1e-5 at the default 1e-4),
+  `ChFi3d_SnapSlivers()`
+  set. Each edge is removed and added again, as the flat end's halving does
+  (a spine a computation failed on has lost its abscissa); its corner's
+  setback and its faces' depths are carried over to the new spine. Still
+  refused, the radii are set back, and the contours refused at them are
+  found again among the new stripes -- FreeCAD leaves out the edges
+  `FaultyContour` names and builds the rest, and a stale stripe named none
+  (contour 0), so the edge left out was the wrong one
+  (`PartDesignTests.TestFillet.testFailedEdgesLeftOut`).
+- `ChFi3d_Builder::Compute` then takes the strips out
+  (`ChFi3d_CollapseSlivers`): a face of one wire, two long edges within the
+  tolerance of each other all along and between their ends short edges or
+  none. The face goes with its short edges; one long edge takes the other's
+  place in the face beyond, with a curve on that face's surface (projected,
+  shifted by whole periods on a periodic surface to the period the dropped
+  edge's curve is in), and the ends are made one. The edge kept is the
+  input's where one is; else the one whose face beyond is on a surface of
+  the input's -- a run of strips, as at #273's ledge (a fillet as wide as a
+  step 1 deep below the top: three faces 1e-5 tall round it), all go the
+  same way, to the top, and a dropped edge is not bound again. Nothing
+  changes when the volume would by more than 1e-6 of itself.
+- The result is refused, as an invalid one is, when a strip is left
+  (`ChFi3d_HasSliverLeft`): a face not the input's no wider than the
+  tolerance (twice its area over its outline), or a vertex not the input's
+  that touches another vertex or an edge it does not bound within their
+  tolerances -- BOP's check's rule. #474 `Fillet003`'s E52 at 2, where the
+  coil's band is 2 thick, kept a face of area 9e-12; a slot's wall 4 wide
+  at the corner's edge at 4 left the fillet's line 1e-5 short of the wall's
+  far edge in a face that runs on below the slot, a vertex of tolerance
+  1e-4 that far from that edge. A first guard flat at 1e-4 refused #876's
+  and #523's clean results too.
+
+`issue273_pocket_wall_wide_e23_r1` was XFAIL until now: made and clean up
+to 0.999, from 0.9999 a strip of wall narrower than the input's 0.03
+tolerance that BOP's check flags. Tried 2026-10-19 and left then: a start
+rolling on the top and the floor's edge (the obstacle mode,
+`BRepBlend_SurfRstLineBuilder`) walks the whole rim from 1.001, but the
+stripe then stands on the floor's corner vertices, a cap upstream never
+wrote ("OneCorner : bouchon non ecrit"), and at exactly 1 the lost-contact
+test (`BRepBlend_SurfRstConstRad::Decroch`) is a tie. The snap goes round
+all of that: it never walks at 1, only a hair below, and the strip the walk
+leaves is then taken out of the result.
+
+The sweeps, against `91d481e2f1`, nothing worse anywhere, every gain an
+EXC -> ok: edge (3921) 66, all at 2 -- #309's 18, #876 `Fillet`'s and
+`Fillet001`'s 20 each (the plate's bottom outline, the cavity 2 in), #474
+`Fillet002` E12, E25 and `Fillet003` E50, E58 to E60, #523 E11, E13; the
+flat end's edge sweep the same 66; vertex (12242) 58 -- #273 `Fillet` 36
+and `Fillet001` 22, #474 8, #962 4 -- and the flat end's the same; the big
+radii (2614) 32, 23 of them the mini slots and fins (8 at 4, 15 at 10);
+chamfer nothing.
+Each of the 156 BOP-checked: 114 clean, the 42 others on #876's and #273's
+`Fillet001`, whose input BOP's check faults already. Part 390 and
+PartDesign 486 OK; the suite PASS=775 XFAIL=4.
+
+| Case | What it covers |
+|------|----------------|
+| `wall_top_exact_r2` | a wall 2 wide on a base, its top's outer edge at 2: the top gone, the fillet down to the inner side, the volume the exact one |
+| `wall_full_round_r1` | its two top edges at 1: a full round, the two fillets meeting at the top's middle |
+| `wall_top_past_r2.01` | past the width: refused |
+| `issue273_pocket_wall_wide_e23_r1` | #273's pocket 1 deep, its rim at 1: the wall gone (XFAIL before) |
+| `issue273_ledge_e27_e29_e31_r1` | the ledge 1 deep round the pocket's tip, its three edges at 1: three strips in a run |
+| `issue876_bottom_cavity_e6_r2` | #876's plate's bottom edge at 2, the post's cavity 2 in from its flush sides |
+| `issue523_boss_rim_e11_r2` | #523's boss rim of radius 2 at 2: nothing of the top left inside the line |
+
+FreeCAD's `PartDesignTests.TestFillet.TestFilletFullRound` (fcad
+`398adc064f`) covers `FullRound`: a face's two sides filleted at
+width / 2 tan(a / 2), the face gone.
+
+`models/pictures/fcad_full_round_ribs.png`: the input and FreeCAD's Fillet
+with `FullRound` on three ribs' tops -- square, drafted and a quarter ring,
+10 high on a plate 46 x 20 x 3 (not made by `make_pictures.sh`: a
+PartDesign feature, drawn with `render.py`). Valid and clean by BOP's
+check; removed 26.2990 against the exact rounds' 26.2974, the result's
+symmetric difference with an exact full round empty on the square rib: each round is the
+snap's, its radius 1e-5 short and its two sides meeting 1e-5 off the
+middle.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -5614,7 +5710,6 @@ before.
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 | `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
-| `issue273_pocket_wall_wide_e23_r1` | A fillet as wide as its face: #273's pocket is 1 deep, so at r 1 the fillet's line on the wall is the floor's edge and the fillet would take the whole wall. Refused ("StartSol echec"), with the flat end or without; up to 0.999 it is made and clean by BOP's check, from 0.9999 the wall left is a strip narrower than the input's 0.03 tolerance and BOP's check flags it, above 1 refusing is right (the line would lie below the floor). Tried 2026-10-19 and left (decided): a start rolling on the top and the floor's edge (the obstacle mode, `BRepBlend_SurfRstLineBuilder`) walks the whole rim from 1.001, but the stripe then stands on the floor's corner vertices, a cap upstream never wrote ("OneCorner : bouchon non ecrit"), at exactly 1 the lost-contact test (`BRepBlend_SurfRstConstRad::Decroch`) is a tie, and the wall would have to vanish from the result -- several sessions, no promise |
 
 ## Pictures
 

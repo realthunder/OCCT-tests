@@ -2174,6 +2174,47 @@ line passing from its flat wall to its rounded corner on the way
 
 ![issue876_post_foot_flat_e91_r2](pictures/issue876_post_foot_flat_e91_r2.png)
 
+### A face exactly as wide as the fillet (`a71a397df2`, #273's pocket)
+
+#273's pocket is 1 deep, and its rim at 1 puts the fillet's line on the
+wall exactly on the floor's edge: the fillet would take the whole wall.
+The walk found no section inside both faces and the fillet was refused --
+a hair smaller it is made and leaves a strip of wall 1e-5 tall, a hair
+larger refusing is right. Parasolid's blends snap there, and now the fork
+does too, as the last resort: computed once more with each radius a tenth
+of the tolerance smaller, and the strip left made one with the floor's
+edge, the fillet meeting the floor. The result is refused should a strip
+stay. Here at 1, valid and clean by BOP's check; upstream and the fork
+before refuse it (the input, greyed).
+
+![issue273_pocket_wall_wide_e23_r1](pictures/issue273_pocket_wall_wide_e23_r1.png)
+
+A wall 2 wide, its two top edges at 1, is the same: each fillet's line on
+the top lies on the other's, and the two make a full round, the top gone.
+
+![wall_full_round_r1](pictures/wall_full_round_r1.png)
+
+### A full round, in FreeCAD (fcad `398adc064f`)
+
+With the snap the full round is a fillet like any other: the two edges of a
+face, each at the radius that makes the fillet as wide as half the face. A
+PartDesign Fillet now does that for faces (`FullRound`): given a face, it
+takes as its sides the longest pair of its edges that share no vertex,
+measures the face's width between them (one width all along, or the face
+is refused) and at each side the solid's angle a between the face and the
+side's face, and fillets each side at r = width / 2 tan(a / 2) -- half the
+width on a square rib, more on a drafted one, whose top corners are obtuse.
+The face goes, one round in its place. Here three ribs 10
+high on a plate, square (2 wide), drafted (2 wide at the top, 4 at the
+foot) and a quarter ring (radii 13 and 15): valid, clean by BOP's check,
+no top left. The round on each is the snap's, its radius a tenth of the
+tolerance short of the exact one, the two fillets meeting at the top's
+middle; on the square rib its symmetric difference with an exact full
+round is empty. The kernel alone refuses these radii before `a71a397df2`; the
+picture is FreeCAD's feature, the input on the left.
+
+![fcad_full_round_ribs](pictures/fcad_full_round_ribs.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
