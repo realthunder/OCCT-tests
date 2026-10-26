@@ -2974,15 +2974,23 @@ for _r in (0.3, 1.0):
     fillet_case("post_flush_on_plate_flat_r%g" % _r, _pf, _pfe, _r, "pass",
                 _pf.Volume + post_flush_run_on_added(0.0, _r), vol_tol=1e-4, bop=True, flat=True)
 refused_case("post_flush_on_plate_r0.3_refused", _pf, _pfe, 0.3)
-# Drafted 1 deg: the same (within 1.8e-4 at 0.3, 1e-4 at 1)
+# At 2, where the line on the top leaves it on the straight foot: the walk
+# past the rim at the far end is not kept (the post's corner one face with
+# the plate's side below), and the end not made; refused, the flat end on
+with FlatEnd(True):
+    refused_case("post_flush_on_plate_flat_r2_refused", _pf, _pfe, 2.0)
+# Drafted 1 deg: the same (within 1.8e-4 at 0.3, 1e-4 at 1, 1.8e-4 at 2, where
+# the line on the top leaves it on the straight foot and the fillet runs on
+# from there round the corner)
 _pd, _pde = post_flush_on_plate(1.0)
-for _r in (0.3, 1.0):
+for _r in (0.3, 1.0, 2.0):
     fillet_case("post_flush_draft_on_plate_flat_r%g" % _r, _pd, _pde, _r, "pass",
                 _pd.Volume + post_flush_run_on_added(1.0, _r), vol_tol=1e-3, bop=True, flat=True)
 refused_case("post_flush_draft_on_plate_r0.3_refused", _pd, _pde, 0.3)
 # #876's own: the post's foot along x=+20 (E91 and on) and x=-20 (E30 and
 # on), 1 deg drafted, at 0.3 and 0.8, run on to the vertices
-for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.7698)):
+for _e, _r, _vol in ((91, 0.3, 8666.3557), (30, 0.3, 8666.3557), (91, 0.8, 8669.7698),
+                     (91, 2.0, 8689.9417), (30, 2.0, 8689.9417)):
     fillet_case("issue876_post_foot_flat_e%d_r%g" % (_e, _r), sweep_shape("issue876_Fillet"), _e,
                 _r, "pass", _vol, vol_tol=1e-3, bop=True, flat=True)
 refused_case("issue876_post_foot_e91_r0.3_refused", sweep_shape("issue876_Fillet"), 91, 0.3)

@@ -2157,13 +2157,22 @@ runs on to the vertex, cut by the plate's side carried up, which rises in
 a small curved triangle to meet it; at the vertex, where the post leans
 off the plate's side by its degree of draft, a sliver closes the end; where
 the post stands straight, the plate's side touching it along a line, the
-fillet's edge on the post ends on that line (`5c11250d99`). Only once
+fillet's edge on the post ends on that line (`5c11250d99`); on #876's
+post at 2, where the line leaves the top already on the straight foot, the
+fillet runs on from there round the corner (`840f4a2b71`). Only once
 everything else has failed, and where the run-on cannot be made the
 fillet ends flat where its line meets the rim (`5ab71bc3ea`). Here at
 0.8, valid and clean by BOP's check; upstream and the fork before refuse
 it (the input, greyed).
 
 ![issue876_post_foot_flat_e91_r0.8](pictures/issue876_post_foot_flat_e91_r0.8.png)
+
+At 2 the line leaves the top on the straight foot, before the corner, and
+the fillet runs on from there round the corner to the vertex, the post's
+line passing from its flat wall to its rounded corner on the way
+(`840f4a2b71`); upstream and the fork before refuse it.
+
+![issue876_post_foot_flat_e91_r2](pictures/issue876_post_foot_flat_e91_r2.png)
 
 ## Making the pictures
 

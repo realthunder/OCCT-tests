@@ -5483,7 +5483,8 @@ of the same estimate. On #876 the foot along x=20 is made at 0.3
 (+0.54425) and 0.8 (+3.68648), along x=-20 at 0.3, valid and clean by BOP's
 check; without the flat end refused as before. At 2 the line on the top
 meets the rim before the corner's arc begins, on the straight foot, and
-the end is not this one: refused as before.
+the end was not this one: refused then (made since, "Past the corner's
+start" below).
 
 The sweeps without the flat end are unchanged, the edge and vertex sweeps,
 the edge sweep at 4 and 10 and the chamfer's. With it, only #876's post's
@@ -5560,6 +5561,50 @@ The flat sweeps change only in #876's foot: the same 24 edge and 128
 vertex cases made, now run on; on `issue876_Fillet001` BOP's check still
 reports only the input's own five edges. The sweeps without the flat end
 do not reach it.
+
+### Past the corner's start (`840f4a2b71`, 2026-10-26)
+
+At 2 the fillet's line on the top meets the rim before the corner's arc
+begins, on the straight foot: the end is the fillet along the straight
+foot, on the post's flat wall, and the rim end was not taken (the walk's
+faces those of the edge at the vertex). Now it is, the top bounded by the
+rim and the edge at the vertex being enough. The walk past the rim on the
+top's tangent plane stopped where the post's line reached the end of its
+flat wall, the guide still running on round the corner: in the last resort
+it goes on, the top's side kept on the plane from where it stopped and the
+post's on to its corner (`ChFi3d_Builder_2.cxx`), up to the spine's end,
+not the guide's, which runs on past it. The run-on takes the pieces one
+after the other, each with its line on its own face of the post, its piece
+of the cut, and between two pieces the section where they meet, the
+surfaces' bound there across the walk (cut by a plane of its own, the
+section lay off the next piece by the walk's approximation). Its other
+curves take a margin over the deviation as sampled: BOP's check finds the
+greatest, past the samples.
+
+The plate's side and its rise are now made one face by hand -- the one's
+wire with the rim's piece replaced by the other's edges, which take their
+curves on the one's surface -- not by `ShapeUpgrade_UnifySameDomain`, which
+also lowered the tolerance of edges it kept: the drafted model at 2 came
+out valid but not clean by BOP's check, and 1.5e-4 off the booleans.
+
+On the drafted model at 2 the volume is the booleans' within 1.8e-4
+(24.48174 against 24.48192), valid and clean; on #876 the foot is made at 2
+along x=20 (`E91`, 8689.9417) and x=-20 (`E30`), valid and clean, refused
+before. The straight model at 2 is still refused: there the walk past the
+rim at the far end is not kept, the post's corner one face with the
+plate's side below it, and keeping it unmade #876 at 0.8.
+
+The flat sweeps change only in #876's foot at 2: on `issue876_Fillet`
+`E30` to `E32` and on `issue876_Fillet001` `E99` to `E101`, refused before,
+now made -- valid and clean, the second with BOP's check reporting only
+the input's own five edges. The vertex sweeps' radii (0.3, 1) are as
+before.
+
+| Case | What it covers |
+|------|----------------|
+| `post_flush_draft_on_plate_flat_r2` | the drafted model at 2, run on from the straight foot round the corner, the booleans' volume |
+| `issue876_post_foot_flat_e{91,30}_r2` | #876's foot at 2, made |
+| `post_flush_on_plate_flat_r2_refused` | the straight model at 2, refused with the flat end on |
 
 ## Known broken (XFAIL)
 

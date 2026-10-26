@@ -96,6 +96,7 @@ STAGES = {
     "srefuse": ("2bde18d4b5", "6271a7f719"),
     "smissed": ("117f0aa8af", "117c549667"),
     "srimend": ("117c549667", "5c11250d99"),
+    "srimpast": ("5c11250d99", "840f4a2b71"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -605,9 +606,13 @@ UVFACE = {
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
-    # #876's plate's top beside the post, x > 19: in two now, the strip kept
-    # beside the foot touching the rest at the point on the rim
+    # #876's plate's top beside the post, x > 19, the fillet's line on it
+    # ending at the rim
     "issue876_post_foot_flat_e91_r0.8": (
+        lambda f: f.Surface.__class__.__name__ == "Plane"
+        and abs(abs(f.Surface.Axis.z) - 1) < 1e-6 and abs(f.Surface.Position.z - 3) < 1e-6
+        and f.BoundBox.XMin > 19),
+    "issue876_post_foot_flat_e91_r2": (
         lambda f: f.Surface.__class__.__name__ == "Plane"
         and abs(abs(f.Surface.Axis.z) - 1) < 1e-6 and abs(f.Surface.Position.z - 3) < 1e-6
         and f.BoundBox.XMin > 19),
@@ -879,6 +884,7 @@ UVLABEL = {
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
     "issue876_post_foot_flat_e91_r0.8": ("the plate's top beside the post", False),
+    "issue876_post_foot_flat_e91_r2": ("the plate's top beside the post", False),
     "issue962_ring_rim_flat_e26_r2": ("the floor z = -9.75", False),
     "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
@@ -1335,6 +1341,12 @@ CASES = {
     "issue876_post_foot_flat_e91_r0.8": (
         "srimend", "p876f", ((20.0, 13.750014, 3.0), (19.238761, 15.746985, 3.0)), 0.8,
         8669.7698, (19.9, 14.6, 3.3), (1, 0.7, 0.9)),
+    # the same at 2: the line on the top leaves it on the straight foot,
+    # before the corner's arc; refused. Run on from there round the corner
+    # now, the post's line passing from its flat wall to its corner (FLAT)
+    "issue876_post_foot_flat_e91_r2": (
+        "srimpast", "p876f", ((20.0, 13.750014, 3.0), (19.238761, 15.746985, 3.0)), 2.0,
+        8689.9417, (20.4, 14.4, 3.8), (1, 0.7, 0.9)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1385,7 +1397,7 @@ STRICT = {
 FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
         "pocket_v10_d1_flat_tip_rims_r0.8",
         "issue273_pocket_flat_tip_e23_e24_r0.8", "issue962_ring_rim_flat_e26_r2",
-        "issue876_post_foot_flat_e91_r0.8"}
+        "issue876_post_foot_flat_e91_r0.8", "issue876_post_foot_flat_e91_r2"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the
