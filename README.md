@@ -27,6 +27,9 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   other's `models/` and the draft sweep's `sweep/shapes/`.
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
+- `surface/` -- checks of the curve network surfaces (`GeomFill_Gordon`,
+  `GeomFill_NetworkSurface`): a C++ driver each, and the write-up of each
+  fix in its README.
 - `math/` -- checks of `TKMath` the work on the others led to: a C++
   driver each, built against an install.
 - `abi/` -- the fork against upstream's ABI: the symbols upstream exports
