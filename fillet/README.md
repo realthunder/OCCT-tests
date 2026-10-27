@@ -5595,7 +5595,8 @@ On the drafted model at 2 the volume is the booleans' within 1.8e-4
 along x=20 (`E91`, 8689.9417) and x=-20 (`E30`), valid and clean, refused
 before. The straight model at 2 is still refused: there the walk past the
 rim at the far end is not kept, the post's corner one face with the
-plate's side below it, and keeping it unmade #876 at 0.8.
+plate's side below it, and keeping it unmade #876 at 0.8. (Made since
+`cd5fc69ce1`, below: not the walk, the corner.)
 
 The flat sweeps change only in #876's foot at 2: on `issue876_Fillet`
 `E30` to `E32` and on `issue876_Fillet001` `E99` to `E101`, refused before,
@@ -5607,7 +5608,48 @@ before.
 |------|----------------|
 | `post_flush_draft_on_plate_flat_r2` | the drafted model at 2, run on from the straight foot round the corner, the booleans' volume |
 | `issue876_post_foot_flat_e{91,30}_r2` | #876's foot at 2, made |
-| `post_flush_on_plate_flat_r2_refused` | the straight model at 2, refused with the flat end on |
+| `post_flush_on_plate_flat_r2_refused` | the straight model at 2, refused with the flat end on (made since `cd5fc69ce1`, `post_flush_on_plate_flat_r2` below) |
+
+### The straight post at 2 (`cd5fc69ce1`, 2026-10-27)
+
+The walk past the rim was kept at both ends on the straight model as on
+the drafted one; it was the corner that lost it. Standing straight, the
+post's corner is one face with the plate's side below it, so the vertex
+where the rim leaves the post has three sharp edges, not four: its end goes
+to `PerformOneCorner`, not `PerformIntersectionAtEnd`, and the first thing
+`PerformOneCorner` does is drop the end's SurfData of no face -- the walk
+past the rim -- as surplus. Finding no cap, it then hands the end to
+`PerformIntersectionAtEnd`, whose run-on had nothing left to run on with
+("Failed to find edge", in the corner setback fallback after it). The
+run-on is now its own function (`RimEnd`, `ChFi3d_Builder_C1.cxx`), and
+`PerformOneCorner` calls it first in the last resort
+(`ChFi3d_MissedFlatEnd`), at a vertex of one stripe, before the surplus
+goes.
+
+The straight model at 2 is made, valid and clean by BOP's check, the
+booleans' volume within 1e-5 (28527.89939 against 28527.89940); at 0.3
+and 1 as before.
+
+The sweeps, against the snap's (`a71a397df2`, crashes and all), change
+only in the crashes below: the edge, flat edge, big radii and chamfer
+sweeps not at all, the vertex sweeps' made cases the same. Part 390 and
+PartDesign 486 OK; the suite PASS=777 XFAIL=4.
+
+The snap's retry crashed (`b305d4e70c`). The retry sets the radii again on
+the stripes the failed computation left, and among them are the corners'
+stripes, which have no spine (`ChFi3d_FilBuilder` makes them at three
+edges); `Remove` took every stripe for one with one and crashed. They are
+dropped first now, as `Reset` drops them. At three edges at a vertex of
+#962's ring (`V5`, `V8`) and of #474's coil (`Fillet002` `V25`, `V27`,
+`Fillet003` `V24`, `V28`), at 0.3 and 1, 12 cases in each vertex sweep
+crashed since `a71a397df2` and are refused again; the sweep's comparison
+reported them and they were missed.
+
+| Case | What it covers |
+|------|----------------|
+| `post_flush_on_plate_flat_r2` | the straight model at 2, run on from the straight foot round the corner, the booleans' volume |
+| `issue962_v5_e5_e6_e10_r0.3_refused` | three edges at a vertex of #962's ring, refused, not a crash |
+| `issue474_f003_v24_e40_e42_r1_refused` | #474's coil at a vertex, refused, not a crash |
 
 ## A face exactly as wide as the fillet (`a71a397df2`, realthunder/FreeCAD#273, #876, #523, 2026-10-27)
 
@@ -5667,8 +5709,9 @@ test (`BRepBlend_SurfRstConstRad::Decroch`) is a tie. The snap goes round
 all of that: it never walks at 1, only a hair below, and the strip the walk
 leaves is then taken out of the result.
 
-The sweeps, against `91d481e2f1`, nothing worse anywhere, every gain an
-EXC -> ok: edge (3921) 66, all at 2 -- #309's 18, #876 `Fillet`'s and
+The sweeps, against `91d481e2f1`, every gain an EXC -> ok, and nothing
+worse but 12 EXC -> CRASH in each vertex sweep, missed then and fixed in
+`b305d4e70c` (below, with the straight post at 2): edge (3921) 66, all at 2 -- #309's 18, #876 `Fillet`'s and
 `Fillet001`'s 20 each (the plate's bottom outline, the cavity 2 in), #474
 `Fillet002` E12, E25 and `Fillet003` E50, E58 to E60, #523 E11, E13; the
 flat end's edge sweep the same 66; vertex (12242) 58 -- #273 `Fillet` 36

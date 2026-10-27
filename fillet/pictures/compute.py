@@ -101,7 +101,7 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
         if name in REFUSED:
             p.append("made, where it is refused")
         r.exportBrep(os.path.join(OUT, name + ".brep"))
-        d["uv"] = uv_outline(r, UVFACE_CASE.get(name, UVFACE[sk]))
+        d["uv"] = uv_outline(r, UVFACE_CASE[name] if name in UVFACE_CASE else UVFACE[sk])
         d.update(ok=not p, problems=p, volume=vol)
     except Exception as e:
         why = "threw " + str(e).strip().splitlines()[-1]

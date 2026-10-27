@@ -98,6 +98,7 @@ STAGES = {
     "srimend": ("117c549667", "5c11250d99"),
     "srimpast": ("5c11250d99", "840f4a2b71"),
     "ssnap": ("91d481e2f1", "a71a397df2"),
+    "sstraight": ("a71a397df2", "cd5fc69ce1"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -150,6 +151,52 @@ def _fin_wall():
 def _wall_on_base():
     # run_tests.py's wall 2 wide on a base, flush with its side x=0
     return Part.makeBox(20, 10, 5).fuse(Part.makeBox(2, 10, 10)).removeSplitter()
+
+
+def _post_flush():
+    # run_tests.py's post standing straight on a plate (post_flush_on_plate
+    # at draft 0): the post's long sides and corner arcs the plate's, until
+    # the plate's rim leaves the post tangent to the arc at 45 deg
+    import math
+    V = App.Vector
+    c = 0.5 ** 0.5
+
+    def arc(cx, cy, a0, a1):
+        m = math.radians(0.5 * (a0 + a1))
+        return Part.Arc(V(cx + 3 * math.cos(math.radians(a0)), cy + 3 * math.sin(math.radians(a0)), 0),
+                        V(cx + 3 * math.cos(m), cy + 3 * math.sin(m), 0),
+                        V(cx + 3 * math.cos(math.radians(a1)), cy + 3 * math.sin(math.radians(a1)),
+                          0)).toShape()
+
+    a = V(17 + 3 * c, 13.75 + 3 * c, 0)
+    b = a + V(c, -c, 0) * ((28 - a.x) / c)
+    rim = [Part.LineSegment(V(-17, 16.75, 0), V(17, 16.75, 0)).toShape(), arc(17, 13.75, 90, 45),
+           Part.LineSegment(a, b).toShape(), Part.LineSegment(b, V(28, -b.y, 0)).toShape(),
+           Part.LineSegment(V(28, -b.y, 0), V(a.x, -a.y, 0)).toShape(), arc(17, -13.75, -45, -90),
+           Part.LineSegment(V(17, -16.75, 0), V(-17, -16.75, 0)).toShape(),
+           arc(-17, -13.75, -90, -135), Part.LineSegment(V(-a.x, -a.y, 0), V(-28, -b.y, 0)).toShape(),
+           Part.LineSegment(V(-28, -b.y, 0), V(-28, b.y, 0)).toShape(),
+           Part.LineSegment(V(-28, b.y, 0), V(-a.x, a.y, 0)).toShape(), arc(-17, 13.75, 135, 90)]
+    plate = Part.Face(Part.Wire(Part.__sortEdges__(rim)))
+
+    def rounded(z):
+        hx, hy, r = 20, 16.75, 3
+        return Part.Wire(Part.__sortEdges__([
+            Part.LineSegment(V(-hx + r, -hy, z), V(hx - r, -hy, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(hx - r, -hy + r, z), V(0, 0, 1), r), -math.pi / 2,
+                             0).toShape(),
+            Part.LineSegment(V(hx, -hy + r, z), V(hx, hy - r, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(hx - r, hy - r, z), V(0, 0, 1), r), 0,
+                             math.pi / 2).toShape(),
+            Part.LineSegment(V(hx - r, hy, z), V(-hx + r, hy, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(-hx + r, hy - r, z), V(0, 0, 1), r), math.pi / 2,
+                             math.pi).toShape(),
+            Part.LineSegment(V(-hx, hy - r, z), V(-hx, -hy + r, z)).toShape(),
+            Part.ArcOfCircle(Part.Circle(V(-hx + r, -hy + r, z), V(0, 0, 1), r), math.pi,
+                             1.5 * math.pi).toShape()]))
+
+    post = Part.makeLoft([rounded(3), rounded(20.6)], True, True)
+    return plate.extrude(V(0, 0, 3)).fuse(post).removeSplitter()
 
 
 def _arm_on_tall_block(split=True, near=False):
@@ -450,6 +497,7 @@ SHAPES = {
     "armtilt": _arm_tilted_under_block,
     "p474": _brep("issue474_fillet003_base.brep"),
     "wallbase": _wall_on_base,
+    "pflush": _post_flush,
     "p273": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue273_Fillet.brep")),
     "pv10": lambda: _v_pocket(10, 1.0),
     "p631l": _brep("issue631_loft_joint.brep"),
@@ -628,6 +676,10 @@ UVFACE_CASE = {
         lambda f: f.Surface.__class__.__name__ == "Plane"
         and abs(abs(f.Surface.Axis.z) - 1) < 1e-6 and abs(f.Surface.Position.z - 3) < 1e-6
         and f.BoundBox.XMin > 19),
+    "post_flush_on_plate_flat_r2": (
+        lambda f: f.Surface.__class__.__name__ == "Plane"
+        and abs(abs(f.Surface.Axis.z) - 1) < 1e-6 and abs(f.Surface.Position.z - 3) < 1e-6
+        and f.BoundBox.XMin > 19),
     # the floor of #962's ring and arm, z = -9.75, the fillet's line on it
     # ending at the flat end
     "issue962_ring_rim_flat_e26_r2": (
@@ -763,6 +815,8 @@ NAMES = {
     "p474": "#474's Fillet003 input (a PartDesign body)",
     "p273": "#273's Fillet input (a PartDesign body: a cup, a handle with a pocket in its top)",
     "wallbase": "20x10x5 base, a wall 2 wide and 10 high on it flush with its side x=0",
+    "pflush": "a post 40x33.5, its corners round (3), straight on a plate flush with its long sides "
+              "and corner arcs (#876's post undrafted)",
     "pv10": "a 30x30x10 block, a V pocket in its top 10 deg at the apex, 8 long, 1 deep",
     "p631l": "#631's Loft (a PartDesign body: a loft on a pad, its faces planes made B-splines)",
     "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
@@ -825,6 +879,7 @@ VIEW = {
     "p474": ((-1.4, 0, 24.3), 34.0),
     "p273": ((0, 2, 16), 44.0),
     "wallbase": ((10, 5, 5), 26.0),
+    "pflush": ((0, 0, 10), 46.0),
     "pv10": ((15, 15, 5), 40.0),
     "p631l": ((-13, -15, 25), 70.0),
     "postplate": ((-4.5, 0, 9), 20.0),
@@ -901,6 +956,7 @@ UVLABEL_CASE = {
     "issue876_post_foot_flat_e91_r0.8": ("the plate's top beside the post", False),
     "issue273_pocket_wall_wide_e23_r1": ("the pocket's floor", False),
     "issue876_post_foot_flat_e91_r2": ("the plate's top beside the post", False),
+    "post_flush_on_plate_flat_r2": ("the plate's top beside the post", False),
     "issue962_ring_rim_flat_e26_r2": ("the floor z = -9.75", False),
     "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
@@ -1363,6 +1419,12 @@ CASES = {
     "issue876_post_foot_flat_e91_r2": (
         "srimpast", "p876f", ((20.0, 13.750014, 3.0), (19.238761, 15.746985, 3.0)), 2.0,
         8689.9417, (20.4, 14.4, 3.8), (1, 0.7, 0.9)),
+    # the post straight at 2: its corner one face with the plate's side
+    # below, three edges at the vertex, and the end's corner took the walk
+    # past the rim for surplus; refused. Run on as the drafted one now (FLAT)
+    "post_flush_on_plate_flat_r2": (
+        "sstraight", "pflush", ((20, 13.75, 3), (19.121320, 15.871320, 3)), 2.0,
+        28527.8994, (20.4, 14.4, 3.8), (1, 0.7, 0.9)),
     # x16win's chamfer, run on along the mitre of two fillets to their corner
     # (2,30,8), where both turn flush with the back face; the radius is the
     # larger distance (CHAMFER has them)
@@ -1421,6 +1483,7 @@ STRICT = {
     "issue962_arm_corner_e25_e26_r1": (1e-4, 1e-4),
     "issue273_pocket_wall_wide_e23_r1": (0.031, 1e-3),
     "wall_full_round_r1": (1e-4, 1e-3),
+    "post_flush_on_plate_flat_r2": (1e-4, 1e-4),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
@@ -1428,7 +1491,7 @@ FLAT = {"issue273_pocket_flat_e23_r0.8", "issue273_f001_apex_flat_e40_r0.3",
         "pocket_v10_d1_flat_tip_rims_r0.8",
         "issue273_pocket_flat_tip_e23_e24_r0.8", "issue962_ring_rim_flat_e26_r2",
         "issue876_post_foot_flat_e91_r0.8", "issue876_post_foot_flat_e91_r2",
-        "issue273_pocket_wall_wide_e23_r1"}
+        "issue273_pocket_wall_wide_e23_r1", "post_flush_on_plate_flat_r2"}
 # case -> (the zoomed row's label, its colour), when it is not "the fillet's
 # end" in grey: a view from below is dark where the label goes
 # cases whose fix refuses the fillet: refused is the answer expected (the

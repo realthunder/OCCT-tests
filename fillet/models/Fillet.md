@@ -2174,6 +2174,13 @@ line passing from its flat wall to its rounded corner on the way
 
 ![issue876_post_foot_flat_e91_r2](pictures/issue876_post_foot_flat_e91_r2.png)
 
+The post standing straight at 2 is the same, made since `cd5fc69ce1`: its corner
+is one face with the plate's side below it, the vertex where the rim
+leaves it has three edges, not four, and the corner taken there first
+threw the walk past the rim away. Upstream and the fork before refuse it.
+
+![post_flush_on_plate_flat_r2](pictures/post_flush_on_plate_flat_r2.png)
+
 ### A face exactly as wide as the fillet (`a71a397df2`, #273's pocket)
 
 #273's pocket is 1 deep, and its rim at 1 puts the fillet's line on the

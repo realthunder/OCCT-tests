@@ -2971,17 +2971,15 @@ def post_flush_run_on_added(draft, r):
 
 
 # The undrafted post, run on to the vertices: the volume the booleans' above
-# (within 1e-5)
+# (within 1e-5); at 2 too, where the line on the top leaves it on the
+# straight foot -- the post's corner one face with the plate's side below,
+# three edges at the vertex, the end taken by PerformOneCorner, which kept
+# the walk past the rim for surplus until RimEnd went first there
 _pf, _pfe = post_flush_on_plate(0.0)
-for _r in (0.3, 1.0):
+for _r in (0.3, 1.0, 2.0):
     fillet_case("post_flush_on_plate_flat_r%g" % _r, _pf, _pfe, _r, "pass",
                 _pf.Volume + post_flush_run_on_added(0.0, _r), vol_tol=1e-4, bop=True, flat=True)
 refused_case("post_flush_on_plate_r0.3_refused", _pf, _pfe, 0.3)
-# At 2, where the line on the top leaves it on the straight foot: the walk
-# past the rim at the far end is not kept (the post's corner one face with
-# the plate's side below), and the end not made; refused, the flat end on
-with FlatEnd(True):
-    refused_case("post_flush_on_plate_flat_r2_refused", _pf, _pfe, 2.0)
 # Drafted 1 deg: the same (within 1.8e-4 at 0.3, 1e-4 at 1, 1.8e-4 at 2, where
 # the line on the top leaves it on the straight foot and the fillet runs on
 # from there round the corner)
@@ -3028,6 +3026,13 @@ fillet_case("issue523_boss_rim_e11_r2", sweep_shape("issue523_box"), 11, 2.0, "p
             1087.964645, vol_tol=1e-3, bop=True)
 fillet_case("issue273_ledge_e27_e29_e31_r1", sweep_shape("issue273_Fillet"), [27, 29, 31], 1.0,
             "pass", 8561.8395, vol_tol=1e-3, bop=True)
+# Three edges at a vertex, refused with and without the snap: the corner's
+# stripe the refused computation left, of no spine, was still in the list
+# when the snap set the radii again, and Remove crashed on it (#962's ring
+# V5, #474's coil V24 of Fillet003; the vertex sweeps, 12 cases)
+refused_case("issue962_v5_e5_e6_e10_r0.3_refused", sweep_shape("issue962_Fillet"), [5, 6, 10], 0.3)
+refused_case("issue474_f003_v24_e40_e42_r1_refused", sweep_shape("issue474_Fillet003"), [40, 42],
+             1.0)
 
 counts = {}
 for _, verdict, _ in results:
