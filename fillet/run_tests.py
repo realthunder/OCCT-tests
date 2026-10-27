@@ -2540,25 +2540,34 @@ fillet_case("boss_rim_seam_foot_r1", _seamrim, _foot(_seamrim), 1.0, "xfail")
 # two at the points the foot touches them, the foot with it, two fillets
 # ending at each point, pinched as one ending twice is (refused before,
 # "BRep_API: command not done"). Against the plate reaching past both sides,
-# cut by them. At 4 the line on the plate passes the plate's corner, and
-# the cylinder's chamfer and a drafted boss stay refused (the drafted boss
-# was made 0.75 short at 2, the gap of each point run on by one fillet only)
+# cut by them; turned 180 deg its seam runs through the point on x=0. A
+# drafted boss (radius 5 to 4) the same, its gap run on from the fillet
+# ending there to the one starting (made 0.75 short at 2 before the ends
+# were told apart); the volumes within 1e-3, 1.3e-3 at 2, of the integration
+# over the cut as at its side (above). At 4 the line on the plate passes the
+# plate's corner, and the cylinder's chamfer stays refused
 _quadrant = Part.makeBox(100, 100, 100, App.Vector(0, 0, -20))
 _wide2 = lambda: Part.makeBox(50, 40, 3, App.Vector(-20, -20, 0))
-for _turn in (0.0, 45.0):
-    _c = Part.makeCylinder(5, 10, App.Vector(0, 0, 3))
-    _c.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), _turn)
-    _c.translate(App.Vector(5, 5, 0))
+for _kind, _turn, _radii in (("", 0.0, (0.3, 1.0, 2.0)), ("_turned", 45.0, (1.0,)),
+                             ("_seam", 180.0, (1.0,)), ("_drafted", 0.0, (0.3, 1.0, 2.0)),
+                             ("_drafted_seam", 180.0, (1.0,))):
+    if "drafted" in _kind:
+        _c = _cone(5, 5, _turn)
+    else:
+        _c = Part.makeCylinder(5, 10, App.Vector(0, 0, 3))
+        _c.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), _turn)
+        _c.translate(App.Vector(5, 5, 0))
     _corner = Part.makeBox(30, 20, 3).fuse(_c).removeSplitter()
     _cornerw = _wide2().fuse(_c).removeSplitter()
-    for r in ((0.3, 1.0, 2.0) if _turn == 0.0 else (1.0,)):
-        drafted_csg("boss_corner_foot%s_r%g" % ("_turned" if _turn else "", r), _corner, _cornerw,
-                    _quadrant, r)
+    for r in _radii:
+        drafted_csg("boss_corner%s_foot_r%g" % (_kind, r), _corner, _cornerw, _quadrant, r,
+                    vol_tol=2e-3 if r == 2.0 else 1e-3)
+    if _kind == "_drafted":
+        drafted_csg("boss_corner_drafted_chamfer_r1", _corner, _cornerw, _quadrant, 1.0,
+                    chamfer=True)
 _corner = _boss(5, x=5.0)
 refused_case("boss_corner_foot_r4_refused", _corner, _foot(_corner), 4.0)
 refused_case("boss_corner_chamfer_r1_refused", _corner, _foot(_corner), 1.0, chamfer=True)
-_dc = Part.makeBox(30, 20, 3).fuse(_cone(5, 5)).removeSplitter()
-refused_case("boss_drafted_corner_foot_r2_refused", _dc, _foot(_dc), 2.0)
 _inset = _boss(8)
 fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
 # The foot in two equal halves, the boss's seam opposite the tangent point:

@@ -100,6 +100,7 @@ STAGES = {
     "ssnap": ("91d481e2f1", "a71a397df2"),
     "sstraight": ("a71a397df2", "cd5fc69ce1"),
     "scorner": ("ed22b47a81", "6a02c23365"),
+    "scornerd": ("6a02c23365", "7f17d53067"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -406,6 +407,13 @@ def _boss_corner():
     return Part.makeBox(30, 20, 3).fuse(Part.makeCylinder(5, 10, V(5, 5, 3))).removeSplitter()
 
 
+def _boss_corner_drafted():
+    """run_tests.py's drafted boss at the plate's corner: a cone boss, radius
+    5 to 4 over 10, on a 30x20x3 plate, flush with its sides x=0 and y=0."""
+    V = App.Vector
+    return Part.makeBox(30, 20, 3).fuse(Part.makeCone(5, 4, 10, V(5, 5, 3))).removeSplitter()
+
+
 def _boss_drafted():
     """run_tests.py's _drafted: a cone boss, radius 5 to 4 over 10, on a
     30x20x3 plate, flush with the plate's side y=0 at its foot."""
@@ -529,6 +537,7 @@ SHAPES = {
     "pocketmouth": _pocket_mouth,
     "bossflush": _boss_flush,
     "bosscorner": _boss_corner,
+    "bosscornerd": _boss_corner_drafted,
     "bossdrafted": _boss_drafted,
     "bosshalves": _boss_halves,
     "bossseam": _boss_seam,
@@ -663,6 +672,8 @@ UVFACE = {
     "bossflush": _plane_at("y", 0),
     # the side y=0 at the corner, which grows a peak over each gap as above
     "bosscorner": _plane_at("y", 0),
+    # the same side, which grows a bump under each gap
+    "bosscornerd": _plane_at("y", 0),
     # the same side, which grows a bump under the gap between the fillet's ends
     "bossdrafted": _plane_at("y", 0),
     # the same side
@@ -862,6 +873,8 @@ NAMES = {
     "bossflush": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0",
     "bosscorner": "a cylinder boss r5 at the corner of a 30x20x3 plate, flush with its sides "
                   "x=0 and y=0",
+    "bosscornerd": "a cone boss, radius 5 to 4 over 10, at the corner of a 30x20x3 plate, flush "
+                   "with its sides x=0 and y=0 at its foot",
     "bossdrafted": "a cone boss, r5 to 4, on a 30x20x3 plate, flush at its foot with the "
                    "plate's side y=0",
     "bosshalves": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0, "
@@ -914,6 +927,7 @@ VIEW = {
     "pocketmouth": ((14, 0, 6), 24.0),
     "bossflush": ((15, 10, 5), 24.0),
     "bosscorner": ((8, 8, 5), 24.0),
+    "bosscornerd": ((8, 8, 5), 24.0),
     "bossdrafted": ((15, 10, 5), 24.0),
     "bosshalves": ((15, 10, 5), 24.0),
     "bossseam": ((15, 10, 5), 24.0),
@@ -960,6 +974,7 @@ UVLABEL = {
     "pocketmouth": ("the slot's wall beyond the split", False),
     "bossflush": ("the plate's side", False),
     "bosscorner": ("the plate's side y=0", False),
+    "bosscornerd": ("the plate's side y=0", False),
     "bossdrafted": ("the plate's side", False),
     "bosshalves": ("the plate's side", False),
     "bossseam": ("the plate's side", False),
@@ -1306,6 +1321,11 @@ CASES = {
     "boss_corner_foot_r1": ("scorner", "bosscorner", [((0, 5, 3), (5, 0, 3)), ((5, 0, 3), (10, 5, 3)),
                                                       ((10, 5, 3), (0, 5, 3))],
                             1.0, 2591.2428, (2.5, 2.5, 3.5), (-1, -1, 0.7)),
+    # the same boss drafted
+    "boss_corner_drafted_foot_r1": ("scornerd", "bosscornerd",
+                                    [((0, 5, 3), (5, 0, 3)), ((5, 0, 3), (10, 5, 3)),
+                                     ((10, 5, 3), (0, 5, 3))],
+                                    1.0, 2443.5033, (2.5, 2.5, 3.5), (-1, -1, 0.7)),
     # the same boss drafted, its foot as the cylinder's; filleted and chamfered
     "boss_drafted_flush_foot_r1": ("sdraftboss", "bossdrafted", _DRAFTED_FOOT, 1.0, 2443.9037,
                                    (15, 0, 3.5), (0.35, -1, 0.5)),
@@ -1505,6 +1525,7 @@ STRICT = {
     "wall_full_round_r1": (1e-4, 1e-3),
     "post_flush_on_plate_flat_r2": (1e-4, 1e-4),
     "boss_corner_foot_r1": (1e-4, 1e-4),
+    "boss_corner_drafted_foot_r1": (1e-4, 1e-3),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
@@ -1615,6 +1636,7 @@ EDGES = {
     "boss_flush_halves_foot_r1": "the boss's foot, its two halves",
     "boss_flush_seam_foot_r1": "the boss's foot, one closed edge",
     "boss_corner_foot_r1": "the boss's foot, its three arcs",
+    "boss_corner_drafted_foot_r1": "the boss's foot, its three arcs",
     "issue474_f003_run_on_e2_r0.3": "the step's edge along the top, (-13,0,13)-(-9,0,13)",
 }
 

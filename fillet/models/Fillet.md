@@ -1672,9 +1672,14 @@ a quarter arc on the corner's piece and three quarters on the rest, and
 at each point two fillets end rather than one ending twice. The ends are
 the same, and the side cuts them the same way; made since `6a02c23365`, the
 volumes of the fillet on a plate reaching past both sides and cut by
-them. A drafted boss at the corner is still refused.
+them. A drafted boss at the corner too, since `7f17d53067`: its gaps are closed
+by the fillet's surface run on from the fillet that ends at the point to
+the one that starts there, and the first version took whichever it met
+first for the one that starts.
 
 ![boss_corner_foot_r1](pictures/boss_corner_foot_r1.png)
+
+![boss_corner_drafted_foot_r1](pictures/boss_corner_drafted_foot_r1.png)
 
 ### A fillet run on past its vertex (`95a3e143e1`, realthunder/FreeCAD#273, #474)
 

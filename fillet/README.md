@@ -5771,9 +5771,8 @@ the same. Refused, as before: at 4, where the fillet's line on the plate
 passes the plate's corner; the chamfer (as `boss_flush_chamfer_r1`); and
 a drafted boss (a cone, radius 5 to 4) at the corner. That one was made
 at 2 by the gap's run on (`PinchGap`), 0.75 short of the construction
-with edges at 0.0013 -- the line on the plate passes the plate's corner
-by 0.1 there -- and refused at 0.3 and 1; the gap's run on is kept to
-one fillet, as before.
+with edges at 0.0013, and refused at 0.3 and 1; the gap's run on is kept
+to one fillet here (made since `7f17d53067`, the next section).
 
 `6a02c23365`: `ChFi3d_Builder.cxx` (`PerformPinchEnds`, `PinchGap`).
 
@@ -5783,8 +5782,38 @@ the suite PASS=784 XFAIL=3.
 
 | Case | What it covers |
 |------|----------------|
-| `boss_corner_foot_r{0.3,1,2}`, `boss_corner_foot_turned_r1` | the boss at the corner, against the plate reaching past both sides cut by them (refused before) |
-| `boss_corner_foot_r4_refused`, `boss_corner_chamfer_r1_refused`, `boss_drafted_corner_foot_r2_refused` | refused, the input left as it was (the drafted one made wrong without the restriction) |
+| `boss_corner_foot_r{0.3,1,2}`, `boss_corner_turned_foot_r1`, `boss_corner_seam_foot_r1` | the boss at the corner, against the plate reaching past both sides cut by them (refused before); turned 45 deg, and 180 deg, its seam through the point on x=0 |
+| `boss_corner_foot_r4_refused`, `boss_corner_chamfer_r1_refused` | refused, the input left as it was |
+
+### A drafted boss at the corner (`7f17d53067`, 2026-10-27)
+
+The drafted boss at the corner closes each gap by running the fillet's
+surface on across it (`PinchGap`), from the stripe's end that is its last
+along the spine to the end that is its first: of one stripe, its last end
+and its first. Of two, the first end found was taken for the first either
+way. Where it was the other's last, the run on went round the wrong way:
+refused at 0.3 and 1, made 0.75 short at 2 (`6a02c23365` kept the gap's run
+on to one stripe for that). The ends are told apart now -- of two stripes,
+one ending there and one starting, or none made -- and the drafted boss at
+the corner is made: at 0.3, 1 and 2 against the construction within 1e-3
+(1.3e-3 at 2: 2439.23609, 2443.50326, 2456.93959 against 2439.23517,
+2443.50332, 2456.94088), nothing of either outside the other by 1e-6, the
+differences those of the volume's integration over the cut, as at the side
+(`boss_drafted*_flush_foot_r1`). Valid, BOP's check clean. Its chamfer at
+1 the same (2452.15765 against 2452.15765); turned 45, 90, 180, 225 and
+270 deg the same for the boss, drafted or not -- at 180 and 270 its seam
+runs through one of the points. Drafted to 4.9 at 1, 9.3e-3 off as at the
+side; at 4, refused as the cylinder.
+
+`7f17d53067`: `ChFi3d_Builder.cxx` (`PerformPinchEnds`).
+
+The sweeps, against `6a02c23365`, do not move: vertex and edge, flat end
+off and on, the big radii and the chamfer. Part 390 and PartDesign 486 OK;
+the suite PASS=789 XFAIL=3.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_corner_drafted_foot_r{0.3,1,2}`, `boss_corner_drafted_seam_foot_r1`, `boss_corner_drafted_chamfer_r1` | the drafted boss at the corner, against the construction (refused before, or made short) |
 
 ## Known broken (XFAIL)
 
