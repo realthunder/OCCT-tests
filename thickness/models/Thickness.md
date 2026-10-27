@@ -1794,6 +1794,22 @@ edge in 3696 runs, the order of the faces in 2038. Neither counts a run the
 shape as made has no valid answer for -- the torus's one face -- and the
 order survey takes all the orders of one solid only.
 
+### Sec 27: a corner's sphere read the arc it had just taken out
+
+**Freed memory read** (`daed911000`, `BRepOffset_MakeOffset::ToContext`).
+A convex corner whose edges all carry a tube gets a piece of sphere
+(`72267e6608`), and the vertex's old image is taken out of
+`myInitOffsetEdge` first. It was taken out by
+`Remove(myInitOffsetEdge.Image(V).First())`, a reference into the list
+`BRepAlgo_Image::Remove` takes the shape out of: Remove freed the node, then
+unbound the shape by it. The freed node still held the shape, so nothing
+showed -- until FreeCAD's suite ran with `MALLOC_PERTURB_=165` (freed memory
+overwritten), where
+`test_thickness_arc_join_of_half_a_ball_with_one_of_its_two_faces_removed`
+crashed every time. The shape is copied first, as the other Remove calls
+there already do. No volume changes: this suite, 378 cases, passes
+the same, run frozen and unfrozen with freed memory overwritten.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
