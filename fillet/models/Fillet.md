@@ -1511,7 +1511,8 @@ plate, cut by the side's plane -- at radius 1 and 2: nothing of either
 lies outside the other. The same against a round plate's rim, the boss
 inside it.
 
-Not made: a chamfer there (its cut would end in a corner of no angle) and
+Not made: a chamfer there (its cut would end in a corner of no angle; made
+since `51e4faf111`, below) and
 a rim whose seam runs through the point (made since `42014a78e1`, below). A
 drafted boss, which touches the side only at its foot, is made since
 `1d642bfaaf` (below).
@@ -1700,6 +1701,24 @@ hair over a whole turn, which the check refused.
 ![boss_rim_seam_foot_r1](pictures/boss_rim_seam_foot_r1.png)
 
 ![boss_drafted_rim_seam_foot_r1](pictures/boss_drafted_rim_seam_foot_r1.png)
+
+The chamfer of the boss's foot, since `51e4faf111`. The chamfer's cone is not
+tangent to the side, and the side cuts it in a hyperbola whose vertex is
+the point: tangent there to the chamfer's line on the boss, a corner of no
+angle on the chamfer's face, which the check takes -- the chamfer on a
+wider plate cut by the side is valid. Made as the fillet is, the cut's
+curve overshot that line just short of the point, and the face's edges
+crossed: the cut is found in steps from the plate's edge to the line, and
+near a tangent end even steps across leave a few long ones along it. The
+steps now close in on the line, and the cut lies on its side of it. The
+same volume as the chamfer on a wider plate, cut, at four sizes, two
+distances, on a rim, in a hole and at the plate's corner. In the close-up,
+the peak of the side under the chamfer's two cut ends. The third row is
+the chamfer's cone in (u, v), its two faces (the foot's two arcs): the
+cuts, at either end, run into the line on the boss along the top, tangent
+to it.
+
+![boss_flush_chamfer_r1](pictures/boss_flush_chamfer_r1.png)
 
 ### A fillet run on past its vertex (`95a3e143e1`, realthunder/FreeCAD#273, #474)
 

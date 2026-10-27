@@ -2448,11 +2448,8 @@ def boss_flush_csg(name, r):
 
 boss_flush_csg("boss_flush_csg_r1", 1.0)
 boss_flush_csg("boss_flush_csg_r2", 2.0)
-# Still refused, as they were: a chamfer (its cut reaches the line on the
-# boss tangent to it, a corner of no angle); the rim's seam through the
-# tangent point (the seam would have to run on up); the boss at a corner of
-# the plate, flush with two sides.
-fillet_case("boss_flush_chamfer_r1", _flush, _foot(_flush), 1.0, "xfail", chamfer=True)
+# The chamfer, the rim's seam through the tangent point and the boss at a
+# corner of the plate were refused here; all made since (below).
 
 
 # A drafted boss (a cone, radius 5 to 4) flush at its foot: it touches the
@@ -2479,7 +2476,8 @@ def drafted_csg(name, shape, wide, keep, r, edges=None, chamfer=False, vol_tol=1
     try:
         def op(s, es):
             es = [s.Edges[i - 1] for i in es]
-            return s.makeChamfer(r, es) if chamfer else s.makeFillet(r, es)
+            sizes = r if isinstance(r, tuple) else (r,)
+            return s.makeChamfer(*sizes, es) if chamfer else s.makeFillet(r, es)
         f = op(shape, edges[0] if edges else _foot(shape))
         ref = op(wide, edges[1] if edges else _foot(wide)).common(keep)
         problems = []
@@ -2591,7 +2589,7 @@ for _ct in (90.0, 0.0):
 # ending there to the one starting (made 0.75 short at 2 before the ends
 # were told apart); the volumes within 1e-3, 1.3e-3 at 2, of the integration
 # over the cut as at its side (above). At 4 the line on the plate passes the
-# plate's corner, and the cylinder's chamfer stays refused
+# plate's corner, refused
 _quadrant = Part.makeBox(100, 100, 100, App.Vector(0, 0, -20))
 _wide2 = lambda: Part.makeBox(50, 40, 3, App.Vector(-20, -20, 0))
 for _kind, _turn, _radii in (("", 0.0, (0.3, 1.0, 2.0)), ("_turned", 45.0, (1.0,)),
@@ -2613,7 +2611,37 @@ for _kind, _turn, _radii in (("", 0.0, (0.3, 1.0, 2.0)), ("_turned", 45.0, (1.0,
                     chamfer=True)
 _corner = _boss(5, x=5.0)
 refused_case("boss_corner_foot_r4_refused", _corner, _foot(_corner), 4.0)
-refused_case("boss_corner_chamfer_r1_refused", _corner, _foot(_corner), 1.0, chamfer=True)
+# The flush boss's foot chamfered: the cone not tangent to the side, its cut
+# by the side tangent to the chamfer's line on the boss at the point, a
+# corner of no angle (the hyperbola's vertex), refused before
+# ("TopOpeBRepDS_DataStructure::Point"). Made, the cut's steps across the
+# chamfer closing in on that line as the square (README.md, "The chamfer of
+# a boss flush with the side"); each against the chamfer on a plate reaching
+# past the side, cut there. Two distances either way, the boss's seam
+# through the point, the rim with either seam there, the hole's wall, the
+# boss at the plate's corner.
+_flushw = _boss(5, plate=_wide())
+for r in (0.3, 1.0, 2.0, 4.0):
+    drafted_csg("boss_flush_chamfer_r%g" % r, _flush, _flushw, _half, r, chamfer=True,
+                vol_tol=1e-4)
+for d in ((1.0, 0.5), (0.5, 1.0)):
+    drafted_csg("boss_flush_chamfer_d%g_%g" % d, _flush, _flushw, _half, d, chamfer=True,
+                vol_tol=1e-4)
+drafted_csg("boss_flush_seam_chamfer_r1", _boss(5, 270.0), _boss(5, 270.0, _wide()), _half,
+            1.0, chamfer=True, vol_tol=1e-4)
+_rimw = lambda bt: _boss(0, bt, Part.makeCylinder(30, 3))
+_inside = Part.makeCylinder(20, 200, App.Vector(0, 0, -20))
+for _kind, _rt, _bt in (("", 90.0, 90.0), ("_seam", 0.0, 90.0), ("_bossseam", 90.0, 0.0)):
+    drafted_csg("boss_rim%s_chamfer_r1" % _kind, _boss(0, _bt, _rim(_rt)), _rimw(_bt), _inside,
+                1.0, chamfer=True, vol_tol=1e-4, side_r=20.0 if _kind == "_seam" else None)
+_holew = _boss(0, 90.0, Part.makeBox(60, 60, 3, App.Vector(-30, -30, 0)))
+_outside = _everything.cut(Part.makeCylinder(10, 200, App.Vector(0, 0, -20)))
+for _kind, _ht in (("", 90.0), ("_seam", 0.0)):
+    drafted_csg("boss_hole%s_chamfer_r1" % _kind, _holed(_ht, 90.0), _holew, _outside, 1.0,
+                chamfer=True, vol_tol=1e-4, side_r=10.0 if _kind == "_seam" else None)
+_c = Part.makeCylinder(5, 10, App.Vector(5, 5, 3))
+drafted_csg("boss_corner_chamfer_r1", Part.makeBox(30, 20, 3).fuse(_c).removeSplitter(),
+            _wide2().fuse(_c).removeSplitter(), _quadrant, 1.0, chamfer=True, vol_tol=1e-4)
 _inset = _boss(8)
 fillet_case("boss_inset_foot_r1", _inset, _foot(_inset), 1.0, "pass", 2592.4413, 1e-4, bop=True)
 # The foot in two equal halves, the boss's seam opposite the tangent point:
@@ -2639,7 +2667,7 @@ fillet_case("boss_rim_halves_foot_r1", _rimhalves, _foot(_rimhalves), 1.0, "pass
 # arc; then the seam has to be split where the fillet's line meets it
 # (README.md, "The boss's seam through the point"). Refused before; now the
 # volumes of the boss turned any other way. The drafted boss the same, and
-# its chamfer (the cylinder's stays refused: boss_flush_chamfer_r1).
+# its chamfer (the cylinder's made since: boss_flush_seam_chamfer_r1).
 _seam = _boss(5, 270.0)
 for r, vol in ((0.3, 2585.9842), (1.0, 2591.8420), (2.0, 2611.2741), (4.0, 2691.5445)):
     fillet_case("boss_flush_seam_foot_r%g" % r, _seam, _foot(_seam), r, "pass", vol, 1e-5,

@@ -3519,7 +3519,8 @@ made only so:
 - the side's surface is elementary (a plane, a cylinder, ...);
 - the fillet is tangent to the side at the point. A chamfer is not: its
   cut reaches its line on the boss tangent to it, a corner of no angle,
-  and the result was invalid; refused, as before;
+  and the result was invalid; refused, as before (made since `51e4faf111`,
+  "The chamfer of a boss flush with the side");
 - the two cuts meet on the side's surface as in space: a closed side
   whose seam runs through the vertex (a round plate's rim, with its seam
   there) would need the seam carried up to the point; refused, as before.
@@ -3545,7 +3546,7 @@ spine's end", below).
 | `boss_flush_foot_and_top_r1` | the foot and the boss's top edge together |
 | `boss_rim_foot_r{0.3,1,2}` | a round plate (radius 20), the boss against its rim from inside: the side a cylinder |
 | `boss_flush_csg_r{1,2}` | the result against the fillet on a wider plate, cut by the side |
-| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken; the corner made since `6a02c23365`, "A boss at the plate's corner"; the rim's seam since `42014a78e1`, "The side's seam through the point") |
+| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken; the corner made since `6a02c23365`, "A boss at the plate's corner"; the rim's seam since `42014a78e1`, "The side's seam through the point"; the chamfer since `51e4faf111`, "The chamfer of a boss flush with the side") |
 
 The sweeps (edge, vertex): no case moved; BOP's check over them as at
 `5c531f4938` (28 and 213 reported), with the cases the baseline still
@@ -3990,7 +3991,8 @@ times the tolerance.
 other way, to the digit: cylinder 2585.9842, 2591.8420, 2611.2741,
 2691.5445 at 0.3, 1, 2, 4; cone 2439.2554, 2443.9037, 2459.2745,
 2522.2233; the cone's chamfer 2453.7582. Valid, BOP's check clean. The
-cylinder's chamfer stays refused (`boss_flush_chamfer_r1`), the rim's
+cylinder's chamfer stays refused (`boss_flush_chamfer_r1`; made since
+`51e4faf111`, "The chamfer of a boss flush with the side"), the rim's
 own seam through the point too (`boss_rim_seam_foot_r1`; made since
 `42014a78e1`, "The side's seam through the point").
 
@@ -5769,7 +5771,8 @@ by them: at 0.3, 1 and 2 the volumes within 5e-5 (2585.95540, 2591.24280,
 2607.77295 against 2585.95541, 2591.24281, 2607.77300), valid, BOP's
 check clean, nothing of either outside the other; the boss turned 45 deg
 the same. Refused, as before: at 4, where the fillet's line on the plate
-passes the plate's corner; the chamfer (as `boss_flush_chamfer_r1`); and
+passes the plate's corner; the chamfer (as `boss_flush_chamfer_r1`; made
+since `51e4faf111`); and
 a drafted boss (a cone, radius 5 to 4) at the corner. That one was made
 at 2 by the gap's run on (`PinchGap`), 0.75 short of the construction
 with edges at 0.0013, and refused at 0.3 and 1; the gap's run on is kept
@@ -5784,7 +5787,7 @@ the suite PASS=784 XFAIL=3.
 | Case | What it covers |
 |------|----------------|
 | `boss_corner_foot_r{0.3,1,2}`, `boss_corner_turned_foot_r1`, `boss_corner_seam_foot_r1` | the boss at the corner, against the plate reaching past both sides cut by them (refused before); turned 45 deg, and 180 deg, its seam through the point on x=0 |
-| `boss_corner_foot_r4_refused`, `boss_corner_chamfer_r1_refused` | refused, the input left as it was |
+| `boss_corner_foot_r4_refused`, `boss_corner_chamfer_r1_refused` | refused, the input left as it was (the chamfer made since `51e4faf111`: `boss_corner_chamfer_r1`) |
 
 ### A drafted boss at the corner (`7f17d53067`, 2026-10-27)
 
@@ -5885,12 +5888,64 @@ PartDesign 486 OK; the suite PASS=803 XFAIL=2.
 | `boss_hole_seam_foot_r{0.3,1,2}`, `boss_hole_both_seams_foot_r1`, `boss_hole_bossseam_foot_r1` | a hole's wall, the boss outside it: the hole's seam, both, the boss's |
 | `boss_drafted_rim_seam_foot_r1`, `boss_drafted_rim_seam_c0_foot_r1` | the drafted boss, the cone's seam at the side and through the point |
 
+## The chamfer of a boss flush with the side (`51e4faf111`, 2026-10-27)
+
+The flush boss's foot chamfered (`boss_flush_chamfer_r1`, the last of "A
+boss flush with the plate's side"'s refusals): refused,
+"TopOpeBRepDS_DataStructure::Point". The chamfer's cone is not tangent to
+the side where the boss touches it, so the pinch was not tried
+(`PerformPinchEnds`), and the vertex was left with two ends and no corner.
+
+What the result is to be is the chamfer on a plate reaching past the side,
+cut there: the side cuts the cone in a hyperbola whose vertex is the point
+where the boss touches the side, on the chamfer's line on the boss and
+tangent to it. The chamfer's face has a corner of no angle there, and
+BRepCheck takes it -- the boolean's result is valid.
+
+Made the fillet's way, the pinch gave that shape, and BRepCheck found the
+chamfer's face's wire self-intersecting: the cut against the line on the
+boss. Each cut is found in steps across the end, from the plate's edge
+(0) to the line (1), a root along the spine for each, and interpolated. A
+fillet's cut crosses its line at an angle, the root moving with the step;
+a chamfer's is tangent to it, the root moving as the square root of the
+distance still to go, and the last of 40 even steps took a sixth of the
+way along in one. The curve fitted through them overshot the line
+before its end, across it in the face's (u, v), its tolerance 4e-5. (The
+shape written out and read back was valid: the crossing is at the
+digits a file keeps.)
+
+The steps across now close in on the line as the square, t = 1 - (1 -
+s)^2 for s even, so those along the spine are even: the cut's tolerance
+1e-7, the face valid. Only where the end's surface is not tangent to the
+side at the point; a fillet's cut is made exactly as before.
+
+Each against the chamfer on a plate reaching past the side (or the round
+plate, the plate round the hole) cut there (`drafted_csg`): valid, BOP's
+check clean, no tolerance above 1e-4, nothing of either outside the other
+by 1e-6, the volumes within 1e-4 -- at 0.3, 1, 2, 4: 2586.75578,
+2600.38469, 2646.16105, 2839.97211 against 2586.75578, 2600.38469,
+2646.16106, 2839.97207.
+
+`51e4faf111`: `ChFi3d_Builder.cxx` (`PerformPinchEnds`, `CutEnd`).
+
+The sweeps, against `6adfe9a2c8`, do not move, line for line: vertex and
+edge, flat end off and on, the big radii and the chamfer. Part 390 and
+PartDesign 486 OK; the suite PASS=815 XFAIL=1.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_flush_chamfer_r{0.3,1,2,4}` | the flush boss's foot chamfered (refused before: XFAIL at 1) |
+| `boss_flush_chamfer_d1_0.5`, `boss_flush_chamfer_d0.5_1` | two distances, either way |
+| `boss_flush_seam_chamfer_r1` | the boss's own seam through the point |
+| `boss_rim_chamfer_r1`, `boss_rim_seam_chamfer_r1`, `boss_rim_bossseam_chamfer_r1` | the round plate's rim: neither seam at the point, the rim's, the boss's |
+| `boss_hole_chamfer_r1`, `boss_hole_seam_chamfer_r1` | a hole's wall, the boss outside it; the hole's seam through the point |
+| `boss_corner_chamfer_r1` | the boss at the plate's corner, flush with both sides (refused before: `boss_corner_chamfer_r1_refused`) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 (refused since `6271a7f719`) -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
-| `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 
 ## Pictures
 

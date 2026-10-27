@@ -102,6 +102,7 @@ STAGES = {
     "scorner": ("ed22b47a81", "6a02c23365"),
     "scornerd": ("6a02c23365", "7f17d53067"),
     "srimseam": ("4b3d5c45b3", "42014a78e1"),
+    "schamflush": ("6adfe9a2c8", "51e4faf111"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -708,6 +709,9 @@ UVFACE_CASE = {
     # #273's pocket's floor, 1 below the top: the fillet as deep as the
     # pocket meets it, the wall gone
     "issue273_pocket_wall_wide_e23_r1": _plane_at("z", 30, {"x": -2, "y": 5}, {"x": 2, "y": 16}),
+    # the flush boss's chamfer, its cone in two faces (the foot's two arcs):
+    # the cut ends tangent to the line on the boss at the point
+    "boss_flush_chamfer_r1": lambda f: f.Surface.__class__.__name__ == "Cone",
     # #876's plate's top beside the post, x > 19, the fillet's line on it
     # ending at the rim
     "issue876_post_foot_flat_e91_r0.8": (
@@ -1011,6 +1015,7 @@ UVLABEL = {
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
+    "boss_flush_chamfer_r1": ("the chamfer's cone", False),
     "issue876_post_foot_flat_e91_r0.8": ("the plate's top beside the post", False),
     "issue273_pocket_wall_wide_e23_r1": ("the pocket's floor", False),
     "issue876_post_foot_flat_e91_r2": ("the plate's top beside the post", False),
@@ -1360,6 +1365,11 @@ CASES = {
                               [((20, 0, 3), (15, 5, 3), (18.536, 3.536, 3)),
                                ((20, 0, 3), (15, 5, 3), (11.464, -3.536, 3))],
                               1.0, 4561.6567, (20, 0, 3.5), (1, 0.35, 0.5)),
+    # the flush boss's foot chamfered: the cut tangent to its line on the boss
+    "boss_flush_chamfer_r1": ("schamflush", "bossflush",
+                              [((15, 0, 3), (20, 5, 3), (18.536, 1.464, 3)),
+                               ((15, 0, 3), (20, 5, 3), (11.464, 8.536, 3))],
+                              1.0, 2600.3847, (15, 0, 3.5), (0.35, -1, 0.5)),
     "boss_drafted_rim_seam_foot_r1": ("srimseam", "bossrimseamd",
                                       [((20, 0, 3), (15, 5, 3), (18.536, 3.536, 3)),
                                        ((20, 0, 3), (15, 5, 3), (11.464, -3.536, 3))],
@@ -1532,6 +1542,7 @@ CHAMFER = {
     "chamfer_fillet_corner_poly_1_1.5": (1.0, 1.5),
     "issue876_fillet_chamfer_flat_split_e85_r0.8": (0.8,),
     "boss_drafted_chamfer_r1": (1.0,),
+    "boss_flush_chamfer_r1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1566,6 +1577,7 @@ STRICT = {
     "boss_corner_drafted_foot_r1": (1e-4, 1e-3),
     "boss_rim_seam_foot_r1": (1e-4, 1e-3),
     "boss_drafted_rim_seam_foot_r1": (1e-4, 2e-3),
+    "boss_flush_chamfer_r1": (1e-4, 1e-4),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
@@ -1679,6 +1691,7 @@ EDGES = {
     "boss_corner_drafted_foot_r1": "the boss's foot, its three arcs",
     "boss_rim_seam_foot_r1": "the boss's foot, its two arcs",
     "boss_drafted_rim_seam_foot_r1": "the boss's foot, its two arcs",
+    "boss_flush_chamfer_r1": "the boss's foot, its two arcs",
     "issue474_f003_run_on_e2_r0.3": "the step's edge along the top, (-13,0,13)-(-9,0,13)",
 }
 
