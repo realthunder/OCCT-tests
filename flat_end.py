@@ -18,7 +18,19 @@ def _lookup():
         elif sys.platform == "win32":
             lib = ctypes.CDLL("TKFillet.dll")
         else:
-            lib = ctypes.CDLL(None)
+            # TKFillet by the path it is loaded from: Python loads Part.so
+            # RTLD_LOCAL, so dlsym(RTLD_DEFAULT) from _ctypes does not see
+            # it, and there may be no unversioned libTKFillet.so to open
+            lib = None
+            try:
+                with open("/proc/self/maps") as maps:
+                    paths = sorted({l.split()[-1] for l in maps if "/libTKFillet." in l})
+                if paths:
+                    lib = ctypes.CDLL(paths[0])
+            except OSError:
+                pass
+            if lib is None:
+                lib = ctypes.CDLL(None)
         try:
             _func = lib.ChFi3d_SetFlatEndAtVertex
         except AttributeError:
