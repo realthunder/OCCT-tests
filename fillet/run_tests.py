@@ -2471,9 +2471,11 @@ def _cone(x, y, turn=0.0, r2=4.0):
     return c
 
 
-def drafted_csg(name, shape, wide, keep, r, edges=None, chamfer=False, vol_tol=1e-3):
+def drafted_csg(name, shape, wide, keep, r, edges=None, chamfer=False, vol_tol=1e-3,
+                side_r=None):
     """The fillet (chamfer) of the feet of <shape> against the same on
-    <wide>, the plate reaching past the side, in common with <keep>."""
+    <wide>, the plate reaching past the side, in common with <keep>. With
+    <side_r>, the side a cylinder of that radius: one face on it."""
     try:
         def op(s, es):
             es = [s.Edges[i - 1] for i in es]
@@ -2493,6 +2495,11 @@ def drafted_csg(name, shape, wide, keep, r, edges=None, chamfer=False, vol_tol=1
             a, b = f.cut(ref).Volume, ref.cut(f).Volume
             if a > 1e-6 or b > 1e-6:
                 problems.append("out %.1e,%.1e" % (a, b))
+            if side_r is not None:
+                n = len([fa for fa in f.Faces if fa.Surface.__class__.__name__ == "Cylinder"
+                         and abs(fa.Surface.Radius - side_r) < 1e-7])
+                if n != 1:
+                    problems.append("%d faces on the side" % n)
             try:
                 f.check(True)
             except Exception as e:
@@ -2534,8 +2541,47 @@ _dr = _rim(90.0).fuse(_cone(15, 0, 90.0)).removeSplitter()
 _drw = Part.makeCylinder(40, 3).fuse(_cone(15, 0, 90.0)).removeSplitter()
 drafted_csg("boss_drafted_rim_foot_r1", _dr, _drw, Part.makeCylinder(20, 100, App.Vector(0, 0, -20)),
             1.0)
-_seamrim = _boss(0, 90.0, _rim(0.0))
-fillet_case("boss_rim_seam_foot_r1", _seamrim, _foot(_seamrim), 1.0, "xfail")
+# The rim's own seam through the tangent point: the cuts meet across it,
+# and the rim carried up over the gap is made a face of its own on a copy of
+# its surface, then one with the rim, its seam carried up from the vertex to
+# the point (README.md, "The side's seam through the point"; refused
+# before, "BRep_API: command not done"). Against the rim turned a quarter:
+# the boss turned three ways (its own seam through the point too), a hole's
+# wall (the side reversed, the boss outside it), the rim's axis down, and a
+# drafted boss, its cut split where it crosses the seam's line. The boss's
+# own seam through the point on a rim turned away was refused as well (its
+# line on the boss a hair over a turn): the hole's and the rim's.
+_everything = Part.makeBox(200, 200, 100, App.Vector(-100, -100, -20))
+_rimq = _boss(0, 90.0, _rim(90.0))
+for _bt in (90.0, 0.0, 180.0):
+    _seamrim = _boss(0, _bt, _rim(0.0))
+    for r in ((0.3, 1.0, 2.0) if _bt == 90.0 else (1.0,)):
+        drafted_csg("boss_rim_seam%s_foot_r%g" % ("" if _bt == 90.0 else "_b%g" % _bt, r),
+                    _seamrim, _rimq, _everything, r, side_r=20.0)
+_rimdown = Part.makeCylinder(20, 3, App.Vector(0, 0, 3), App.Vector(0, 0, -1))
+drafted_csg("boss_rim_seam_down_foot_r1", _boss(0, 90.0, _rimdown), _rimq, _everything, 1.0,
+            side_r=20.0)
+drafted_csg("boss_rim_bossseam_foot_r1", _boss(0, 0.0, _rim(90.0)), _rimq, _everything, 1.0)
+
+
+def _holed(hturn, bturn):
+    h = Part.makeCylinder(10, 3)
+    h.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), hturn)
+    return _boss(0, bturn, Part.makeBox(60, 60, 3, App.Vector(-30, -30, 0)).cut(h))
+
+
+_holeq = _holed(90.0, 90.0)
+for r in (0.3, 1.0, 2.0):
+    drafted_csg("boss_hole_seam_foot_r%g" % r, _holed(0.0, 90.0), _holeq, _everything, r,
+                side_r=10.0)
+drafted_csg("boss_hole_both_seams_foot_r1", _holed(0.0, 180.0), _holeq, _everything, 1.0,
+            side_r=10.0)
+drafted_csg("boss_hole_bossseam_foot_r1", _holed(90.0, 180.0), _holeq, _everything, 1.0)
+_dq = _rim(90.0).fuse(_cone(15, 0, 90.0)).removeSplitter()
+for _ct in (90.0, 0.0):
+    drafted_csg("boss_drafted_rim_seam%s_foot_r1" % ("" if _ct == 90.0 else "_c0"),
+                _rim(0.0).fuse(_cone(15, 0, _ct)).removeSplitter(), _dq, _everything, 1.0,
+                side_r=20.0)
 # The boss at a corner of the plate, flush with both sides: the top cut in
 # two at the points the foot touches them, the foot with it, two fillets
 # ending at each point, pinched as one ending twice is (refused before,

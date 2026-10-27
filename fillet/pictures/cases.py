@@ -101,6 +101,7 @@ STAGES = {
     "sstraight": ("a71a397df2", "cd5fc69ce1"),
     "scorner": ("ed22b47a81", "6a02c23365"),
     "scornerd": ("6a02c23365", "7f17d53067"),
+    "srimseam": ("4b3d5c45b3", "42014a78e1"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -414,6 +415,17 @@ def _boss_corner_drafted():
     return Part.makeBox(30, 20, 3).fuse(Part.makeCone(5, 4, 10, V(5, 5, 3))).removeSplitter()
 
 
+def _boss_rim_seam(drafted=False):
+    """run_tests.py's boss against a round plate's rim from inside, the rim's
+    seam through the point: a cylinder boss r5 (a cone, r5 to 4, drafted)
+    at (15, 0) on a plate r20 3 thick, its seam at (20, 0)."""
+    V = App.Vector
+    b = Part.makeCone(5, 4, 10, V(0, 0, 3)) if drafted else Part.makeCylinder(5, 10, V(0, 0, 3))
+    b.rotate(V(0, 0, 0), V(0, 0, 1), 90.0)
+    b.translate(V(15, 0, 0))
+    return Part.makeCylinder(20, 3).fuse(b).removeSplitter()
+
+
 def _boss_drafted():
     """run_tests.py's _drafted: a cone boss, radius 5 to 4 over 10, on a
     30x20x3 plate, flush with the plate's side y=0 at its foot."""
@@ -538,6 +550,8 @@ SHAPES = {
     "bossflush": _boss_flush,
     "bosscorner": _boss_corner,
     "bosscornerd": _boss_corner_drafted,
+    "bossrimseam": _boss_rim_seam,
+    "bossrimseamd": lambda: _boss_rim_seam(True),
     "bossdrafted": _boss_drafted,
     "bosshalves": _boss_halves,
     "bossseam": _boss_seam,
@@ -674,6 +688,12 @@ UVFACE = {
     "bosscorner": _plane_at("y", 0),
     # the same side, which grows a bump under each gap
     "bosscornerd": _plane_at("y", 0),
+    # the rim, which grows a peak over the gap across its seam (one face)
+    "bossrimseam": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+                    and abs(f.Surface.Radius - 20) < 1e-6),
+    # the same rim, which grows a bump under the gap
+    "bossrimseamd": (lambda f: f.Surface.__class__.__name__ == "Cylinder"
+                     and abs(f.Surface.Radius - 20) < 1e-6),
     # the same side, which grows a bump under the gap between the fillet's ends
     "bossdrafted": _plane_at("y", 0),
     # the same side
@@ -875,6 +895,10 @@ NAMES = {
                   "x=0 and y=0",
     "bosscornerd": "a cone boss, radius 5 to 4 over 10, at the corner of a 30x20x3 plate, flush "
                    "with its sides x=0 and y=0 at its foot",
+    "bossrimseam": "a cylinder boss r5 against the rim of a round plate r20 3 thick from inside, "
+                   "the rim's seam through the point it touches",
+    "bossrimseamd": "a cone boss, radius 5 to 4 over 10, against the rim of a round plate r20 "
+                    "from inside at its foot, the rim's seam through the point",
     "bossdrafted": "a cone boss, r5 to 4, on a 30x20x3 plate, flush at its foot with the "
                    "plate's side y=0",
     "bosshalves": "a cylinder boss r5 on a 30x20x3 plate, flush with the plate's side y=0, "
@@ -928,6 +952,8 @@ VIEW = {
     "bossflush": ((15, 10, 5), 24.0),
     "bosscorner": ((8, 8, 5), 24.0),
     "bosscornerd": ((8, 8, 5), 24.0),
+    "bossrimseam": ((0, 0, 4), 44.0),
+    "bossrimseamd": ((0, 0, 4), 44.0),
     "bossdrafted": ((15, 10, 5), 24.0),
     "bosshalves": ((15, 10, 5), 24.0),
     "bossseam": ((15, 10, 5), 24.0),
@@ -975,6 +1001,8 @@ UVLABEL = {
     "bossflush": ("the plate's side", False),
     "bosscorner": ("the plate's side y=0", False),
     "bosscornerd": ("the plate's side y=0", False),
+    "bossrimseam": ("the rim", False),
+    "bossrimseamd": ("the rim", False),
     "bossdrafted": ("the plate's side", False),
     "bosshalves": ("the plate's side", False),
     "bossseam": ("the plate's side", False),
@@ -1326,6 +1354,16 @@ CASES = {
                                     [((0, 5, 3), (5, 0, 3)), ((5, 0, 3), (10, 5, 3)),
                                      ((10, 5, 3), (0, 5, 3))],
                                     1.0, 2443.5033, (2.5, 2.5, 3.5), (-1, -1, 0.7)),
+    # against the rim from inside, the rim's seam through the point; the
+    # foot's two arcs share their ends: each told by a point on it
+    "boss_rim_seam_foot_r1": ("srimseam", "bossrimseam",
+                              [((20, 0, 3), (15, 5, 3), (18.536, 3.536, 3)),
+                               ((20, 0, 3), (15, 5, 3), (11.464, -3.536, 3))],
+                              1.0, 4561.6567, (20, 0, 3.5), (1, 0.35, 0.5)),
+    "boss_drafted_rim_seam_foot_r1": ("srimseam", "bossrimseamd",
+                                      [((20, 0, 3), (15, 5, 3), (18.536, 3.536, 3)),
+                                       ((20, 0, 3), (15, 5, 3), (11.464, -3.536, 3))],
+                                      1.0, 4413.7513, (20, 0, 3.5), (1, 0.35, 0.5)),
     # the same boss drafted, its foot as the cylinder's; filleted and chamfered
     "boss_drafted_flush_foot_r1": ("sdraftboss", "bossdrafted", _DRAFTED_FOOT, 1.0, 2443.9037,
                                    (15, 0, 3.5), (0.35, -1, 0.5)),
@@ -1526,6 +1564,8 @@ STRICT = {
     "post_flush_on_plate_flat_r2": (1e-4, 1e-4),
     "boss_corner_foot_r1": (1e-4, 1e-4),
     "boss_corner_drafted_foot_r1": (1e-4, 1e-3),
+    "boss_rim_seam_foot_r1": (1e-4, 1e-3),
+    "boss_drafted_rim_seam_foot_r1": (1e-4, 2e-3),
 }
 # cases made with the flat end at a vertex (ChFi3d_Builder::SetFlatEndAtVertex,
 # ../../flat_end.py), where the OCCT has it
@@ -1637,6 +1677,8 @@ EDGES = {
     "boss_flush_seam_foot_r1": "the boss's foot, one closed edge",
     "boss_corner_foot_r1": "the boss's foot, its three arcs",
     "boss_corner_drafted_foot_r1": "the boss's foot, its three arcs",
+    "boss_rim_seam_foot_r1": "the boss's foot, its two arcs",
+    "boss_drafted_rim_seam_foot_r1": "the boss's foot, its two arcs",
     "issue474_f003_run_on_e2_r0.3": "the step's edge along the top, (-13,0,13)-(-9,0,13)",
 }
 

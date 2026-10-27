@@ -1512,8 +1512,9 @@ lies outside the other. The same against a round plate's rim, the boss
 inside it.
 
 Not made: a chamfer there (its cut would end in a corner of no angle) and
-a rim whose seam runs through the point. A drafted boss, which touches
-the side only at its foot, is made since `1d642bfaaf` (below).
+a rim whose seam runs through the point (made since `42014a78e1`, below). A
+drafted boss, which touches the side only at its foot, is made since
+`1d642bfaaf` (below).
 
 ![boss_flush_foot_r1](pictures/boss_flush_foot_r1.png)
 
@@ -1680,6 +1681,25 @@ first for the one that starts.
 ![boss_corner_foot_r1](pictures/boss_corner_foot_r1.png)
 
 ![boss_corner_drafted_foot_r1](pictures/boss_corner_drafted_foot_r1.png)
+
+A round plate's rim whose seam runs through the point where the boss
+touches it, since `42014a78e1`: the two cuts meet across the seam, so the
+rim grown over the gap would need its seam run on from the vertex up to
+their point -- an edge the builder's data cannot hold. The rim carried up
+is made a face of its own on a copy of the rim's surface, and after the
+build the two are made one, the seam carried up to the point: in the
+close-up, the seam's line runs from the plate's bottom up through the peak
+to the point. The third row is the rim in (u, v), one face: the peak's two
+halves stand at either end, u = 0 and 2 pi. Against the rim with its seam turned
+a quarter away, the same volume. A hole's wall the same, the boss outside
+it; and a drafted boss, its one cut split where it crosses the seam's line,
+the seam carried up to there. With the same fix, the boss's own seam
+through the point on a rim turned away: its line on the boss came out a
+hair over a whole turn, which the check refused.
+
+![boss_rim_seam_foot_r1](pictures/boss_rim_seam_foot_r1.png)
+
+![boss_drafted_rim_seam_foot_r1](pictures/boss_drafted_rim_seam_foot_r1.png)
 
 ### A fillet run on past its vertex (`95a3e143e1`, realthunder/FreeCAD#273, #474)
 

@@ -3545,7 +3545,7 @@ spine's end", below).
 | `boss_flush_foot_and_top_r1` | the foot and the boss's top edge together |
 | `boss_rim_foot_r{0.3,1,2}` | a round plate (radius 20), the boss against its rim from inside: the side a cylinder |
 | `boss_flush_csg_r{1,2}` | the result against the fillet on a wider plate, cut by the side |
-| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken; the corner made since `6a02c23365`, "A boss at the plate's corner") |
+| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken; the corner made since `6a02c23365`, "A boss at the plate's corner"; the rim's seam since `42014a78e1`, "The side's seam through the point") |
 
 The sweeps (edge, vertex): no case moved; BOP's check over them as at
 `5c531f4938` (28 and 213 reported), with the cases the baseline still
@@ -3944,7 +3944,7 @@ check clean.
 Still refused: the boss's seam through the tangent point (a turn of
 three quarters), cylinder and cone, fillet and chamfer -- the foot one
 closed edge there (made since `e549e29656`, the next section) -- and the
-rim's own seam through it (`boss_rim_seam_foot_r1`).
+rim's own seam through it (`boss_rim_seam_foot_r1`; made since `42014a78e1`).
 
 `892a10b753`. The sweeps do not move, line for line: fillet edge and
 vertex, BOP's check, the chamfer sweeps and New draft's. The fillet suite
@@ -3991,7 +3991,8 @@ other way, to the digit: cylinder 2585.9842, 2591.8420, 2611.2741,
 2691.5445 at 0.3, 1, 2, 4; cone 2439.2554, 2443.9037, 2459.2745,
 2522.2233; the cone's chamfer 2453.7582. Valid, BOP's check clean. The
 cylinder's chamfer stays refused (`boss_flush_chamfer_r1`), the rim's
-own seam through the point too (`boss_rim_seam_foot_r1`).
+own seam through the point too (`boss_rim_seam_foot_r1`; made since
+`42014a78e1`, "The side's seam through the point").
 
 The sweeps (sweep/README.md) move two cases, both made now and refused
 before: `issue273_Fillet V5:5,6` at 0.3 and 1, the two arcs of a
@@ -5815,13 +5816,81 @@ the suite PASS=789 XFAIL=3.
 |------|----------------|
 | `boss_corner_drafted_foot_r{0.3,1,2}`, `boss_corner_drafted_seam_foot_r1`, `boss_corner_drafted_chamfer_r1` | the drafted boss at the corner, against the construction (refused before, or made short) |
 
+## The side's seam through the point (`42014a78e1`, 2026-10-27)
+
+The boss against a round plate's rim from inside, the rim's own seam
+through the point where the boss touches it (`boss_rim_seam_foot_r1`, the
+last of "A boss flush with the plate's side"'s refusals but the chamfer).
+The pinch cuts each end of the foot's fillet by the side's surface, from
+its point on the plate's edge up to where the boss's line touches the side,
+and the side grows over the gap between them. Here the two cuts lie on
+either side of the seam: in the side's (u, v) one ends at u = 0 and the
+other at 2 pi, and the side carried up over them would need its seam run on
+from the vertex up to their point -- a closed edge the DS cannot hold.
+
+So the side carried up is a face of its own, on a copy of the side's
+surface, bounded by the two cuts (their pcurves on it within one period)
+and by the side's edge either side of the vertex: those two pieces are new
+curves, put in the side in place of the edge's, the way a rim run on is
+(`MakeRimRunOn`). After the build the two faces are made one: the side's
+wire with its seam carried up from the vertex to the point, along the
+seam's line, and each piece of the edge replaced by the face's edges from
+the point to its end, their pcurves moved by a period onto the side's
+(`ChFi3d_MergeSideSeams`, from the vertex and point each pinch records in
+`ChFi3d_SideSeams`). The vertex goes, and the edge's pieces. A cylinder or
+a cone side, its seam a line, the point on it past the vertex; refused, as
+before, otherwise. The point is off the line by what the touching point is
+found to (1.6e-7 at 0.3), which the point's vertex takes.
+
+A drafted boss (`PinchGap`) the same: its one cut, across the gap from one
+end's point on the plate's edge to the other's, crosses the seam's line, is
+cut in two there, and the seam is carried up to the crossing. The face's
+side of the cut is found from the loop of the cut and the vertex in the
+side's (u, v).
+
+Then the boss's own seam through the point, the rim's seam turned away --
+refused too, though on a plane side it is made (`e549e29656`): the foot is
+one closed edge and the fillet one surface data from end to end, its line on
+the boss run on from both ends to the one point. The two touching points
+are found to some 1e-8, and the line came out 2e-8 over a whole turn, a
+range BRepCheck refuses on a periodic curve (`InvalidRange`, past 1e-9).
+It is a period exactly now (`PerformPinchEnds`); on a plane side and a
+hole's wall it had happened to fall short.
+
+Each is checked against the same with the side's seam turned a quarter
+away (`drafted_csg`, the whole result kept): valid, BOP's check clean, no
+tolerance above 1e-4 (the merged ones at 4e-7), nothing of either outside
+the other by 1e-6, one face on the side. The rim at 0.3, 1, 2: 4555.8909,
+4561.6567, 4580.5974 against 4555.8909, 4561.6566, 4580.5973 (the merged
+face's integration over its B-spline cuts); a hole's wall of radius 10 in a
+plate, the boss outside it (the side reversed), at 0.3, 1, 2: 10643.5118,
+10649.4789, 10669.4945 against 10643.5118, 10649.4789, 10669.4944. The drafted boss at
+1: 4413.7513 against 4413.7505, as the drafted boss's integration over its
+cut elsewhere.
+
+`42014a78e1`: `ChFi3d_Builder.cxx` (`PerformPinchEnds`, `PinchGap`,
+`ChFi3d_MergeSideSeams`), `ChFi3d_Builder_0.cxx`/`.hxx`
+(`ChFi3d_SideSeams`).
+
+The sweeps, against `7f17d53067`, do not move, line for line: vertex and
+edge, flat end off and on, the big radii and the chamfer. Part 390 and
+PartDesign 486 OK; the suite PASS=803 XFAIL=2.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_rim_seam_foot_r{0.3,1,2}` | the rim's seam through the point (refused before: XFAIL) |
+| `boss_rim_seam_b0_foot_r1`, `boss_rim_seam_b180_foot_r1` | the boss turned: its own seam through the point too, and on the far side |
+| `boss_rim_seam_down_foot_r1` | the rim's cylinder with its axis down |
+| `boss_rim_bossseam_foot_r1` | the boss's own seam through the point, the rim's turned away (refused before) |
+| `boss_hole_seam_foot_r{0.3,1,2}`, `boss_hole_both_seams_foot_r1`, `boss_hole_bossseam_foot_r1` | a hole's wall, the boss outside it: the hole's seam, both, the boss's |
+| `boss_drafted_rim_seam_foot_r1`, `boss_drafted_rim_seam_c0_foot_r1` | the drafted boss, the cone's seam at the side and through the point |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
 |------|---------|
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 (refused since `6271a7f719`) -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
-| `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
 
 ## Pictures
 
