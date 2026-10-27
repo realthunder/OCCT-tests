@@ -3545,7 +3545,7 @@ spine's end", below).
 | `boss_flush_foot_and_top_r1` | the foot and the boss's top edge together |
 | `boss_rim_foot_r{0.3,1,2}` | a round plate (radius 20), the boss against its rim from inside: the side a cylinder |
 | `boss_flush_csg_r{1,2}` | the result against the fillet on a wider plate, cut by the side |
-| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken) |
+| `boss_flush_chamfer_r1`, `boss_rim_seam_foot_r1`, `boss_corner_foot_r1` | still refused: XFAIL (Known broken; the corner made since `6a02c23365`, "A boss at the plate's corner") |
 
 The sweeps (edge, vertex): no case moved; BOP's check over them as at
 `5c531f4938` (28 and 213 reported), with the cases the baseline still
@@ -5745,6 +5745,47 @@ symmetric difference with an exact full round empty on the square rib: each roun
 snap's, its radius 1e-5 short and its two sides meeting 1e-5 off the
 middle.
 
+## A boss at the plate's corner (`6a02c23365`, 2026-10-27)
+
+A cylinder boss (radius 5) at a corner of the plate (30 x 20 x 3), flush
+with both its sides, x=0 and y=0 (`boss_corner_foot_r1`, Known broken
+until now): refused at every radius ("BRep_API: command not done"). The
+foot touches the plate's two top edges at (0,5,3) and (5,0,3), and the
+fuse cuts the top in two there: a curved triangle at the corner, its
+third side the foot's quarter arc, and the rest of the top, along the
+foot's other three quarters (two arcs). Either part of the foot alone is
+made; the whole foot is two fillets, and at each point two fillets end,
+one on each piece of the top. The pinch (`PerformPinchEnds`, "A boss
+flush with the plate's side") took only one fillet ending twice at its
+vertex, the foot one ring. The two ends are the same either way -- each
+on the plate's edge along the side, its line on the boss short of the
+point, the same boss and the same side -- and each is cut by the side
+and the cuts meet at the point as before; it takes two stripes now, each
+ending at the vertex once, each end written to its own stripe.
+
+Against the boss on a plate reaching past both sides, filleted and cut
+by them: at 0.3, 1 and 2 the volumes within 5e-5 (2585.95540, 2591.24280,
+2607.77295 against 2585.95541, 2591.24281, 2607.77300), valid, BOP's
+check clean, nothing of either outside the other; the boss turned 45 deg
+the same. Refused, as before: at 4, where the fillet's line on the plate
+passes the plate's corner; the chamfer (as `boss_flush_chamfer_r1`); and
+a drafted boss (a cone, radius 5 to 4) at the corner. That one was made
+at 2 by the gap's run on (`PinchGap`), 0.75 short of the construction
+with edges at 0.0013 -- the line on the plate passes the plate's corner
+by 0.1 there -- and refused at 0.3 and 1; the gap's run on is kept to
+one fillet, as before.
+
+`6a02c23365`: `ChFi3d_Builder.cxx` (`PerformPinchEnds`, `PinchGap`).
+
+The sweeps, against `cd5fc69ce1`, do not move: vertex and edge, flat end
+off and on, the big radii and the chamfer. Part 390 and PartDesign 486 OK;
+the suite PASS=784 XFAIL=3.
+
+| Case | What it covers |
+|------|----------------|
+| `boss_corner_foot_r{0.3,1,2}`, `boss_corner_foot_turned_r1` | the boss at the corner, against the plate reaching past both sides cut by them (refused before) |
+| `boss_corner_foot_r4_refused`, `boss_corner_chamfer_r1_refused`, `boss_drafted_corner_foot_r2_refused` | refused, the input left as it was (the drafted one made wrong without the restriction) |
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
@@ -5752,7 +5793,6 @@ middle.
 | `issue962_rib_chamfer_1.2` | "Self-intersecting wire" on the rib's wall: the chain turns from the rib's top down its front on an arc of radius 1, and a chamfer of 1 or more turns back on itself there. Inherent, measured 2026-10-10: split and refined shapes alike are valid at 0.9, 0.95, 0.99 (equal volumes), refused at 1, and invalid from 1.01 to 1.5 (refused since `6271a7f719`) -- upstream's behaviour on a wall in one face. Left as it is (decided): FreeCAD rejects an invalid result; refusing early would move every chamfer along a tight arc. Refused before, at the foot, which is made now |
 | `boss_flush_chamfer_r1` | The flush boss's foot chamfered: refused ("TopOpeBRepDS_DataStructure::Point"). The chamfer's cone is not tangent to the side where the boss touches it, so the cut by the side reaches the chamfer's line on the boss tangent to it -- a corner of no angle on the chamfer's face; made the fillet's way, the result was invalid. See "A boss flush with the plate's side" |
 | `boss_rim_seam_foot_r1` | The boss against a round plate's rim, the rim's seam through the tangent point: refused, as before. The two cuts meet across the seam, which would have to be carried up to their point; with the seam elsewhere it is made (`boss_rim_foot_r*`) |
-| `boss_corner_foot_r1` | A boss flush with two sides at the plate's corner: refused before any corner is made ("BRep_API: command not done"), as before |
 
 ## Pictures
 

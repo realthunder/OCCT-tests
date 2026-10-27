@@ -1665,6 +1665,17 @@ way, fillet and the cone's chamfer.
 
 ![boss_flush_seam_foot_r1](pictures/boss_flush_seam_foot_r1.png)
 
+At a corner of the plate, flush with both sides, the boss touches the
+plate's top edges at two points, and the top is cut in two there: a
+curved triangle at the corner and the rest. The foot is then two fillets,
+a quarter arc on the corner's piece and three quarters on the rest, and
+at each point two fillets end rather than one ending twice. The ends are
+the same, and the side cuts them the same way; made since `6a02c23365`, the
+volumes of the fillet on a plate reaching past both sides and cut by
+them. A drafted boss at the corner is still refused.
+
+![boss_corner_foot_r1](pictures/boss_corner_foot_r1.png)
+
 ### A fillet run on past its vertex (`95a3e143e1`, realthunder/FreeCAD#273, #474)
 
 An edge between two faces a degree or two from tangent -- #474's step
