@@ -1,6 +1,7 @@
 # python doc_html.py <out.html> [suite] -- models/Fillet.md as one HTML page,
 # or another suite's doc: "draft" renders ../../draft/models/Draft.md,
-# "boolean" ../../boolean/README.md (a fix to each h2 there, not each h3).
+# "boolean" ../../boolean/README.md and "exchange" ../../exchange/README.md
+# (a fix to each h2 there, not each h3).
 #
 # The page references its pictures as pictures/<case>.png, beside it; publish
 # the suite's models/pictures/*.png at those paths with it. Needs
@@ -22,6 +23,9 @@ SUITES = {
     "draft": ("Draft.md", "TKOffset Draft Fixes", "TKOffset / Draft",
               "Each fix the fork makes to OCCT's draft, with the cases that show it:\n"
               "  upstream OCCT, the fork before the fix and the fork after, side by side."),
+    "exchange": ("README.md", "STEP Exchange Fixes", "TKDESTEP / ShapeProcess",
+                 "Each fix the fork makes to OCCT's data exchange, from the issues of\n"
+                 "  realthunder/FreeCAD: the fork before the fix and after, side by side."),
     "boolean": ("README.md", "Boolean Fixes", "TKBO / IntAna / BRepTools",
                 "Each fix the fork makes to OCCT met through the booleans, from the issues\n"
                 "  of realthunder/FreeCAD: the fork before the fix and after, side by side."),

@@ -30,6 +30,9 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   (and the surface intersections they call), most from `occ-issues/`:
   `run_tests.py`, a C++ driver of each fix in `models/`, the write-up of
   each in its README, and its pictures (before and after).
+- `exchange/` -- the fixes to reading and writing STEP and the other
+  formats, and the shape processing they run: a C++ driver of each fix in
+  `models/`, the write-up of each in its README, and its pictures.
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
 - `surface/` -- checks of the curve network surfaces (`GeomFill_Gordon`,
