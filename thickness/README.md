@@ -461,6 +461,33 @@ their runs and lists the fork's dumps on the way; `models/Thickness.md`,
 | `luneball_flatsfirst_sphere1/2_join_out/in`, `turned_luneball_flatsfirst_sphere1_join_out` | the half ball in two lunes, its faces in the order flat, flat, lune, lune; one lune removed, Intersection join | 91.1786 outward, 74.1857 inward; an invalid 87.4583 and 72.4404. The flat's half beside the removed lune built the other half's face a second time, beyond the line between them |
 | `luneballsplit_meridian_*`, `luneballsplit_rim_*`, `placed_luneballsplit_meridian_f1_join_in` | the same solid as made, a vertex on the meridian between the lunes or on the rim beside the removed one | the same volumes; refused. Joined, it is the solid in that order |
 
+## #613: a filleted part, its hang and its null object (2026-10-28)
+
+`../occ-issues/`'s #613: a thickness 2 inward with two faces removed, the
+top and bottom of a filleted part (its input is the issue file's stored
+Fillet, `models/issue613_fillet.brep`, faces 7 and 16; the document no
+longer recomputes to it: its Fillet's edge references are lost). It ran
+for ever: a section edge is stretched 100 times its length on its own
+curves (upstream's `ExtentEdge`, and the fork's step case beside it,
+"enough for analytic edges"), and a B-spline is nothing past its ends --
+its pcurve came 2e27 out of its face, and the offset surface evaluated
+there tried to shift its point by 1e-9, which at 2e27 does not move it,
+so its loop never ended. Fixed: the evaluation gives up when a shift
+leaves the point where it was (`0b7bc39ad7`, `Geom_OffsetSurfaceUtils`),
+and the stretch stops where the edge's curves end (`a9988e61f8`). Then
+`ExtentFace` set two edges' ranges from a pcurve and from vertex
+parameters 2e-5 past their B-splines: on a plane the pcurve is made by
+trimming the 3D curve to the range, a trim past the end is refused, and
+the 2D intersection threw a null object (`5a042c6a55`, the ranges kept to
+the curves too; `BRepOffset_Tool::KeepToCurvesDomain`). Inward is now
+refused in 2.6 s, not done; the thick solid itself is not made yet:
+inward refused, outward invalid (-14917.4397, inside out).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue613_fillet_top_bottom_in` | #613's part, faces 7 and 16 removed, -2, Arc | refused as not done, in time: it ran for ever, then threw a null object |
+| `issue613_fillet_top_bottom_in_made`, `_out_made` | the same, -2 and +2 | `XFAIL`: the thick solid; refused inward, invalid outward |
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
