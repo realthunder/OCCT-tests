@@ -11,11 +11,13 @@
 import math
 import os
 import sys
+import traceback
 
 import FreeCAD as App
 import Part
 
 V = App.Vector
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def emit(line):
@@ -42,6 +44,15 @@ def report(name, ok, what):
     emit("%-44s %s  %s" % (name, "PASS" if ok else "FAIL", what))
 
 
+def guarded(fix):
+    # a fix's cases; an exception among them is a FAIL, not the end of the
+    # suite (FreeCADCmd ends a script that raises with exit code 0)
+    try:
+        fix()
+    except Exception:
+        report(fix.__name__, False, "raised: " + traceback.format_exc().splitlines()[-1])
+
+
 # #64: a cylinder (r 25, h 35) split by the plane y = k (z - 34.36), tilted
 # off its axis, with a fuzzy value; the cylinder's seam at the cut (x = 25,
 # y = 0) or turned 90 deg away. Two valid solids each time; with the seam
@@ -60,16 +71,45 @@ def split(k, fuzzy, angle):
     return res if res.isValid() else None, sorted(s.Volume for s in res.Solids)
 
 
-for k in (0.1, 0.35, 1.0):
-    for angle in (0, 90):
-        ref = split(k, 0.0, angle)[1]
-        for fuzzy in (0.0, 0.1, 0.5, 1.0):
-            res, vols = split(k, fuzzy, angle)
-            ok = res is not None and len(vols) == 2 and len(ref) == 2
-            if ok and not (angle == 0 and fuzzy > 0):
-                ok = all(abs(v - r) <= 1e-2 * r for v, r in zip(vols, ref))
-            report("issue064_k%g_seam%d_fuzzy%g" % (k, angle, fuzzy), ok,
-                   ("invalid " if res is None else "") + " ".join("%.4f" % v for v in vols))
+def issue064():
+    for k in (0.1, 0.35, 1.0):
+        for angle in (0, 90):
+            ref = split(k, 0.0, angle)[1]
+            for fuzzy in (0.0, 0.1, 0.5, 1.0):
+                res, vols = split(k, fuzzy, angle)
+                ok = res is not None and len(vols) == 2 and len(ref) == 2
+                if ok and not (angle == 0 and fuzzy > 0):
+                    ok = all(abs(v - r) <= 1e-2 * r for v, r in zip(vols, ref))
+                report("issue064_k%g_seam%d_fuzzy%g" % (k, angle, fuzzy), ok,
+                       ("invalid " if res is None else "") + " ".join("%.4f" % v for v in vols))
+
+
+guarded(issue064)
+
+
+# #580: #580's Pad003, whose planar face 19 holds a degenerated edge with no
+# 3D curve, mirrored and moved with a copy, and fused with its mirror: each
+# valid, the copies of its volume, the fuse twice it less the common. The
+# copy used to drop that edge's pcurve (README.md, #580).
+def solid_case(name, shape, want):
+    ok = shape.isValid() and abs(shape.Volume - want) <= 1e-6 * want
+    invalid = "" if shape.isValid() else "invalid "
+    report(name, ok, "%svol %.4f (want %.4f)" % (invalid, shape.Volume, want))
+
+
+def issue580():
+    pad = Part.read(os.path.join(HERE, "models", "issue580_pad003.brep"))
+    v0 = pad.Volume
+    mirrored = pad.mirror(V(0, 0, 0), V(0, 1, 0))
+    solid_case("issue580_mirror", mirrored, v0)
+    moved = pad.copy()
+    move = App.Placement(V(1, 2, 3), App.Rotation(V(1, 0, 0), math.degrees(0.7))).toMatrix()
+    moved.transformShape(move, True)
+    solid_case("issue580_moved_copy", moved, v0)
+    solid_case("issue580_fuse_mirror", pad.fuse(mirrored), 2 * v0 - pad.common(mirrored).Volume)
+
+
+guarded(issue580)
 
 failed = results.count(False)
 emit("---")

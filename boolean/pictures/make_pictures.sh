@@ -27,20 +27,33 @@ else
     FCBUILD=${FCBUILD:-$HOME/works/sw/fcad/build/conda-relwithdebinfo-801}
 fi
 export W=${BOOL_WORK:-/tmp/boolean-pictures}
-mkdir -p $W/before $W/after $W/home
+mkdir -p $W/home
 
+LIBS="-lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
+LIBS="$LIBS -lTKMath -lTKernel"
+# fix <tag> <commit> <source> <driver> [args]: the driver built against the
+# install, run on the library <source> belongs to as it was before <commit>
+# (mkold.py) into $W/<tag>/before -- it fails there (exit 1): its results are
+# the point -- and on the install into $W/<tag>/after, where it must pass.
+fix() {
+    local tag=$1 commit=$2 src=$3 drv=$4
+    shift 4
+    mkdir -p $W/$tag/before $W/$tag/after
+    clang++ -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/$drv.cpp \
+        -L$PREFIX/lib -Wl,-rpath,$PREFIX/lib $LIBS -o $W/$tag/$drv
+    ls $W/$tag/old/lib* > /dev/null 2>&1 ||
+        python3 $HERE/mkold.py $BUILD $W/$tag/old "$commit^" $src > $W/$tag/mkold.log 2>&1
+    DYLD_LIBRARY_PATH=$W/$tag/old LD_LIBRARY_PATH=$W/$tag/old $W/$tag/$drv "$@" $W/$tag/before \
+        > $W/$tag/before.txt || true
+    $W/$tag/$drv "$@" $W/$tag/after > $W/$tag/after.txt ||
+        { echo "$drv fails after the fix, see $W/$tag/after.txt"; exit 1; }
+}
 # #64: the plane/cylinder intersection under a fuzzy value
-FIX=ed990cf61b
-clang++ -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/issue064_fuzzy_plane_cylinder.cpp \
-    -L$PREFIX/lib -Wl,-rpath,$PREFIX/lib -lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo \
-    -lTKGeomBase -lTKG3d -lTKG2d -lTKMath -lTKernel -o $W/issue064
-[ -e $W/old064/libTKGeomBase.8.0.dylib ] || [ -e $W/old064/libTKGeomBase.so.8.0 ] ||
-    python3 $HERE/mkold.py $BUILD $W/old064 "$FIX^" \
-        src/ModelingData/TKGeomBase/IntAna/IntAna_QuadQuadGeo.cxx > $W/mkold064.log 2>&1
-# before the fix the driver fails (exit 1): its results are the point
-DYLD_LIBRARY_PATH=$W/old064 LD_LIBRARY_PATH=$W/old064 $W/issue064 --write $W/before > $W/before.txt || true
-$W/issue064 --write $W/after > $W/after.txt
-grep -q "^0 bad" $W/after.txt || { echo "the driver fails after the fix, see $W/after.txt"; exit 1; }
+fix 064 ed990cf61b src/ModelingData/TKGeomBase/IntAna/IntAna_QuadQuadGeo.cxx \
+    issue064_fuzzy_plane_cylinder --write
+# #580: a degenerated edge's pcurve on a plane kept by a transformed copy
+fix 580 c20f921783 src/ModelingData/TKBRep/BRepTools/BRepTools_TrsfModification.cxx \
+    issue580_mirror_degenerated $HERE/../models/issue580_pad003.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

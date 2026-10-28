@@ -1,9 +1,9 @@
 # Booleans and the general fuse
 
 The fork's fixes met through the booleans and the general fuse
-(`BOPAlgo_Builder`, what FreeCAD's Split, Fragments, Cut and Fuse run), and
-through what they call -- the surface intersections. Most come from the
-issues of `../occ-issues/`.
+(`BOPAlgo_Builder`, what FreeCAD's Split, Fragments, Cut and Fuse run), what
+they call -- the surface intersections -- and what makes their arguments --
+the transforms of a shape. Most come from the issues of `../occ-issues/`.
 
 ```
 FreeCADCmd tests/fork/boolean/run_tests.py      # the cases, through FreeCAD
@@ -88,3 +88,52 @@ PartDesign 486 tests OK; the fillet suite PASS=815 XFAIL=1, thickness 378,
 draft 105, as before; the six fillet sweeps (12242, 12242, 3921, 3921, 2614,
 3921 runs) and the three draft sweeps (1222, 500, 114) not one result
 changed; the thickness sweep right in all 928 runs by its reference.
+
+## #580: a degenerated edge on a plane lost by a transformed copy (`c20f921783`, 2026-10-28)
+
+**The issue.** `../occ-issues/models/issue580_mirror_crash.FCStd`: mirroring
+a part (a MultiTransform's Mirrored, the whole shape) gave an invalid shape,
+and the fuse that follows crashed (2022, OCC 7.5). Today the fuse does not
+crash, but the mirror of the part, `Pad003` (valid, 700.9305), is invalid:
+652.3448 by the volume integrals -- the volume the document's Body stored --
+and its fuse with the part invalid too.
+
+**What was broken.** Pad003's face 19, a plane, holds a degenerated edge, one
+with no 3D curve, only its pcurve. `BRepBuilderAPI_Transform` with a copy
+rebuilds the shape through `BRepTools_Modifier`, and
+`BRepTools_TrsfModification::NewCurve2d` gives no new pcurve for an edge on a
+plane: `BRep_Tool` projects an edge's 3D curve onto a plane when its pcurve
+is asked for. A degenerated edge has nothing to project; it was left with no
+curve at all, its face `NoCurveOnSurface`. Not the mirror's alone: a copied
+rotation and a scale of Pad003 were invalid the same way; only a move
+without a copy, a location, was not.
+
+**The fix.** On a plane, `NewCurve2d` declines only an edge that has a 3D
+curve; one without carries its pcurve over as on any other surface (a
+plane's parameters are unchanged by a rigid move or a mirror; a scale goes
+through the surface's parametric transformation, as for the others).
+
+**The cases.** `models/issue580_mirror_degenerated.cpp` on
+`models/issue580_pad003.brep` (#580's Pad003), and `run_tests.py`: the part
+mirrored about the XZ plane, moved with and without a copy and scaled by 2,
+each valid with the volume it should have; its fuse with its mirror valid,
+twice the part less their common (1209.5704). Before: the mirror, the copied
+move, the scale and the fuse invalid. After: all pass.
+
+![#580: before and after](models/pictures/issue580_mirror_degenerated.png)
+
+**What is left of #580.** The document no longer recomputes to the mirror:
+its Chamfer (two distances, 5 and 2, on a circle and two lines of `Pad001`)
+fails first. The kernel makes that chamfer -- exactly the stored 476.2935 --
+on the edges the file names, with the distances on the faces it gave them.
+Recomputed (8.0.1 renumbers the shape), the same three edges are named
+again, but the face each edge lists first, which a two-distance chamfer
+gives the first distance, is now the pad's base for all three, where 5 does
+not fit; given the other way round the kernel refuses it on the stored shape
+too. A FreeCAD matter (which face a two-distance chamfer measures from is not
+kept through a rebuild), not the kernel's.
+
+**Validation** (against `ed990cf61b`): Part 390 and PartDesign 486 tests
+OK; the fillet suite PASS=815 XFAIL=1, thickness 378, draft 105, as before;
+the six fillet sweeps and the three draft sweeps not one result changed; the
+thickness sweep right in all 928 runs by its reference.

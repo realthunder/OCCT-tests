@@ -1,5 +1,6 @@
 # python doc_html.py <out.html> [suite] -- models/Fillet.md as one HTML page,
-# or another suite's doc: "draft" renders ../../draft/models/Draft.md.
+# or another suite's doc: "draft" renders ../../draft/models/Draft.md,
+# "boolean" ../../boolean/README.md (a fix to each h2 there, not each h3).
 #
 # The page references its pictures as pictures/<case>.png, beside it; publish
 # the suite's models/pictures/*.png at those paths with it. Needs
@@ -21,9 +22,15 @@ SUITES = {
     "draft": ("Draft.md", "TKOffset Draft Fixes", "TKOffset / Draft",
               "Each fix the fork makes to OCCT's draft, with the cases that show it:\n"
               "  upstream OCCT, the fork before the fix and the fork after, side by side."),
+    "boolean": ("README.md", "Boolean Fixes", "TKBO / IntAna / BRepTools",
+                "Each fix the fork makes to OCCT met through the booleans, from the issues\n"
+                "  of realthunder/FreeCAD: the fork before the fix and after, side by side."),
 }
 DOC, PAGE_TITLE, TOOLKIT, LEDE = SUITES[SUITE]
-SRC = os.path.join(HERE, "..", "..", SUITE, "models", DOC)
+# the doc's path in the suite: models/<doc>, or the suite's own README
+DOCPATH = DOC if DOC == "README.md" else "models/" + DOC
+SRC = os.path.join(HERE, "..", "..", SUITE, DOCPATH)
+FIXLEVEL = "h2" if DOC == "README.md" else "h3"
 
 text = open(SRC, encoding="utf-8").read()
 # the first line is the page's heading, set apart from the body
@@ -33,6 +40,8 @@ title = first.lstrip("# ").strip()
 md = markdown.Markdown(extensions=["toc", "tables", "fenced_code"],
                        extension_configs={"toc": {"toc_depth": "2-3"}})
 out = md.convert(body)
+# a README's pictures are in models/pictures; the page has them in pictures/
+out = out.replace('src="models/pictures/', 'src="pictures/')
 
 
 def figures(m):
@@ -48,10 +57,11 @@ out = re.sub(r"<p>(?:\s*<img [^>]*>\s*)+</p>", figures, out)
 
 # the fixes, for the contents list: h3 under "The fixes", with the commit
 fixes = []
-for hid, inner in re.findall(r'<h3 id="([^"]+)">(.*?)</h3>', out):
+for hid, inner in re.findall(r'<%s id="([^"]+)">(.*?)</%s>' % (FIXLEVEL, FIXLEVEL), out):
     commit = re.search(r"<code>([0-9a-f]{10})</code>", inner)
-    issue = re.search(r"#(\d+)\)", inner)
+    issue = re.search(r"#(\d+)\)", inner) or re.match(r"#(\d+): ", inner)
     name = re.sub(r"\s*\(.*\)\s*$", "", re.sub(r"<[^>]+>", "", inner)).strip()
+    name = re.sub(r"^#\d+: ", "", name)
     fixes.append((hid, name, commit.group(1) if commit else "", issue.group(1) if issue else ""))
 nfig = len(re.findall(r"<figure>", out))
 
@@ -228,18 +238,18 @@ figcaption code { background: none; padding: 0; }
   <ol>
 %(toc)s
   </ol>
-  <p class="count">%(nfig)d pictures &middot; source <code>tests/fork/%(suite)s/models/%(doc)s</code></p>
+  <p class="count">%(nfig)d pictures &middot; source <code>tests/fork/%(suite)s/%(doc)s</code></p>
 </nav>
 <article>
 %(body)s
-<p class="source">Rendered from <code>tests/fork/%(suite)s/models/%(doc)s</code> in the OCCT fork; the suite is
+<p class="source">Rendered from <code>tests/fork/%(suite)s/%(doc)s</code> in the OCCT fork; the suite is
 <code>tests/fork/%(suite)s/run_tests.py</code>, the pictures come from <code>tests/fork/%(suite)s/pictures/make_pictures.sh</code>.</p>
 </article>
 </div>
 </div>
 """
 for key, value in (("%(pagetitle)s", PAGE_TITLE), ("%(toolkit)s", TOOLKIT), ("%(lede)s", LEDE),
-                   ("%(suite)s", SUITE), ("%(doc)s", DOC),
+                   ("%(suite)s", SUITE), ("%(doc)s", DOCPATH),
                    ("%(title)s", html.escape(title)), ("%(toc)s", toc), ("%(nfig)d", str(nfig)),
                    ("%(body)s", out)):
     page = page.replace(key, value)
