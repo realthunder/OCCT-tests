@@ -589,30 +589,22 @@ thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844, loos
 # Geom_OffsetSurfaceUtils and in the stretch, kept to the curves). Then a
 # face's edge ranged 2e-5 past its curve lost its pcurve on a plane and the
 # 2D intersection threw a null object (ExtentFace, kept to the curves too).
-# It is refused now, in time -- not done -- and the thick solid itself is
-# still to be made: inward refused, outward invalid (README.md, #613).
+# Then the top's offset cone, its seam 2e-8 off where the circle the cap's
+# plane cuts from it starts, gave no section at all (the pave filler found
+# no vertex at the circle's bounds; PutClosingPaveOnCurve), and the cap was
+# kept whole: refused as unhollowed. Made now: its faces on the input or 2
+# inside it, but for one loose end (allowed below): the inner cone's seam
+# ends where the offset cone and cylinder meet, z 7.9476 at 2, its vertex at
+# z 8, the corner moved by the cylinder's normal only. Outward is still
+# invalid (README.md, #613).
 issue613 = Part.Shape()
 issue613.importBrep(os.path.join(MODELS, "issue613_fillet.brep"))
-
-
-def notdone_case(name, shape, face_indices, value, inter=False, join=0):
-    """Refused by the kernel as not done -- not a null object, nothing else,
-    and in the time it takes (a hang ends the run: the summary missing)."""
-    before = signature(shape)
-    faces = [shape.Faces[i - 1] for i in face_indices]
-    try:
-        r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
-        report(name, r.isValid(), False, "answered: valid=%s vol=%.4f" % (r.isValid(), r.Volume))
-    except Part.OCCError as e:
-        problems = input_problems(shape, before)
-        if "StdFail_NotDone" not in str(e):
-            problems.append("refused by " + str(e).strip().splitlines()[-1])
-        report(name, not problems, False, "; ".join(problems) if problems else "refused, not done")
-
-
-notdone_case("issue613_fillet_top_bottom_in", issue613, [7, 16], -2.0)
-thickness_case("issue613_fillet_top_bottom_in_made", issue613, [7, 16], -2.0, "xfail")
-thickness_case("issue613_fillet_top_bottom_out_made", issue613, [7, 16], +2.0, "xfail")
+thickness_case("issue613_fillet_top_bottom_in", issue613, [7, 16], -2.0, "pass", 10194.8311,
+               loose_ok=0.06)
+thickness_case("issue613_fillet_top_in", issue613, [7], -2.0, "pass", 12835.3408, loose_ok=0.06)
+thickness_case("issue613_fillet_top_bottom_in_half", issue613, [7, 16], -0.5, "pass", 2647.5510,
+               loose_ok=0.015)
+thickness_case("issue613_fillet_top_bottom_out", issue613, [7, 16], +2.0, "xfail")
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

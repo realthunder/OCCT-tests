@@ -461,7 +461,7 @@ their runs and lists the fork's dumps on the way; `models/Thickness.md`,
 | `luneball_flatsfirst_sphere1/2_join_out/in`, `turned_luneball_flatsfirst_sphere1_join_out` | the half ball in two lunes, its faces in the order flat, flat, lune, lune; one lune removed, Intersection join | 91.1786 outward, 74.1857 inward; an invalid 87.4583 and 72.4404. The flat's half beside the removed lune built the other half's face a second time, beyond the line between them |
 | `luneballsplit_meridian_*`, `luneballsplit_rim_*`, `placed_luneballsplit_meridian_f1_join_in` | the same solid as made, a vertex on the meridian between the lunes or on the rim beside the removed one | the same volumes; refused. Joined, it is the solid in that order |
 
-## #613: a filleted part, its hang and its null object (2026-10-28)
+## #613: a filleted part, its hang, its null object and its cap (2026-10-28)
 
 `../occ-issues/`'s #613: a thickness 2 inward with two faces removed, the
 top and bottom of a filleted part (its input is the issue file's stored
@@ -479,14 +479,23 @@ and the stretch stops where the edge's curves end (`a9988e61f8`). Then
 parameters 2e-5 past their B-splines: on a plane the pcurve is made by
 trimming the 3D curve to the range, a trim past the end is refused, and
 the 2D intersection threw a null object (`5a042c6a55`, the ranges kept to
-the curves too; `BRepOffset_Tool::KeepToCurvesDomain`). Inward is now
-refused in 2.6 s, not done; the thick solid itself is not made yet:
-inward refused, outward invalid (-14917.4397, inside out).
+the curves too; `BRepOffset_Tool::KeepToCurvesDomain`). Then it was
+refused: the top (the cap, at the ridge's top, between the ridge's walls,
+four blends and the cone at its two ends) was kept whole. The cap is cut
+by its neighbours' offsets enlarged; the cone's, its seam 2.1e-8 off where
+the circle the cap's plane cuts from it starts, gave no section at all --
+a pave filler bug for any whole turn with its seam a hair off
+(`59ca72bbcc`, `PutClosingPaveOnCurve`; `../boolean/`, #613). Made now:
+10194.8311, every face on the input or 2 inside it. One loose end is left
+and allowed in the cases: the inner cone's seam ends where the offset cone
+and cylinder meet (z 7.9476 at 2), its vertex at z 8, the corner moved by
+the cylinder's normal only (0.0524 at 2, 0.0131 at 0.5). Outward is still
+invalid (-14917.4397, inside out).
 
 | Case | Model | What it covers |
 |------|-------|----------------|
-| `issue613_fillet_top_bottom_in` | #613's part, faces 7 and 16 removed, -2, Arc | refused as not done, in time: it ran for ever, then threw a null object |
-| `issue613_fillet_top_bottom_in_made`, `_out_made` | the same, -2 and +2 | `XFAIL`: the thick solid; refused inward, invalid outward |
+| `issue613_fillet_top_bottom_in`, `_top_in`, `_top_bottom_in_half` | #613's part, faces 7 and 16 (or 7) removed, -2 (or -0.5), Arc | 10194.8311, 12835.3408, 2647.5510; it ran for ever, then threw, then was refused. A loose end of 0.0524 (0.0131) allowed |
+| `issue613_fillet_top_bottom_out` | the same, +2 | `XFAIL`: invalid |
 
 ## Determinism cases (intersection mode, Arc join)
 

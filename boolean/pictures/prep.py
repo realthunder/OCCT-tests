@@ -91,6 +91,32 @@ for shape, title, note, center, bad in [
     panel(pic, shape, title, note, EYE, center, height, colors, mark=True, bad=bad)
 pictures.append(pic)
 
+# #613: a cylinder's face, its seam 1e-8 off where the circle the plane
+# z = 0 cuts from it starts; the face see-through, the section red.
+pic = dict(name="issue613_seam_section",
+           title="#613: a cylinder whose seam is 1e-8 off u = 0, cut by a plane",
+           caption="BRepAlgoAPI_Section of a cylinder's face (r 21.2, a whole turn, its seam at "
+                   "u = 1e-8) with the plane z = 0. The face is drawn see-through, the section in "
+                   "red; the seam is the vertical edge in front.",
+           panels=[])
+for stage, title, note, bad in (
+        ("before", "before", "no section: the seam's vertex stood for the circle's ends, at "
+                             "1e-8, and the circle was never closed", True),
+        ("after", "after", "the whole circle, 133.2035", False)):
+    both = Part.read(os.path.join(W, "613", stage, "cylinder_1e-08.brep"))
+    face, section = both.childShapes()[0], both.childShapes()[1]
+    sec = os.path.join(W, "613_%s_section.brep" % stage)
+    section.exportBrep(sec)
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    face.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    jobs.append(dict(brep=out, png=png, eye=[1.0, -0.4, 0.45], center=[0, 0, 2], height=56,
+                     transparency=70,
+                     extras=[dict(brep=sec, color=[0.85, 0.1, 0.1], linewidth=5)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

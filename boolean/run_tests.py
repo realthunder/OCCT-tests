@@ -111,6 +111,39 @@ def issue580():
 
 guarded(issue580)
 
+# #613: a cylinder's or a cone's face, a whole turn with its seam d off
+# u = 0, cut by the plane z = 0: the section is the whole circle. With the
+# seam's vertex within tolerance of the circle's end (d 1e-8, 2e-8) the
+# section was empty (README.md, #613).
+def seam_surface(kind):
+    if kind == "cylinder":
+        s = Part.Cylinder()
+        s.Radius = 21.2
+    else:
+        s = Part.Cone()
+        s.SemiAngle = 0.2
+        s.Radius = 21.2
+    s.Center = V(0, 0, -5)
+    s.Axis = V(0, 0, 1)
+    return s
+
+
+def issue613():
+    for kind, want in (("cylinder", 2 * math.pi * 21.2),
+                       ("cone", 2 * math.pi * (21.2 + 5 * math.tan(0.2)))):
+        surf = seam_surface(kind)
+        for d in (0.0, 1e-9, 1e-8, 2e-8, 5e-8, 1e-6):
+            face = surf.toShape(d, d + 2 * math.pi, 0.0, 10.0)
+            plane = Part.makePlane(100, 100, V(-50, -50, 0))
+            sec = face.section(plane)
+            length = sum(e.Length for e in sec.Edges)
+            ok = sec.Edges and abs(length - want) <= 1e-6 * want
+            report("issue613_%s_seam_%g" % (kind, d), bool(ok),
+                   "%d edge(s), length %.6f (want %.6f)" % (len(sec.Edges), length, want))
+
+
+guarded(issue613)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

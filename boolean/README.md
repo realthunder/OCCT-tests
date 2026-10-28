@@ -137,3 +137,41 @@ kept through a rebuild), not the kernel's.
 OK; the fillet suite PASS=815 XFAIL=1, thickness 378, draft 105, as before;
 the six fillet sweeps and the three draft sweeps not one result changed; the
 thickness sweep right in all 928 runs by its reference.
+
+## #613: a section lost to a seam a hair off its start (`59ca72bbcc`, 2026-10-28)
+
+**Where it was met.** `../thickness/`'s #613: a filleted part, its top and
+bottom removed inward. The cap at the top meets the part's cone at the
+ridge's ends; the offset cone, enlarged, was cut by the cap's plane in a
+whole circle -- and the pave filler gave no section: the cap was never cut,
+kept whole, and the thick solid refused as the input unhollowed.
+
+**What was broken.** The cone's seam lay 2.1e-8 off u = 0 (its pcurves a
+hair less than the period apart), where the circle the plane cuts from it
+starts. On a radius of 21 that is 4e-7 in space, within the vertices'
+tolerance of the circle's end: no vertex was made at the circle's bounds,
+the seam's vertex standing for them -- at 2.1e-8. `PutClosingPaveOnCurve`
+closes a closed curve by putting the vertex found at one bound at the
+other too, and looked for it by its parameter (within 1e-9): none was
+found, the circle kept one pave, made no block, and the section was empty.
+Any whole turn does it -- a plain cylinder or cone, its seam 1e-8 or 2e-8
+off u = 0, cut by a plane square to its axis, has no section; at 0, 1e-9,
+5e-8 and beyond it has.
+
+**The fix.** With no pave at a bound by its parameter, a pave whose vertex
+is at a bound in space -- within the vertex's tolerance and the curve's --
+is taken for it, unless the other bound already has one; the closure test
+after it is as before.
+
+**The cases.** `models/issue613_seam_section.cpp` and `run_tests.py`: a
+cylinder's and a cone's face (radius 21.2, a whole turn) with the seam at
+0, 1e-9, 1e-8, 2e-8, 5e-8 and 1e-6, cut by the plane z = 0, each giving the
+whole circle (its length to 1e-6). Before: the four at 1e-8 and 2e-8 empty.
+After: all twelve.
+
+![#613: before and after](models/pictures/issue613_seam_section.png)
+
+**Validation** (against `37cb17ed8e`): Part 390 and PartDesign 486 tests
+OK; the fillet suite PASS=815 XFAIL=1, thickness 381 (with #613's new
+cases), draft 105, boolean 39; the six fillet sweeps and the three draft
+sweeps not one result changed; the thickness sweep right in all 928 runs.

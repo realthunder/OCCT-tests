@@ -51,6 +51,9 @@ fix() {
 # #64: the plane/cylinder intersection under a fuzzy value
 fix 064 ed990cf61b src/ModelingData/TKGeomBase/IntAna/IntAna_QuadQuadGeo.cxx \
     issue064_fuzzy_plane_cylinder --write
+# #613: a section whose end vertex lies a hair in, closed
+fix 613 59ca72bbcc src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    issue613_seam_section --write
 # #580: a degenerated edge's pcurve on a plane kept by a transformed copy
 fix 580 c20f921783 src/ModelingData/TKBRep/BRepTools/BRepTools_TrsfModification.cxx \
     issue580_mirror_degenerated $HERE/../models/issue580_pad003.brep --write
