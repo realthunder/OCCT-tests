@@ -16,7 +16,7 @@ those need a scripted repro before they can join the suite.
 
 | # | Model(s) | Problem | Scan result |
 |---|----------|---------|-------------|
-| 64 | `issue064_boolean_split_seam.FCStd` | Part Split through a cylinder **seam edge** produces a wrong boolean; RT: split incorrect near seam, workaround = split at a different angle | invalid: Body, Split, Split_i0, Boolean, Reference |
+| 64 | `issue064_boolean_split_seam.FCStd` | Part Split through a cylinder **seam edge** produces a wrong boolean; RT: split incorrect near seam, workaround = split at a different angle | invalid: Body, Split, Split_i0, Boolean, Reference **Rescan 2026-10-28**: the seam split is made at every Tolerance up to 2.5 (the pieces the same with the seam turned away); the file's own Tolerance of 3 mm puts the cut on the seam edge for 24 mm (within 2.83 of it), invalid -- left so. Found on the way and fixed: a plane/cylinder section lost under a fuzzy value (`IntAna_QuadQuadGeo`), `../boolean/` |
 | 172 | `issue172_sketch_unclosed.FCStd` | Edges imported into sketch as external geometry become unconnected: curve `First/LastParameter` evaluation is ~0.003 mm off the end vertices | errors: Pad006, Pad008; invalid: Sketch008 |
 | 273 | `issue273_heater_handle*.FCStd` | Fillet whose surface touches a **seam edge** destroys the shape; chamfer on the same edge segfaults (upstream bug 28354; `ShapeUpgrade_ShapeDivideClosed` suggested as seam removal) | invalid: Pad (both variants; crash itself needs the interactive chamfer) |
 | 280 | `issue280_pocket_sphere_seam.FCStd` | Pocket through a mirrored sphere fails ("resulting shape is not a solid") once wide enough — cutting with **overlapping seam edges**; tolerance workaround exists | error: Sketch002 |

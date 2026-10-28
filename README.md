@@ -10,6 +10,7 @@ git submodule update --init tests/fork     # once per clone of the fork
 FreeCADCmd tests/fork/thickness/run_tests.py
 FreeCADCmd tests/fork/fillet/run_tests.py
 FreeCADCmd tests/fork/draft/run_tests.py
+FreeCADCmd tests/fork/boolean/run_tests.py
 ```
 
 On another OCCT than the fork -- upstream's, as FreeCAD can load it -- every
@@ -25,6 +26,10 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   its README, `models/Draft.md` and a few models of its own; most of its
   models are `occ-issues/`'s. The fillet and draft suites also read each
   other's `models/` and the draft sweep's `sweep/shapes/`.
+- `boolean/` -- the fixes met through the booleans and the general fuse
+  (and the surface intersections they call), most from `occ-issues/`:
+  `run_tests.py`, a C++ driver of each fix in `models/`, the write-up of
+  each in its README, and its pictures (before and after).
 - `occ-issues/` -- every issue labelled `occ` on realthunder/FreeCAD, with
   the models attached to it and a scan of each.
 - `surface/` -- checks of the curve network surfaces (`GeomFill_Gordon`,

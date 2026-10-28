@@ -1,0 +1,90 @@
+# Booleans and the general fuse
+
+The fork's fixes met through the booleans and the general fuse
+(`BOPAlgo_Builder`, what FreeCAD's Split, Fragments, Cut and Fuse run), and
+through what they call -- the surface intersections. Most come from the
+issues of `../occ-issues/`.
+
+```
+FreeCADCmd tests/fork/boolean/run_tests.py      # the cases, through FreeCAD
+pictures/make_pictures.sh                       # models/pictures, before and after
+```
+
+`models/` holds a C++ driver of each fix, built against an install (its
+header says how); `run_tests.py` runs the same cases through FreeCAD's
+`Part`. The pictures are made by `pictures/make_pictures.sh`: the driver run
+on the install and on the library the fix changed as it was just before
+(`pictures/mkold.py` links it from the build tree's own objects, nothing
+installed touched), the results laid out (`prep.py`), rendered in the
+FreeCAD GUI (`../fillet/pictures/render.py`) and composed (`compose.py`).
+
+## #64: a plane and a cylinder under a fuzzy value (`ed990cf61b`, 2026-10-28)
+
+**The issue.** `../occ-issues/models/issue064_boolean_split_seam.FCStd`: a
+Split of a cylinder (r 25, h 35) by an extruded S-curve, reported wrong near
+the cylinder's seam. The Split runs the general fuse with the document's
+Tolerance as its fuzzy value -- 3 mm in the file. At 0, 1e-5, 0.1, 1 and 2.5
+it is valid, two solids; at 0 the pieces are 42396.3536 and 26325.9857
+(integrated to 1e-9; together the cylinder's 68722.3393) with the seam at
+the cut or turned 37, 90 or 180 deg away: the seam split of the report is
+made, and was before this fix. (Part's default `Volume` reads the pieces up
+to 1.6 apart with the seam's place: an integration error, not the shape.)
+At 3 the result is invalid, one solid of 22907.4464, and only with the seam
+at the cut. The cut crosses the seam three times (z 10.71, 23.61, 34.36) and
+between the crossings stays within 2.83 and 0.85 of it: within 3 mm the cut
+is the seam edge for 24 mm, and the vertices on it take tolerances of 8 to 14
+on a cylinder 35 high. That is what the fuzzy value asks for; it is left so.
+
+**What was broken.** Looking for that, a plain case failed: the cylinder
+split by a plane tilted off its axis, y = k (z - zc), came back one solid,
+uncut, from a fuzzy value of half the sine of the tilt -- 0.05 at k 0.1,
+0.17 at 0.35, 0.35 at 1 -- wherever the plane lay and wherever the seam was.
+The plane/cylinder pair had no section curve at all.
+`IntAna_QuadQuadGeo::Perform(gp_Pln, gp_Cylinder, ...)` takes the plane for
+parallel to the axis when `|sinda - Tol| < Tol`: the sine of the angle
+between them against a length. At the default tolerance that is a plane
+parallel within 2e-7; at the tolerances a fuzzy value gives the faces, a
+plane tilted by up to 2 Tol radians. The two lines it then gives for the
+section miss the cylinder (7.2 off at its top for k 0.35, Tol 0.5), and the
+pair comes out of the face/face intersection with no curve. Upstream's #1176 (`797d3259df`, 2026-03) had added
+the sound test beside it -- the axis's deviation from the plane over the
+cylinder face's height, `sinda * H < 2 Tol`, a length against a length --
+but kept the old one, either sufficing.
+
+**The fix.** When the face's height is known (`H > 0`, as `IntPatch` and
+`IntTools_FaceFace` give it), the height test alone decides; the old one
+stays for an unbounded cylinder (`H = 0`). Below 2e-7 rad the angle is
+parallel whatever `H`, as the old test made it at the default tolerance. For
+a face no higher than 1 nothing changes (the height test then accepts
+whatever the old one did). `IntTools_FaceFace` already sends an ellipse
+longer than 1e5 times its width to the walking intersection, so a nearly
+parallel plane the stricter test now leaves to the ellipse is not handed to
+BOP as one.
+
+**The cases.** `models/issue064_fuzzy_plane_cylinder.cpp` and
+`run_tests.py`: k 0.1, 0.35 and 1, fuzzy 0, 0.1, 0.5 and 1, the seam at the
+cut and turned 90 deg away -- 24 runs. Each must give two valid solids and,
+with the seam away, each within 1% of its volume at no fuzzy value. Before:
+14 of the 24 one uncut solid. After: all pass. With the seam at the cut a
+fuzzy value merges the plane's crossing of the top rim, k 0.64 from the
+seam's vertex there, into that vertex (the short section edge between them
+collapsed too): the top's chord starts that far from where its arc ends, the
+gap closed by the vertex's tolerance, and the volume integrals read that
+loop short -- 1.8% at most here. A valid shape within its tolerances, which
+is what a fuzzy value asks for; those runs are asked for the two valid
+solids only.
+
+![#64: before and after](models/pictures/issue064_fuzzy_plane_cylinder.png)
+
+**Still a limit.** At a fuzzy value near a twentieth of the cylinder the
+pair loses its section again: k 0.1 from 2.2, where the height test itself
+(3.48 against 4.4) takes the plane for parallel -- the lines it gives lie
+within the tolerance (0.58 off at Tol 2.2), yet the face/face intersection
+again keeps no curve (not followed further); and k 1 from 1.1, from another
+cause, not looked at.
+
+**Validation** (against `0b44bd01ba`, the kernel before): Part 390 and
+PartDesign 486 tests OK; the fillet suite PASS=815 XFAIL=1, thickness 378,
+draft 105, as before; the six fillet sweeps (12242, 12242, 3921, 3921, 2614,
+3921 runs) and the three draft sweeps (1222, 500, 114) not one result
+changed; the thickness sweep right in all 928 runs by its reference.
