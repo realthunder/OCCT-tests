@@ -117,6 +117,45 @@ for stage, title, note, bad in (
     pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
 pictures.append(pic)
 
+# A section's tangent end at a corner: the dome's fillet shape, the bottom
+# removed; one mitre pair's offsets at their corner, the faces see-through,
+# the section red; the thickness cut open.
+MAGENTA = (0.85, 0.2, 0.85)
+pic = dict(name="dome_tangent_corner",
+           title="A box under a B-spline dome, its edges filleted, 2 inward with the bottom removed",
+           caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, -2, the Arc join. At each "
+                   "corner of the dome two fillets meet in a mitre and both meet the dome "
+                   "tangentially; the middle panels are the offsets of two of them (faces 7 and 10) "
+                   "at that corner, see-through, with their section (BRepAlgoAPI_Section) in red.",
+           panels=[])
+dome = Part.read(os.path.join(MODELS, "dome_fillet_r3.brep"))
+panel(pic, dome, "the input", "the bottom (magenta) removed, 2 inward", [-0.7, -1.0, -0.6],
+      [40, 25, 18], 110, {"3": MAGENTA})
+for stage, title, note, bad in (
+        ("before", "before", "no section: it ended a hair outside one face and took no vertex "
+                             "there; the thickness refused", True),
+        ("after", "after", "the section, 1.7038 long, ends at the corner's vertex", False)):
+    both = Part.read(os.path.join(W, "dome", stage, "pair7x10.brep"))
+    kids = both.childShapes()
+    faces = Part.Compound(kids[:2])
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    faces.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    extras = []
+    if kids[2].Edges:
+        sec = os.path.join(W, "dome_%s_section.brep" % stage)
+        kids[2].exportBrep(sec)
+        extras.append(dict(brep=sec, color=[0.85, 0.1, 0.1], linewidth=5))
+    jobs.append(dict(brep=out, png=png, eye=[-0.5, -1.0, 0.9], center=[2.6, 2.6, 22.4], height=5,
+                     transparency=60, extras=extras))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+thick = Part.read(os.path.join(W, "dome", "after", "thickness.brep"))
+half = thick.common(Part.makeBox(100, 30, 60, V(-10, -5, -5)))
+panel(pic, half, "after, cut open", "valid, 20254.4308, the volume booleans give; beyond y = 25 cut "
+      "away", [0.5, 1.2, 0.6], [40, 12, 15], 100, mark=True)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

@@ -1378,7 +1378,7 @@ for _k, _b in enumerate(_g5s90_bottoms):
 thickness_case("issue363_groove5_seam90_both_bottoms_in", _g5s90, _g5s90_bottoms, -1.0, "pass",
                4927.0697)
 # The groove a single face, its seam on its edge with the right bottom: the
-# left bottom removed came out valid and wrong (2142.6285; Thickness001's own
+# left bottom removed came out valid and wrong (2142.0698; Thickness001's own
 # left bottom, -3798.5363, inside out), and before #363's fixes too.
 _gs = Part.makeCylinder(25.807914, 14.0).cut(
     Part.makeCylinder(5.0, 120, App.Vector(0, -60, 0), App.Vector(0, 1, 0)).rotated(
@@ -1393,6 +1393,22 @@ thickness_case("issue363_thickness001_top_in", issue363, 6, -1.0, "pass", 4576.7
 thickness_case("issue363_thickness001_in", issue363, [3, 5], -1.0, "pass", 5496.0504)
 thickness_case("issue363_thickness001_out", issue363, [3, 5], +1.0, "pass", 5816.1031)
 thickness_case("issue363_thickness001_in_join", issue363, [3, 5], -1.0, "xfail", None, False, 2)
+
+# A box under a B-spline dome, the dome's four edges filleted (r 3), the
+# bottom (face 4) removed, 2 inward: at each corner of the dome two fillets
+# meet in a mitre and both meet the dome tangentially, and their offsets'
+# section ended a hair outside one of them -- no edge, refused. The volume
+# booleans give: the shape less the part above z = 0 of the offset of it
+# carried down to z = -10 (../boolean/README.md, "A section's tangent end at a
+# corner"). The section ends beside the corner, not at it: the offsets are
+# tangent there and their section passes the corner 4 to 7e-4 to the side, the
+# faces within 4e-7 of each other in between; its edge ends at the corner's
+# vertex, its tolerance grown to cover it (allowed below).
+_dome = Part.Shape()
+_dome.importBrep(os.path.join(HERE, "..", "boolean", "models", "dome_fillet_r3.brep"))
+thickness_case("dome_tangent_corner_in", _dome, 4, -2.0, "pass", 20254.4292, loose_ok=7e-4)
+thickness_case("dome_tangent_corner_in_inter", _dome, 4, -2.0, "pass", 20254.4292, True,
+               loose_ok=7e-4)
 
 counts = {}
 for _, verdict, _ in results:

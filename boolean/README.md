@@ -175,3 +175,47 @@ After: all twelve.
 OK; the fillet suite PASS=815 XFAIL=1, thickness 381 (with #613's new
 cases), draft 105, boolean 39; the six fillet sweeps and the three draft
 sweeps not one result changed; the thickness sweep right in all 928 runs.
+
+## A section's tangent end at a corner (`e9ded0215d`, 2026-10-29)
+
+**Where it was met.** A box (80 x 50 x 40) split by a B-spline dome (a
+network surface, z 22 to 32), the dome's four edges filleted (r 3), a
+thickness 2 inward with the bottom removed, the Arc join: refused
+(`BRepOffset_UnknownError`, the offset shell empty). Found by a peer
+session's B-spline fillet work; its shape is `models/dome_fillet_r3.brep`.
+
+**What was broken.** At each corner of the dome two fillets meet in a mitre
+and both meet the dome tangentially, so the three faces' normals agree at
+the corner and the offsets of the two fillets are tangent to each other at
+the corner's offset. Their section is a curve that passes that corner at a
+hair's distance -- 4 to 7e-4, to the side, not through it -- and its end
+lies across the boundary of one of the faces (1.3 to 1.9e-4 out, with the
+curve's tolerance 1e-5). `PutBoundPaveOnCurve` gives an end a vertex only
+if it is on both faces, and `PutStickPavesOnCurve` takes a vertex of both
+for it only within 4.5e-4 and with the faces tangent at the end itself (to
+0.006 deg; they part at 0.025 to 0.037 deg there): the section had one end,
+no block, no edge. In the thickness the mitre pairs were not cut, and the
+offset shell fell apart. All four corners alike; upstream the same.
+
+**The fix.** An end that is not on both faces and has no vertex takes the
+nearest vertex lying on both -- one they share or one their vertices merged
+into -- if the faces are tangent at it (the pave filler's own crease
+criterion) and stay within the curve's tolerance of each other all the way
+from the end to it: the distance times the sine of the angle between the
+faces at the end (here 2 to 4e-7) -- and the vertex is near the end, within a
+tenth of the curve's chord. The vertex's tolerance grows to the distance.
+
+**The cases.** `models/dome_tangent_corner.cpp` and `run_tests.py`: the
+offsets (-2) of each mitre pair made alone, sectioned: one edge, 1.7038
+long. `../thickness/`'s `dome_tangent_corner_in` and `_in_inter`: the
+thickness, valid, 20254.4308 -- the shape less the part above z = 0 of the
+offset of it carried down to z = -10 gives 20254.4292 (that offset failed
+before too). Before: no edge on any pair, the thickness refused. After: all.
+
+![A section's tangent end at a corner: before and after](models/pictures/dome_tangent_corner.png)
+
+**Validation** (against `19c89dc908`): Part 390 and PartDesign 486 tests
+OK; the fillet suite PASS=815 XFAIL=1, thickness 400 (with the two new
+cases), draft 105, boolean 43; the six fillet sweeps and the three draft
+sweeps not one result changed; the thickness sweep right in all 928 runs,
+not one changed.

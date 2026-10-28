@@ -144,6 +144,28 @@ def issue613():
 
 guarded(issue613)
 
+# A box under a B-spline dome, the dome's four edges filleted (r 3): the
+# offsets (-2) of two fillets meeting in a mitre at a corner of the dome,
+# each made alone, cut each other in one edge. Both meet the dome
+# tangentially there, so the offsets are tangent at the corner's offset; the
+# section passed the corner at a hair's distance and ended outside one of
+# them -- no vertex there, no edge (README.md, "A section's tangent end at a
+# corner").
+def dome_tangent_corner():
+    dome = Part.Shape()
+    dome.importBrep(os.path.join(HERE, "models", "dome_fillet_r3.brep"))
+    for i, j in ((3, 8), (3, 10), (7, 8), (7, 10)):
+        o1 = dome.Faces[i - 1].makeOffsetShape(-2, 1e-7)
+        o2 = dome.Faces[j - 1].makeOffsetShape(-2, 1e-7)
+        sec = o1.section(o2)
+        length = sum(e.Length for e in sec.Edges)
+        ok = len(sec.Edges) == 1 and abs(length - 1.7038) <= 1e-3 * 1.7038
+        report("dome_tangent_corner_mitre_%dx%d" % (i, j), ok,
+               "%d edge(s), length %.4f (want 1.7038)" % (len(sec.Edges), length))
+
+
+guarded(dome_tangent_corner)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

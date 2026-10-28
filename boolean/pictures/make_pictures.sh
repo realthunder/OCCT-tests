@@ -29,7 +29,7 @@ fi
 export W=${BOOL_WORK:-/tmp/boolean-pictures}
 mkdir -p $W/home
 
-LIBS="-lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
+LIBS="-lTKOffset -lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
 LIBS="$LIBS -lTKMath -lTKernel"
 # fix <tag> <commit> <source> <driver> [args]: the driver built against the
 # install, run on the library <source> belongs to as it was before <commit>
@@ -57,6 +57,9 @@ fix 613 59ca72bbcc src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx 
 # #580: a degenerated edge's pcurve on a plane kept by a transformed copy
 fix 580 c20f921783 src/ModelingData/TKBRep/BRepTools/BRepTools_TrsfModification.cxx \
     issue580_mirror_degenerated $HERE/../models/issue580_pad003.brep --write
+# a section's tangent end at a corner: the offsets of two fillets of a dome
+fix dome e9ded0215d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    dome_tangent_corner $HERE/../models/dome_fillet_r3.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

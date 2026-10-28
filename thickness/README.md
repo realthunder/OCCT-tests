@@ -566,6 +566,27 @@ XFAIL=4 (with these cases), draft 105, boolean 39; the three draft sweeps
 not one result changed; the thickness sweep right in all 928 runs, not one
 changed.
 
+## A filleted dome, 2 inward (2026-10-29)
+
+A box (80 x 50 x 40) under a B-spline dome, the dome's four edges filleted
+(r 3), the bottom removed, 2 inward, the Arc join: refused, the offset
+shell empty. At each corner of the dome two fillets meet in a mitre and
+both meet the dome tangentially; their offsets' section ended a hair
+outside one of them and was given no edge, and the mitres were never cut.
+A pave filler fix (`e9ded0215d`, `../boolean/`, "A section's tangent end at
+a corner"): valid, 20254.4308, as booleans give (20254.4292).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_tangent_corner_in`, `_in_inter` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, -2; the Arc join, without and with intersection | 20254.4308; refused before |
+
+1 inward is valid now too (10416.5544). Still refused, as before: 2
+outward (a zero-length edge at a corner, another fault), 4 inward (past the
+fillets' radius), and the dome itself removed.
+
+**Validation** as `../boolean/README.md` gives it: thickness PASS=400
+XFAIL=4, the thickness sweep right in all 928 runs, not one changed.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
