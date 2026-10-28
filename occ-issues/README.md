@@ -24,7 +24,7 @@ those need a scripted repro before they can join the suite.
 | 334 | `issue334_draft_artifact.FCStd` | Same model family: artifact after Draft003; RT: side face broken from Draft001 on | **crash on recompute** **Rescan 2026-10-28**: the recompute stops at Sketch006 ("No planar face in AttachEngine3D": its support remapped to a curved face, a document matter), so Draft003's invalid shape is the stored one; recomputed alone it is refused (2026-10-02, below). |
 | 346 | `issue346_offset_one_side.FCStd` | Part Offset works from one side, throws "Unknown OCC exception" from the other | error: Offset |
 | 360 | `issue360_fillet_spike.FCStd` | Fillet produces a spike in the model (7 MB model) | **crash on recompute** (closed as OCC bug, still crashes) |
-| 363 | `issue363_thickness_multi.FCStd` | "Unexpected result with thickness and other issues" — richest thickness repro in the corpus | errors: Chamfer, Thickness, Thickness001, Thickness002; invalid: Body, Thickness001 |
+| 363 | `issue363_thickness_multi.FCStd` | "Unexpected result with thickness and other issues" — richest thickness repro in the corpus | errors: Chamfer, Thickness, Thickness001, Thickness002; invalid: Body, Thickness001 **Rescan 2026-10-29**: Thickness001 (both bottoms of a chamfered cylinder with a groove across its bottom removed, -1) was invalid, and so was the top removed; upstream 7.6 the same: two fixes in `BRepOffset_Inter3d` (`5525e72804`, two offset faces sharing two edges apart intersected at each; `0c1693fb61`, arcs of one circle on removed faces share it). Now valid, 5496.0504, the volume booleans give, and the Body with it. The rest stop in FreeCAD: the Part Chamfer finds no edges after the geometry version change, Thickness002 sits on it, and Thickness has an invalid face reference; run on their stored bases both are valid (3678.0536, 2158.7040). `../thickness/`, #363 |
 | 474 | `issue474_fillet_edit_crash.FCStd` | Editing Fillet003 crashes; root cause per RT: sketch misalignment OCC fillet can't absorb; release crash needs `BUILD_RELEASE_DISABLE_EXCEPTIONS=Off` builds | **crash on recompute** |
 | 521 | `issue521_thickness_intersection.FCStd` | Thickness **Intersection option** not working | error: Thickness |
 | 523 | `issue523_fillet_explodes.FCStd` | Face "explodes" when applying a fillet radius | invalid: Fillet. **Fixed 2026-10-02** (`16df68d224`): the cylinder's seam was left on its three-quarter face as an edge with both pcurves, and the fillet corner read the one a period away; see `../fillet/` |
@@ -103,7 +103,7 @@ Named `localNN_*`.
 - **Fillet/chamfer** is the biggest cluster (273, 309, 360, 474, 523, 631,
   876, 937, 962) — `ChFi3d` crashes and invalid outputs.
 - **Thickness/offset** (346, 363, 521, 613, 662) — same `BRepOffset` code
-  paths as `../thickness/`; #363 is the best next target.
+  paths as `../thickness/`; #363 and #613 done (2026-10-28).
 - Three models **crash a debug build on plain recompute** (333/334, 360,
   474) — good candidates for crash-isolation work regardless of fix.
 

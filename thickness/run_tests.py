@@ -1307,6 +1307,93 @@ _luneballsplit = split_at(_lunes, 1)
 thickness_case("placed_luneballsplit_meridian_f1_join_in", placed(_luneballsplit),
                face_of(_luneballsplit, _lunes, 1), -0.5, "pass", 74.1857, False, 2)
 
+
+# occ-issues #363 (README.md, #363): a cylinder with a groove across its
+# bottom, a half cylinder of axis on the bottom's plane, 1 inward with the Arc
+# join and no intersection. The side meets the bottom twice where its seam
+# splits the bottom's arc, and each side of the groove at both ends: two faces
+# sharing two edges apart, whose offsets were intersected once, for the first
+# edge, and kept the piece of the section nearest it -- the side's offset had
+# nothing to close it at the other end and was cut off at its top: invalid,
+# the inside dropped. And a removed bottom's arcs of the side, each stretched
+# round the whole circle on the side's offset: with both bottoms removed (the
+# issue's Thickness001), or a bottom whose arc the seam splits, two circles
+# lay on each other there, and the loops were made of the slivers between
+# them -- refused or invalid. Arcs of one circle now share it.
+def grooved_cylinder(groove_r, chamfer=False, seam_deg=0.0):
+    """#363's shape: a cylinder r 25.807914 h 14 (a 1 chamfer on a 15 high one),
+    less a cylinder of radius groove_r along y on its bottom's plane; the
+    side's seam turned by seam_deg round z."""
+    R = 25.807914
+    cyl = Part.makeCylinder(R, 15.0 if chamfer else 14.0)
+    if seam_deg:
+        cyl.rotate(App.Vector(), App.Vector(0, 0, 1), seam_deg)
+    if chamfer:
+        cyl = cyl.makeChamfer(1.0, [e for e in cyl.Edges
+                                    if e.Curve.TypeId == "Part::GeomCircle"
+                                    and e.BoundBox.ZMin > 10])
+    groove = Part.makeCylinder(groove_r, 120, App.Vector(0, -60, 0), App.Vector(0, 1, 0))
+    return cyl.cut(groove)
+
+
+def issue363_base():
+    base = Part.Shape()
+    base.importBrep(os.path.join(MODELS, "issue363_thickness001_base.brep"))
+    return base
+
+
+def planar_faces(shape):
+    """1-based indices of the planar faces: (top, bottoms), the bottoms
+    sorted by the number of their edges (the one the seam splits last)"""
+    flat = [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.TypeId == "Part::GeomPlane"]
+    top = max(flat, key=lambda i: shape.Faces[i - 1].CenterOfMass.z)
+    bottoms = sorted((i for i in flat if i != top), key=lambda i: len(shape.Faces[i - 1].Edges))
+    return top, bottoms
+
+
+_g5 = grooved_cylinder(5.0)
+_g5_top, _g5_bottoms = planar_faces(_g5)
+thickness_case("issue363_groove5_top_in", _g5, _g5_top, -1.0, "pass", 4340.4816)
+thickness_case("issue363_groove5_top_in_inter", _g5, _g5_top, -1.0, "pass", 4340.4816, True)
+thickness_case("issue363_groove5_bottom_in", _g5, _g5_bottoms[0], -1.0, "pass", 5600.5842)
+thickness_case("issue363_groove5_seam_bottom_in", _g5, _g5_bottoms[1], -1.0, "pass", 5600.6746)
+thickness_case("issue363_groove5_both_bottoms_in", _g5, _g5_bottoms, -1.0, "pass", 4927.3387)
+_g10 = grooved_cylinder(10.062591)
+thickness_case("issue363_groove10_top_in", _g10, planar_faces(_g10)[0], -1.0, "pass", 4344.8435)
+thickness_case("issue363_groove10_both_bottoms_in", _g10, planar_faces(_g10)[1], -1.0, "pass",
+               5403.7097)
+thickness_case("issue363_groove10_both_bottoms_out", _g10, planar_faces(_g10)[1], +1.0, "pass",
+               5749.5607)
+_g10c = grooved_cylinder(10.062591, chamfer=True)
+_g10c_top, _g10c_bottoms = planar_faces(_g10c)
+thickness_case("issue363_groove10_chamfer_top_in", _g10c, _g10c_top, -1.0, "pass", 4576.7380)
+thickness_case("issue363_groove10_chamfer_bottom_in", _g10c, _g10c_bottoms[0], -1.0, "pass",
+               5933.2710)
+_g5s90 = grooved_cylinder(5.0, seam_deg=90.0)
+_g5s90_top, _g5s90_bottoms = planar_faces(_g5s90)
+thickness_case("issue363_groove5_seam90_top_in", _g5s90, _g5s90_top, -1.0, "pass", 4340.2907)
+for _k, _b in enumerate(_g5s90_bottoms):
+    thickness_case("issue363_groove5_seam90_bottom%d_in" % (_k + 1), _g5s90, _b, -1.0, "pass",
+                   5600.3995)
+thickness_case("issue363_groove5_seam90_both_bottoms_in", _g5s90, _g5s90_bottoms, -1.0, "pass",
+               4927.0697)
+# The groove a single face, its seam on its edge with the right bottom: the
+# left bottom removed came out valid and wrong (2142.6285; Thickness001's own
+# left bottom, -3798.5363, inside out), and before #363's fixes too.
+_gs = Part.makeCylinder(25.807914, 14.0).cut(
+    Part.makeCylinder(5.0, 120, App.Vector(0, -60, 0), App.Vector(0, 1, 0)).rotated(
+        App.Vector(), App.Vector(0, 1, 0), 90))
+_gs_left = min(planar_faces(_gs)[1], key=lambda i: _gs.Faces[i - 1].CenterOfMass.x)
+thickness_case("issue363_groove5_groove_seam_left_bottom_in", _gs, _gs_left, -1.0, "xfail",
+               5600.5842)
+thickness_case("issue363_thickness001_left_bottom_in", issue363_base(), 5, -1.0, "xfail", 5933.2710)
+# The issue's own: Thickness001's base (the Pad's side a left-handed cylinder).
+issue363 = issue363_base()
+thickness_case("issue363_thickness001_top_in", issue363, 6, -1.0, "pass", 4576.7701)
+thickness_case("issue363_thickness001_in", issue363, [3, 5], -1.0, "pass", 5496.0504)
+thickness_case("issue363_thickness001_out", issue363, [3, 5], +1.0, "pass", 5816.1031)
+thickness_case("issue363_thickness001_in_join", issue363, [3, 5], -1.0, "xfail", None, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

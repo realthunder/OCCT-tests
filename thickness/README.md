@@ -497,6 +497,75 @@ invalid (-14917.4397, inside out).
 | `issue613_fillet_top_bottom_in`, `_top_in`, `_top_bottom_in_half` | #613's part, faces 7 and 16 (or 7) removed, -2 (or -0.5), Arc | 10194.8311, 12835.3408, 2647.5510; it ran for ever, then threw, then was refused. A loose end of 0.0524 (0.0131) allowed |
 | `issue613_fillet_top_bottom_out` | the same, +2 | `XFAIL`: invalid |
 
+## #363: a groove across a cylinder's end (2026-10-28)
+
+`../occ-issues/`'s #363, Thickness001: a thickness 1 inward of a Pad
+(a cylinder r 25.81 with a chamfered top) cut by a half cylinder r 10.06
+along y, its axis on the bottom's plane -- a groove across the bottom --
+with both bottom faces removed, the Arc join and no intersection
+(FreeCAD's Thickness as it comes). Its input is the document's base,
+`models/issue363_thickness001_base.brep`, faces 3 and 5. It was invalid,
+and so was the plain top removed; upstream (7.6) the same. Two faults,
+both in `BRepOffset_Inter3d`.
+
+The side meets each face of the groove at both of the groove's ends, and
+the bottom in two arcs where the side's seam splits the bottom's: two
+faces that share two edges apart. `ConnexIntByArc` intersected each pair
+of offset faces once, for the first of their edges, and `Inter3D` kept the
+piece of the section nearest that edge; the other end was never
+intersected, the side's offset had nothing to close it there and was cut
+off at its top. The top removed: invalid, the inside dropped. Now every
+edge the two faces share is given (`5525e72804`, an `Inter3D` that takes
+several), and the piece nearest each kept: the top removed is valid, at
+the volume the intersection mode gives.
+
+With a bottom removed, the side's arc on it is offset onto the side's
+offset and stretched round the whole circle (`ExtentEdge`), to reach
+whatever it is to be cut by. Two such arcs on one circle -- both bottoms
+removed, or a bottom whose arc the side's seam splits in two -- gave two
+whole circles lying on each other, and the side's loops were made of the
+slivers between them: refused, or invalid. Arcs of one circle on one
+offset face now share it (`0c1693fb61`, `ShareTurns` in
+`ContextIntByArc`): each is stretched to the middle of the gap on either
+side of it, to a vertex the arc beyond it takes too. Thickness001 is
+valid: 5496.0504 (the groove's walls cut by booleans give the same to
+1e-5), and 5816.1031 outward; a bottom alone, the seam's or the other,
+5600.67 and 5600.58 on the radius 5 groove; both bottoms outward, which
+the fork refused, 5749.5607 as upstream gives.
+
+Still wrong, and as before: the groove a single face whose own seam lies
+on its edge with one bottom, the other bottom removed -- valid and wrong
+(2142.0698 for 5600.58 on the radius 5 groove; the issue's own left
+bottom, -3798.5363, inside out: its groove is such a face). And
+Thickness001 with the Intersection join is invalid.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove5_top_in`, `_groove10_top_in`, `_groove10_chamfer_top_in`, `_groove5_seam90_top_in`, `_thickness001_top_in` | the groove of radius 5, 10.06 (the issue's), 10.06 under a chamfer, 5 with the side's seam turned 90 deg, the issue's base; the top removed, -1 | 4340.4816, 4344.8435, 4576.7380, 4340.2907, 4576.7701; invalid before (the inside dropped) |
+| `issue363_groove5_top_in_inter` | the radius 5 groove, the top removed, -1, intersection on | 4340.4816: the intersection mode, right before too, the reference |
+| `issue363_groove5_bottom_in`, `_groove10_chamfer_bottom_in`, `_groove5_seam90_bottom1_in`, `_bottom2_in` | a bottom without the side's seam vertex removed, -1 | 5600.5842, 5933.2710, 5600.3995 |
+| `issue363_groove5_seam_bottom_in` | the bottom whose arc the seam splits, -1 | 5600.6746; invalid before |
+| `issue363_groove5_both_bottoms_in`, `_groove5_seam90_both_bottoms_in`, `_groove10_both_bottoms_in`, `_thickness001_in` | both bottoms removed, -1 | 4927.3387, 4927.0697, 5403.7097, 5496.0504; invalid, then refused |
+| `issue363_groove10_both_bottoms_out`, `_thickness001_out` | both bottoms removed, +1 | 5749.5607, 5816.1031; refused before |
+| `issue363_groove5_groove_seam_left_bottom_in`, `_thickness001_left_bottom_in` | the groove a single face with its seam on the right bottom's edge, the left bottom removed | `XFAIL`: valid and wrong (2142.0698, -3798.5363) |
+| `issue363_thickness001_in_join` | Thickness001, the Intersection join | `XFAIL`: invalid |
+
+`models/issue363_groove.cpp` is the C++ driver of both (the groove of
+radius 5, 10.06 and 10.06 under a chamfer, the top, both bottoms or the
+seam's bottom removed), and `pictures/make_fix_pictures.sh` makes its
+pictures (macOS or Linux; the libraries before the first fix linked from
+the build's own objects, `../boolean/pictures/mkold.py`).
+
+![#363: the top removed](models/pictures/issue363_groove10_chamfer_top.png)
+
+![#363: both bottoms removed](models/pictures/issue363_groove10_chamfer_bottoms.png)
+
+**Validation** (each fix against the kernel before it, `ca991d3f27` and
+`5525e72804`): Part 390 and PartDesign 486 tests OK; thickness PASS=398
+XFAIL=4 (with these cases), draft 105, boolean 39; the three draft sweeps
+not one result changed; the thickness sweep right in all 928 runs, not one
+changed.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
