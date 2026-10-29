@@ -1409,6 +1409,16 @@ _dome.importBrep(os.path.join(HERE, "..", "boolean", "models", "dome_fillet_r3.b
 thickness_case("dome_tangent_corner_in", _dome, 4, -2.0, "pass", 20254.4292, loose_ok=7e-4)
 thickness_case("dome_tangent_corner_in_inter", _dome, 4, -2.0, "pass", 20254.4292, True,
                loose_ok=7e-4)
+# The same outward: the mitre between two fillets is a crease, and its tube
+# (the Arc join) closes to nothing at the dome's corner, where both fillets
+# meet the dome tangentially. The fillets' offsets made a vertex each there,
+# 1.8e-6 apart, so the tube's end was an edge of no length that nothing else
+# shared -- refused. The volume booleans give: the part above z = 0 of the
+# offset of the shape carried down to z = -10, less the shape.
+thickness_case("dome_crease_fades_out", _dome, 4, 2.0, "pass", 22546.8191)
+thickness_case("dome_crease_fades_out_inter", _dome, 4, 2.0, "pass", 22546.8191, True)
+thickness_case("dome_crease_fades_out_1", _dome, 4, 1.0, "pass", 10990.0527)
+thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
 
 counts = {}
 for _, verdict, _ in results:

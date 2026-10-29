@@ -76,6 +76,32 @@ for run, removed, what, eye, cause in (
           "inside", SIDE, CENTER, HEIGHT)
     pictures.append(pic)
 
+# A filleted dome outward: the crease between two fillets fades out at the
+# dome's corner, and its tube (the Arc join) closes to a point there. The
+# tubes in orange: the faces with a degenerated edge.
+ORANGE = (0.95, 0.55, 0.1)
+dome = Part.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "boolean",
+                              "models", "dome_fillet_r3.brep"))
+out2 = Part.read(os.path.join(W, "dome", "after", "out2.brep"))
+tubes = {str(i): ORANGE for i, f in enumerate(out2.Faces) if any(e.Degenerated for e in f.Edges)}
+pic = dict(name="dome_crease_fades",
+           title="A box under a B-spline dome, its edges filleted, 2 outward with the bottom removed",
+           caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, the Arc join. At each corner "
+                   "of the dome two fillets meet in a mitre, a crease that fades out where both "
+                   "meet the dome tangentially; the crease's tube (orange) closes to a point there. "
+                   "Before, 1, 2 and 3 outward were refused.",
+           panels=[])
+panel(pic, dome, "the input", "the bottom (magenta) removed, 2 outward", [-0.7, -1.0, -0.6],
+      [40, 25, 18], 110, {"3": MAGENTA})
+panel(pic, out2, "after", "valid, %.4f, the volume booleans give; the four tubes orange"
+      % out2.Volume, [-0.5, -0.9, 0.8], [40, 25, 18], 115, tubes)
+panel(pic, out2, "after, at a corner", "the tube on the mitre narrows to the dome's corner and "
+      "ends in a point", [-0.6, -1.0, 0.7], [0.6, 0.8, 25.0], 10, tubes, mark=True)
+half = out2.common(Part.makeBox(100, 30, 60, V(-10, -5, -5)))
+panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick", [0.5, 1.2, 0.6],
+      [40, 12, 15], 105)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

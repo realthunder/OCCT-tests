@@ -580,12 +580,53 @@ a corner"): valid, 20254.4308, as booleans give (20254.4292).
 |------|-------|----------------|
 | `dome_tangent_corner_in`, `_in_inter` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, -2; the Arc join, without and with intersection | 20254.4308; refused before |
 
-1 inward is valid now too (10416.5544). Still refused, as before: 2
-outward (a zero-length edge at a corner, another fault), 4 inward (past the
-fillets' radius), and the dome itself removed.
+1 inward is valid now too (10416.5544). Still refused, as before: outward
+(the next section), 4 inward (past the fillets' radius), and the dome
+itself removed.
 
 **Validation** as `../boolean/README.md` gives it: thickness PASS=400
 XFAIL=4, the thickness sweep right in all 928 runs, not one changed.
+
+## A filleted dome, outward (`8097862fb0`, 2026-10-29)
+
+**What was broken.** The same shape, the bottom removed, 1, 2 or 3 outward,
+the Arc join: refused (`BRepOffset_UnknownError`), the offset shell dropped
+for a free edge. At each corner of the dome the mitre between two fillets
+is a crease, convex, and it fades out where both fillets meet the dome
+tangentially. The Arc join puts a tube on a convex crease, its section an
+arc of the angle between the faces, so the tube closes to nothing at the
+dome's corner. `BRepOffset_Offset` makes that end a degenerated edge when
+the two faces' offsets share the vertex there -- and they did not.
+`MakeOffsetFaces` shares a vertex among the offset faces only where every
+edge at it is tangential, and the mitre is not: each fillet's offset made a
+vertex of its own at the corner, 1.8e-6 from the other's (the faces 1 to
+2e-6 rad off tangent there, within the vertex's tolerance, 1.9e-5). The
+tube's end became an edge of no length that no other face shared.
+
+**The fix.** The offset faces also share a vertex where the offsets of it
+by every face around it -- the vertex moved along each face's normal by its
+offset -- lie within the vertex's tolerance of each other: where the faces
+are tangent at the vertex, whatever their edges are elsewhere. A face
+whose normal is not defined there (a pole) never counts as meeting. Then
+the tube's end is degenerated, a point, and the corner closes.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_crease_fades_out`, `_out_inter` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, +2; without and with intersection | 22546.8215 (booleans 22546.8191); refused before |
+| `dome_crease_fades_out_1`, `_out_3` | the same, +1 and +3 | 10990.0549 and 34682.8741 (booleans 10990.0527, 34682.8715); refused before |
+
+`models/dome_crease_fades.cpp` runs the three against the volumes booleans
+give: the part above z = 0 of the offset of the shape carried down to
+z = -10, less the shape. Still refused, as before: the dome itself removed,
+4 inward, and the Intersection join either way.
+
+![A filleted dome outward: the tubes close to a point](models/pictures/dome_crease_fades.png)
+
+**Validation** (against the kernel before it, `f80ed3ac78`): Part 390 and
+PartDesign 486 tests OK; thickness PASS=404 XFAIL=4 (with these cases),
+fillet 815, draft 105, boolean 43; the fillet and draft sweeps not one
+result changed; the thickness sweep right in all 928 runs, not one
+changed.
 
 ## Determinism cases (intersection mode, Arc join)
 

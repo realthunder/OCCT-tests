@@ -57,6 +57,10 @@ fix() {
 # (0c1693fb61): before the first, both sources as they were
 fix 363 5525e72804 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Inter3d.cxx
     src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Tool.cxx" issue363_groove --write
+# a filleted dome outward: offset faces share a vertex where their offsets of
+# it meet
+fix dome 8097862fb0 src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx \
+    dome_crease_fades $HERE/../../boolean/models/dome_fillet_r3.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep_fixes.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
