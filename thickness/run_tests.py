@@ -45,9 +45,10 @@ RELTOL = 1e-3
 # FreeCAD freezes shape values (Immutable TShapes, copy-on-write) when it finds
 # this fork; a frozen input is protected from an algorithm that edits it. Run
 # unfrozen by default, the way any other build of FreeCAD runs it, so an edit
-# of the input shows (THICK_FREEZE=1 for the frozen path).
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
+# of the input shows (THICK_FREEZE=1 for the frozen path). The user's own
+# value is back when the run ends (../freeze.py).
+from freeze import set_for_run  # noqa: E402
+set_for_run(os.environ.get("THICK_FREEZE", "0") != "0")
 
 # THICK_FIX_LEVEL=<n> runs the suite at the fork's offset fix level n
 # (BRepOffset_SetFixLevel); unset, at the library's default, 0.

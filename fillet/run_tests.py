@@ -46,9 +46,10 @@ if hasattr(Part, "hasOCCTFunction") and not Part.hasOCCTFunction("TKBRep", "SetF
 # FreeCAD freezes shape values when it finds this fork, and a frozen input is
 # protected from an algorithm that edits it. Run unfrozen by default, as any
 # other build of FreeCAD runs, so such an edit shows (FILLET_FREEZE=1 for the
-# frozen path).
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("FILLET_FREEZE", "0") != "0")
+# frozen path). The user's own value is back when the run ends
+# (../freeze.py).
+from freeze import set_for_run  # noqa: E402
+set_for_run(os.environ.get("FILLET_FREEZE", "0") != "0")
 
 
 def signature(shape):

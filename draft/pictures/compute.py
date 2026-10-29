@@ -17,7 +17,9 @@ from cases import CASES, DOCS, PRE_ANGLE, SHAPES
 OUT = os.environ["OUT"]
 NAME = os.environ["CASE"]
 os.makedirs(OUT, exist_ok=True)
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool("ImmutableShapeValues", False)
+sys.path.insert(0, os.path.join(os.environ["DRAFT_TOOLS"], "..", ".."))
+from freeze import set_for_run  # noqa: E402
+set_for_run(False)
 
 
 def emit(s):

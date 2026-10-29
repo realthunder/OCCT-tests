@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from loose_ends import loose, widest  # noqa: E402
 
 V = FreeCAD.Vector
-FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
+from freeze import set_for_run  # noqa: E402
+set_for_run(os.environ.get("THICK_FREEZE", "0") != "0")
 # THICK_FIX_LEVEL=<n>: the fork's offset fix level (fix_level.py)
 from fix_level import from_env as _fix_level_from_env  # noqa: E402
 

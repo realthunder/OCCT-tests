@@ -74,8 +74,9 @@ def describe(s):
 
 
 # before any shape is made: a value is frozen, or not, as it is made
-FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("FREEZE", "1") == "1")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from freeze import set_for_run  # noqa: E402
+set_for_run(os.environ.get("FREEZE", "1") == "1")
 key, _, edge = os.environ.get("W", "box").partition(":")
 fi = int(os.environ.get("F", "1")) - 1
 s = survey.place(survey.SHAPES[key](), os.environ.get("PLACE"))

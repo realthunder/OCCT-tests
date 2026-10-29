@@ -17,7 +17,8 @@ from flat_end import FlatEnd, available as flat_available  # noqa: E402
 OUT = os.environ["OUT"]
 os.makedirs(OUT, exist_ok=True)
 # Unfrozen, as the suite runs: a frozen input would hide an edit of it.
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool("ImmutableShapeValues", False)
+from freeze import set_for_run  # noqa: E402
+set_for_run(False)
 stages = os.environ.get("STAGES", "all").split()
 
 

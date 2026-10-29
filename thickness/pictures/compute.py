@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.join(os.environ["THICK_TOOLS"], "..", ".."))
 from fix_level import set_offset_fix_level
 OUT = os.environ["OUT"]; os.makedirs(OUT, exist_ok=True)
 # Unfrozen, as the suite runs: a frozen input would hide an edit of it.
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool("ImmutableShapeValues", False)
+from freeze import set_for_run
+set_for_run(False)
 stages = os.environ.get("STAGES", "all").split()
 only = os.environ.get("ONLY", "").split()
 def emit(s): os.write(1, (s + "\n").encode())

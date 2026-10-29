@@ -18,6 +18,7 @@
 import itertools
 import math
 import os
+import sys
 
 import FreeCAD
 import Part
@@ -124,8 +125,9 @@ def main():
     if key == "list":
         out(" ".join(SHAPES))
         os._exit(0)
-    FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-        "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    from freeze import set_for_run
+    set_for_run(os.environ.get("THICK_FREEZE", "0") != "0")
     base = place(SHAPES[key](), os.environ.get("PLACE"))
     RUNS = [(fi, off, j) for fi in range(len(base.Faces)) for off in (0.5, -0.5) for j in (0, 2)]
     ref = {r: run(base, *r) for r in RUNS}

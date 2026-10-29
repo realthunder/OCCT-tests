@@ -49,8 +49,8 @@ if hasattr(Part, "hasOCCTFunction") and not Part.hasOCCTFunction("TKBRep", "SetF
 
 
 # Unfrozen, as any other build of FreeCAD runs (see ../fillet/run_tests.py).
-App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
-    "ImmutableShapeValues", os.environ.get("DRAFT_FREEZE", "0") != "0")
+from freeze import set_for_run  # noqa: E402
+set_for_run(os.environ.get("DRAFT_FREEZE", "0") != "0")
 
 results = []  # (name, verdict, detail)
 
