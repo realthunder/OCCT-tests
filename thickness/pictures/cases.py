@@ -44,6 +44,7 @@ STAGES = {
     "s25": ("8d5aa88952", "25"),
     "s26a": ("99971a1dc8", "26"),
     "s26b": ("54d2c02774", "26"),
+    "s28": ("047a9e432d", "28"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -123,6 +124,17 @@ def _axis_wedge(ang):
     return w
 
 
+def _mitrebox(xmax, ymax):
+    # A box with two adjacent top edges filleted, r2: the edge at x = 0 or 10
+    # and the one at y = 0 or 8. Its bottom is Face4 or Face6 (run_tests.py
+    # finds it by place).
+    b = Part.makeBox(10, 8, 6)
+    top = [e for e in b.Edges if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9]
+    ex = [e for e in top if abs(e.BoundBox.XMin - xmax) < 1e-9 and abs(e.BoundBox.XMax - xmax) < 1e-9]
+    ey = [e for e in top if abs(e.BoundBox.YMin - ymax) < 1e-9 and abs(e.BoundBox.YMax - ymax) < 1e-9]
+    return b.makeFillet(2, ex + ey)
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -196,6 +208,9 @@ SHAPES = {
     "cutballsplit": lambda: _split_at(Part.makeSphere(5).cut(Part.makeBox(20, 20, 20, V(-10, -20, -10))), 2),
     "luneballsplit": lambda: _split_at(_halfball("meridian"), 0),
     "luneball_flatsfirst": lambda: _reordered(_halfball("meridian"), (3, 4, 1, 2)),
+    "mitrebox_x0y8": lambda: _mitrebox(0, 8),
+    "mitrebox_x10y0": lambda: _mitrebox(10, 0),
+    "mitrebox_x10y8": lambda: _mitrebox(10, 8),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -368,6 +383,12 @@ CASES = {
     "luneball_flatsfirst_sphere2_join_in": ("s26b", "luneball_flatsfirst", 4, -0.5, False, 2, 74.1857),
     "luneballsplit_sphere1_join_out": ("s26b", "luneballsplit", 1, +0.5, False, 2, 91.1786),
     "luneballsplit_sphere1_join_in": ("s26b", "luneballsplit", 1, -0.5, False, 2, 74.1857),
+    "mitrebox_x0y8_join_in": ("s28", "mitrebox_x0y8", 4, -1, False, 2, 228.2242),
+    "mitrebox_x0y8_join_out": ("s28", "mitrebox_x0y8", 4, +1, False, 2, 334.7817),
+    "mitrebox_x10y0_join_in": ("s28", "mitrebox_x10y0", 4, -1, False, 2, 228.2242),
+    "mitrebox_x10y0_join_out": ("s28", "mitrebox_x10y0", 4, +1, False, 2, 334.7817),
+    "mitrebox_x10y8_join_in": ("s28", "mitrebox_x10y8", 6, -1, False, 2, 228.2242),
+    "mitrebox_x10y8_join_out": ("s28", "mitrebox_x10y8", 6, +1, False, 2, 334.7817),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

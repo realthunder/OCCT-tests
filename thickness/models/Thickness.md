@@ -1810,6 +1810,57 @@ crashed every time. The shape is copied first, as the other Remove calls
 there already do. No volume changes: this suite, 378 cases, passes
 the same, run frozen and unfrozen with freed memory overwritten.
 
+### Sec 28: a section cut at its curve's origin
+
+**A piece outside the faces** (`779e6acceb`, `BRepOffset_Tool::Inter3D`,
+`JoinAtCurveOrigin`). A box with two adjacent top edges filleted, the bottom
+removed, the Intersection join: at three corners of the four the thickness
+was invalid inward, at the input's volume, and refused outward. The
+fillets' offsets are two cylinders of one radius whose axes cross, and they
+meet on an ellipse. The filler gives the section in pieces from curves of
+their own, and it cut this one at the ellipse's origin, where nothing else
+is: a vertex only the two pieces reach. At those three corners the origin
+is the point where the section crosses the line the fillet's offset shares
+with the wall's -- the tangent line, below which the section runs on into
+the enlarged face. The run-on was then an edge of its own, lying wholly
+outside the faces to come, and the loops walked it out and back: the
+fillet's face came back with a second wire round nothing, the other
+fillet with a face of no area. At the fourth corner the ellipse's origin
+lies off the section; the run-on is a piece of the one edge, and the cut at
+the tangent line takes it away.
+
+`Inter3D` assembles a section's pieces only when one of the faces is not
+elementary. Between two elementary faces it now joins two pieces of one
+periodic curve -- the same points at the same parameters -- the one ending
+on the period's end and the other starting on its start, at a vertex the
+filler made that no other piece reaches. Every corner then gives what the
+fourth always did. Worked out by hand: a box with two adjacent edges
+rounded at r is X Y Z less r^2 (1 - pi/4) (X + Y), plus the overlap at the
+corner, the integral of (r - sqrt(r^2 - t^2))^2 for t from 0 to r; the skin
+is the outer such solid less the inner. 228.2242 inward and 334.7817
+outward at 10 x 8 x 6, r 2; at 80 x 50 x 30, r 3, 1 and 2 each way meet
+the hand values to 1e-4.
+
+![mitrebox_x0y8_join_in](pictures/mitrebox_x0y8_join_in.png)
+
+![mitrebox_x0y8_join_out](pictures/mitrebox_x0y8_join_out.png)
+
+![mitrebox_x10y0_join_in](pictures/mitrebox_x10y0_join_in.png)
+
+![mitrebox_x10y0_join_out](pictures/mitrebox_x10y0_join_out.png)
+
+![mitrebox_x10y8_join_in](pictures/mitrebox_x10y8_join_in.png)
+
+![mitrebox_x10y8_join_out](pictures/mitrebox_x10y8_join_out.png)
+
+Still refused, with all four top edges filleted: the top's offset, every
+edge of it tangent, meets no section and keeps the edges it was made with,
+while the fillets' faces are rebuilt with new ones along the same lines,
+and the shell has edges only one face holds. The filleted dome
+(`../boolean/models/dome_fillet_r3.brep`), all of its top edges filleted,
+is still refused with the Intersection join too; it has not been looked
+at apart.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
