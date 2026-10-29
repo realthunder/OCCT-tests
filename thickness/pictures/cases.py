@@ -454,11 +454,8 @@ REFUSED = {
 # Cases made at a fix level of the fork's (BRepOffset_SetFixLevel, 0 unless
 # set): the fix comes at that level only, so that a document saved before
 # recomputes as it did (sec 31). Libraries without the level run them as
-# they are.
-FIX_LEVEL = {
-    "dome_join_out": 1,
-    "dome_join_out_2": 1,
-}
+# they are. None now: sec 31's fixes are made at every level (sec 32).
+FIX_LEVEL = {}
 # The captured user models; upstream 8.0.1 passes them all, so not pictured.
 DOCS = {
     "issue1_ellipse_thickness": ("issue1_ellipse_thickness.FCStd", "Thickness", 3598.2930),
