@@ -48,6 +48,7 @@ STAGES = {
     "s28": ("047a9e432d", "28"),
     "s29": ("efe6683cd7", "29"),
     "s30": ("193f97a680", "30"),
+    "s31": ("92cc9effb6", "31"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -415,6 +416,8 @@ CASES = {
     "roundtop_join_out": ("s29", "roundtop", 4, +1, False, 2, 313.2065),
     "dome_join_in": ("s30", "filleteddome", 4, -1, False, 2, 10416.5477),
     "dome_join_in_2": ("s30", "filleteddome", 4, -2, False, 2, 20254.4292),
+    "dome_join_out": ("s31", "filleteddome", 4, 1, False, 2, 11009.9518),
+    "dome_join_out_2": ("s31", "filleteddome", 4, 2, False, 2, 22626.4034),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
@@ -447,6 +450,14 @@ INPUT = {
 REFUSED = {
     "sphere_face_refused_in",
     "box_all_faces_refused_in",
+}
+# Cases made at a fix level of the fork's (BRepOffset_SetFixLevel, 0 unless
+# set): the fix comes at that level only, so that a document saved before
+# recomputes as it did (sec 31). Libraries without the level run them as
+# they are.
+FIX_LEVEL = {
+    "dome_join_out": 1,
+    "dome_join_out_2": 1,
 }
 # The captured user models; upstream 8.0.1 passes them all, so not pictured.
 DOCS = {

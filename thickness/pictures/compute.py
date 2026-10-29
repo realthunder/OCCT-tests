@@ -6,7 +6,9 @@
 import os, sys, json
 sys.path.insert(0, os.environ["THICK_TOOLS"])
 import FreeCAD as App, Part
-from cases import SHAPES, CASES, DOCS, SHELLS, SOLIDS, INPUT, REFUSED
+from cases import SHAPES, CASES, DOCS, SHELLS, SOLIDS, INPUT, REFUSED, FIX_LEVEL
+sys.path.insert(0, os.path.join(os.environ["THICK_TOOLS"], "..", ".."))
+from fix_level import set_offset_fix_level
 OUT = os.environ["OUT"]; os.makedirs(OUT, exist_ok=True)
 # Unfrozen, as the suite runs: a frozen input would hide an edit of it.
 App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool("ImmutableShapeValues", False)
@@ -67,6 +69,8 @@ for name, (st, sk, fi, val, inter, join, ref) in CASES.items():
         res[name] = d
         emit("%-32s %s %s" % (name, "OK " if d["ok"] else "BAD", "; ".join(d["problems"]) or "refused"))
         continue
+    # None where the libraries have no level: they run the case as they are
+    previous = set_offset_fix_level(FIX_LEVEL[name]) if name in FIX_LEVEL else None
     try:
         r = s.makeThickness(faces, val, 1e-7, inter, False, 0, join)
         p, vol = judge(r, ref, SHELLS.get(name, 1), SOLIDS.get(name, 1))
@@ -77,6 +81,9 @@ for name, (st, sk, fi, val, inter, join, ref) in CASES.items():
         a = e.args[0] if e.args else None
         msg = a.get("sErrMsg", "") if isinstance(a, dict) else str(e)
         d.update(ok=False, problems=["threw " + (msg.strip().splitlines() or [type(e).__name__])[-1]], volume=None)
+    finally:
+        if previous is not None:
+            set_offset_fix_level(previous)
     res[name] = d
     emit("%-32s %s %s" % (name, "OK " if d["ok"] else "BAD", "; ".join(d["problems"]) or "vol=%.4f" % d["volume"]))
 if os.environ.get("DOCS"):

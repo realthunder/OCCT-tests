@@ -61,6 +61,30 @@ Every suite here is added to by the work on the fork: a fix lands in the
 fork, its cases and pictures here, and the fork's commit moves the
 submodule to the matching commit.
 
+## A fix that changes a shape
+
+The rule for every fix to the fork (the user's ruling, 2026-10-29). Run
+the suites over it, each frozen and unfrozen. If it changes no result a
+suite already had -- no volume, no validity, no case -- it lands as the
+fork's behaviour. If it changes any, it goes behind an option, off by
+default, so that the shape a document saved comes back as it was; FreeCAD
+turns the option on for objects made from then on, and keeps it off for an
+object an older file brings (a hidden property of the object, 0 when the
+file has not got it). The option keeps the ABI (`abi/`): a C function
+FreeCAD looks up by name, not a member, a parameter or a virtual function
+of a class of upstream's.
+
+For the offset and thickness that option is a level,
+`BRepOffset_SetFixLevel(n)` (`BRepOffset.hxx`): the calling thread's, 0 by
+default, each level adding its fixes to those below. FreeCAD holds a
+feature's `_OffsetFixLevel` for the feature's recompute
+(`Part::OCCTOffsetFixLevel`, `src/Mod/Part/App/OCCTFork.h`), and a new
+level is a new value of `Part::OCCTOffsetFixLevelLatest` there. The suites
+set it with `THICK_FIX_LEVEL=<n>` or per case (`fix_level.py`); a fix
+behind a level is run at 0, where nothing may change, and at the latest.
+Level 1 is the filleted dome outward (`thickness/models/Thickness.md` sec
+31).
+
 History: moved out of the fork on 2026-10-03 with its history (the fork's
 `tests/thickness/`, `tests/fillet/` and `tests/occ-issues/`); the commits
 here are those, rewritten by `git filter-repo`.
