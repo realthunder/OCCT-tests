@@ -61,6 +61,12 @@ fix 363 5525e72804 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Inter3
 # it meet
 fix dome 8097862fb0 src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx \
     dome_crease_fades $HERE/../../boolean/models/dome_fillet_r3.brep --write
+# a filleted dome, the dome removed: tubes round its tangent edges built and
+# joined (three sources)
+fix domecap 6004240f16 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx
+    src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Inter2d.cxx
+    src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Tool.cxx" \
+    dome_cap_removed $HERE/../../boolean/models/dome_fillet_r3.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep_fixes.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

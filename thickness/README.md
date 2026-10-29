@@ -621,8 +621,9 @@ the tube's end is degenerated, a point, and the corner closes.
 
 `models/dome_crease_fades.cpp` runs the three against the volumes booleans
 give: the part above z = 0 of the offset of the shape carried down to
-z = -10, less the shape. Still refused, as before: the dome itself removed,
-4 inward, and the Intersection join either way.
+z = -10, less the shape. Still refused then: the dome itself removed
+(inward since the next section), 4 inward, and the Intersection join
+either way (inward since sec 30, outward from fix level 1 since sec 31).
 
 ![A filleted dome outward: the tubes close to a point](models/pictures/dome_crease_fades.png)
 
@@ -631,6 +632,76 @@ PartDesign 486 tests OK; thickness PASS=404 XFAIL=4 (with these cases),
 fillet 815, draft 105, boolean 43; the fillet and draft sweeps not one
 result changed; the thickness sweep right in all 928 runs, not one
 changed.
+
+## A filleted dome, the dome removed (`6004240f16`, 2026-10-29)
+
+**What was broken.** The same shape with the dome itself removed, 1, 2 or
+2.5 inward, the Arc join: refused (`BRepOffset_UnknownError`), the result
+the input itself, unhollowed. The dome meets each fillet tangentially, and
+a removed face tangent to its neighbour along an edge is closed by a tube
+round the edge (`ToContext`, the filleted box's sec 6); none was built here,
+and four faults lay behind that one:
+
+1. The edges were not taken as tangent. The dome and its B-spline fillets
+   meet 2e-6 rad off, and the test was the angular precision (1e-12) where
+   the analysis works to the angle the tolerance allows over half the offset
+   -- which `TreatTangentCaps`, the Intersection join's counterpart, already
+   used. Now the tube's test uses it too (a helper, `analyseTolAngle`).
+2. The tube's edge on the dome had no pcurve for two of the four edges: its
+   projection onto the dome came back empty, and the edge was never cut into
+   the dome. The pcurve is now fitted through the points' parameters on the
+   dome, which the intersection that finds them gives anyway (and the same
+   for the corner arc on the dome outward, `TangentCornerArcOnCap`).
+3. That edge ended where the dome's edge does, short of the dome's next edge
+   at each corner (the lines and circles of the box and the sphere cases run
+   on): the corner of the rim was never cut off. It now runs on past each
+   end until it has left the dome, and a step further.
+4. Two tubes meet at a corner of the dome along a curve that should end on
+   both tubes' edges on the dome where they cross, and at the vertex both
+   tubes start from on the fillets' offsets. It ended 7e-6 off one of the
+   edges -- the 2D intersection works to 1e-7 and missed it, and the edge was
+   not cut -- and 3e-4 to 1e-3 off the vertex, where the tubes all but touch
+   and their section is ill-conditioned. `EdgeInter` (`BRepOffset_Inter2d`)
+   now takes an end of one edge lying on the other within their tolerances
+   as an intersection (at an end of the other, the two ends meeting), and
+   `PipeInter` (`BRepOffset_Tool`) ends the section at a vertex both tubes
+   have when it ends that near it (within a thousandth of the tubes' size),
+   the end poles of its curve and pcurves moved onto the vertex.
+   Where the two touch to within 1e-7 the 2D intersection found nothing on
+   purpose, and that stays as it was: a vertex put there broke the wire of
+   a half dome's offset.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_cap_removed_in`, `_in_1`, `_in_2_5` | `../boolean/models/dome_fillet_r3.brep`, face 9 (the dome) removed, -2, -1 and -2.5 | 21141.1736, 10903.6446, 26016.1291; refused before |
+
+The volumes are the rule the tube follows, worked numerically (to about
+1e-5): the input less the points more than the thickness from every face
+kept -- the input shrunk by the thickness (a closed offset), and the
+channel under the dome, the points within the thickness below it and
+further than that from its edges (near the dome a kept face's nearest point
+is on the dome's edge, the fillets meeting it tangentially). A Gauss-rule
+integral over a grid on the dome, it gives 21141.268, 10903.572 and
+26016.161 at 1200 x 800; at 600 x 400 it moves by 0.5. `models/dome_cap_removed.cpp`
+runs the three against those to 1e-4. The mitre between the fillets'
+offsets ends up to 1e-3 off the vertex at the dome's corner, where the two
+all but touch; the vertex's tolerance covers it, and the cases allow it, as
+for the bottom removed.
+
+Still refused: 0.5 inward (the tube's edge on the dome runs on past the
+tube, whose own pcurve of it does not, and the tubes' curve is not cut by
+it), 3 and 4 inward (the fillets' radius), and outward -- which before was
+a valid solid of 11247.290 where the same rule gives 11891.581: the
+fillets' offsets ran round to the removed dome and the rounded rim was
+missing.
+
+![A filleted dome, the dome removed: tubes round its tangent edges](models/pictures/dome_cap_removed.png)
+
+**Validation** (against the kernel before it, `047a9e432d`): Part 390 and
+PartDesign 486 tests OK; thickness PASS=407 XFAIL=4 (with these cases),
+plain and frozen, fillet 815, draft 105, boolean 43; the fillet and draft
+sweeps not one result changed; the thickness sweep right in all 928 runs,
+plain and frozen, not one changed.
 
 ## Two adjacent top fillets, the Intersection join (`779e6acceb`, 2026-10-29, sec 28)
 

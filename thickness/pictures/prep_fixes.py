@@ -102,6 +102,48 @@ panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick", 
       [40, 12, 15], 105)
 pictures.append(pic)
 
+# The same dome with the dome itself removed, 2 inward: tubes (orange) round
+# the dome's edges, where it meets the fillets tangentially, close the wall;
+# the rim left of the dome (magenta) runs round the opening.
+cap = dome.Faces[8]
+in2 = Part.read(os.path.join(W, "domecap", "after", "in2.brep"))
+
+
+def on_tube(f):
+    u0, u1, v0, v1 = f.ParameterRange
+    p = f.valueAt((u0 + u1) / 2, (v0 + v1) / 2)
+    return abs(Part.Vertex(p).distToShape(cap.OuterWire)[0] - 2.0) < 1e-3
+
+
+def on_cap(f):
+    u0, u1, v0, v1 = f.ParameterRange
+    return Part.Vertex(f.valueAt((u0 + u1) / 2, (v0 + v1) / 2)).distToShape(cap)[0] < 1e-4
+
+
+colors = {}
+for i, f in enumerate(in2.Faces):
+    if on_tube(f):
+        colors[str(i)] = ORANGE
+    elif on_cap(f):
+        colors[str(i)] = MAGENTA
+pic = dict(name="dome_cap_removed",
+           title="A box under a B-spline dome, its edges filleted, 2 inward with the dome removed",
+           caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, the Arc join. The dome meets "
+                   "each fillet tangentially; a tube (orange) round each of its edges closes the wall, "
+                   "from the fillet's offset to the rim left of the dome (magenta). Before, 1, 2 and "
+                   "2.5 inward were refused.",
+           panels=[])
+panel(pic, dome, "the input", "the dome (magenta) removed, 2 inward", [-0.5, -0.9, 0.8],
+      [40, 25, 18], 110, {"8": MAGENTA})
+panel(pic, in2, "after", "valid, %.4f, as worked numerically; the tubes orange, the rim magenta"
+      % in2.Volume, [-0.5, -0.9, 0.8], [40, 25, 18], 115, colors)
+panel(pic, in2, "after, at a corner", "two tubes meet in a mitre down to the fillets' offsets",
+      [-0.4, -0.6, 0.9], [76.3, 46.2, 24.2], 7, colors, mark=True)
+half = in2.common(Part.makeBox(100, 30, 60, V(-10, -5, -5)))
+panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick, rounded into the "
+      "rim", [0.5, 1.2, 0.6], [40, 12, 15], 105)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")
