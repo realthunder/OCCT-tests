@@ -49,6 +49,14 @@ RELTOL = 1e-3
 App.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
     "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
 
+# THICK_FIX_LEVEL=<n> runs the suite at the fork's offset fix level n
+# (BRepOffset_SetFixLevel); unset, at the library's default, 0.
+sys.path.insert(0, os.path.join(HERE, ".."))
+from fix_level import from_env as _fix_level_from_env  # noqa: E402
+from fix_level import set_offset_fix_level  # noqa: E402
+
+FIX_LEVEL = _fix_level_from_env() or 0
+
 
 def signature(shape):
     """What a thickness must leave of its input: the shape valid, the volume,
@@ -141,9 +149,11 @@ def placed(shape):
 # ---------------------------------------------------------------------------
 
 def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inter=False, join=0,
-                   loose_ok=0.0):
+                   loose_ok=0.0, fix_level=None):
     """makeThickness(mode=Skin, join=Arc unless given) removing 1-based face `face_index`
-    (or the faces of a list of them).
+    (or the faces of a list of them), at the fork's offset fix level `fix_level` if given
+    (BRepOffset_SetFixLevel), else at the suite's (THICK_FIX_LEVEL, 0 unset). A library
+    without the level runs the case as it is, and shows what it does without.
 
     expect='pass':  result must be a valid solid, one closed shell, and match
                     ref_volume (captured from a verified-good run).
@@ -151,6 +161,7 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
                     shape, or open shell counts as the expected failure.
     """
     detail = ""
+    previous = None if fix_level is None else set_offset_fix_level(fix_level)
     try:
         indices = face_index if isinstance(face_index, list) else [face_index]
         faces = [shape.Faces[i - 1] for i in indices]
@@ -175,6 +186,9 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
     except Exception as e:
         ok = False
         detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    finally:
+        if previous is not None:
+            set_offset_fix_level(previous)
     report(name, ok, expect == "xfail", detail)
 
 
@@ -1436,6 +1450,14 @@ thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
 # The volume booleans give as above (2 inward is dome_tangent_corner_in's).
 thickness_case("dome_join_in", _dome, 4, -1.0, "pass", 10416.5477, False, 2)
 thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
+# The same outward (Thickness.md sec 31): refused before, made from the fork's offset fix
+# level 1 (BRepOffset_SetFixLevel; FreeCAD sets it on objects made from now on). The
+# references are the results; the Arc join's volume and the wedge each sharp edge gains,
+# d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761. At level 0, what a
+# document saved before gets, it is refused as it was.
+thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=1)
+thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2, fix_level=1)
+thickness_case("dome_join_out_level0", _dome, 4, 1.0, "xfail", None, False, 2, fix_level=0)
 
 
 # Sec 28. A box with two adjacent top edges filleted, the bottom removed, the
