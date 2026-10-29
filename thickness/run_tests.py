@@ -159,7 +159,7 @@ def placed(shape):
 # ---------------------------------------------------------------------------
 
 def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inter=False, join=0,
-                   loose_ok=0.0, fix_level=None):
+                   loose_ok=0.0, fix_level=None, max_gap=None):
     """makeThickness(mode=Skin, join=Arc unless given) removing 1-based face `face_index`
     (or the faces of a list of them), at the fork's offset fix level `fix_level` if given
     (BRepOffset_SetFixLevel), else at the suite's (THICK_FIX_LEVEL, 0 unset). A library
@@ -167,7 +167,9 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
 
     expect='pass':  result must be a valid solid, one closed shell, and match
                     ref_volume (captured from a verified-good run); valid still
-                    after a BRep text round trip.
+                    after a BRep text round trip, and, given max_gap, no edge's
+                    curve ending farther than that from its vertex, however
+                    loose the edge (loose_ends.widest).
     expect='xfail': known broken (see README.md); any exception, invalid
                     shape, or open shell counts as the expected failure.
     """
@@ -186,6 +188,8 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
         else:
             problems += loose_end(r, shape, loose_ok)
             problems += round_trip(r)
+            if max_gap is not None and widest(r) > max_gap:
+                problems.append("gap %.3g > %.3g" % (widest(r), max_gap))
         if len(r.Shells) != 1:
             problems.append("shells=%d" % len(r.Shells))
         elif not r.Shells[0].isClosed():
@@ -1467,9 +1471,14 @@ thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
 # it, come to 11009.7686 and 22625.6761. Sec 31 made it from the fork's offset fix level 1
 # only; what that moved in the cases made before lies within their tolerances, so it is
 # made at every level (sec 32), level 0 -- a document saved before -- too.
-thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2)
-thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2)
-thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=0)
+# Sec 33: the edges between the walls and the fillets ended 0.0027 and 0.011 short of
+# the corners, under tolerances that took the gap in; they reach them now. The volumes
+# moved within those tolerances (0.71 and 3.10; booleans against the Arc join's solid
+# give 11010.25 and 22628.7 for both, sec 33).
+thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2, max_gap=0.002)
+thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2, max_gap=0.002)
+thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=0,
+               max_gap=0.002)
 
 
 # Sec 28. A box with two adjacent top edges filleted, the bottom removed, the
