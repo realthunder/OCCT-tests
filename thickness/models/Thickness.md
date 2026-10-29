@@ -1931,8 +1931,102 @@ the largest tolerance is at the top's corners, 9.5e-4 at 1 and 1.5e-3 at
 
 ![dome_join_in_2](pictures/dome_join_in_2.png)
 
-Still refused: the dome outward with the Intersection join, 1 and 2, no
-reason given; not chased yet.
+Still refused then: the dome outward with the Intersection join, 1 and 2,
+no reason given (sec 31).
+
+### Sec 31: the dome outward, and a level for fixes that change a shape
+
+**Four faults, behind a level** (`b68a0320fa`, the level; `e87e3c2289`,
+`BRepOffset_Inter2d` and `TrimEdge` in `BRepOffset_MakeOffset.cxx`).
+The filleted dome of sec 29 and 30, the bottom removed, outward with the
+Intersection join, 1 and 2: refused, no reason given.
+
+**The level.** The four fixes together give the right solid here, and move
+one result the suite already had, `dome_join_in_2`, in its last place
+(20254.6087 to 20254.6086). The rule since (the user's, 2026-10-29): a fix
+that changes a shape some input already had is made only where the caller
+asks for it, so that a document saved before recomputes as it did.
+`BRepOffset_SetFixLevel(n)` sets, for the calling thread, which of such
+fixes are made; 0, the default on every thread, makes none. Each level adds
+its own to those below; these four are level 1. It is a C function beside
+`BRepOffset`, which FreeCAD looks up by name (tests/fork/abi): no class
+changes, no signature. FreeCAD gives each feature that offsets a hidden
+`_OffsetFixLevel`, the latest for an object made now, 0 for one a file from
+before brings, and holds it on the thread while the feature recomputes
+(`Part::OCCTOffsetFixLevel`). The suites set it with `THICK_FIX_LEVEL=<n>`
+or per case (`thickness_case(..., fix_level=n)`), through `fix_level.py`.
+
+**The faults**, each from level 1:
+
+1. Outward, the edge between a wall and a B-spline fillet has to go past
+   its curve's end to meet the next wall, and sec 30 holds it to its curve:
+   no wall closed a wire, and the offset shell came out empty. Its curve is
+   made again from the pcurve its range came from (`GeomLib::BuildCurve3d`
+   over the prolonged range), so it keeps that pcurve's parameters.
+   `GeomLib::ExtendCurveToPoint`, sec 30's other way, gives the same here.
+2. A vertex stored where two edges cross (`RefEdgeInter`, `FuseVertices`)
+   was given the sum of the two edges' tolerances, and on an edge prolonged
+   before the faces are cut that is the tolerance of the whole
+   prolongation, where its surfaces part: with fault 1 fixed the walls'
+   corners inward came out at 0.0059 and 0.0122, where they are 9.4e-4
+   without. The vertex gets how far it is from each edge where it lies on
+   it: from the 3D curve and from each pcurve on its surface, at the
+   parameter it was given (`LocalTolerance`). Not at
+   `BRep_Tool::Parameter`'s, which takes a vertex whose tolerance reaches
+   both ends of an edge for one end of a closed one -- one such reading
+   gave 282370, and the tolerance it set fed the next.
+3. At the dome's top corners all three faces have one normal. The section
+   of the two fillets' offsets and the offset of the top's edge pass within
+   1.5e-3 of one point, the corner carried along that normal by the
+   thickness, and meet nowhere: no wire on the fillet.
+   `StoreAtSmoothVertex` puts a vertex there, on two edges that the
+   intersection found no crossing for and that pass within a hundredth of
+   the thickness of it.
+4. `TrimEdge` gave a vertex it found on an edge by projection its parameter
+   between the edge's ends only (sec 30); the corner of fault 3 is an end.
+   And the trimmed edge's tolerance takes in how far its curve ends from
+   its vertices: the section at the corner ends up to 1.4e-3 from it, at a
+   tolerance of 1e-7, which the suite's loose-end check flags.
+
+**Tried and dropped.** The first theory was the prolongation itself:
+`ExtendPCurve` prolongs a pcurve by twice the thickness in the surface's
+parameters, which on the top (parameters 0 to 1 over 80 by 50) runs the
+edge 26 out past the box, where the top's and a fillet's offsets part by
+8.74. Prolonging by that length in space instead fixed nothing on its own,
+broke both inward cases, and with the four faults fixed was not needed:
+capped at 40 times the thickness in space or more, every case here came out
+the same as with no cap, and below that the results jumped about (at 4 and
+8 times, all four broke). It is not in.
+
+**Results.** At level 1, with the Arc join's faces beside:
+
+| Case | Level 0 | Level 1 | Arc join + edge wedges |
+|------|---------|---------|------------------------|
+| `dome_join_out`, +1 | refused | 11009.9518, tolerance 2.8e-3 | 11009.7686 |
+| `dome_join_out_2`, +2 | refused | 22626.4034, tolerance 1.16e-2 | 22625.6761 |
+| `dome_join_in`, -1 | 10416.3739 | 10416.3739 | |
+| `dome_join_in_2`, -2 | 20254.6087 | 20254.6086 | |
+
+There is no reference by booleans outward. The last column is the Arc
+join's volume (10990.0549, 22546.8215) and the wedge each sharp edge gains
+over its arc, d^2 (tan(phi/2) - phi/2) per unit of length, phi the angle
+between the faces' normals there, integrated along the walls' edges and the
+creases: 1.7e-5 and 3.2e-5 under, the corners where three faces meet left
+out. The whole dome offset outward (`makeOffsetShape`, the Intersection
+join, closed) is a null shape at level 0 and 130150.5282 at level 1; the
+Arc join's 130072.9269 and the same wedges with the box's bottom edges and
+corners come to about 77.4 more, 130150.3.
+
+**Validation.** The thickness suite, 418 PASS 5 XFAIL with the new cases,
+and the 928-run sweep, each unfrozen and frozen: at level 0 the same as
+`92cc9effb6` case for case and run for run; at level 1 the same but for
+`dome_join_in_2`'s last place.
+
+![dome_join_out](pictures/dome_join_out.png)
+
+![dome_join_out_2](pictures/dome_join_out_2.png)
+
+The largest tolerance at +2, 1.16e-2, was not looked into.
 
 ## Where the chase stands (2026-10-04)
 

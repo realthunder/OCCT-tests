@@ -9,7 +9,8 @@
 # give every solid a location (an object's placement) or =baked to turn and
 # move its geometry instead: the volumes are the same wherever a solid lies.
 # SWEEP_PLACEMENT="x y z ax ay az degrees" is where, (3 4 5) and 40 degrees
-# about (1 2 3) when not given.
+# about (1 2 3) when not given. THICK_FIX_LEVEL=<n> runs at the fork's offset
+# fix level n (../../fix_level.py).
 import os
 import sys
 import FreeCAD
@@ -21,6 +22,10 @@ from loose_ends import loose, widest  # noqa: E402
 V = FreeCAD.Vector
 FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Part").SetBool(
     "ImmutableShapeValues", os.environ.get("THICK_FREEZE", "0") != "0")
+# THICK_FIX_LEVEL=<n>: the fork's offset fix level (fix_level.py)
+from fix_level import from_env as _fix_level_from_env  # noqa: E402
+
+_fix_level_from_env()
 
 
 def out(s):

@@ -19,7 +19,11 @@ FreeCADCmd tests/fork/thickness/run_tests.py
 The suite runs with FreeCAD's shape values unfrozen (`ImmutableShapeValues`
 off), as any build that does not freeze them runs: a frozen input is
 protected by copy-on-write from an algorithm that edits it, and the suite
-must see such an edit. `THICK_FREEZE=1` runs it frozen. Every case also
+must see such an edit. `THICK_FREEZE=1` runs it frozen. `THICK_FIX_LEVEL=<n>`
+runs it at the fork's offset fix level n (`BRepOffset_SetFixLevel`,
+`../fix_level.py`), which FreeCAD sets on objects made from now on; a case
+with a level of its own (`fix_level=`) runs at that one. Run it at 0 and
+at the latest level. Every case also
 checks that its input comes back as it went in (valid, the same volume, no
 tolerance grown).
 
@@ -617,9 +621,9 @@ the tube's end is degenerated, a point, and the corner closes.
 
 `models/dome_crease_fades.cpp` runs the three against the volumes booleans
 give: the part above z = 0 of the offset of the shape carried down to
-z = -10, less the shape. Still refused, as before: the dome itself removed
+z = -10, less the shape. Still refused then: the dome itself removed
 (inward since the next section), 4 inward, and the Intersection join
-either way.
+either way (inward since sec 30, outward from fix level 1 since sec 31).
 
 ![A filleted dome outward: the tubes close to a point](models/pictures/dome_crease_fades.png)
 
@@ -753,13 +757,42 @@ loops threw on; `TrimEdge` keeps the parameter it projected it to
 |------|-------|----------------|
 | `dome_join_in`, `dome_join_in_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, -1 and -2 | 10416.5477 and 20254.4292, by the volume booleans, as the Arc join gives; refused before |
 
-Still refused: the dome outward with the Intersection join.
+Still refused then: the dome outward with the Intersection join (the next
+section).
 
 **Validation** (against `193f97a680`): Part 397 and PartDesign 499 tests
 OK; thickness PASS=416 XFAIL=4 unfrozen and frozen (FAIL=2 before), fillet
 815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as before; the
 thickness sweep right in all 928 runs, not one changed. The first fix
 alone changes none of these.
+
+## The filleted dome outward, the Intersection join, from fix level 1 (`b68a0320fa`, `e87e3c2289`, 2026-10-29, sec 31)
+
+A fix that changes a shape some input already had is made only at a level
+the caller sets (`BRepOffset_SetFixLevel`, 0 by default on every thread);
+FreeCAD sets it from each feature's `_OffsetFixLevel`, the latest for an
+object made now, 0 for one an older file brings. The dome outward needs
+four, all level 1: the wall-to-fillet edges go past their B-spline curves,
+made again from the pcurve; a vertex where two edges cross is as far from
+them as it is where it lies, not their whole tolerance; a vertex at the
+top corners, where three faces share one normal and the edges meet
+nowhere; and `TrimEdge` keeps a projected end's parameter and lets a
+trimmed edge's tolerance take in how far it ends from its vertices
+(`models/Thickness.md` sec 31).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_join_out`, `dome_join_out_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, +1 and +2, level 1 | 11009.9518 and 22626.4034, the results; the Arc join's volume and the wedge each sharp edge gains, d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761; refused before |
+| `dome_join_out_level0` | the same, +1, level 0 | `XFAIL`: what a document saved before gets, refused as it was |
+
+**Validation** (against `92cc9effb6`): the thickness suite PASS=418
+XFAIL=5 unfrozen and frozen, at level 0 and at level 1, and the sweep, all
+928 runs: at level 0 the same as before case for case and run for run; at
+level 1 the same but for `dome_join_in_2`'s last place (20254.6086 for
+20254.6087). Fillet 815/1, boolean 43 and draft 104 with
+`new_roof_L_a-30` failing as before, the same at both levels. FreeCAD with
+`_OffsetFixLevel` (Sketch3D `719e37a112`): its Python suite 4064 tests OK
+and its gtests 1085 of 1085, frozen and unfrozen.
 
 ## Determinism cases (intersection mode, Arc join)
 
