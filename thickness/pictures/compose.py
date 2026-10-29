@@ -63,6 +63,8 @@ def status(d):
     for x in d["problems"]:
         x = re.sub(r"threw \d+", "threw ", x)
         x = x.replace(" BRep_API: command not done", "").replace("BRep_Tool:: ", "")
+        # FreeCAD's word for a thickness the kernel reported not done
+        x = re.sub(r"Thickness failed: the kernel gave no reason.*", "not done, no reason given", x)
         x = re.sub(r"\d{12,}(\.\d+)?", lambda m: "%.0e" % float(m.group(0)), x)
         x = x.replace(" BRep_Builder::Infinite parameter", " (an infinite parameter)")
         x = x.replace(" NCollection_DataMap::Find", " (a map lookup)")

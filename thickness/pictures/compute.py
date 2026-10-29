@@ -73,7 +73,10 @@ for name, (st, sk, fi, val, inter, join, ref) in CASES.items():
         r.exportBrep(os.path.join(OUT, name + ".brep"))
         d.update(ok=not p, problems=p, volume=vol, shells=len(r.Shells), solids=len(r.Solids))
     except Exception as e:
-        d.update(ok=False, problems=["threw " + (str(e).strip().splitlines() or [type(e).__name__])[-1]], volume=None)
+        # FreeCAD's own exceptions carry a dict; its message is the reason
+        a = e.args[0] if e.args else None
+        msg = a.get("sErrMsg", "") if isinstance(a, dict) else str(e)
+        d.update(ok=False, problems=["threw " + (msg.strip().splitlines() or [type(e).__name__])[-1]], volume=None)
     res[name] = d
     emit("%-32s %s %s" % (name, "OK " if d["ok"] else "BAD", "; ".join(d["problems"]) or "vol=%.4f" % d["volume"]))
 if os.environ.get("DOCS"):
