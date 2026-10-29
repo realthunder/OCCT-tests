@@ -15,6 +15,20 @@ def _tkoffset():
                     return ctypes.CDLL(line.split()[-1])
     except OSError:
         pass
+    # macOS has no /proc: walk the images dyld has loaded. A bare name would be
+    # looked up on the library path and can find another OCCT's (Homebrew's
+    # 7.6 in /usr/local), which has no level.
+    try:
+        dyld = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
+        dyld._dyld_get_image_name.restype = ctypes.c_char_p
+        for i in range(dyld._dyld_image_count()):
+            path = dyld._dyld_get_image_name(i).decode()
+            if "libTKOffset" in path:
+                lib = ctypes.CDLL(path)
+                if hasattr(lib, "BRepOffset_SetFixLevel"):
+                    return lib
+    except (OSError, AttributeError):
+        pass
     for name in ("libTKOffset.dylib", "TKOffset.dll", "libTKOffset.so"):
         try:
             return ctypes.CDLL(name)
