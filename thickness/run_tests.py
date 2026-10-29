@@ -1419,6 +1419,20 @@ thickness_case("dome_crease_fades_out", _dome, 4, 2.0, "pass", 22546.8191)
 thickness_case("dome_crease_fades_out_inter", _dome, 4, 2.0, "pass", 22546.8191, True)
 thickness_case("dome_crease_fades_out_1", _dome, 4, 1.0, "pass", 10990.0527)
 thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
+# The dome itself removed, inward: it meets each fillet 2e-6 rad off tangent,
+# and its edges are closed by tubes (the Arc join) -- never built, as the test
+# was the angular precision, and the result came back unhollowed. Built, the
+# tube's edge on the B-spline dome had no pcurve, stopped short of the dome's
+# next edge at each corner, and the curve between two tubes ended a hair off
+# the edges and the vertex it should end on (README.md). The volumes are the
+# rule the tube follows, worked numerically to about 1e-5: the input less the
+# points more than the thickness from every face kept. The mitre between the
+# fillets' offsets ends up to 1e-3 off the vertex at the dome's corner, where
+# the two all but touch, the vertex's tolerance grown to cover it (allowed
+# below, as for the bottom removed).
+thickness_case("dome_cap_removed_in_1", _dome, 9, -1.0, "pass", 10903.5721, loose_ok=1e-3)
+thickness_case("dome_cap_removed_in", _dome, 9, -2.0, "pass", 21141.2680, loose_ok=1e-3)
+thickness_case("dome_cap_removed_in_2_5", _dome, 9, -2.5, "pass", 26016.1606, loose_ok=1e-3)
 
 counts = {}
 for _, verdict, _ in results:
