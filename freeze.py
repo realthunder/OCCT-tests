@@ -43,3 +43,25 @@ def set_for_run(frozen):
         App.addDocumentObserver(_observer)
         App.newDocument(_DOC, hidden=True, temp=True)
     grp.SetBool(_NAME, bool(frozen))
+
+
+def frozen_copy(shape):
+    """A copy of shape, frozen as a feature's Shape is: set as a Part::Feature's
+    Shape with ImmutableShapeValues on, which freezes its TShapes in place. The
+    preference is back as it was after, and the feature gone."""
+    grp = App.ParamGet(_GROUP)
+    had = _NAME in grp.GetBools()
+    old = grp.GetBool(_NAME)
+    grp.SetBool(_NAME, True)
+    try:
+        doc = App.listDocuments().get(_DOC) or App.newDocument(_DOC, hidden=True, temp=True)
+        copy = shape.copy()
+        feature = doc.addObject("Part::Feature", "Frozen")
+        feature.Shape = copy
+        doc.removeObject(feature.Name)
+        return copy
+    finally:
+        if had:
+            grp.SetBool(_NAME, old)
+        else:
+            grp.RemBool(_NAME)

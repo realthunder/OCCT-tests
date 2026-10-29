@@ -48,7 +48,7 @@ if hasattr(Part, "hasOCCTFunction") and not Part.hasOCCTFunction("TKBRep", "SetF
 # other build of FreeCAD runs, so such an edit shows (FILLET_FREEZE=1 for the
 # frozen path). The user's own value is back when the run ends
 # (../freeze.py).
-from freeze import set_for_run  # noqa: E402
+from freeze import frozen_copy, set_for_run  # noqa: E402
 set_for_run(os.environ.get("FILLET_FREEZE", "0") != "0")
 
 
@@ -147,7 +147,8 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
                     result's tessellation inside the input's bounding box (a
                     fillet takes material away, or fills a concave corner:
                     nothing it makes lies outside -- a spike does, at a
-                    volume a spike hardly changes).
+                    volume a spike hardly changes); and the same fillet of the
+                    input frozen (frozen_problem) the same.
     expect='xfail': known broken (see README.md); an exception, an invalid
                     shape, a loose end or an open shell counts as the
                     expected failure.
@@ -157,6 +158,9 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
     looseness the case accepts.
     """
     try:
+        # copied before the fillet below, which may raise the input's
+        # tolerances in place
+        frozen = frozen_copy(shape) if expect == "pass" else None
         before = signature(shape)
         indices = edge_index if isinstance(edge_index, list) else [edge_index]
         op = shape.makeChamfer if chamfer else shape.makeFillet
@@ -196,12 +200,32 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
                 far = max(out, key=lambda p: box.Center.distanceToPoint(p))
                 problems.append("%d points outside the input's box, one at (%.3f, %.3f, %.3f)"
                                 % (len(out), far.x, far.y, far.z))
+        if not problems and frozen is not None:
+            problems += frozen_problem(frozen, chamfer, sizes, indices, flat, r)
         ok = not problems
         detail = "; ".join(problems) if problems else "vol=%.4f" % r.Volume
     except Exception as e:
         ok = False
         detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
     report(name, ok, expect == "xfail", detail)
+
+
+def frozen_problem(frozen, chamfer, sizes, indices, flat, made):
+    """[] when the fillet of `frozen`, a frozen copy of the input
+    (../freeze.py), is the fillet `made` of the input: a fillet writes nothing
+    into its input, and one frozen -- a feature's Shape in FreeCAD -- would
+    refuse the write. Valid, and the same volume to rounding."""
+    try:
+        op = frozen.makeChamfer if chamfer else frozen.makeFillet
+        with FlatEnd(flat):
+            r = op(*sizes, [frozen.Edges[i - 1] for i in indices])
+    except Exception as e:
+        return ["frozen: " + str(e).strip().splitlines()[-1]]
+    if not r.isValid():
+        return ["frozen: invalid"]
+    if abs(r.Volume - made.Volume) > 1e-9 * max(1.0, abs(made.Volume)):
+        return ["frozen: volume %.9g != %.9g" % (r.Volume, made.Volume)]
+    return []
 
 
 def exact_case(name, shape, edge_index, radius, kind):
