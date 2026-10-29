@@ -1460,6 +1460,20 @@ for _tag, _tests in (("x0y0", (lambda b: b.XMax < 1e-9, lambda b: b.YMax < 1e-9)
     thickness_case("mitrebox_%s_join_in" % _tag, _s, _bottom, -1.0, "pass", 228.2242, False, 2)
     thickness_case("mitrebox_%s_join_out" % _tag, _s, _bottom, +1.0, "pass", 334.7817, False, 2)
 
+# Sec 29. The same box with all four top edges filleted: the top's offset,
+# every edge of it tangent, met no section and was not extended, and kept the
+# edges it was made with, while the fillets' faces were extended, cut and
+# rebuilt with new ones along the same lines -- the shell had edges only one
+# face held, and the thickness was refused both ways. Worked out by hand as
+# sec 28's, the four sides rounded: X*Y*Z less r^2*(1 - pi/4)*(2X + 2Y), plus
+# the overlap at each of the four corners.
+_roundtop = _mitrebox.makeFillet(2, [e for e in _mitrebox.Edges
+                                     if abs(e.BoundBox.ZMin - 6) < 1e-9
+                                     and abs(e.BoundBox.ZMax - 6) < 1e-9])
+_bottom = [i + 1 for i, f in enumerate(_roundtop.Faces) if abs(f.BoundBox.ZMax) < 1e-9][0]
+thickness_case("roundtop_join_in", _roundtop, _bottom, -1.0, "pass", 217.7906, False, 2)
+thickness_case("roundtop_join_out", _roundtop, _bottom, +1.0, "pass", 313.2065, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
