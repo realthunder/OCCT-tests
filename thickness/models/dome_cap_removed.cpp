@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     // checked to 1e-4
     struct Run {
         double offset, want;
-    } runs[] = {{-1., 10903.5721}, {-2., 21141.2680}, {-2.5, 26016.1606}};
+    } runs[] = {{-0.5, 5536.4205}, {-1., 10903.5721}, {-2., 21141.2680}, {-2.5, 26016.1606}};
     for (const Run& r : runs) {
         std::string  what;
         bool         ok = false;
