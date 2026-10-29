@@ -45,6 +45,7 @@ STAGES = {
     "s26a": ("99971a1dc8", "26"),
     "s26b": ("54d2c02774", "26"),
     "s28": ("047a9e432d", "28"),
+    "s29": ("efe6683cd7", "29"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -135,6 +136,14 @@ def _mitrebox(xmax, ymax):
     return b.makeFillet(2, ex + ey)
 
 
+def _roundtop():
+    # The box of _mitrebox with all four top edges filleted, r2: its bottom
+    # is Face4.
+    b = Part.makeBox(10, 8, 6)
+    return b.makeFillet(2, [e for e in b.Edges
+                            if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9])
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -211,6 +220,7 @@ SHAPES = {
     "mitrebox_x0y8": lambda: _mitrebox(0, 8),
     "mitrebox_x10y0": lambda: _mitrebox(10, 0),
     "mitrebox_x10y8": lambda: _mitrebox(10, 8),
+    "roundtop": lambda: _roundtop(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -389,6 +399,8 @@ CASES = {
     "mitrebox_x10y0_join_out": ("s28", "mitrebox_x10y0", 4, +1, False, 2, 334.7817),
     "mitrebox_x10y8_join_in": ("s28", "mitrebox_x10y8", 6, -1, False, 2, 228.2242),
     "mitrebox_x10y8_join_out": ("s28", "mitrebox_x10y8", 6, +1, False, 2, 334.7817),
+    "roundtop_join_in": ("s29", "roundtop", 4, -1, False, 2, 217.7906),
+    "roundtop_join_out": ("s29", "roundtop", 4, +1, False, 2, 313.2065),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

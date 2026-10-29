@@ -643,15 +643,30 @@ faces (`models/Thickness.md` sec 28).
 | `mitrebox_x0y0_join_in`, `_out` | box 10 x 8 x 6, the top edges at x = 0 and y = 0 filleted r2, the bottom removed, Intersection join, -1 and +1 | 228.2242 and 334.7817, worked out by hand; right before too (the ellipse's origin lies off the section) |
 | `mitrebox_x0y8_join_*`, `mitrebox_x10y0_join_*`, `mitrebox_x10y8_join_*` | the same at the other three corners | the same volumes; invalid inward and refused outward before |
 
-Still refused: all four top edges filleted (the top's offset keeps edges
-the fillets' faces no longer have), and the filleted dome, with the
-Intersection join.
+Still refused then: all four top edges filleted (the next section), and
+the filleted dome, with the Intersection join.
 
 **Validation** (against `047a9e432d`): Part 397 and PartDesign 499 tests
 OK; thickness PASS=412 XFAIL=4 unfrozen and frozen (FAIL=6 before), fillet
 815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing on this box with
 the kernel from before as well; the thickness sweep right in all 928 runs,
 not one changed.
+
+## A top whose every edge is tangent, the Intersection join (`9e58e47a29`, 2026-10-29, sec 29)
+
+The same box with all four top edges filleted: the top's offset met no
+section, was not extended, and kept the edges its offset was made with,
+while the fillets' faces were rebuilt with new ones along the same lines --
+the shell held each of the top's edges once, refused. A face that meets no
+section is extended, and rebuilt, with a neighbour across a tangent edge
+that is (`models/Thickness.md` sec 29).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `roundtop_join_in`, `_out` | box 10 x 8 x 6, all four top edges filleted r2, the bottom removed, Intersection join, -1 and +1 | 217.7906 and 313.2065, worked out by hand; refused before |
+
+Still refused: the filleted dome with the Intersection join (the loops
+given a vertex off its edge).
 
 ## Determinism cases (intersection mode, Arc join)
 

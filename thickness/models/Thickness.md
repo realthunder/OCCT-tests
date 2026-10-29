@@ -1853,13 +1853,41 @@ the hand values to 1e-4.
 
 ![mitrebox_x10y8_join_out](pictures/mitrebox_x10y8_join_out.png)
 
-Still refused, with all four top edges filleted: the top's offset, every
-edge of it tangent, meets no section and keeps the edges it was made with,
-while the fillets' faces are rebuilt with new ones along the same lines,
-and the shell has edges only one face holds. The filleted dome
-(`../boolean/models/dome_fillet_r3.brep`), all of its top edges filleted,
-is still refused with the Intersection join too; it has not been looked
-at apart.
+With all four top edges filleted it was still refused: sec 29.
+
+### Sec 29: a face whose every edge is tangent
+
+**Not extended, not rebuilt** (`9e58e47a29`,
+`BRepOffset_MakeOffset::BuildOffsetByInter`).
+The box of sec 28 with all four top edges filleted, the bottom removed, the
+Intersection join: refused both ways. The Intersection join extends the
+offset of every face that meets a section -- the faces on either side of a
+convex or concave edge (`ConnexIntByInt`) -- and the loops rebuild them from
+the edges trimmed on the extended faces, a tangent edge among them: its
+offset, extended and trimmed, cut where the loops cut it. The top's offset
+has only tangent edges, met no section and was never extended; it was taken
+as it came, with the edges its offset was made with, while each fillet's
+face was rebuilt with new ones along the same lines. The shell held each of
+the top's four edges once, every face hung by one of them, and the shell
+was dropped. With three fillets the top meets the bare wall at a sharp
+edge, is extended, and is rebuilt with the rest.
+
+A face that meets no section is extended now as its neighbours are when one
+across a tangent edge of it is, and rebuilt with them; that one may make
+another face's neighbour extended, so it goes round until none is added.
+Worked out by hand as sec 28, the four sides rounded: 217.7906 inward and
+313.2065 outward at 10 x 8 x 6, r 2; at 80 x 50 x 30, r 3, 1 and 2 each
+way meet the hand values to 1e-4.
+
+![roundtop_join_in](pictures/roundtop_join_in.png)
+
+![roundtop_join_out](pictures/roundtop_join_out.png)
+
+Still refused with the Intersection join: the filleted dome
+(`../boolean/models/dome_fillet_r3.brep`), its B-spline top bounded by
+fillets all round. The loops are given a vertex for an edge it does not lie
+on (`BRep_Tool::Parameter` throws in `BRepAlgo_Loop::Perform`), 1 or 2
+either way; not chased yet.
 
 ## Where the chase stands (2026-10-04)
 
