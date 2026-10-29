@@ -76,6 +76,16 @@ def loose_end(shape, given, loose_ok=0.0):
     return ["loose end %.3g at Edge%d" % (gap, i)] if gap else []
 
 
+def round_trip(shape):
+    """['invalid after a BRep round trip'] when the shape, written as BRep text
+    and read back, is not valid: the text keeps a vertex's point and an edge's
+    range to 15 digits, and a vertex whose tolerance is exactly the gap to an
+    edge's end is left a few 1e-14 short of it (Thickness.md sec 33)."""
+    t = Part.Shape()
+    t.importBrepFromString(shape.exportBrepToString(), 0)
+    return [] if t.isValid() else ["invalid after a BRep round trip"]
+
+
 def input_problems(shape, before):
     after = signature(shape)
     if after == before:
@@ -156,7 +166,8 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
     without the level runs the case as it is, and shows what it does without.
 
     expect='pass':  result must be a valid solid, one closed shell, and match
-                    ref_volume (captured from a verified-good run).
+                    ref_volume (captured from a verified-good run); valid still
+                    after a BRep text round trip.
     expect='xfail': known broken (see README.md); any exception, invalid
                     shape, or open shell counts as the expected failure.
     """
@@ -174,6 +185,7 @@ def thickness_case(name, shape, face_index, value, expect, ref_volume=None, inte
             problems.append("invalid")
         else:
             problems += loose_end(r, shape, loose_ok)
+            problems += round_trip(r)
         if len(r.Shells) != 1:
             problems.append("shells=%d" % len(r.Shells))
         elif not r.Shells[0].isClosed():
