@@ -1810,6 +1810,130 @@ crashed every time. The shape is copied first, as the other Remove calls
 there already do. No volume changes: this suite, 378 cases, passes
 the same, run frozen and unfrozen with freed memory overwritten.
 
+### Sec 28: a section cut at its curve's origin
+
+**A piece outside the faces** (`779e6acceb`, `BRepOffset_Tool::Inter3D`,
+`JoinAtCurveOrigin`). A box with two adjacent top edges filleted, the bottom
+removed, the Intersection join: at three corners of the four the thickness
+was invalid inward, at the input's volume, and refused outward. The
+fillets' offsets are two cylinders of one radius whose axes cross, and they
+meet on an ellipse. The filler gives the section in pieces from curves of
+their own, and it cut this one at the ellipse's origin, where nothing else
+is: a vertex only the two pieces reach. At those three corners the origin
+is the point where the section crosses the line the fillet's offset shares
+with the wall's -- the tangent line, below which the section runs on into
+the enlarged face. The run-on was then an edge of its own, lying wholly
+outside the faces to come, and the loops walked it out and back: the
+fillet's face came back with a second wire round nothing, the other
+fillet with a face of no area. At the fourth corner the ellipse's origin
+lies off the section; the run-on is a piece of the one edge, and the cut at
+the tangent line takes it away.
+
+`Inter3D` assembles a section's pieces only when one of the faces is not
+elementary. Between two elementary faces it now joins two pieces of one
+periodic curve -- the same points at the same parameters -- the one ending
+on the period's end and the other starting on its start, at a vertex the
+filler made that no other piece reaches. Every corner then gives what the
+fourth always did. Worked out by hand: a box with two adjacent edges
+rounded at r is X Y Z less r^2 (1 - pi/4) (X + Y), plus the overlap at the
+corner, the integral of (r - sqrt(r^2 - t^2))^2 for t from 0 to r; the skin
+is the outer such solid less the inner. 228.2242 inward and 334.7817
+outward at 10 x 8 x 6, r 2; at 80 x 50 x 30, r 3, 1 and 2 each way meet
+the hand values to 1e-4.
+
+![mitrebox_x0y8_join_in](pictures/mitrebox_x0y8_join_in.png)
+
+![mitrebox_x0y8_join_out](pictures/mitrebox_x0y8_join_out.png)
+
+![mitrebox_x10y0_join_in](pictures/mitrebox_x10y0_join_in.png)
+
+![mitrebox_x10y0_join_out](pictures/mitrebox_x10y0_join_out.png)
+
+![mitrebox_x10y8_join_in](pictures/mitrebox_x10y8_join_in.png)
+
+![mitrebox_x10y8_join_out](pictures/mitrebox_x10y8_join_out.png)
+
+With all four top edges filleted it was still refused: sec 29.
+
+### Sec 29: a face whose every edge is tangent
+
+**Not extended, not rebuilt** (`9e58e47a29`,
+`BRepOffset_MakeOffset::BuildOffsetByInter`).
+The box of sec 28 with all four top edges filleted, the bottom removed, the
+Intersection join: refused both ways. The Intersection join extends the
+offset of every face that meets a section -- the faces on either side of a
+convex or concave edge (`ConnexIntByInt`) -- and the loops rebuild them from
+the edges trimmed on the extended faces, a tangent edge among them: its
+offset, extended and trimmed, cut where the loops cut it. The top's offset
+has only tangent edges, met no section and was never extended; it was taken
+as it came, with the edges its offset was made with, while each fillet's
+face was rebuilt with new ones along the same lines. The shell held each of
+the top's four edges once, every face hung by one of them, and the shell
+was dropped. With three fillets the top meets the bare wall at a sharp
+edge, is extended, and is rebuilt with the rest.
+
+A face that meets no section is extended now as its neighbours are when one
+across a tangent edge of it is, and rebuilt with them; that one may make
+another face's neighbour extended, so it goes round until none is added.
+Worked out by hand as sec 28, the four sides rounded: 217.7906 inward and
+313.2065 outward at 10 x 8 x 6, r 2; at 80 x 50 x 30, r 3, 1 and 2 each
+way meet the hand values to 1e-4.
+
+![roundtop_join_in](pictures/roundtop_join_in.png)
+
+![roundtop_join_out](pictures/roundtop_join_out.png)
+
+Still refused with the Intersection join: the filleted dome
+(`../boolean/models/dome_fillet_r3.brep`), its B-spline top bounded by
+fillets all round, 1 or 2 either way -- inward, the next section.
+
+### Sec 30: a B-spline run past its ends, and a vertex given no parameter
+
+**Two faults** (`09d6ab9ac2`, `BRepOffset_Inter2d::ExtentEdge`; `ad76ead2ad`,
+`TrimEdge` in `BRepOffset_MakeOffset.cxx`).
+The filleted dome of sec 29, the bottom removed, inward with the
+Intersection join: refused, `BRep_Tool::Parameter` throwing in
+`BRepAlgo_Loop::Perform`. Inward the two joins must come to one solid; the
+Arc join gives 10416.55 at 1 and 20254.43 at 2, and so do the volume
+booleans and the offset of the closed solid less its cavity.
+
+The first fault. Before the faces are cut, the offset of a tangent edge
+beside a section is prolonged, so that the sections reach it
+(`BRepOffset_Inter2d::ConnexIntByInt`, `ExtentEdge`): its pcurves are
+prolonged by twice the thickness and its range taken from them. The edges
+between the dome's walls and its fillets are B-splines, and a B-spline is
+not defined past its ends: the range ran past the curve, the curve was
+evaluated where it does not go, and the edge came out under a tolerance of
+1.87. A B-spline or Bezier edge goes no further than its curve now; the
+sections here meet it well inside. Prolonging the curve to the pcurves'
+ends instead (`GeomLib::ExtendCurveToPoint`) was tried, and gave the right
+solid, but the vertices where such an edge met two sections came out under
+0.0122 at 1 and 0.0456 at 2, where the Arc join's have 1e-4.
+
+The second. At each corner of the dome's top the offsets of its two
+tangent edges there, the top's with the fillets', cross at the offset of
+the corner, and the crossing gave two vertices 5e-4 apart: the end the one
+edge kept, and the point computed. The other edge was cut at the computed
+one, and the kept one was stored on it too, where the two cross, with no
+parameter on it. `TrimEdge` found where it lies by projecting it, but did
+not keep that, and the loops ask for it. It is kept now; a vertex found
+off the edge is left out.
+
+The second alone gave a valid solid of 10999.98 at 1, wrong: the edges of
+the first fault cut the walls at x = 1 and x = 79 short of the fillets
+beside them, both short edges lost. Together, 10416.3739 at 1 and 20254.6087 at 2, within 2e-5 of the
+references, with the Arc join's faces, edges and vertices, 19, 48 and 32;
+the largest tolerance is at the top's corners, 9.5e-4 at 1 and 1.5e-3 at
+2, the gap between the two vertices there (the Arc join's 9.3e-4 and
+6.6e-4).
+
+![dome_join_in](pictures/dome_join_in.png)
+
+![dome_join_in_2](pictures/dome_join_in_2.png)
+
+Still refused: the dome outward with the Intersection join, 1 and 2, no
+reason given; not chased yet.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

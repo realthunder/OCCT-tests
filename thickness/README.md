@@ -699,6 +699,68 @@ plain and frozen, fillet 815, draft 105, boolean 43; the fillet and draft
 sweeps not one result changed; the thickness sweep right in all 928 runs,
 plain and frozen, not one changed.
 
+## Two adjacent top fillets, the Intersection join (`779e6acceb`, 2026-10-29, sec 28)
+
+A box with two adjacent top edges filleted, the bottom removed, the
+Intersection join: the fillets' offsets meet on an ellipse, which the
+filler cut at its origin. At three corners of the four that origin is
+where the section crosses the fillet's tangent line with the wall, and the
+run-on beyond it was an edge of its own outside the faces, walked out and
+back by the loops. `Inter3D` joins such pieces again between elementary
+faces (`models/Thickness.md` sec 28).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `mitrebox_x0y0_join_in`, `_out` | box 10 x 8 x 6, the top edges at x = 0 and y = 0 filleted r2, the bottom removed, Intersection join, -1 and +1 | 228.2242 and 334.7817, worked out by hand; right before too (the ellipse's origin lies off the section) |
+| `mitrebox_x0y8_join_*`, `mitrebox_x10y0_join_*`, `mitrebox_x10y8_join_*` | the same at the other three corners | the same volumes; invalid inward and refused outward before |
+
+Still refused then: all four top edges filleted (the next section), and
+the filleted dome, with the Intersection join.
+
+**Validation** (against `047a9e432d`): Part 397 and PartDesign 499 tests
+OK; thickness PASS=412 XFAIL=4 unfrozen and frozen (FAIL=6 before), fillet
+815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing on this box with
+the kernel from before as well; the thickness sweep right in all 928 runs,
+not one changed.
+
+## A top whose every edge is tangent, the Intersection join (`9e58e47a29`, 2026-10-29, sec 29)
+
+The same box with all four top edges filleted: the top's offset met no
+section, was not extended, and kept the edges its offset was made with,
+while the fillets' faces were rebuilt with new ones along the same lines --
+the shell held each of the top's edges once, refused. A face that meets no
+section is extended, and rebuilt, with a neighbour across a tangent edge
+that is (`models/Thickness.md` sec 29).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `roundtop_join_in`, `_out` | box 10 x 8 x 6, all four top edges filleted r2, the bottom removed, Intersection join, -1 and +1 | 217.7906 and 313.2065, worked out by hand; refused before |
+
+Still refused then: the filleted dome with the Intersection join (inward,
+the next section).
+
+## The filleted dome inward, the Intersection join (`09d6ab9ac2`, `ad76ead2ad`, 2026-10-29, sec 30)
+
+Two faults. The offset of a tangent edge between a wall and a B-spline
+fillet was given a range past the ends of its curve, a B-spline that does
+not go there, and came out under a tolerance of 1.87; it goes no further
+than its curve now. And at each corner of the dome's top the end of one offset edge was
+stored on the next where they cross without a parameter on it, which the
+loops threw on; `TrimEdge` keeps the parameter it projected it to
+(`models/Thickness.md` sec 30).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_join_in`, `dome_join_in_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, -1 and -2 | 10416.5477 and 20254.4292, by the volume booleans, as the Arc join gives; refused before |
+
+Still refused: the dome outward with the Intersection join.
+
+**Validation** (against `193f97a680`): Part 397 and PartDesign 499 tests
+OK; thickness PASS=416 XFAIL=4 unfrozen and frozen (FAIL=2 before), fillet
+815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as before; the
+thickness sweep right in all 928 runs, not one changed. The first fix
+alone changes none of these.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

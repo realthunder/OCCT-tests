@@ -857,6 +857,15 @@ thickness_case("topsplit_top_piece_join_out", topsplit, topsplit_top, +1.0, "pas
 thickness_case("topsplit_top_piece_join_in",  topsplit, topsplit_top, -1.0, "pass", 276.0, False, 2)
 
 
+# The kernel's refusal of a thickness: a Standard_Failure raised inside it
+# (Part.OCCError), or the call's own word that it was not done -- FreeCAD
+# raises that as Base.CADKernelError, with the reason, since 2026-10-29
+# (FreeCAD 1bba59eb6e); a FreeCAD from before raised OCCError for both.
+REFUSED = (Part.OCCError,)
+if hasattr(App.Base, "CADKernelError"):
+    REFUSED += (App.Base.CADKernelError,)
+
+
 # Where the fork has no answer yet it must have none: the input back, "valid"
 # and unhollowed, is the one result that is never right. MakeThickSolid
 # refuses a result of the shape's own volume (inward) or of its volume with
@@ -871,7 +880,7 @@ def never_the_input_case(name, shape, face_index, value, inter=False, join=0):
         if back:
             problems.append("the input back, vol=%.4f" % r.Volume)
         report(name, not problems, False, "; ".join(problems) if problems else "vol=%.4f" % r.Volume)
-    except Part.OCCError:
+    except REFUSED:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
@@ -887,13 +896,13 @@ never_the_input_case("halfdome_side_join_out_not_the_input", halfdome, 3, +0.5, 
 def refused_case(name, shape, face_indices, value, inter=False, join=0):
     before = signature(shape)
     # the faces looked up outside the try: a wrong index is the case's fault,
-    # not a refusal; only the kernel's own refusal (Part.OCCError) counts
+    # not a refusal; only the kernel's own refusal (REFUSED) counts
     faces = [shape.Faces[i - 1] for i in face_indices]
     try:
         r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         report(name, False, False, "answered: %s valid=%s vol=%.4f" % (
             r.ShapeType, r.isValid(), r.Volume))
-    except Part.OCCError:
+    except REFUSED:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
@@ -1419,6 +1428,14 @@ thickness_case("dome_crease_fades_out", _dome, 4, 2.0, "pass", 22546.8191)
 thickness_case("dome_crease_fades_out_inter", _dome, 4, 2.0, "pass", 22546.8191, True)
 thickness_case("dome_crease_fades_out_1", _dome, 4, 1.0, "pass", 10990.0527)
 thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
+# Sec 30. The same inward with the Intersection join, which must come to the
+# Arc join's solid: the edges between the walls and the fillets, B-splines,
+# were given a range past the ends of their curves and came out under a
+# tolerance of 1.87, and at each corner of the dome's top the end of one
+# offset edge was stored on the next without a parameter on it -- refused.
+# The volume booleans give as above (2 inward is dome_tangent_corner_in's).
+thickness_case("dome_join_in", _dome, 4, -1.0, "pass", 10416.5477, False, 2)
+thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
 # The dome itself removed, inward: it meets each fillet 2e-6 rad off tangent,
 # and its edges are closed by tubes (the Arc join) -- never built, as the test
 # was the angular precision, and the result came back unhollowed. Built, the
@@ -1433,6 +1450,51 @@ thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
 thickness_case("dome_cap_removed_in_1", _dome, 9, -1.0, "pass", 10903.5721, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in", _dome, 9, -2.0, "pass", 21141.2680, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in_2_5", _dome, 9, -2.5, "pass", 26016.1606, loose_ok=1e-3)
+
+
+# Sec 28. A box with two adjacent top edges filleted, the bottom removed, the
+# Intersection join: the fillets' offsets meet on an ellipse, and the filler
+# cut that section at the ellipse's origin, where nothing else need be. At
+# three corners of the four the origin is the point where the section crosses
+# the line the fillet's offset shares with the wall's, and the piece beyond it
+# was an edge of its own lying outside the faces: the fillet's face came back
+# with a second wire walked out along it and back, and a face of no area on
+# the other fillet -- invalid at the input's volume inward, refused outward.
+# At the fourth the origin lies off the section. Worked out by hand: a box
+# with two adjacent edges rounded at r is X*Y*Z less r^2*(1 - pi/4)*(X + Y),
+# plus the overlap at the corner, the integral of (r - sqrt(r^2 - t^2))^2 for
+# t from 0 to r; the skin is the outer such solid less the inner.
+_mitrebox = Part.makeBox(10, 8, 6)
+
+
+def _mitrebox_top(test):
+    return [e for e in _mitrebox.Edges
+            if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9
+            and test(e.BoundBox)][0]
+
+
+for _tag, _tests in (("x0y0", (lambda b: b.XMax < 1e-9, lambda b: b.YMax < 1e-9)),
+                     ("x0y8", (lambda b: b.XMax < 1e-9, lambda b: b.YMin > 8 - 1e-9)),
+                     ("x10y0", (lambda b: b.XMin > 10 - 1e-9, lambda b: b.YMax < 1e-9)),
+                     ("x10y8", (lambda b: b.XMin > 10 - 1e-9, lambda b: b.YMin > 8 - 1e-9))):
+    _s = _mitrebox.makeFillet(2, [_mitrebox_top(t) for t in _tests])
+    _bottom = [i + 1 for i, f in enumerate(_s.Faces) if abs(f.BoundBox.ZMax) < 1e-9][0]
+    thickness_case("mitrebox_%s_join_in" % _tag, _s, _bottom, -1.0, "pass", 228.2242, False, 2)
+    thickness_case("mitrebox_%s_join_out" % _tag, _s, _bottom, +1.0, "pass", 334.7817, False, 2)
+
+# Sec 29. The same box with all four top edges filleted: the top's offset,
+# every edge of it tangent, met no section and was not extended, and kept the
+# edges it was made with, while the fillets' faces were extended, cut and
+# rebuilt with new ones along the same lines -- the shell had edges only one
+# face held, and the thickness was refused both ways. Worked out by hand as
+# sec 28's, the four sides rounded: X*Y*Z less r^2*(1 - pi/4)*(2X + 2Y), plus
+# the overlap at each of the four corners.
+_roundtop = _mitrebox.makeFillet(2, [e for e in _mitrebox.Edges
+                                     if abs(e.BoundBox.ZMin - 6) < 1e-9
+                                     and abs(e.BoundBox.ZMax - 6) < 1e-9])
+_bottom = [i + 1 for i, f in enumerate(_roundtop.Faces) if abs(f.BoundBox.ZMax) < 1e-9][0]
+thickness_case("roundtop_join_in", _roundtop, _bottom, -1.0, "pass", 217.7906, False, 2)
+thickness_case("roundtop_join_out", _roundtop, _bottom, +1.0, "pass", 313.2065, False, 2)
 
 counts = {}
 for _, verdict, _ in results:
