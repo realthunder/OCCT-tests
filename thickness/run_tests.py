@@ -1450,14 +1450,14 @@ thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
 # The volume booleans give as above (2 inward is dome_tangent_corner_in's).
 thickness_case("dome_join_in", _dome, 4, -1.0, "pass", 10416.5477, False, 2)
 thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
-# The same outward (Thickness.md sec 31): refused before, made from the fork's offset fix
-# level 1 (BRepOffset_SetFixLevel; FreeCAD sets it on objects made from now on). The
-# references are the results; the Arc join's volume and the wedge each sharp edge gains,
-# d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761. At level 0, what a
-# document saved before gets, it is refused as it was.
-thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=1)
-thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2, fix_level=1)
-thickness_case("dome_join_out_level0", _dome, 4, 1.0, "xfail", None, False, 2, fix_level=0)
+# The same outward (Thickness.md sec 31): refused before. The references are the results;
+# the Arc join's volume and the wedge each sharp edge gains, d^2 (tan(phi/2) - phi/2) along
+# it, come to 11009.7686 and 22625.6761. Sec 31 made it from the fork's offset fix level 1
+# only; what that moved in the cases made before lies within their tolerances, so it is
+# made at every level (sec 32), level 0 -- a document saved before -- too.
+thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2)
+thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2)
+thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=0)
 # The dome itself removed, inward: it meets each fillet 2e-6 rad off tangent,
 # and its edges are closed by tubes (the Arc join) -- never built, as the test
 # was the angular precision, and the result came back unhollowed. Built, the

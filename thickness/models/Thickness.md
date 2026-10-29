@@ -2026,7 +2026,90 @@ and the 928-run sweep, each unfrozen and frozen: at level 0 the same as
 
 ![dome_join_out_2](pictures/dome_join_out_2.png)
 
-The largest tolerance at +2, 1.16e-2, was not looked into.
+The largest tolerance at +2, 1.16e-2: sec 32. The level is gone there
+too: what these four fixes move lies within tolerance, and they are made at
+every level.
+
+### Sec 32: a fix within tolerance needs no level; the +2 dome's tolerance
+
+**The rule, refined** (the user's, 2026-10-29). A fix that moves the
+shapes it changes no further than their tolerances needs no level: it lands
+as the fork's behaviour. Only a change past the tolerance goes behind one.
+
+**Sec 31 measured** (`8b5beb449a`). The thickness suite and the 928-run
+sweep at levels 0 and 1, each result to full precision -- volume, area,
+face/edge/vertex counts, widest tolerance (a patched copy of the two
+scripts printing `%.10f`): no status and no topology changes anywhere. 529
+results differ: 526 in the widest tolerance alone, which tightens (a vertex
+takes how far it lies from its edges, not the sum of their tolerances), 3
+loosen at most from 9.54e-4 to 1.09e-3. Volumes move 9e-7 at most, but
+for `dome_join_in_2`:
+
+- `dome_join_in_2`, level 0 against 1: the same 19/48/32, no vertex moved
+  by 1e-9, ten edges' tolerances from 1e-7 to at most 4.2e-6. One face's
+  area is 1.17e-5 more over a boundary 93.7 long -- a strip 1.2e-7 wide on
+  average, which is the volume's -1.05e-4. Sampled over both shapes, 15333
+  points each way at exact distances, they lie within 2e-6 of each other
+  but at two top corners, 1.35e-3 apart there inside a tolerance of
+  1.46e-3.
+- `dome_join_in`: four corner vertices move 2.4e-4 to 8.6e-4, each within
+  its own tolerance (7.6e-4 to 1.09e-3).
+
+So the four fixes are made at every level, `dome_join_out_level0` passes
+(11009.9518), and level 1 makes nothing differently. It stays, with
+`BRepOffset_SetFixLevel`: FreeCAD has saved objects at 1, and the next fix
+that does move a shape past its tolerance is level 2. One more for level 1
+here: `dome_join_in` at level 0 came back invalid from a BRep text write
+and read; at level 1, now every level, it does not.
+
+At level 0 now: the thickness suite 419 PASS 4 XFAIL unfrozen and frozen,
+the same as level 1 at `e87e3c2289` case for case and to full precision but
+for `dome_join_out_level0`; the sweep, unfrozen and frozen, run for run;
+fillet 815 PASS 1 XFAIL, boolean 43, draft 104 with `new_roof_L_a-30`
+failing as before, case for case.
+
+**The +2 tolerance, 1.16e-2: found, not fixed.** The edges between the
+walls and the fillets end 0.011 (`dome_join_out_2`) and 0.0027
+(`dome_join_out`) short of the corners lying on them -- their curves lie on
+both faces to 1e-11, the corners on the curves to 2e-9 -- and the
+tolerance is the gap (sec 31's fault 4). The cause is in `ExtentEdge`: the
+edge's B-spline is made again from one pcurve, the wall plane's (sec 31's
+fault 1), while the other, the fillet offset's, a line in the fillet's
+parameters, was prolonged its own way. Past the old curve's end the two run
+at different speeds: at the same parameter they are 0.022 and 0.043 apart at
+the prolonged ends (+2). `BRepLib::SameParameter` does not make the second
+pcurve agree; it raises the tolerance. A corner the intersection finds on
+that pcurve is given its parameter there, and the edge is trimmed to it, so
+on the curve it ends short. In the wall's own parameters, the wall's top
+edge stops 0.0057 short of the corner as well.
+
+That gap costs the exact volume more than its size suggests: the area of a
+plane face is integrated round its pcurves, and a wire left open by 1.3e-3
+in z, some 80 from the plane's origin, is off by about 0.1. The two side
+walls of `dome_join_out_2` come out 0.085 below their own meshes (0.001
+mesh deflection), where the closed walls of the fix below come out 0.016
+above theirs, as the other plane faces do. The whole solids' meshes cannot
+tell the two apart (22624.517 and 22624.529; a mesh's chords put both some
+2 to 5 under), so by the faces: the results the suite holds, 11009.9518
+and 22626.4034, are likely low by about 0.7 and 3.1.
+
+Tried:
+
+- Moving a trimmed end to where its vertex lies on the curve (`TrimEdge`):
+  the edge reaches the corner, but the fillet's pcurve then runs past it,
+  and the tolerances stay.
+- Clearing the edge's SameParameter flag in `ExtentEdge`: nothing changes,
+  the tolerance is raised as before.
+- Making the other pcurves again as the new curve projected on their
+  surfaces (`GeomProjLib::Curve2d`): the edges reach their corners at
+  1e-7, the walls close, +2's widest tolerance is 2.4e-3 (the top corners,
+  sec 31's fault 3) and +1's 2.8e-3, and the exact volumes come to
+  11010.6637 and 22629.5034. The inward cases move 5.3e-3 and 2.4e-3. But `dome_join_out_2` then fails a check after a BRep
+  text write and read: a wall corner holds stale point representations
+  1.34e-5 off, exactly its tolerance. It is valid in memory.
+
+The last is the way to go; it is not in until the corner's representations
+are right. The patch is kept with the chase's notes.
 
 ## Where the chase stands (2026-10-04)
 

@@ -782,8 +782,8 @@ trimmed edge's tolerance take in how far it ends from its vertices
 
 | Case | Model | What it covers |
 |------|-------|----------------|
-| `dome_join_out`, `dome_join_out_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, +1 and +2, level 1 | 11009.9518 and 22626.4034, the results; the Arc join's volume and the wedge each sharp edge gains, d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761; refused before |
-| `dome_join_out_level0` | the same, +1, level 0 | `XFAIL`: what a document saved before gets, refused as it was |
+| `dome_join_out`, `dome_join_out_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, +1 and +2, at every level since sec 32 | 11009.9518 and 22626.4034, the results; the Arc join's volume and the wedge each sharp edge gains, d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761; refused before |
+| `dome_join_out_level0` | the same, +1, level 0 | what a document saved before gets: `XFAIL`, refused, until sec 32; made since, 11009.9518 |
 
 **Validation** (against `92cc9effb6`): the thickness suite PASS=418
 XFAIL=5 unfrozen and frozen, at level 0 and at level 1, and the sweep, all
@@ -793,6 +793,32 @@ level 1 the same but for `dome_join_in_2`'s last place (20254.6086 for
 `new_roof_L_a-30` failing as before, the same at both levels. FreeCAD with
 `_OffsetFixLevel` (Sketch3D `719e37a112`): its Python suite 4064 tests OK
 and its gtests 1085 of 1085, frozen and unfrozen.
+
+## The dome outward at every fix level (`8b5beb449a`, 2026-10-29, sec 32)
+
+What sec 31's four fixes move in the cases the suite had lies within those
+shapes' tolerances, measured to full precision over the suite and the sweep:
+no status, no topology, tolerances tighter in 526 of 529, volumes 9e-7 at
+most but `dome_join_in_2`'s -1.05e-4, a strip 1.2e-7 wide on one face, the
+two shapes within 2e-6 of each other but at two corners inside their
+tolerance. A fix within tolerance needs no level, so they are made at every
+one; level 1 makes nothing differently (`models/Thickness.md` sec 32).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_join_out_level0` | as above, +1, level 0 | made, 11009.9518, as at level 1 |
+
+The +2 dome's tolerance of 1.16e-2 is found, not fixed: the wall-to-fillet
+edges end 0.011 short of their corners, the fillet's pcurve and the curve
+made again from the wall's running at different speeds past the old end.
+The exact volumes of `dome_join_out` and `dome_join_out_2` are likely low by
+about 0.7 and 3.1 for it (sec 32).
+
+**Validation** (against `7543d139db`): the thickness suite PASS=419
+XFAIL=4 unfrozen and frozen (FAIL=3 before), the same as level 1 before
+case for case and to full precision but for `dome_join_out_level0`; the
+sweep, all 928 runs, the same; fillet 815/1, boolean 43, draft 104 with
+`new_roof_L_a-30` failing as before.
 
 ## Determinism cases (intersection mode, Arc join)
 

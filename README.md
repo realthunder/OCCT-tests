@@ -66,7 +66,11 @@ submodule to the matching commit.
 The rule for every fix to the fork (the user's ruling, 2026-10-29). Run
 the suites over it, each frozen and unfrozen. If it changes no result a
 suite already had -- no volume, no validity, no case -- it lands as the
-fork's behaviour. If it changes any, it goes behind an option, off by
+fork's behaviour. So does one whose changes stay within the tolerances of
+the shapes it changes (the user's, the same day): measure them to full
+precision, not to the four places the suites print -- how far each changed
+shape moves, against its tolerance there. If it changes any result past
+that, it goes behind an option, off by
 default, so that the shape a document saved comes back as it was; FreeCAD
 turns the option on for objects made from then on, and keeps it off for an
 object an older file brings (a hidden property of the object, 0 when the
@@ -82,8 +86,11 @@ feature's `_OffsetFixLevel` for the feature's recompute
 level is a new value of `Part::OCCTOffsetFixLevelLatest` there. The suites
 set it with `THICK_FIX_LEVEL=<n>` or per case (`fix_level.py`); a fix
 behind a level is run at 0, where nothing may change, and at the latest.
-Level 1 is the filleted dome outward (`thickness/models/Thickness.md` sec
-31).
+Level 1 brought the filleted dome outward (`thickness/models/Thickness.md`
+sec 31); measured, it moved the shapes before it within their tolerances,
+so it is made at every level now and level 1 makes nothing differently. It
+stays reserved, since FreeCAD has saved objects at 1: the next level is 2
+(sec 32).
 
 History: moved out of the fork on 2026-10-03 with its history (the fork's
 `tests/thickness/`, `tests/fillet/` and `tests/occ-issues/`); the commits
