@@ -1428,6 +1428,14 @@ thickness_case("dome_crease_fades_out", _dome, 4, 2.0, "pass", 22546.8191)
 thickness_case("dome_crease_fades_out_inter", _dome, 4, 2.0, "pass", 22546.8191, True)
 thickness_case("dome_crease_fades_out_1", _dome, 4, 1.0, "pass", 10990.0527)
 thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
+# Sec 30. The same inward with the Intersection join, which must come to the
+# Arc join's solid: the edges between the walls and the fillets, B-splines,
+# were given a range past the ends of their curves and came out under a
+# tolerance of 1.87, and at each corner of the dome's top the end of one
+# offset edge was stored on the next without a parameter on it -- refused.
+# The volume booleans give as above (2 inward is dome_tangent_corner_in's).
+thickness_case("dome_join_in", _dome, 4, -1.0, "pass", 10416.5477, False, 2)
+thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
 
 
 # Sec 28. A box with two adjacent top edges filleted, the bottom removed, the
