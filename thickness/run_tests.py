@@ -1429,6 +1429,37 @@ thickness_case("dome_crease_fades_out_inter", _dome, 4, 2.0, "pass", 22546.8191,
 thickness_case("dome_crease_fades_out_1", _dome, 4, 1.0, "pass", 10990.0527)
 thickness_case("dome_crease_fades_out_3", _dome, 4, 3.0, "pass", 34682.8715)
 
+
+# Sec 28. A box with two adjacent top edges filleted, the bottom removed, the
+# Intersection join: the fillets' offsets meet on an ellipse, and the filler
+# cut that section at the ellipse's origin, where nothing else need be. At
+# three corners of the four the origin is the point where the section crosses
+# the line the fillet's offset shares with the wall's, and the piece beyond it
+# was an edge of its own lying outside the faces: the fillet's face came back
+# with a second wire walked out along it and back, and a face of no area on
+# the other fillet -- invalid at the input's volume inward, refused outward.
+# At the fourth the origin lies off the section. Worked out by hand: a box
+# with two adjacent edges rounded at r is X*Y*Z less r^2*(1 - pi/4)*(X + Y),
+# plus the overlap at the corner, the integral of (r - sqrt(r^2 - t^2))^2 for
+# t from 0 to r; the skin is the outer such solid less the inner.
+_mitrebox = Part.makeBox(10, 8, 6)
+
+
+def _mitrebox_top(test):
+    return [e for e in _mitrebox.Edges
+            if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9
+            and test(e.BoundBox)][0]
+
+
+for _tag, _tests in (("x0y0", (lambda b: b.XMax < 1e-9, lambda b: b.YMax < 1e-9)),
+                     ("x0y8", (lambda b: b.XMax < 1e-9, lambda b: b.YMin > 8 - 1e-9)),
+                     ("x10y0", (lambda b: b.XMin > 10 - 1e-9, lambda b: b.YMax < 1e-9)),
+                     ("x10y8", (lambda b: b.XMin > 10 - 1e-9, lambda b: b.YMin > 8 - 1e-9))):
+    _s = _mitrebox.makeFillet(2, [_mitrebox_top(t) for t in _tests])
+    _bottom = [i + 1 for i, f in enumerate(_s.Faces) if abs(f.BoundBox.ZMax) < 1e-9][0]
+    thickness_case("mitrebox_%s_join_in" % _tag, _s, _bottom, -1.0, "pass", 228.2242, False, 2)
+    thickness_case("mitrebox_%s_join_out" % _tag, _s, _bottom, +1.0, "pass", 334.7817, False, 2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
