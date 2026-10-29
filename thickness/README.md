@@ -665,8 +665,30 @@ that is (`models/Thickness.md` sec 29).
 |------|-------|----------------|
 | `roundtop_join_in`, `_out` | box 10 x 8 x 6, all four top edges filleted r2, the bottom removed, Intersection join, -1 and +1 | 217.7906 and 313.2065, worked out by hand; refused before |
 
-Still refused: the filleted dome with the Intersection join (the loops
-given a vertex off its edge).
+Still refused then: the filleted dome with the Intersection join (inward,
+the next section).
+
+## The filleted dome inward, the Intersection join (`09d6ab9ac2`, `ad76ead2ad`, 2026-10-29, sec 30)
+
+Two faults. The offset of a tangent edge between a wall and a B-spline
+fillet was given a range past the ends of its curve, a B-spline that does
+not go there, and came out under a tolerance of 1.87; it goes no further
+than its curve now. And at each corner of the dome's top the end of one offset edge was
+stored on the next where they cross without a parameter on it, which the
+loops threw on; `TrimEdge` keeps the parameter it projected it to
+(`models/Thickness.md` sec 30).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_join_in`, `dome_join_in_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, -1 and -2 | 10416.5477 and 20254.4292, by the volume booleans, as the Arc join gives; refused before |
+
+Still refused: the dome outward with the Intersection join.
+
+**Validation** (against `193f97a680`): Part 397 and PartDesign 499 tests
+OK; thickness PASS=416 XFAIL=4 unfrozen and frozen (FAIL=2 before), fillet
+815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as before; the
+thickness sweep right in all 928 runs, not one changed. The first fix
+alone changes none of these.
 
 ## Determinism cases (intersection mode, Arc join)
 

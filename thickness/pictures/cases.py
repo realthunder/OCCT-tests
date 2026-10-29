@@ -2,6 +2,7 @@
 # turned from failing to passing, each with the stage of the fix -- the fork
 # commit just before it (STAGES) is the "before" column.
 import math
+import os
 
 try:
     import FreeCAD as App, Part
@@ -46,6 +47,7 @@ STAGES = {
     "s26b": ("54d2c02774", "26"),
     "s28": ("047a9e432d", "28"),
     "s29": ("efe6683cd7", "29"),
+    "s30": ("193f97a680", "30"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -144,6 +146,15 @@ def _roundtop():
                             if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9])
 
 
+def _filleteddome():
+    # A box under a B-spline dome, the dome's four edges filleted r3 (the
+    # suite's _dome): its bottom is Face4.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "boolean",
+                              "models", "dome_fillet_r3.brep"))
+    return s
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -221,6 +232,7 @@ SHAPES = {
     "mitrebox_x10y0": lambda: _mitrebox(10, 0),
     "mitrebox_x10y8": lambda: _mitrebox(10, 8),
     "roundtop": lambda: _roundtop(),
+    "filleteddome": lambda: _filleteddome(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -401,6 +413,8 @@ CASES = {
     "mitrebox_x10y8_join_out": ("s28", "mitrebox_x10y8", 6, +1, False, 2, 334.7817),
     "roundtop_join_in": ("s29", "roundtop", 4, -1, False, 2, 217.7906),
     "roundtop_join_out": ("s29", "roundtop", 4, +1, False, 2, 313.2065),
+    "dome_join_in": ("s30", "filleteddome", 4, -1, False, 2, 10416.5477),
+    "dome_join_in_2": ("s30", "filleteddome", 4, -2, False, 2, 20254.4292),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

@@ -1885,9 +1885,54 @@ way meet the hand values to 1e-4.
 
 Still refused with the Intersection join: the filleted dome
 (`../boolean/models/dome_fillet_r3.brep`), its B-spline top bounded by
-fillets all round. The loops are given a vertex for an edge it does not lie
-on (`BRep_Tool::Parameter` throws in `BRepAlgo_Loop::Perform`), 1 or 2
-either way; not chased yet.
+fillets all round, 1 or 2 either way -- inward, the next section.
+
+### Sec 30: a B-spline run past its ends, and a vertex given no parameter
+
+**Two faults** (`09d6ab9ac2`, `BRepOffset_Inter2d::ExtentEdge`; `ad76ead2ad`,
+`TrimEdge` in `BRepOffset_MakeOffset.cxx`).
+The filleted dome of sec 29, the bottom removed, inward with the
+Intersection join: refused, `BRep_Tool::Parameter` throwing in
+`BRepAlgo_Loop::Perform`. Inward the two joins must come to one solid; the
+Arc join gives 10416.55 at 1 and 20254.43 at 2, and so do the volume
+booleans and the offset of the closed solid less its cavity.
+
+The first fault. Before the faces are cut, the offset of a tangent edge
+beside a section is prolonged, so that the sections reach it
+(`BRepOffset_Inter2d::ConnexIntByInt`, `ExtentEdge`): its pcurves are
+prolonged by twice the thickness and its range taken from them. The edges
+between the dome's walls and its fillets are B-splines, and a B-spline is
+not defined past its ends: the range ran past the curve, the curve was
+evaluated where it does not go, and the edge came out under a tolerance of
+1.87. A B-spline or Bezier edge goes no further than its curve now; the
+sections here meet it well inside. Prolonging the curve to the pcurves'
+ends instead (`GeomLib::ExtendCurveToPoint`) was tried, and gave the right
+solid, but the vertices where such an edge met two sections came out under
+0.0122 at 1 and 0.0456 at 2, where the Arc join's have 1e-4.
+
+The second. At each corner of the dome's top the offsets of its two
+tangent edges there, the top's with the fillets', cross at the offset of
+the corner, and the crossing gave two vertices 5e-4 apart: the end the one
+edge kept, and the point computed. The other edge was cut at the computed
+one, and the kept one was stored on it too, where the two cross, with no
+parameter on it. `TrimEdge` found where it lies by projecting it, but did
+not keep that, and the loops ask for it. It is kept now; a vertex found
+off the edge is left out.
+
+The second alone gave a valid solid of 10999.98 at 1, wrong: the edges of
+the first fault cut the walls at x = 1 and x = 79 short of the fillets
+beside them, both short edges lost. Together, 10416.3739 at 1 and 20254.6087 at 2, within 2e-5 of the
+references, with the Arc join's faces, edges and vertices, 19, 48 and 32;
+the largest tolerance is at the top's corners, 9.5e-4 at 1 and 1.5e-3 at
+2, the gap between the two vertices there (the Arc join's 9.3e-4 and
+6.6e-4).
+
+![dome_join_in](pictures/dome_join_in.png)
+
+![dome_join_in_2](pictures/dome_join_in_2.png)
+
+Still refused: the dome outward with the Intersection join, 1 and 2, no
+reason given; not chased yet.
 
 ## Where the chase stands (2026-10-04)
 
