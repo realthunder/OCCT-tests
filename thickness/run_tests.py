@@ -1473,11 +1473,11 @@ thickness_case("dome_join_in_2", _dome, 4, -2.0, "pass", 20254.4292, False, 2)
 # made at every level (sec 32), level 0 -- a document saved before -- too.
 # Sec 33: the edges between the walls and the fillets ended 0.0027 and 0.011 short of
 # the corners, under tolerances that took the gap in; they reach them now. The volumes
-# moved within those tolerances (0.71 and 3.10; booleans against the Arc join's solid
-# give 11010.25 and 22628.7 for both, sec 33).
-thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11009.9518, False, 2, max_gap=0.002)
-thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22626.4034, False, 2, max_gap=0.002)
-thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11009.9518, False, 2, fix_level=0,
+# moved within those tolerances, from 11009.9518 and 22626.4034: the Arc join's solid
+# plus the Intersection join's less it gives 11010.25 and 22628.7 for both (sec 33).
+thickness_case("dome_join_out", _dome, 4, 1.0, "pass", 11010.6637, False, 2, max_gap=0.002)
+thickness_case("dome_join_out_2", _dome, 4, 2.0, "pass", 22629.5034, False, 2, max_gap=0.002)
+thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11010.6637, False, 2, fix_level=0,
                max_gap=0.002)
 
 

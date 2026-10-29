@@ -711,8 +711,8 @@ trimmed edge's tolerance take in how far it ends from its vertices
 
 | Case | Model | What it covers |
 |------|-------|----------------|
-| `dome_join_out`, `dome_join_out_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, +1 and +2, at every level since sec 32 | 11009.9518 and 22626.4034, the results; the Arc join's volume and the wedge each sharp edge gains, d^2 (tan(phi/2) - phi/2) along it, come to 11009.7686 and 22625.6761; refused before |
-| `dome_join_out_level0` | the same, +1, level 0 | what a document saved before gets: `XFAIL`, refused, until sec 32; made since, 11009.9518 |
+| `dome_join_out`, `dome_join_out_2` | `../boolean/models/dome_fillet_r3.brep`, face 4 removed, Intersection join, +1 and +2, at every level since sec 32 | 11010.6637 and 22629.5034 since sec 33 (11009.9518 and 22626.4034 before), the results; the Arc join's solid plus the Intersection join's less it gives 11010.25 and 22628.7 for both; refused before |
+| `dome_join_out_level0` | the same, +1, level 0 | what a document saved before gets: `XFAIL`, refused, until sec 32; made since, 11010.6637 since sec 33 |
 
 **Validation** (against `92cc9effb6`): the thickness suite PASS=418
 XFAIL=5 unfrozen and frozen, at level 0 and at level 1, and the sweep, all
@@ -741,13 +741,44 @@ The +2 dome's tolerance of 1.16e-2 is found, not fixed: the wall-to-fillet
 edges end 0.011 short of their corners, the fillet's pcurve and the curve
 made again from the wall's running at different speeds past the old end.
 The exact volumes of `dome_join_out` and `dome_join_out_2` are likely low by
-about 0.7 and 3.1 for it (sec 32).
+about 0.7 and 3.1 for it (sec 32; 0.30 and 2.25, sec 33). Fixed in sec 33.
 
 **Validation** (against `7543d139db`): the thickness suite PASS=419
 XFAIL=4 unfrozen and frozen (FAIL=3 before), the same as level 1 before
 case for case and to full precision but for `dome_join_out_level0`; the
 sweep, all 928 runs, the same; fillet 815/1, boolean 43, draft 104 with
 `new_roof_L_a-30` failing as before.
+
+## The dome outward's edges reach their corners (`35036a8034`, `6847e84646`, 2026-10-29, sec 33)
+
+`ExtentEdge` makes a prolonged B-spline edge's other pcurves again, its
+new curve projected on their surfaces: the wall-to-fillet edges of the
+dome outward end at their corners, where they ended 0.0027 (+1) and 0.011
+(+2) short under a tolerance that took the gap in. And
+`BRepLib::UpdateTolerances` pads a vertex tolerance it sets to a gap, so
+the vertex still covers it after a BRep text write and read (15 digits for
+points and ranges), which one corner of the +2 dome did not.
+
+Every passing thickness case is now written and read back and checked
+again (`round_trip`), and the outward domes hold their widest curve-end
+gap to 0.002 (`max_gap`, `../loose_ends.py`'s `widest`).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_join_out`, `dome_join_out_level0`, `dome_join_out_2` | as above | widest gap 0.0012 and 0.0015 (0.00271 and 0.0111 before); +2's widest tolerance 2.42e-3, from 1.16e-2 |
+
+Only the five dome cases move, within their tolerances: no vertex, the
+shapes within 1.4e-3 of each other beside edges of 1.4e-3 to 2.8e-3; the
+exact volumes by 0.71 and 3.10 outward, which booleans show to be the
+integration round pcurves a tolerance off their edges, not the shape
+(`models/Thickness.md` sec 33).
+
+**Validation** (against `6847e84646`): the thickness suite PASS=419
+XFAIL=4 unfrozen and frozen (PASS=416 FAIL=3 before), every case valid
+after the round trip; the sweep, all 928 runs, the same to full precision;
+fillet 815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as
+before, case for case; FreeCAD's Python suite 4064 OK and C++ tests 1086 of
+1086, frozen and unfrozen.
 
 ## Determinism cases (intersection mode, Arc join)
 

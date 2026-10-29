@@ -416,8 +416,8 @@ CASES = {
     "roundtop_join_out": ("s29", "roundtop", 4, +1, False, 2, 313.2065),
     "dome_join_in": ("s30", "filleteddome", 4, -1, False, 2, 10416.5477),
     "dome_join_in_2": ("s30", "filleteddome", 4, -2, False, 2, 20254.4292),
-    "dome_join_out": ("s31", "filleteddome", 4, 1, False, 2, 11009.9518),
-    "dome_join_out_2": ("s31", "filleteddome", 4, 2, False, 2, 22626.4034),
+    "dome_join_out": ("s31", "filleteddome", 4, 1, False, 2, 11010.6637),
+    "dome_join_out_2": ("s31", "filleteddome", 4, 2, False, 2, 22629.5034),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

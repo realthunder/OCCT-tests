@@ -2091,7 +2091,9 @@ mesh deflection), where the closed walls of the fix below come out 0.016
 above theirs, as the other plane faces do. The whole solids' meshes cannot
 tell the two apart (22624.517 and 22624.529; a mesh's chords put both some
 2 to 5 under), so by the faces: the results the suite holds, 11009.9518
-and 22626.4034, are likely low by about 0.7 and 3.1.
+and 22626.4034, are likely low by about 0.7 and 3.1. (Wrong, sec 33: the
+fix's exact volumes are off too, the other way; booleans put the two
+results low by 0.30 and 2.25.)
 
 Tried:
 
@@ -2110,6 +2112,78 @@ Tried:
 
 The last is the way to go; it is not in until the corner's representations
 are right. The patch is kept with the chase's notes.
+
+### Sec 33: the +2 dome's edges reach their corners; a tolerance that survives a round trip
+
+**The round trip** (`35036a8034`). The corner sec 32's last patch left
+invalid after a BRep text write and read was not made so by its stale point
+representations. Those lie within its tolerance; they are what is left of
+the corner where it was before the vertices were fused. It was made so by
+`BRepLib::UpdateTolerances`, which the offset runs at its end: it set the
+corner's tolerance to exactly its gap to one edge's end, 1.339244626e-5,
+padded by 2 Epsilon of it, some 1e-21. The text keeps a vertex's point and
+an edge's range to 15 digits (the curves and surfaces get 17): the corner
+came back 1.4e-14 off in z, the range ends 1e-14 off, and the gap read
+back 1.339244628e-5. Found with a watchpoint on the corner's tolerance;
+`ShapeFix_Edge::FixVertexTolerance`, an earlier suspect, pads its own by a
+factor of 1.0000001, and its copy was a temporary of the loops.
+
+`UpdateTolerances` now pads a gap by 1e-13 for each unit of the point's
+distance from the origin -- well above what 15 digits lose, well below any
+tolerance -- and leaves a tolerance an edge's own covers alone, so a vertex
+at 1e-7 stays at 1e-7. Alone, it changes nothing in the thickness suite or
+the sweep to the precision they print (tolerances to 6 digits), nor in the
+fillet, boolean and draft suites. The suite now writes and reads back
+every passing result and checks it again (`round_trip`); with the
+committed libraries nothing failed that.
+
+The text's 15 digits are the root of it. Writing 17 (OCCT's
+`TopTools_ShapeSet`, and FreeCAD's `ShapeRefSet`, which copies it) would
+make the round trip exact, but changes the bytes of every text BRep and
+every FreeCAD document saved as text; the padding was taken instead.
+
+**The edges reach their corners** (`6847e84646`): sec 32's last patch.
+`ExtentEdge` makes the other pcurves of a prolonged B-spline edge again,
+its new curve projected on their surfaces, and marks the edge to be
+checked again. The suite holds the outward domes' widest curve-end gap to
+0.002 (`max_gap`, `loose_ends.widest`; the loose-end check, ten times the
+edge's tolerance, let 0.011 under 0.0116 by): before, `dome_join_out` and
+`dome_join_out_level0` 0.00271, `dome_join_out_2` 0.0111; after, 0.0012
+and 0.0015. The widest tolerance at +2 goes from 1.16e-2 to 2.42e-3 (the
+top corners, sec 31's fault 3), at +1 from 2.84e-3 to 2.83e-3.
+
+Measured to full precision against the results before, over the suite and
+the sweep: only the five dome cases move. Nothing else, to the digits
+printed.
+
+- No vertex moves (by 1e-9). Sampled over both shapes, at exact
+  distances, the two lie within 1.2e-3 (+1) and 1.4e-3 (+2) of each other,
+  where the edges there have tolerances of 1.2e-3 to 2.8e-3; inward within
+  8.6e-4 and 1.35e-3, against 8.7e-4 and 1.46e-3.
+- The exact volumes move 0.71 (+1) and 3.10 (+2), and 0.005 and 0.002
+  inward. Neither result's exact volume is to be trusted to that: OCCT
+  integrates a face's area round its pcurves, and a pcurve up to a
+  tolerance off its edge, along edges 100 long, on faces 50 to 80 from the
+  origin, moves the volume by units. Booleans settle it: the Arc join's
+  solid (exact to its own small tolerances) plus the Intersection join's
+  solid less it gives 11010.2517 and 11010.2613 at +1, 22628.6559 and
+  22628.7315 at +2, before and after -- the same to 0.01 and 0.08. So the
+  committed results were low by 0.30 and 2.25, as said wrongly in sec 32
+  (0.7 and 3.1), and the new ones are high by 0.41 and 0.77. The meshes
+  are no judge here: 0.01 and 0.002 deflection differ by 5.
+- The references are the results, 11010.6637 and 22629.5034; the comment
+  in `run_tests.py` gives the booleans' figures too. The wedge estimate in
+  sec 31, 11009.7686 and 22625.6761, falls short of the booleans' by 0.5
+  and 3.0: the wedge is not d^2 (tan(phi/2) - phi/2) where the crease
+  fades.
+
+Within tolerance, so no fix level (sec 32's rule). The thickness suite 419
+PASS 4 XFAIL unfrozen and frozen (416 and 3 FAIL before); the sweep's 928
+runs, unfrozen and frozen, as before; fillet 815/1, boolean 43, draft 104
+with `new_roof_L_a-30` failing as before, case for case. FreeCAD on it: the
+Python suite 4064 OK and the C++ tests 1086 of 1086, frozen and unfrozen.
+The pictures of `dome_join_out` and `dome_join_out_2` are made again for
+the new volumes.
 
 ## Where the chase stands (2026-10-04)
 
