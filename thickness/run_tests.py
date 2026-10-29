@@ -1469,6 +1469,9 @@ thickness_case("dome_join_out_level0", _dome, 4, 1.0, "pass", 11009.9518, False,
 # fillets' offsets ends up to 1e-3 off the vertex at the dome's corner, where
 # the two all but touch, the vertex's tolerance grown to cover it (allowed
 # below, as for the bottom removed).
+# 0.5 inward the mitre ends 1.04e-3 off its vertex: the thinner, the closer to
+# tangent the two offsets cross there (4.6e-4 at 2.5, 9.3e-4 at 1).
+thickness_case("dome_cap_removed_in_0_5", _dome, 9, -0.5, "pass", 5536.4205, loose_ok=1.2e-3)
 thickness_case("dome_cap_removed_in_1", _dome, 9, -1.0, "pass", 10903.5721, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in", _dome, 9, -2.0, "pass", 21141.2680, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in_2_5", _dome, 9, -2.5, "pass", 26016.1606, loose_ok=1e-3)

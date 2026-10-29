@@ -635,8 +635,8 @@ changed.
 
 ## A filleted dome, the dome removed (`6004240f16`, 2026-10-29)
 
-**What was broken.** The same shape with the dome itself removed, 1, 2 or
-2.5 inward, the Arc join: refused (`BRepOffset_UnknownError`), the result
+**What was broken.** The same shape with the dome itself removed, 0.5, 1,
+2 or 2.5 inward, the Arc join: refused (`BRepOffset_UnknownError`), the result
 the input itself, unhollowed. The dome meets each fillet tangentially, and
 a removed face tangent to its neighbour along an edge is closed by a tube
 round the edge (`ToContext`, the filleted box's sec 6); none was built here,
@@ -673,7 +673,7 @@ and four faults lay behind that one:
 
 | Case | Model | What it covers |
 |------|-------|----------------|
-| `dome_cap_removed_in`, `_in_1`, `_in_2_5` | `../boolean/models/dome_fillet_r3.brep`, face 9 (the dome) removed, -2, -1 and -2.5 | 21141.1736, 10903.6446, 26016.1291; refused before |
+| `dome_cap_removed_in`, `_in_0_5`, `_in_1`, `_in_2_5` | `../boolean/models/dome_fillet_r3.brep`, face 9 (the dome) removed, -2, -0.5, -1 and -2.5 | 21141.1736, 5536.3514, 10903.6446, 26016.1291; refused before |
 
 The volumes are the rule the tube follows, worked numerically (to about
 1e-5): the input less the points more than the thickness from every face
@@ -681,16 +681,15 @@ kept -- the input shrunk by the thickness (a closed offset), and the
 channel under the dome, the points within the thickness below it and
 further than that from its edges (near the dome a kept face's nearest point
 is on the dome's edge, the fillets meeting it tangentially). A Gauss-rule
-integral over a grid on the dome, it gives 21141.268, 10903.572 and
-26016.161 at 1200 x 800; at 600 x 400 it moves by 0.5. `models/dome_cap_removed.cpp`
-runs the three against those to 1e-4. The mitre between the fillets'
-offsets ends up to 1e-3 off the vertex at the dome's corner, where the two
-all but touch; the vertex's tolerance covers it, and the cases allow it, as
+integral over a grid on the dome, it gives 21141.268, 5536.421, 10903.572
+and 26016.161 at 1200 x 800; at 600 x 400 it moves by 0.5 (0.11 at 0.5).
+`models/dome_cap_removed.cpp` runs the four against those to 1e-4. The mitre between the fillets'
+offsets ends up to 1e-3 off the vertex at the dome's corner (1.04e-3 at
+0.5 inward: the thinner, the closer to tangent the two cross there), where
+the two all but touch; the vertex's tolerance covers it, and the cases allow it, as
 for the bottom removed.
 
-Still refused: 0.5 inward (the tube's edge on the dome runs on past the
-tube, whose own pcurve of it does not, and the tubes' curve is not cut by
-it), 3 and 4 inward (the fillets' radius), and outward -- which before was
+Still refused: 3 and 4 inward (the fillets' radius), and outward -- which before was
 a valid solid of 11247.290 where the same rule gives 11891.581: the
 fillets' offsets ran round to the removed dome and the rounded rim was
 missing.
