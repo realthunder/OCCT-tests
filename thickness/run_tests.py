@@ -857,6 +857,15 @@ thickness_case("topsplit_top_piece_join_out", topsplit, topsplit_top, +1.0, "pas
 thickness_case("topsplit_top_piece_join_in",  topsplit, topsplit_top, -1.0, "pass", 276.0, False, 2)
 
 
+# The kernel's refusal of a thickness: a Standard_Failure raised inside it
+# (Part.OCCError), or the call's own word that it was not done -- FreeCAD
+# raises that as Base.CADKernelError, with the reason, since 2026-10-29
+# (FreeCAD 1bba59eb6e); a FreeCAD from before raised OCCError for both.
+REFUSED = (Part.OCCError,)
+if hasattr(App.Base, "CADKernelError"):
+    REFUSED += (App.Base.CADKernelError,)
+
+
 # Where the fork has no answer yet it must have none: the input back, "valid"
 # and unhollowed, is the one result that is never right. MakeThickSolid
 # refuses a result of the shape's own volume (inward) or of its volume with
@@ -871,7 +880,7 @@ def never_the_input_case(name, shape, face_index, value, inter=False, join=0):
         if back:
             problems.append("the input back, vol=%.4f" % r.Volume)
         report(name, not problems, False, "; ".join(problems) if problems else "vol=%.4f" % r.Volume)
-    except Part.OCCError:
+    except REFUSED:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
@@ -887,13 +896,13 @@ never_the_input_case("halfdome_side_join_out_not_the_input", halfdome, 3, +0.5, 
 def refused_case(name, shape, face_indices, value, inter=False, join=0):
     before = signature(shape)
     # the faces looked up outside the try: a wrong index is the case's fault,
-    # not a refusal; only the kernel's own refusal (Part.OCCError) counts
+    # not a refusal; only the kernel's own refusal (REFUSED) counts
     faces = [shape.Faces[i - 1] for i in face_indices]
     try:
         r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         report(name, False, False, "answered: %s valid=%s vol=%.4f" % (
             r.ShapeType, r.isValid(), r.Volume))
-    except Part.OCCError:
+    except REFUSED:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
 
