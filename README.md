@@ -92,6 +92,43 @@ so it is made at every level now and level 1 makes nothing differently. It
 stays reserved, since FreeCAD has saved objects at 1: the next level is 2
 (sec 32).
 
+## Frozen shapes
+
+FreeCAD freezes a feature's Shape: `TopoDS_TShape::Immutable` (a fork flag)
+on every TShape of it, with Part's `ImmutableShapeValues`. BRep_Builder,
+and the TShapes' own tolerance setters, refuse a change to a frozen
+vertex, edge or face (`TopoDS_LockedShape`). FreeCAD counts the refusals
+(TKBRep's `TopoDS_LockedShape_Raised`) and recomputes a feature an
+algorithm refused on copies of its inputs -- the whole of them. So an
+algorithm that would change a part of its input it shares with its result
+is made to change a copy of that part instead: the copy is marked thawed
+(`TopoDS_TShape::Thaw`; FreeCAD names it as the original) and put into
+the result in the original's place, the frozen edges, wires and faces on
+the way copied in turn (`BRepLib_ThawedCopy`, `BRepLib_PutThawed`). Where
+nothing is frozen nothing changes. Where the fork does so:
+
+- `BRepLib::UpdateTolerances` and what calls it (`SameParameter`).
+- The fillet (`fillet/README.md`, "A frozen input filleted without a
+  copy"): the input's vertices it raises and moves, and BRepLib's copies
+  in a new face put in the whole result.
+- `ShapeFix_ShapeTolerance::LimitTolerance` and `SetTolerance`
+  (`c4fa59b477`, 2026-10-30). Each wrote the tolerance into every part of
+  the shape it was given; FreeCAD's face maker limits the tolerances of a
+  face it made invalid, and the face shares the sketch's frozen edges and
+  vertices, so a helix's profile was refused (fcad `TestHelix`, the giant
+  helices) and so was a pad's (`issue172_sketch_unclosed`, Pad006). A
+  frozen part's tolerance is now set on a copy; a frozen shape given to it
+  whole is refused as before. fcad
+  `test_shape_tolerance_changes_a_copy_of_a_frozen_part`: setTolerance
+  and limitTolerance on a compound of a frozen box give the plain run's
+  tolerances, refuse nothing and leave the box as it was.
+
+How the refusals left were found: every Part and PartDesign test and every
+`occ-issues` model recomputed frozen, the refusals logged (FreeCAD's
+"recomputing on copies"). 2026-10-30, after the fillet: the helix, the pad
+and a loft, whose BOP wrote into its profiles in FreeCAD's own code (fcad
+`enclosedSolids`, now non-destructive).
+
 History: moved out of the fork on 2026-10-03 with its history (the fork's
 `tests/thickness/`, `tests/fillet/` and `tests/occ-issues/`); the commits
 here are those, rewritten by `git filter-repo`.
