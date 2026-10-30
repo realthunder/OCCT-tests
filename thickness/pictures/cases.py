@@ -51,6 +51,7 @@ STAGES = {
     "s31": ("92cc9effb6", "31"),
     "s34": ("047a9e432d", "34"),
     "s35": ("eebc4a98b5", "35"),
+    "s36": ("c1f874898c", "36"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -158,6 +159,21 @@ def _filleteddome():
     return s
 
 
+def _groove5seam():
+    # #363's grooved cylinder, the groove one face whose own seam lies on its
+    # edge with the right bottom (run_tests.py's _gs): the left bottom is Face4.
+    return Part.makeCylinder(25.807914, 14.0).cut(
+        Part.makeCylinder(5.0, 120, V(0, -60, 0), V(0, 1, 0)).rotated(V(), V(0, 1, 0), 90))
+
+
+def _issue363base():
+    # Thickness001's base (realthunder/OCCT#363): its left bottom is Face5.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue363_thickness001_base.brep"))
+    return s
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -236,6 +252,8 @@ SHAPES = {
     "mitrebox_x10y8": lambda: _mitrebox(10, 8),
     "roundtop": lambda: _roundtop(),
     "filleteddome": lambda: _filleteddome(),
+    "groove5seam": lambda: _groove5seam(),
+    "issue363base": lambda: _issue363base(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -433,6 +451,10 @@ CASES = {
     "dome_cap_removed_out_2_5": ("s35", "filleteddome", 9, 2.5, False, 0, 32178.6711),
     "dome_cap_removed_out_3": ("s35", "filleteddome", 9, 3, False, 0, 39601.1422),
     "dome_cap_removed_out_4": ("s35", "filleteddome", 9, 4, False, 0, 55446.4475),
+    # A grooved cylinder, the groove one face with its seam on one bottom's
+    # edge, the other bottom removed (sec 36).
+    "issue363_groove5_groove_seam_left_bottom_in": ("s36", "groove5seam", 4, -1, False, 0, 5600.5842),
+    "issue363_thickness001_left_bottom_in": ("s36", "issue363base", 5, -1, False, 0, 5933.2710),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

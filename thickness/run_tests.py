@@ -1419,14 +1419,17 @@ thickness_case("issue363_groove5_seam90_both_bottoms_in", _g5s90, _g5s90_bottoms
                4927.0697)
 # The groove a single face, its seam on its edge with the right bottom: the
 # left bottom removed came out valid and wrong (2142.0698; Thickness001's own
-# left bottom, -3798.5363, inside out), and before #363's fixes too.
+# left bottom, -3798.5363, inside out), and before #363's fixes too. The
+# side's offset kept a piece through its seam under the groove's offset and
+# the other bottom's, and those two were dropped as hanging. Now the same
+# solid as the groove of two faces gives (booleans: no difference either way).
 _gs = Part.makeCylinder(25.807914, 14.0).cut(
     Part.makeCylinder(5.0, 120, App.Vector(0, -60, 0), App.Vector(0, 1, 0)).rotated(
         App.Vector(), App.Vector(0, 1, 0), 90))
 _gs_left = min(planar_faces(_gs)[1], key=lambda i: _gs.Faces[i - 1].CenterOfMass.x)
-thickness_case("issue363_groove5_groove_seam_left_bottom_in", _gs, _gs_left, -1.0, "xfail",
+thickness_case("issue363_groove5_groove_seam_left_bottom_in", _gs, _gs_left, -1.0, "pass",
                5600.5842)
-thickness_case("issue363_thickness001_left_bottom_in", issue363_base(), 5, -1.0, "xfail", 5933.2710)
+thickness_case("issue363_thickness001_left_bottom_in", issue363_base(), 5, -1.0, "pass", 5933.2710)
 # The issue's own: Thickness001's base (the Pad's side a left-handed cylinder).
 issue363 = issue363_base()
 thickness_case("issue363_thickness001_top_in", issue363, 6, -1.0, "pass", 4576.7701)

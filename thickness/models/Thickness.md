@@ -2303,6 +2303,55 @@ draft 105 as before, case for case.
 
 ![dome_cap_removed_out_4](pictures/dome_cap_removed_out_4.png)
 
+### Sec 36: a wire through the seam, walked in (u, v)
+
+**One fault** (`1b6b556d93`, `DropOutsideWires` in `BRepAlgo_Loop.cxx`).
+#363's grooved cylinder (a cylinder r 25.81 h 14 less a cylinder r 5 along
+y on its bottom's plane) with the groove one face whose own seam lies on
+its edge with the right bottom, the left bottom removed, 1 inward, the Arc
+join: valid and wrong, 2142.0698 for 5600.5842. The issue's own base,
+whose groove is such a face, came back inside out, -3798.5363 for
+5933.2710. Both were in the suite as known broken.
+
+The groove's offset and the right bottom's were missing from the result,
+dropped as hanging (`DropHangingFaces`), and a plane on the removed
+bottom's level closed the solid under them. The side's offset is walked in
+(u, v) (sec 8): the removed bottom's arc on it is stretched round the whole
+circle, and runs on under the groove's offset and the right bottom's; the
+walk makes wires of the pieces down there besides the side's own face. A
+wire through a piece of an edge past the span its intersections gave it
+loses to a wire inside that shares an edge with it -- unless it has a piece
+of the seam, left to the seam bands. With the groove in two faces that
+never mattered: the region under the groove is one wire, dropped so, and
+the strip under the right bottom's offset another, through the side's
+seam, kept and dropped later as hanging. With the groove one face, its own
+loop cut its section with the side first and kept it only down to the
+right bottom's offset; the short piece below, which parts the two regions,
+never reached the side's loop. One wire then, through the seam: kept. Its
+arc pieces cut the removed face's plane, which got a piece under them too
+(crossings at x = -5, y = +/-24.30, where the side's offset passes the
+groove's edge), and the shell held those, while the groove's offset and
+the bottom's were left hanging.
+
+On a face walked in (u, v) a piece of the seam is a border like any other,
+the walk parting a region where it crosses the seam, and a wire through it
+is no longer exempt there. The result is the solid the groove in two faces
+gives: the booleans of the one less the other are 0 both ways. Its volume
+integrates to 5600.4573 over these faces, 5600.5842 over the other's; the
+issue's base gives 5933.3055 for 5933.2710.
+
+![issue363_groove5_groove_seam_left_bottom_in](pictures/issue363_groove5_groove_seam_left_bottom_in.png)
+
+![issue363_thickness001_left_bottom_in](pictures/issue363_thickness001_left_bottom_in.png)
+
+**Validation** (on `1b6b556d93`): Part 390 and PartDesign 486 tests OK;
+thickness PASS=434 XFAIL=2 at fix levels 0 and 1, plain and frozen, the two
+cases above among them (PASS=432 XFAIL=4 before); fillet 815/1, draft 105,
+boolean 43; the thickness sweep right in all 928 runs at both levels, plain
+and frozen, not one changed; the fillet sweeps (vertex, edge, flat, big
+radii, chamfer) and the draft sweeps (1222 valid, 500 refused, 114 chains)
+the same as before, case for case.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

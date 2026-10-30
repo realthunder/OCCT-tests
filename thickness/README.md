@@ -537,10 +537,10 @@ valid: 5496.0504 (the groove's walls cut by booleans give the same to
 5600.67 and 5600.58 on the radius 5 groove; both bottoms outward, which
 the fork refused, 5749.5607 as upstream gives.
 
-Still wrong, and as before: the groove a single face whose own seam lies
-on its edge with one bottom, the other bottom removed -- valid and wrong
-(2142.0698 for 5600.58 on the radius 5 groove; the issue's own left
-bottom, -3798.5363, inside out: its groove is such a face). And
+Still wrong then: the groove a single face whose own seam lies on its edge
+with one bottom, the other bottom removed -- valid and wrong (2142.0698 for
+5600.58 on the radius 5 groove; the issue's own left bottom, -3798.5363,
+inside out: its groove is such a face). Made since, sec 36 below. And
 Thickness001 with the Intersection join is invalid.
 
 | Case | Model | What it covers |
@@ -551,7 +551,7 @@ Thickness001 with the Intersection join is invalid.
 | `issue363_groove5_seam_bottom_in` | the bottom whose arc the seam splits, -1 | 5600.6746; invalid before |
 | `issue363_groove5_both_bottoms_in`, `_groove5_seam90_both_bottoms_in`, `_groove10_both_bottoms_in`, `_thickness001_in` | both bottoms removed, -1 | 4927.3387, 4927.0697, 5403.7097, 5496.0504; invalid, then refused |
 | `issue363_groove10_both_bottoms_out`, `_thickness001_out` | both bottoms removed, +1 | 5749.5607, 5816.1031; refused before |
-| `issue363_groove5_groove_seam_left_bottom_in`, `_thickness001_left_bottom_in` | the groove a single face with its seam on the right bottom's edge, the left bottom removed | `XFAIL`: valid and wrong (2142.0698, -3798.5363) |
+| `issue363_groove5_groove_seam_left_bottom_in`, `_thickness001_left_bottom_in` | the groove a single face with its seam on the right bottom's edge, the left bottom removed | 5600.5842, 5933.2710; valid and wrong before (2142.0698, -3798.5363), until sec 36 |
 | `issue363_thickness001_in_join` | Thickness001, the Intersection join | `XFAIL`: invalid |
 
 `models/issue363_groove.cpp` is the C++ driver of both (the groove of
@@ -915,6 +915,54 @@ the thickness sweep right in all 928 runs at both levels, plain and
 frozen, not one changed; the fillet sweeps (vertex, edge, flat, big radii,
 chamfer) and the draft sweeps (1222 valid, 500 refused, 114 chains) the
 same as before, case for case.
+
+## A grooved cylinder's bottom away from the groove's seam (`1b6b556d93`, 2026-10-30, sec 36)
+
+**What was broken.** #363's grooved cylinder with the groove one face whose
+own seam lies on its edge with one bottom, the other bottom removed, 1
+inward, the Arc join: valid and wrong, 2142.0698 for 5600.5842; the issue's
+own base the same way, -3798.5363 (inside out) for 5933.2710. The groove's
+offset and the kept bottom's were missing, and a plane on the removed
+bottom's level closed the solid under them.
+
+The side's offset is walked in (u, v) (sec 8): the removed bottom's arc on
+it, stretched round the whole circle, runs on under the groove's offset and
+the kept bottom's, and the walk makes wires of the pieces down there as
+well as the side's own face. Those pieces run past the span the arc's
+intersections gave it, and a wire through such a piece loses to the wire
+inside that shares an edge with it (`DropOutsideWires`) -- unless it has a
+piece of the seam, which is left to the seam bands. With the groove in two
+faces that never mattered: the piece under the groove is one wire, the
+strip under the kept bottom another, which runs through the side's seam
+and is dropped later as hanging. With the groove one face, its loop
+cuts the section with the side first and keeps it only down to where the
+kept bottom's offset cuts it; the short piece below, which parts the two
+regions, never reaches the side's loop, and they became one wire, through
+the seam: kept. Its arc pieces cut the removed face, which
+then had a piece under it too, and with that the shell held it, while the
+groove's offset and the bottom's were dropped as hanging.
+
+On a face walked in (u, v) a piece of the seam is a border like any other,
+the walk parting a region where it crosses the seam: such a wire is no
+longer exempt there (`BRepAlgo_Loop`). The result is the same solid the
+groove in two faces gives -- each boolean difference with it is 0 -- at
+5600.4573 (5600.5842 integrated over the other faces) and 5933.3055.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove5_groove_seam_left_bottom_in`, `_thickness001_left_bottom_in` | the groove a single face with its seam on the right bottom's edge, the left bottom removed, -1 | 5600.5842, 5933.2710; `XFAIL` before, valid and wrong |
+
+![issue363_groove5_groove_seam_left_bottom_in](models/pictures/issue363_groove5_groove_seam_left_bottom_in.png)
+
+![issue363_thickness001_left_bottom_in](models/pictures/issue363_thickness001_left_bottom_in.png)
+
+**Validation** (on `1b6b556d93`): Part 390 and PartDesign 486 tests OK;
+thickness PASS=434 XFAIL=2 at fix levels 0 and 1, plain and frozen, the two
+cases above among them (PASS=432 XFAIL=4 before); fillet 815/1, draft 105,
+boolean 43; the thickness sweep right in all 928 runs at both levels, plain
+and frozen, not one changed; the fillet sweeps (vertex, edge, flat, big
+radii, chamfer) and the draft sweeps (1222 valid, 500 refused, 114 chains)
+the same as before, case for case.
 
 ## Determinism cases (intersection mode, Arc join)
 

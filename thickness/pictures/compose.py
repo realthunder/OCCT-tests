@@ -55,7 +55,9 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "mitrebox_x10y0": "box with two adjacent top edges filleted, r2, at the corner x = 10, y = 0",
          "mitrebox_x10y8": "box with two adjacent top edges filleted, r2, at the corner x = 10, y = 8",
          "roundtop": "box with all four top edges filleted, r2",
-         "filleteddome": "box under a B-spline dome, the dome's four edges filleted, r3"}
+         "filleteddome": "box under a B-spline dome, the dome's four edges filleted, r3",
+         "groove5seam": "cylinder with a groove r5 across its end, the groove's seam on the right bottom",
+         "issue363base": "#363's Thickness001 base: a chamfered cylinder with a groove across its end"}
 JOIN = {0: "Arc join", 2: "Intersection join"}
 def status(d):
     if d["ok"] and d.get("refused"):
