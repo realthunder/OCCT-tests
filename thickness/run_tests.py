@@ -1436,6 +1436,32 @@ thickness_case("issue363_thickness001_top_in", issue363, 6, -1.0, "pass", 4576.7
 thickness_case("issue363_thickness001_in", issue363, [3, 5], -1.0, "pass", 5496.0504)
 thickness_case("issue363_thickness001_out", issue363, [3, 5], +1.0, "pass", 5816.1031)
 thickness_case("issue363_thickness001_in_join", issue363, [3, 5], -1.0, "xfail", None, False, 2)
+# The Intersection join on #363's cylinder with a square step cut off its
+# side instead of the groove (x < -10.062591, z < 10.062591), 1 in or out: with
+# any face removed it was refused or invalid, upstream too. The side meets the
+# step's wall in two edges apart and their offsets were intersected once (as
+# the Arc join did before #363's first fix); the side's section with the
+# bottom, a whole circle, closed a piece of the side's offset and of the
+# bottom's (or of a removed bottom's rim) under the step, off the face. The
+# volumes are exact: the solid less its offset by 1 with sharp corners, open
+# through the face removed.
+_step = Part.makeCylinder(25.807914, 14.0).cut(
+    Part.makeBox(60 - 10.062591, 120, 10.062591 + 1, App.Vector(-60, -60, -1)))
+_step_flat = [i + 1 for i, f in enumerate(_step.Faces) if f.Surface.TypeId == "Part::GeomPlane"]
+_step_z = {i: _step.Faces[i - 1].CenterOfMass.z for i in _step_flat}
+_step_top = max(_step_flat, key=lambda i: _step_z[i])
+_step_bottom = min(_step_flat, key=lambda i: _step_z[i])
+_step_ceiling = [i for i in _step_flat if abs(_step.Faces[i - 1].BoundBox.ZLength) < 1e-6
+                 and abs(_step_z[i] - 10.062591) < 1e-6][0]
+_step_wall = [i for i in _step_flat if _step.Faces[i - 1].BoundBox.ZLength > 1][0]
+thickness_case("step_top_in_join", _step, _step_top, -1.0, "pass", 4028.4994, False, 2)
+thickness_case("step_wall_in_join", _step, _step_wall, -1.0, "pass", 5501.2992, False, 2)
+thickness_case("step_ceiling_in_join", _step, _step_ceiling, -1.0, "pass", 5434.6552, False, 2)
+thickness_case("step_bottom_in_join", _step, _step_bottom, -1.0, "pass", 4555.7822, False, 2)
+thickness_case("step_top_out_join", _step, _step_top, +1.0, "pass", 4443.8934, False, 2)
+thickness_case("step_wall_out_join", _step, _step_wall, +1.0, "pass", 6205.8133, False, 2)
+thickness_case("step_ceiling_out_join", _step, _step_ceiling, +1.0, "pass", 6148.6061, False, 2)
+thickness_case("step_bottom_out_join", _step, _step_bottom, +1.0, "pass", 4996.9311, False, 2)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

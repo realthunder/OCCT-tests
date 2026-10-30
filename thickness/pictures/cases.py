@@ -52,6 +52,7 @@ STAGES = {
     "s34": ("047a9e432d", "34"),
     "s35": ("eebc4a98b5", "35"),
     "s36": ("c1f874898c", "36"),
+    "s37": ("ddac69429e", "37"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -166,6 +167,14 @@ def _groove5seam():
         Part.makeCylinder(5.0, 120, V(0, -60, 0), V(0, 1, 0)).rotated(V(), V(0, 1, 0), 90))
 
 
+def _step():
+    # #363's cylinder with a square step cut off its side (run_tests.py's
+    # _step): Face2 the bottom, Face3 the step's wall, Face4 its ceiling,
+    # Face5 the top.
+    return Part.makeCylinder(25.807914, 14.0).cut(
+        Part.makeBox(60 - 10.062591, 120, 10.062591 + 1, V(-60, -60, -1)))
+
+
 def _issue363base():
     # Thickness001's base (realthunder/OCCT#363): its left bottom is Face5.
     s = Part.Shape()
@@ -254,6 +263,7 @@ SHAPES = {
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
+    "step": lambda: _step(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -455,6 +465,16 @@ CASES = {
     # edge, the other bottom removed (sec 36).
     "issue363_groove5_groove_seam_left_bottom_in": ("s36", "groove5seam", 4, -1, False, 0, 5600.5842),
     "issue363_thickness001_left_bottom_in": ("s36", "issue363base", 5, -1, False, 0, 5933.2710),
+    # The cylinder with a step cut off its side, each face but the side
+    # removed, the Intersection join (sec 37).
+    "step_top_in_join": ("s37", "step", 5, -1, False, 2, 4028.4994),
+    "step_wall_in_join": ("s37", "step", 3, -1, False, 2, 5501.2992),
+    "step_ceiling_in_join": ("s37", "step", 4, -1, False, 2, 5434.6552),
+    "step_bottom_in_join": ("s37", "step", 2, -1, False, 2, 4555.7822),
+    "step_top_out_join": ("s37", "step", 5, 1, False, 2, 4443.8934),
+    "step_wall_out_join": ("s37", "step", 3, 1, False, 2, 6205.8133),
+    "step_ceiling_out_join": ("s37", "step", 4, 1, False, 2, 6148.6061),
+    "step_bottom_out_join": ("s37", "step", 2, 1, False, 2, 4996.9311),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

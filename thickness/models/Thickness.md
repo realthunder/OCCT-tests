@@ -2352,6 +2352,120 @@ and frozen, not one changed; the fillet sweeps (vertex, edge, flat, big
 radii, chamfer) and the draft sweeps (1222 valid, 500 refused, 114 chains)
 the same as before, case for case.
 
+### Sec 37: the Intersection join, a step cut off a cylinder's side
+
+**Three faults** (`6eb5f7566e`, `BRepOffset_Inter3d.cxx` and
+`BRepOffset_MakeOffset.cxx`). #363's Thickness001 with the Intersection join
+is invalid, and so is any cylinder with something cut across the edge of an
+end -- the groove, a slot, a step -- upstream too. The step is the simplest:
+the cylinder r 25.807914 h 14 less the box x < -10.062591, z < 10.062591.
+Its five faces are the side, the bottom (x > -10.062591), the step's wall
+(x = -10.062591), its ceiling (z = 10.062591) and the top. With any one of
+them but the side removed, 1 in or out, the Intersection join: refused,
+mostly (`CannotFuseVertices`, `UnknownError`), inside out (-12709.9326 for
+6148.6061, the ceiling removed outward), or valid and wrong -- 656.1071 for
+5501.2992 with the wall removed inward, in two shells, 10008.8856 for
+4443.8934 with the top removed outward. The Arc join was right in most of
+these.
+
+*Two edges, one section.* The side meets the wall in two vertical edges, at
+y = +/-23.77. `ConnexIntByInt` intersects the offsets of the two faces an
+edge joins, once a pair (`SetDone`), and `Inter3D` keeps the block of the
+section nearest the edge it is given: for the first edge, x = -9.06 at
+y = -23.09 only. The second edge, the pair done, took what the two offsets
+had in common, the same line; the side's offset was cut by one line at
+both ends of the step, the wall's offset never by the line at y = +23.09,
+and its loop made nothing: the wall's extended face, a plane of 1e7, went
+into the shell whole. The Arc join's `ConnexIntByArc` had the fault too,
+fixed in #363's first fix (`5525e72804`; README, "#363: a groove across a
+cylinder's end"); here likewise: every edge of the one type the two faces
+share is given (`Inter3D` with a list), and each takes the pieces of the section nearest
+it (`NearestEdge`, the distance from points along the edge to the piece) --
+unless one would take none: the side's section with the bottom is a whole
+circle, and the two arcs of the bottom the side's seam splits both take it.
+An edge given its pieces so is skipped when the loop reaches it.
+`ContextIntByInt`, the removed faces, had it too, and worse: there the
+second edge got no section at all. It is given its own the same way, each
+piece turned by its own edge's offset.
+
+*Pieces off the face.* The Intersection join extends every offset face as
+far as it goes, and a section runs as far: the side's with the bottom is
+the whole circle r 24.81 at z = 1, under the step too, where the side's
+offset is cut away. With the wall's lines and the ceiling's circle it
+closes a piece of the side's offset under the step besides the side's own,
+and the bottom's plane is cut in two by the wall's line, inside the circle:
+the bottom's own piece and one under the step. `MakeLoops` gave each face
+both, and with all of them the shell came out inside out (-1277.3314 with
+the top removed). Of the pieces an extended face is split into, those a
+point inside (`BOPTools_AlgoTools3D::PointInFace`) lies off the face's own
+offset, the face not extended, are dropped now (`PiecesOnTheFace`) -- unless
+a point inside that offset lies on the piece: outward a piece grows past
+its face to meet its neighbours' offsets, and its own point may lie in what
+it grew (a box with a hole, one face removed, +1, was refused on the
+first point alone). The top removed: 4028.4994, the exact value. A face all of whose pieces lie off it
+gets none: its own piece was never made. Thickness001's base with its left
+bottom removed, inward, the loops gave the right bottom only the
+piece across the groove from it (x < 11.02), and the side only a strip
+below z = 1; the offsets of the top, the chamfer and the right bottom hung,
+were dropped, and what was left closed a pocket in the solid -- valid,
+22819.0551 for 5933.3055. Refused now, as it was before.
+
+*A removed face's rim.* A removed face's rim is extended and split the same
+way. With the bottom removed it got a piece under the step, outside the
+bottom; but a rim may run past its face rightly -- the wall removed, its rim
+runs up the wall's plane from the wall's top edge to the ceiling's offset,
+1 higher -- so it is held not to its face but to the solid: a piece of it on
+the side of the solid away from the thickness (out of it, inward) is
+dropped, if another is kept. (Only where the shape given is one solid:
+there is no one solid to hold the rim to otherwise, and it is left as it was.) And the circle's pieces under the step bounded
+the rim on the inside, between the circle and the wall's line, where the rim
+runs on; a section's piece that only a dropped piece of an offset face is
+bounded by goes to no rim now (the caps' history in `BuildOffsetByInter`).
+
+All eight are right, at the exact volumes: the solid less its offset by 1
+with sharp corners, open through the face removed (outward: the offset less
+the solid). Inward 4028.4994 (top), 5501.2992 (wall), 5434.6552 (ceiling),
+4555.7822 (bottom); outward 4443.8934, 6205.8133, 6148.6061, 4996.9311. The
+Arc join gives what it gave on every face of the step, the groove of radius
+5 and 10.06, the slot, the box with the groove and with the slot, and
+Thickness001, in or out.
+
+![step_wall_in_join](pictures/step_wall_in_join.png)
+
+![step_ceiling_out_join](pictures/step_ceiling_out_join.png)
+
+Still wrong with the Intersection join: the groove -- Thickness001 (now
+refused), the groove of radius 5 in two faces, whose offsets are one
+cylinder once extended and the side's offset, walked in (u, v), is cut by
+both; a slot with flat sides across the end, where the side's loop gives
+the slot ceiling's offset two of the four arcs of its circle. Some of
+these, refused at once before, get past the vertices now and are refused
+after up to a minute: the side's loop spends all its search's steps
+(`THE_LOOP_SEARCH_STEPS`, 1e6 a face) first.
+
+Over eight shapes of the kind -- the step, the slot, the grooves of radius
+5 and 10, the groove with chamfers, the box with the groove and with the
+slot, Thickness001's base -- each face removed alone, +/-1 and +/-0.5, 224
+runs: right 88 (72 before), valid and wrong 0 (12, the input solid back
+among them), invalid 12 (27), refused 124 (113). Four runs refused before
+are invalid now: Thickness001's base with its right bottom removed, outward,
+1 and 0.5; the slot with its top removed, inward, 1 and 0.5. (A run counts
+right within 15% of the Arc join's volume; on the step with the ceiling
+removed the Arc join is the wrong one -- refused inward, -12745.7787
+outward, before as now -- and the Intersection join's exact.)
+
+**Validation** (on `6eb5f7566e`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=442 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the eight cases above among them; fillet 815/1
+and draft 105, plain and frozen; boolean 43; the thickness sweep right in
+all 928 runs at both levels, plain and frozen, not one changed; the fillet
+sweeps (vertex, edge, flat, big radii, chamfer) and the draft sweeps (1222
+valid, 500 refused, 114 chains) the same as before, case for case (run
+before the piece test was made two-way -- a change neither fillet nor draft
+reaches). A first form of the piece test, one-way, refused six outward runs
+of the sweep that were right (a box with a hole, a cone's hole, a T, the
+Intersection join): a piece grown past its face had its point there.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
