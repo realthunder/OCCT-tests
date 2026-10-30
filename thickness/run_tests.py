@@ -1497,6 +1497,23 @@ thickness_case("dome_cap_removed_in_0_5", _dome, 9, -0.5, "pass", 5536.4205, loo
 thickness_case("dome_cap_removed_in_1", _dome, 9, -1.0, "pass", 10903.5721, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in", _dome, 9, -2.0, "pass", 21141.2680, loose_ok=1e-3)
 thickness_case("dome_cap_removed_in_2_5", _dome, 9, -2.5, "pass", 26016.1606, loose_ok=1e-3)
+# Outward, two tubes touch at each corner of the dome, their section tangent at
+# its end to the one's end and the other's edge on the dome: a corner sphere
+# built there, a sliver of the section, its piece started on its own vertex,
+# its end tangent past the edge, a vertex merged on some edges only (README.md).
+# The same rule, the input grown; refused before.
+thickness_case("dome_cap_removed_out_0_5", _dome, 9, 0.5, "pass", 5783.3829)
+thickness_case("dome_cap_removed_out_1", _dome, 9, 1.0, "pass", 11891.1235)
+thickness_case("dome_cap_removed_out_1_5", _dome, 9, 1.5, "pass", 18325.2355)
+thickness_case("dome_cap_removed_out", _dome, 9, 2.0, "pass", 25087.2990)
+thickness_case("dome_cap_removed_out_2_5", _dome, 9, 2.5, "pass", 32178.6711)
+thickness_case("dome_cap_removed_out_3", _dome, 9, 3.0, "pass", 39601.1422)
+thickness_case("dome_cap_removed_out_4", _dome, 9, 4.0, "pass", 55446.4475)
+# The filleted dome, its dome removed, 3 and 4 inward (3 the fillets' radius):
+# no answer yet. 3 came back done, invalid, the input's skin round two scraps of
+# the offset, once a sliver of a section stopped throwing (README.md).
+refused_case("dome_cap_removed_in_3_refused", _dome, [9], -3.0)
+refused_case("dome_cap_removed_in_4_refused", _dome, [9], -4.0)
 
 
 # Sec 28. A box with two adjacent top edges filleted, the bottom removed, the

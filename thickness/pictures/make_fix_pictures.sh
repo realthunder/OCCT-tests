@@ -67,6 +67,13 @@ fix domecap 6004240f16 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Ma
     src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Inter2d.cxx
     src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Tool.cxx" \
     dome_cap_removed $HERE/../../boolean/models/dome_fillet_r3.brep --write
+# the same, outward: no corner sphere where two tubes meet, no section of one
+# vertex, a merged vertex replaced on every face (TKOffset, three sources; the
+# two TKBool fixes c8e8866490 and 29f01c8d95 come from the install either way)
+fix domecapout b16d138042 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeLoops.cxx
+    src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx
+    src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Tool.cxx" \
+    dome_cap_removed $HERE/../../boolean/models/dome_fillet_r3.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep_fixes.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

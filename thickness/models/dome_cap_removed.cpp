@@ -1,6 +1,7 @@
 // dome_cap_removed: a box under a B-spline dome, the dome's four edges
-// filleted (r 3), and a thickness of it inward with the dome removed (the
-// Arc join). See ../README.md, "A filleted dome, the dome removed".
+// filleted (r 3), and a thickness of it inward and outward with the dome
+// removed (the Arc join). See ../README.md, "A filleted dome, the dome
+// removed" and "... outward".
 //
 // The dome meets each fillet tangentially, 2e-6 rad off, so each of its
 // edges is closed by a tube round it (BRepOffset_MakeOffset::ToContext).
@@ -11,10 +12,20 @@
 // short of the dome's next edge at each corner, the curve between two tubes
 // ended on the one tube's edge to 7e-6 and was not cut by it, and at the
 // corner it ended up to 1e-3 off the vertex the tubes start from. Each of
-// these is mended (README.md); 1, 2 and 2.5 inward come out valid, to the
+// these is mended (README.md); 0.5 to 2.5 inward come out valid, to the
 // volume of the rule the tube follows, worked numerically: the input less
 // the points more than the thickness from every face kept (the input shrunk,
 // and the channel under the dome away from its edges).
+//
+// Outward the tubes of two edges meeting at a corner of the dome touch
+// there, and their section is tangent at its end to the one tube's end and
+// to the other's edge on the dome. A corner sphere was built where they
+// meet, a sliver of the section was left at the corner, the section's piece
+// started at its own vertex, not the one the other edges were cut at, its
+// end tangent strayed past the edge it is tangent to, and a vertex merged
+// there was replaced on some edges only (README.md). 0.5 to 4 outward come
+// out valid, to the same rule (the input grown, and the channel above the
+// dome away from its edges).
 //
 // Build (macOS, OCCT install prefix O):
 //   clang++ -std=c++17 -w -I$O/include/opencascade dome_cap_removed.cpp \
@@ -22,7 +33,8 @@
 //     -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d -lTKMath -lTKernel -o dome_cap_removed
 // Run: ./dome_cap_removed ../../boolean/models/dome_fillet_r3.brep [--write <dir>]
 //   (exit 0 when every run passes)
-//   --write: each result, <dir>/in<d>.brep (none when it is refused)
+//   --write: each result, <dir>/in<d>.brep or out<d>.brep (none when it is
+//   refused)
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
@@ -57,7 +69,9 @@ int main(int argc, char** argv)
     // checked to 1e-4
     struct Run {
         double offset, want;
-    } runs[] = {{-0.5, 5536.4205}, {-1., 10903.5721}, {-2., 21141.2680}, {-2.5, 26016.1606}};
+    } runs[] = {{-0.5, 5536.4205}, {-1., 10903.5721}, {-2., 21141.2680}, {-2.5, 26016.1606},
+                {0.5, 5783.3829},  {1., 11891.1235},  {1.5, 18325.2355}, {2., 25087.2990},
+                {2.5, 32178.6711}, {3., 39601.1422},  {4., 55446.4475}};
     for (const Run& r : runs) {
         std::string  what;
         bool         ok = false;
@@ -88,7 +102,8 @@ int main(int argc, char** argv)
         bad += !ok;
         if (dir && !result.IsNull()) {
             char name[64];
-            snprintf(name, sizeof(name), "/in%g.brep", -r.offset);
+            snprintf(name, sizeof(name), r.offset < 0 ? "/in%g.brep" : "/out%g.brep",
+                     std::abs(r.offset));
             BRepTools::Write(result, (std::string(dir) + name).c_str());
         }
     }

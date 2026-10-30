@@ -144,6 +144,35 @@ panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick, r
       "rim", [0.5, 1.2, 0.6], [40, 12, 15], 105)
 pictures.append(pic)
 
+# The same, outward: the tubes (orange) now stand above the dome's edges, and
+# two of them touch at each corner of the dome.
+out2 = Part.read(os.path.join(W, "domecapout", "after", "out2.brep"))
+colors = {}
+for i, f in enumerate(out2.Faces):
+    if on_tube(f):
+        colors[str(i)] = ORANGE
+    elif on_cap(f):
+        colors[str(i)] = MAGENTA
+pic = dict(name="dome_cap_removed_out",
+           title="A box under a B-spline dome, its edges filleted, 2 outward with the dome removed",
+           caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, the Arc join. A tube (orange) "
+                   "round each of the dome's edges closes the wall, from the fillet's offset over to "
+                   "the dome's edge; at each corner of the dome two tubes touch, and their section "
+                   "is tangent at its end to the one's end and the other's edge. Before, 0.5 to 4 "
+                   "outward were refused.",
+           panels=[])
+panel(pic, dome, "the input", "the dome (magenta) removed, 2 outward", [-0.5, -0.9, 0.8],
+      [40, 25, 18], 110, {"8": MAGENTA})
+panel(pic, out2, "after", "valid, %.4f, as worked numerically; the tubes orange"
+      % out2.Volume, [-0.5, -0.9, 0.8], [40, 25, 20], 120, colors)
+panel(pic, out2, "after, at a corner", "two tubes meet on a curved section, from the walls "
+      "up to where the tubes touch", [-0.3, -0.7, 0.9], [76.9, 46.35, 26.1], 9, colors,
+      mark=True)
+half = out2.common(Part.makeBox(110, 35, 70, V(-15, -10, -5)))
+panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick, rounded over the "
+      "dome's edge", [0.5, 1.2, 0.6], [40, 12, 15], 115)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

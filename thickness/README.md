@@ -689,10 +689,9 @@ offsets ends up to 1e-3 off the vertex at the dome's corner (1.04e-3 at
 the two all but touch; the vertex's tolerance covers it, and the cases allow it, as
 for the bottom removed.
 
-Still refused: 3 and 4 inward (the fillets' radius), and outward -- which before was
-a valid solid of 11247.290 where the same rule gives 11891.581: the
-fillets' offsets ran round to the removed dome and the rounded rim was
-missing.
+Still refused: 3 and 4 inward (the fillets' radius). Outward, which was
+refused too, has its own section below ("A filleted dome, the dome removed,
+outward").
 
 ![A filleted dome, the dome removed: tubes round its tangent edges](models/pictures/dome_cap_removed.png)
 
@@ -849,6 +848,73 @@ after the round trip; the sweep, all 928 runs, the same to full precision;
 fillet 815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as
 before, case for case; FreeCAD's Python suite 4064 OK and C++ tests 1086 of
 1086, frozen and unfrozen.
+
+## A filleted dome, the dome removed, outward (`c8e8866490` to `ec6c703cfc`, 2026-10-30)
+
+**What was broken.** The dome removed as above, but outward, 0.5 to 4, the
+Arc join: refused (`BRepOffset_UnknownError`). Outward the tubes round the
+dome's edges stand above the dome, and two of them touch at each corner of
+it; their section is tangent at its end to the one tube's end and to the
+other's edge on the dome. Five faults, one after the other:
+
+1. `ToContext` built the outward corner sphere (`72267e6608`) at each corner:
+   the convex edge it found ending there is the mitre between the two
+   fillets, whose tube closes to a point, and the sphere came out a sliver
+   with an arc on the dome 1.1 off it. Where another tangent edge of the same
+   cap ends at the vertex, the two tubes meet each other, as inward, and no
+   sphere is built now.
+2. `PipeInter` gave the section a second line 3.4e-4 long whose two ends both
+   took the vertex the tubes share: an edge of no length, and a construction
+   error. Such a line is dropped; the section's other line reaches the vertex.
+3. `BRepAlgo_Loop::CutEdge`, keeping every piece, put the section's own first
+   vertex after the vertex its end on the tube's edge had been cut at, both at
+   the one parameter: the piece kept started on the section's own vertex, and
+   the tube's wire did not close there. The first vertex now goes first.
+4. `FindLoopsByAngle` orders the edges leaving a vertex by their end tangents
+   in (u, v). The section's pcurve ends 3.9 deg the wrong side of the tube's
+   end at 1 outward (6.1 deg at 2.5; 0.9 deg of the other tube's edge),
+   though the curve runs on the right side of it, and two faces of the tube
+   were walked as one: the tube came out a triangle. Directions closer than
+   0.2 rad now go by the chords a tenth along each, as exact ties did; one
+   leaving all but the way the walk came in goes first or last, on its
+   chord's side.
+5. Where the two fillets' mitre shrinks to nothing, `MakeLoops::BuildFaces`
+   merged its end into the corner vertex and replaced it on its own faces'
+   edges only: the tube's edge on the dome took the new vertex, the section
+   kept the old, and the tube's wire came apart
+   (`BRepCheck_NotConnected`). The replacement now runs over every face built.
+
+Fault 2's line threw at 3 inward too, which was what refused it: without it
+3 inward came back done, invalid, the input's skin round two scraps of the
+offset, each bounded by one edge from a vertex back to it. After
+`SelectShells` an offset with none of the faces built round the removed
+ones, open or with a wire that does not close, is now refused
+(`ec6c703cfc`); a cavity sealed below a removed face (FreeCAD's
+`test_thickness_sealed_below_a_removed_face`) is closed and stays.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `dome_cap_removed_out`, `_out_0_5`, `_out_1`, `_out_1_5`, `_out_2_5`, `_out_3`, `_out_4` | `../boolean/models/dome_fillet_r3.brep`, face 9 (the dome) removed, 2, 0.5, 1, 1.5, 2.5, 3 and 4 | 25087.1916, 5783.3046, 11891.1761, 18325.2602, 32178.6178, 39601.1865, 55446.3703; refused before |
+| `dome_cap_removed_in_3_refused`, `_in_4_refused` | the same, -3 and -4 | refused, as before (3 answered invalid without `ec6c703cfc`) |
+
+The volumes are the same rule as inward, the input grown and the channel
+above the dome away from its edges, at 1200 x 800: 25087.299, 5783.383,
+11891.124, 18325.236, 32178.671, 39601.142 and 55446.448, within 1.4e-5 of
+the results (0.5) and within 4.4e-6 for the rest; at 400 x 400 they move
+by up to 0.9. 5 outward comes out valid too (72635.996, the rule's 72636.049
+at its default grid). Every curve end is within 2.8e-5 of its vertex.
+`models/dome_cap_removed.cpp` runs these with the inward four, to 1e-4.
+
+![A filleted dome, the dome removed, outward: two tubes touch at each corner](models/pictures/dome_cap_removed_out.png)
+
+**Validation** (on `eebc4a98b5`, then again merged with `c4fe0d5bd6` and
+`ee8f75c149`): Part 390 and PartDesign 486 tests OK; thickness PASS=432
+XFAIL=4 at fix levels 0 and 1, plain and frozen, the nine cases above
+among them (PASS=423 before them); fillet 815/1, draft 105, boolean 43;
+the thickness sweep right in all 928 runs at both levels, plain and
+frozen, not one changed; the fillet sweeps (vertex, edge, flat, big radii,
+chamfer) and the draft sweeps (1222 valid, 500 refused, 114 chains) the
+same as before, case for case.
 
 ## Determinism cases (intersection mode, Arc join)
 
