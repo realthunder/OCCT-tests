@@ -633,7 +633,7 @@ fillet 815, draft 105, boolean 43; the fillet and draft sweeps not one
 result changed; the thickness sweep right in all 928 runs, not one
 changed.
 
-## A filleted dome, the dome removed (`6004240f16`, 2026-10-29)
+## A filleted dome, the dome removed (`6004240f16`, 2026-10-29, sec 34)
 
 **What was broken.** The same shape with the dome itself removed, 0.5, 1,
 2 or 2.5 inward, the Arc join: refused (`BRepOffset_UnknownError`), the result
@@ -849,7 +849,7 @@ fillet 815/1, boolean 43, draft 104 with `new_roof_L_a-30` failing as
 before, case for case; FreeCAD's Python suite 4064 OK and C++ tests 1086 of
 1086, frozen and unfrozen.
 
-## A filleted dome, the dome removed, outward (`c8e8866490` to `ec6c703cfc`, 2026-10-30)
+## A filleted dome, the dome removed, outward (`c8e8866490` to `ec6c703cfc`, 2026-10-30, sec 35)
 
 **What was broken.** The dome removed as above, but outward, 0.5 to 4, the
 Arc join: refused (`BRepOffset_UnknownError`). Outward the tubes round the
@@ -905,7 +905,7 @@ by up to 0.9. 5 outward comes out valid too (72635.996, the rule's 72636.049
 at its default grid). Every curve end is within 2.8e-5 of its vertex.
 `models/dome_cap_removed.cpp` runs these with the inward four, to 1e-4.
 
-![A filleted dome, the dome removed, outward: two tubes touch at each corner](models/pictures/dome_cap_removed_out.png)
+![A filleted dome, the dome removed, outward: two tubes touch at each corner](models/pictures/dome_cap_removed_outward.png)
 
 **Validation** (on `eebc4a98b5`, then again merged with `c4fe0d5bd6` and
 `ee8f75c149`): Part 390 and PartDesign 486 tests OK; thickness PASS=432
@@ -996,7 +996,10 @@ results beside it -- upstream's chain files at `91be8c4c71`, the fork just
 before the fix, the fork now -- each whole and cut open. `models/Thickness.md` walks through them fix by fix and says
 how to read them. `pictures/make_pictures.sh` makes them again (scratch
 libraries for upstream and for each stage, the cases run on each, rendered
-under Xvfb); add a case to `pictures/cases.py`, with its stage, to picture it.
+under Xvfb, or on the screen on macOS); add a case to `pictures/cases.py`,
+with its stage, to picture it, and `ONLY="<case> ..."` draws just those.
+`pictures/mkpage.py` then makes the "Thickness Before and After" page from
+them, published again after every fix.
 
 ## Layout
 

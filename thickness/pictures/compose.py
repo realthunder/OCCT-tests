@@ -1,7 +1,7 @@
 # python compose.py <outdir> [names...] -- one PNG per case from the panels.
 #
 # Needs Pillow (the FreeCAD conda env has it) and the DejaVu fonts.
-import json, os, re, sys
+import glob, json, os, re, sys
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cases import CASES, INPUT, REFUSED, STAGES as STAGE
@@ -9,7 +9,10 @@ P = os.environ["THICK_WORK"]
 OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
 R = {k: json.load(open(P + "/r/%s/results.json" % k)) for k in os.listdir(P + "/r")
      if os.path.exists(P + "/r/%s/results.json" % k)}
-FD = "/usr/share/fonts/truetype/dejavu/"
+# The system's DejaVu, or matplotlib's copy (macOS has none of its own).
+FD = ([d for d in ["/usr/share/fonts/truetype/dejavu/"] + glob.glob(
+    sys.prefix + "/lib/python3*/site-packages/matplotlib/mpl-data/fonts/ttf/")
+    if os.path.exists(d + "DejaVuSans.ttf")] or [""])[0]
 F = ImageFont.truetype(FD + "DejaVuSans.ttf", 15)
 FB = ImageFont.truetype(FD + "DejaVuSans-Bold.ttf", 16)
 FT = ImageFont.truetype(FD + "DejaVuSans-Bold.ttf", 19)

@@ -10,16 +10,19 @@ from concurrent.futures import ThreadPoolExecutor
 
 U = os.environ["U"]
 SRC = os.environ["OCCT"].rstrip("/") + "/"
-B = os.environ.get("OCCT_BUILD", SRC + "build_conda_relwithdebinfo_801")
+MAC = sys.platform == "darwin"
+B = os.environ.get("OCCT_BUILD", SRC + ("build_conda_rwdi_801" if MAC else "build_conda_relwithdebinfo_801"))
 RUN = os.environ.get("RUN", os.path.expanduser("~/works/sw/fcad/.conda/run.sh"))
-out = subprocess.run([RUN, "ninja", "-C", B, "-t", "commands", "TKOffset"],
+# On macOS the system ninja: conda's takes the tree for out of date.
+NINJA = ["/usr/local/bin/ninja"] if MAC else [RUN, "ninja"]
+out = subprocess.run(NINJA + ["-C", B, "-t", "commands", "TKOffset"],
                      capture_output=True, text=True).stdout.splitlines()
 comp = []
 links = []
 for l in out:
     if ("TKBool.dir" in l or "TKOffset.dir" in l) and " -c " in l:
         comp.append(l)
-    elif re.search(r"-o \S*libTK(Bool|Offset)\.so(\.[0-9.]+)?( |$)", l):
+    elif re.search(r"-o \S*libTK(Bool|Offset)(\.so(\.[0-9.]+)?|\.8\.0\.1\.dylib)( |$)", l):
         links.append(l)
 print(len(comp), "objects,", len(links), "libraries")
 
@@ -58,7 +61,7 @@ def run(l):
     return 0
 
 
-with ThreadPoolExecutor(os.cpu_count()) as ex:
+with ThreadPoolExecutor(min(os.cpu_count(), 4) if MAC else os.cpu_count()) as ex:
     bad = sum(ex.map(run, comp))
 print("compile failures", bad)
 if bad:
@@ -69,7 +72,9 @@ for l in links:
     r = [U + "/obj/" + x if x.endswith(".o") and ("TKBool.dir" in x or "TKOffset.dir" in x) else x
          for x in a]
     j = r.index("-o")
-    r[j + 1] = U + "/lib/" + os.path.basename(r[j + 1])
+    # macOS: named as the clients' install name has it (libTKOffset.8.0.dylib),
+    # which is what dyld looks up in DYLD_LIBRARY_PATH.
+    r[j + 1] = U + "/lib/" + re.sub(r"\.8\.0\.1\.dylib$", ".8.0.dylib", os.path.basename(r[j + 1]))
     p = subprocess.run(r, cwd=B, capture_output=True, text=True)
     print("link", os.path.basename(r[j + 1]), p.returncode, p.stderr[-2000:])
     if p.returncode:

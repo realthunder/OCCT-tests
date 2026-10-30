@@ -153,7 +153,7 @@ for i, f in enumerate(out2.Faces):
         colors[str(i)] = ORANGE
     elif on_cap(f):
         colors[str(i)] = MAGENTA
-pic = dict(name="dome_cap_removed_out",
+pic = dict(name="dome_cap_removed_outward",
            title="A box under a B-spline dome, its edges filleted, 2 outward with the dome removed",
            caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, the Arc join. A tube (orange) "
                    "round each of the dome's edges closes the wall, from the fillet's offset over to "

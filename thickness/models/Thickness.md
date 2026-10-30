@@ -2185,6 +2185,124 @@ Python suite 4064 OK and the C++ tests 1086 of 1086, frozen and unfrozen.
 The pictures of `dome_join_out` and `dome_join_out_2` are made again for
 the new volumes.
 
+### Sec 34: the dome removed, inward
+
+**Four faults** (`6004240f16`, `ToContext` and `MakeOffset` in
+`BRepOffset_MakeOffset.cxx`, `BRepOffset_Tool::PipeInter`; `d572352e2e`,
+`BRepOffset_Inter2d::EdgeInter`). The filleted dome of sec 30 with the dome
+itself removed (Face9), 0.5 to 2.5 inward, the Arc join: refused, the
+result the input itself. The dome meets each fillet tangentially, and a
+removed face tangent to its neighbour along an edge is closed by a tube
+round the edge (sec 6); none was built.
+
+1. The edges were not taken as tangent: the dome and its B-spline fillets
+   meet 2e-6 rad off, and the test was the angular precision, 1e-12. The
+   tube's test now takes the angle the tolerance allows over half the
+   offset, as `TreatTangentCaps`, the Intersection join's, already did
+   (`analyseTolAngle`).
+2. The tube's edge on the dome had no pcurve for two of the four edges: its
+   projection onto the dome came back empty and the edge was never cut into
+   it. The pcurve is fitted through the points' parameters on the dome,
+   which the intersection finding them gives anyway (the outward corner arc
+   too, `TangentCornerArcOnCap`).
+3. That edge ended where the dome's edge does, short of the next edge at
+   each corner, and the rim's corner was never cut off. It runs on past
+   each end until it has left the dome, and a step further.
+4. Two tubes meet at a corner of the dome along a curve that should end on
+   both tubes' edges on the dome, and at the vertex both start from on the
+   fillets' offsets. It ended 7e-6 off one edge -- the 2D intersection works
+   to 1e-7 and missed it -- and 3e-4 to 1e-3 off the vertex, where the tubes
+   all but touch and their section is ill-conditioned. `EdgeInter` takes an
+   end of one edge lying on the other within the edges' tolerances as an
+   intersection, and `PipeInter` ends the section at a vertex both tubes
+   have when it ends within a thousandth of the tubes' size of it, the end
+   poles of its curve and pcurves moved onto the vertex. Where the two touch
+   to within 1e-7 the 2D intersection still finds nothing, on purpose: a
+   vertex put there broke a half dome's wire.
+
+The references are the rule the tube follows, worked numerically: the
+input less the points further than the thickness from every face kept (a
+Gauss rule over a grid on the dome, 1200 x 800): 5536.4205, 10903.5721,
+21141.2680 and 26016.1606 at 0.5, 1, 2 and 2.5; the results lie within 2e-5
+of them. The mitre between the fillets' offsets ends up to 1e-3 off the
+vertex at the dome's corner (1.04e-3 at 0.5), inside the vertex's tolerance.
+Still refused then: 3 and 4 inward, the fillets' radius (refused still,
+sec 35), and outward (sec 35).
+
+![dome_cap_removed_in_0_5](pictures/dome_cap_removed_in_0_5.png)
+
+![dome_cap_removed_in_1](pictures/dome_cap_removed_in_1.png)
+
+![dome_cap_removed_in](pictures/dome_cap_removed_in.png)
+
+![dome_cap_removed_in_2_5](pictures/dome_cap_removed_in_2_5.png)
+
+### Sec 35: the dome removed, outward
+
+**Five faults, and a refusal** (`c8e8866490`, `BRepAlgo_Loop::CutEdge`;
+`29f01c8d95`, `FindLoopsByAngle` in `BRepAlgo_Loop.cxx`; `b16d138042`,
+`BRepOffset_MakeLoops::BuildFaces`; `9649fb0e7e`, `ToContext` and
+`PipeInter`; `ec6c703cfc`, `MakeOffset`). Sec 34's shape outward, 0.5 to 4:
+refused. Outward the tubes stand above the dome, and two of them touch at
+each corner of it; their section is tangent at its end to the one tube's
+end and to the other's edge on the dome.
+
+1. `ToContext` built the outward corner sphere at each corner: the convex
+   edge it found ending there is the mitre between the two fillets, whose
+   tube closes to a point, and the sphere came out a sliver with an arc 1.1
+   off the dome. Where another tangent edge of the same removed face ends at
+   the vertex, the two tubes meet each other, as inward, and no sphere is
+   built.
+2. `PipeInter` gave the section a second line 3.4e-4 long whose two ends
+   both took the vertex the tubes share: an edge of no length. Such a line
+   is dropped; the section's other line reaches the vertex.
+3. `CutEdge`, keeping every piece, put the section's own first vertex after
+   the vertex its end on the tube's edge had been cut at, both at one
+   parameter: the piece kept started on the section's own vertex, and the
+   tube's wire did not close there. The first vertex now goes first.
+4. `FindLoopsByAngle` orders the edges leaving a vertex by their end
+   tangents in (u, v). The section's pcurve ends 3.9 deg the wrong side of
+   the tube's end at 1 (6.1 deg at 2.5; 0.9 deg off the other tube's edge),
+   though the curve runs on the right side of it, and two faces of the tube
+   were walked as one. Directions closer than 0.2 rad now go by the chords
+   a tenth along each, as exact ties did; one leaving all but the way the
+   walk came in goes first or last, on its chord's side.
+5. Where the fillets' mitre shrinks to nothing, `BuildFaces` merged its end
+   into the corner vertex and replaced it on its own faces' edges only: the
+   tube's edge on the dome took the new vertex, the section kept the old,
+   and the tube's wire came apart. The replacement runs over every face
+   built now.
+
+Fault 2's line was what refused 3 inward: without it, 3 inward came back
+done and invalid, the input's skin round two scraps of the offset. After
+`SelectShells` an offset with none of the faces built round the removed
+ones that is open, or has a wire that does not close, is refused; a cavity
+sealed below a removed face (sec 10) is closed and stays. 3 and 4 inward are
+in the suite as refusals.
+
+The references are sec 34's rule outward, the input grown and the channel
+above the dome away from its edges: 5783.3829, 11891.1235, 18325.2355,
+25087.2990, 32178.6711, 39601.1422 and 55446.4475 at 0.5, 1, 1.5, 2, 2.5, 3
+and 4; the results lie within 1.4e-5 of them (0.5) and 4.4e-6 (the rest).
+5 comes out valid too. Every curve end is within 2.8e-5 of its vertex.
+Within tolerance, so no fix level: the suite 432 PASS 4 XFAIL at levels 0
+and 1, frozen and not; the sweep's 928 runs, fillet 815/1, boolean 43 and
+draft 105 as before, case for case.
+
+![dome_cap_removed_out_0_5](pictures/dome_cap_removed_out_0_5.png)
+
+![dome_cap_removed_out_1](pictures/dome_cap_removed_out_1.png)
+
+![dome_cap_removed_out_1_5](pictures/dome_cap_removed_out_1_5.png)
+
+![dome_cap_removed_out](pictures/dome_cap_removed_out.png)
+
+![dome_cap_removed_out_2_5](pictures/dome_cap_removed_out_2_5.png)
+
+![dome_cap_removed_out_3](pictures/dome_cap_removed_out_3.png)
+
+![dome_cap_removed_out_4](pictures/dome_cap_removed_out_4.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
@@ -2263,14 +2381,17 @@ ten minutes on the dev box, most of it building libraries:
    RPATH, so `LD_LIBRARY_PATH` does not reach them) and once on the fork as
    built, keeping each result as a `.brep` and a `results.json`.
 3. `mkjobs.py` and `render.py` draw the panels in the FreeCAD GUI under
-   `xvfb-run` -- the shape given with its removed faces in magenta, then
+   `xvfb-run` (on macOS on the screen, the libraries named as the clients
+   load them, `libTKOffset.8.0.dylib`, and put first by `DYLD_LIBRARY_PATH`) -- the shape given with its removed faces in magenta, then
    each result -- and `compose.py` lays them out (Pillow, from the FreeCAD
    conda env). The viewer is started afresh for every hundred panels, under
    a limit on its address space: it kept memory for every panel drawn, and
    all 1248 in one run took the machine down (`render.py` has the numbers
    and the two causes, both fixed since).
 
-A case added to `cases.py` with its stage gets its picture on the next run.
+A case added to `cases.py` with its stage gets its picture on the next run;
+`ONLY="name ..."` runs and draws those cases alone, building only their
+stages' libraries, and leaves the other pictures as they are.
 `mkpage.py OUTDIR` then builds the "Thickness Before and After" page from
 them -- `index.html` and `img/`, one section per fix with its title from the
 heading here and its summary from `SUMMARY` in the script, which a new

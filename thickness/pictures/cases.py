@@ -49,6 +49,8 @@ STAGES = {
     "s29": ("efe6683cd7", "29"),
     "s30": ("193f97a680", "30"),
     "s31": ("92cc9effb6", "31"),
+    "s34": ("047a9e432d", "34"),
+    "s35": ("eebc4a98b5", "35"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -418,6 +420,19 @@ CASES = {
     "dome_join_in_2": ("s30", "filleteddome", 4, -2, False, 2, 20254.4292),
     "dome_join_out": ("s31", "filleteddome", 4, 1, False, 2, 11010.6637),
     "dome_join_out_2": ("s31", "filleteddome", 4, 2, False, 2, 22629.5034),
+    # The same dome with the dome itself (Face9) removed, the Arc join: tubes
+    # round its tangent edges, inward (sec 34) and outward (sec 35).
+    "dome_cap_removed_in_0_5": ("s34", "filleteddome", 9, -0.5, False, 0, 5536.4205),
+    "dome_cap_removed_in_1": ("s34", "filleteddome", 9, -1, False, 0, 10903.5721),
+    "dome_cap_removed_in": ("s34", "filleteddome", 9, -2, False, 0, 21141.2680),
+    "dome_cap_removed_in_2_5": ("s34", "filleteddome", 9, -2.5, False, 0, 26016.1606),
+    "dome_cap_removed_out_0_5": ("s35", "filleteddome", 9, 0.5, False, 0, 5783.3829),
+    "dome_cap_removed_out_1": ("s35", "filleteddome", 9, 1, False, 0, 11891.1235),
+    "dome_cap_removed_out_1_5": ("s35", "filleteddome", 9, 1.5, False, 0, 18325.2355),
+    "dome_cap_removed_out": ("s35", "filleteddome", 9, 2, False, 0, 25087.2990),
+    "dome_cap_removed_out_2_5": ("s35", "filleteddome", 9, 2.5, False, 0, 32178.6711),
+    "dome_cap_removed_out_3": ("s35", "filleteddome", 9, 3, False, 0, 39601.1422),
+    "dome_cap_removed_out_4": ("s35", "filleteddome", 9, 4, False, 0, 55446.4475),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
