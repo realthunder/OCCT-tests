@@ -16,7 +16,11 @@ FreeCADCmd tests/fork/fillet/run_tests.py
 The suite runs with FreeCAD's shape values unfrozen (`ImmutableShapeValues`
 off), as any build that does not freeze them runs; `FILLET_FREEZE=1` runs it
 frozen. Every case also checks that its input comes back as it went in
-(valid, the same volume), and every result it makes for loose ends -- an
+(valid, the same volume); every passing case is filleted once more on a
+frozen copy of its input (`frozen_problem`, as a feature's Shape is frozen
+in FreeCAD), which must come out valid at the plain fillet's volume to
+1e-9 -- a fillet that writes into its input is refused there; and every
+result it makes is checked for loose ends -- an
 edge whose curve ends past its vertex, which BRepCheck lets pass
 (`../loose_ends.py`, added 2026-10-15) by more than the tolerance the case
 accepts. Of the cases that passed, only #876's fillet a few thousandths
@@ -5940,6 +5944,71 @@ PartDesign 486 OK; the suite PASS=815 XFAIL=1.
 | `boss_rim_chamfer_r1`, `boss_rim_seam_chamfer_r1`, `boss_rim_bossseam_chamfer_r1` | the round plate's rim: neither seam at the point, the rim's, the boss's |
 | `boss_hole_chamfer_r1`, `boss_hole_seam_chamfer_r1` | a hole's wall, the boss outside it; the hole's seam through the point |
 | `boss_corner_chamfer_r1` | the boss at the plate's corner, flush with both sides (refused before: `boss_corner_chamfer_r1_refused`) |
+
+## A frozen input filleted without a copy (`a38fd1578a`, `36a9e0d3aa`, `24fe55c705`, 2026-10-30)
+
+FreeCAD freezes a feature's Shape (`TopoDS_TShape::Immutable`, Part's
+`ImmutableShapeValues`), and BRep_Builder refuses a write into it. A
+fillet that wrote into its input was refused, and FreeCAD recomputed the
+feature on a copy of the whole input (fcad TransactionLogJournal sec
+27.82). Each passing case is now filleted once more on a frozen copy of
+its input (`frozen_problem`), to come out valid at the plain fillet's
+volume to 1e-9. At `350be9c134` 328 of the 815 did not: 313 refused, 15 at
+another volume -- a refusal the fillet caught and went around.
+
+Three causes, in the order they were taken:
+
+- The fillet's own writes into the input's vertices, in 385 cases: the
+  tolerance of a vertex a stripe ends at raised (`Compute`, twice), a
+  vertex moved to a corner's point (`ChFi3d_IndexPointInDS`), and the
+  passes on the result raising the vertex they keep (`SplitPinchedFaces`,
+  `CollapseSlivers`, `DropMicroEdges`). Each change is now kept for a
+  copy of the vertex (`ChFi3d_UpdateVertex`, `ChFi3d_ThawScope`,
+  `ChFi3d_RaiseKept`), put into the result in its place once the result
+  is made -- the frozen edges, wires and faces on the way copied in turn
+  (`BRepLib_ThawedVertex`, `BRepLib_PutThawed`, from UpdateTolerances'
+  copy-on-write) -- and marked a thawed copy, which stands for its
+  original wherever the fillet asks whether a shape is the input's, and
+  which FreeCAD names as the original. The computation reads the
+  tolerance kept (`ChFi3d_VertexTolerance`). `a38fd1578a`: 328 -> 28.
+- A refusal caught inside the fillet: `PerformIntersectionAtEnd` remakes
+  its variable for the extended face, which held the input's face, and
+  `BRep_Builder::MakeFace` refused a handle holding a frozen face --
+  though it makes a new TShape and writes nothing into the one there. The
+  corner was then taken another way, 76 times in the suite; a count of
+  the refusals that reach the caller never saw them (a trace of every
+  `TopoDS_LockedShape` thrown did). `MakeFace` and `MakeEdge` now refuse a
+  Locked handle only, as upstream does. `36a9e0d3aa`: 28 -> 11.
+- BRepLib's copy-on-write, local to the part it is given: once the result
+  is built, `BRepLib::SameParameter` runs on each new face alone, and
+  raises a frozen vertex on a copy put in that face only. A face of the
+  input kept beside it held the original, and the wire the two share did
+  not close there -- BRepCheck's `NotClosed`, every setback refused, the
+  fillet not done: the 11, each a fillet with its end made flat at a
+  vertex (#273's `Fillet001` at 0.3 on its edge 39: the flat end's 0.3 of
+  the cut edge on the copy, the input's top edge on the original). Each
+  face's copies are put in the whole result before the next face's pass
+  (`ChFi3d_SpreadThawed`), which then raises the copy, as it raises the
+  vertex in place unfrozen. `24fe55c705`: 11 -> 0.
+
+None of it runs where nothing is frozen. Every case's plain fillet before
+(`eebc4a98b5`) and after, at full precision -- volume and area to 15
+digits, the faces, edges and vertices, the largest tolerance: the 710
+results the same. The sweeps, before and after, line for line the
+same: with the flat end off, edge 2666 ok and 1255 refused, vertex 9712
+and 2530; on, edge 2706 and 1215, vertex 9840 and 2402 -- no `BAD`,
+`LOOSE`, timeout or crash. Thickness 423 + 4 XFAIL, draft 104 and its
+known failure, boolean 43, each plain and frozen, as before.
+
+The suite PASS=815 XFAIL=1, plain and frozen, the frozen check on every
+passing case. The step block of the PartDesign test the refusal was found
+in (fcad `TestFillet`) fillets its frozen feature Shape directly, valid, at
+the copy's volume.
+
+`a38fd1578a`: `ChFi3d_Builder.cxx`, `ChFi3d_Builder_0.cxx`/`.hxx`,
+`BRepFilletAPI_MakeFillet.cxx`, `BRepFilletAPI_MakeChamfer.cxx`,
+`BRepLib.cxx`/`.hxx`. `36a9e0d3aa`: `BRep_Builder.cxx`. `24fe55c705`:
+`ChFi3d_Builder.cxx` (`ChFi3d_SpreadThawed`).
 
 ## Known broken (XFAIL)
 
