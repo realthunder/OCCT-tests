@@ -1488,6 +1488,12 @@ thickness_case("issue521_connect_wall_y10_in_join", issue521, 2, -0.5, "pass", 2
 thickness_case("issue521_connect_wall_x0_in_join", issue521, 5, -0.5, "pass", 270.4120, True, 2)
 thickness_case("issue521_connect_wall_y0_in_join", issue521, 3, -0.5, "pass", 270.4120, True, 2)
 thickness_case("issue521_connect_wall_y0_in", issue521, 3, -0.5, "pass", 269.8020)
+# The step with its ceiling removed, the Arc join: refused inward, inside out
+# outward (-12745.7787). The ceiling's edge with the side, an arc of 137
+# degrees, was stretched into a whole circle, which cut the side's offset
+# all the way round; the ceiling's rim became a disc.
+thickness_case("step_ceiling_in", _step, _step_ceiling, -1.0, "pass", 5434.6552)
+thickness_case("step_ceiling_out", _step, _step_ceiling, +1.0, "pass", 6078.0044)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

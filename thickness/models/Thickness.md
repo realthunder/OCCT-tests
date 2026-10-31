@@ -2546,6 +2546,53 @@ Thickness001's base too, half a turn by its bounds and a hair over, and
 twelve of its runs (three faces, four offsets) threw where they were
 refused or invalid: a face must be more than half a turn by a margin now.
 
+### Sec 39: the Arc join, the step's ceiling removed
+
+**One fault** (`36d0345d8e`, `BRepOffset_Inter3d.cxx`). Sec 37's corpus used the
+Arc join for its reference, and on the step with the ceiling removed the
+reference was the wrong one: refused inward, -12745.7787 outward (inside
+out), and with the 0.5 offsets the same. Upstream: invalid inward, the input
+handed back outward.
+
+The ceiling (z = 10.06, x < -10.06) meets the side in an arc from 112.9 to
+247.1 degrees, and the wall in a line. `ContextIntByArc` takes each edge the
+removed face shares with a kept one, its offset on the kept face's offset,
+and stretches it (`ExtentEdge`) before the removed face's plane is cut with
+it: a line 100 lengths each way, a periodic curve round until it closes --
+here the side's offset, r 26.81, at z = 10.06, a whole circle. The circle cut
+the side's offset all the way round, under the top on the side where the
+bottom is; the ceiling's rim, bounded by it, was a disc r 26.81 with the
+wall's line across it; and the offset shell closed at z = 10.06, the bottom's
+and the wall's offsets and the side's below the circle left out. The solid
+was the step's top part turned inside out.
+
+An arc of less than half a turn is stretched 0.45 of what it leaves free
+each way now: 338 degrees of the circle, open for 22 degrees round
+x = 26.8, where it hangs in the side's offset and goes into no loop. The wall's offset crosses the
+side's at 114.4 degrees, inside the arc's own range. A whole circle (the top
+of a cylinder), a half (a seam's two arcs of one circle) and more (#521's
+three quarters) are stretched as before; tried on all of them, the open
+stretch refused or broke 56 runs of the corpus that were right.
+
+Inward 5434.6552, the Intersection join's value: inward the Arc join rounds
+the concave edges, and the step's only one, the wall's with the ceiling,
+goes with the ceiling. Outward 6078.0044, the Intersection join's
+6148.6061 less about 71 for the rounded edges: the top's circle, the
+bottom's arc, the wall's foot and its two uprights, 331 long, at 1 - pi/4 a
+unit length, and a little for the curvature.
+
+![step_ceiling_in](pictures/step_ceiling_in.png)
+
+![step_ceiling_out](pictures/step_ceiling_out.png)
+
+**Validation** (on `36d0345d8e`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=451 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the two cases above among them; fillet 815/1 and
+draft 105, plain and frozen; boolean 43; the thickness sweep right in all
+928 runs at both levels, plain and frozen, not one changed (464 of them the
+Arc join). The fillet and draft sweeps were not run: neither reaches the
+offset.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

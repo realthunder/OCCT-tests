@@ -1126,6 +1126,41 @@ Thickness001's base too, half a turn by its bounds and a hair over, and
 twelve of its runs (three faces, four offsets) threw where they were
 refused or invalid: a face must be more than half a turn by a margin now.
 
+## A step cut off a cylinder, its ceiling removed, the Arc join (`36d0345d8e`, 2026-10-31, sec 39)
+
+**What was broken.** The step of sec 37 with its ceiling removed, the Arc
+join: refused inward, inside out outward (-12745.7787); upstream invalid
+inward and the input handed back outward. Found by the corpus of sec 37,
+where it was the reference.
+
+The ceiling meets the side in an arc of 137 degrees. `ContextIntByArc`
+stretches the offset of each edge a removed face shares with a kept one
+before the removed face is cut by its neighbours' offsets (`ExtentEdge`); a
+periodic edge was stretched until it closed, a whole circle. The circle cut
+the side's offset all the way round, z = 10.06, the ceiling's rim came out
+a disc of radius 26.81, and the solid closed above it. An arc of less than
+half a turn is stretched 0.45 of what it leaves free each way now, short of
+closing; a whole circle, a half (a seam's two arcs), and the three
+quarters of #521 are stretched as they were.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `step_ceiling_in`, `step_ceiling_out` | the step, its ceiling removed, -1 and +1, the Arc join | 5434.6552 (the Intersection join's: no concave edge is left to round), 6078.0044; refused and inside out before |
+
+![step_ceiling_out](models/pictures/step_ceiling_out.png)
+
+Over the corpus of sec 37 with the Arc join, the eight runs of the ceiling
+(+/-1, +/-0.5) change and nothing else (one 1e-4 in the volume of
+Thickness001's base, its left bottom removed, +1).
+
+**Validation** (on `36d0345d8e`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=451 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the two cases above among them; fillet 815/1 and
+draft 105, plain and frozen; boolean 43; the thickness sweep right in all
+928 runs at both levels, plain and frozen, not one changed (464 of them the
+Arc join). The fillet and draft sweeps were not run: neither reaches the
+offset.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

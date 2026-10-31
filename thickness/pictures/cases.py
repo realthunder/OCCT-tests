@@ -54,6 +54,7 @@ STAGES = {
     "s36": ("c1f874898c", "36"),
     "s37": ("ddac69429e", "37"),
     "s38": ("fd833a6672", "38"),
+    "s39": ("2ad983305c", "39"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -492,6 +493,9 @@ CASES = {
     "issue521_connect_wall_x0_in_join": ("s38", "issue521", 5, -0.5, True, 2, 270.4120),
     "issue521_connect_wall_y0_in_join": ("s38", "issue521", 3, -0.5, True, 2, 270.4120),
     "issue521_connect_wall_y0_in": ("s38", "issue521", 3, -0.5, False, 0, 269.8020),
+    # The step with its ceiling removed, the Arc join (sec 39).
+    "step_ceiling_in": ("s39", "step", 4, -1, False, 0, 5434.6552),
+    "step_ceiling_out": ("s39", "step", 4, 1, False, 0, 6078.0044),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
