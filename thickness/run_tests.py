@@ -1495,6 +1495,89 @@ thickness_case("issue521_connect_wall_y0_in", issue521, 3, -0.5, "pass", 269.802
 thickness_case("step_ceiling_in", _step, _step_ceiling, -1.0, "pass", 5434.6552)
 thickness_case("step_ceiling_out", _step, _step_ceiling, +1.0, "pass", 6078.0044)
 
+
+def offset_case(name, shape, value, expect, ref, join=0, inter=False, exact=True):
+    """makeOffsetShape (Skin, join Arc unless given) of the whole shape.
+
+    expect='pass':  a valid result whose area (a shell, a face) or volume
+                    (a solid) is ref; with exact, the points inside each of
+                    its faces at |value| from the input's faces, to 1e-4 --
+                    the offset of the faces, of their edges and of their
+                    vertices is at that distance, and nothing else is.
+    expect='xfail': known broken (see README.md).
+    """
+    try:
+        r = shape.makeOffsetShape(value, 1e-7, inter, False, 0, join)
+        problems = []
+        if not r.isValid():
+            problems.append("invalid")
+        else:
+            got = r.Volume if r.Solids else r.Area
+            if abs(got - ref) > RELTOL * abs(ref):
+                problems.append("%s %.4f != %.4f" % ("volume" if r.Solids else "area", got, ref))
+            if exact:
+                faces = Part.Compound(shape.Faces)
+                worst = 0.0
+                for f in r.Faces:
+                    u0, u1, v0, v1 = f.ParameterRange
+                    for i in range(1, 6):
+                        for j in range(1, 6):
+                            p = f.valueAt(u0 + (u1 - u0) * i / 6.0, v0 + (v1 - v0) * j / 6.0)
+                            if f.isInside(p, 1e-6, True):
+                                d = faces.distToShape(Part.Vertex(p))[0]
+                                worst = max(worst, abs(d - abs(value)))
+                if worst > 1e-4:
+                    problems.append("a point %.4g off the offset distance" % worst)
+        ok = not problems
+        detail = "; ".join(problems) if problems else "%s=%.4f" % (
+            "vol" if r.Solids else "area", r.Volume if r.Solids else r.Area)
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    report(name, ok, expect == "xfail", detail)
+
+
+def issue346_profile(cx, solid=False):
+    """#346's Revolve: a line from (37.71, 51.19) to (30, 42) and an arc
+    centred (cx, -20.08) on to the axis, turned about y; the arc's centre off
+    the axis makes its end a point: a dimple (cx > 0, the meridian reaching
+    the axis going back down) or a peak (cx < 0). With solid, closed by the
+    axis and a disc at the top."""
+    cy = -20.083431642721106
+    a = App.Vector(37.713451316238469, 51.192533317427738, 0)
+    b = App.Vector(30, 42, 0)
+    r = math.hypot(30 - cx, 42 - cy)
+    t = App.Vector(0, cy + math.sqrt(r * r - cx * cx), 0)
+    am = 0.5 * (math.atan2(42 - cy, 30 - cx) + math.atan2(t.y - cy, -cx))
+    m = App.Vector(cx + r * math.cos(am), cy + r * math.sin(am), 0)
+    edges = [Part.LineSegment(a, b).toShape(), Part.Arc(b, m, t).toShape()]
+    if solid:
+        c = App.Vector(0, a.y, 0)
+        edges += [Part.LineSegment(t, c).toShape(), Part.LineSegment(c, a).toShape()]
+        return Part.Face(Part.Wire(edges)).revolve(App.Vector(), App.Vector(0, 1, 0), 360)
+    return Part.Wire(edges).revolve(App.Vector(), App.Vector(0, 1, 0), 360)
+
+
+# #346: the issue's Revolve (a shell, its dome's top a dimple 0.9 degrees
+# deep), offset by -2 with the Arc join: "Unknown OCC exception" -- a
+# projection that found nothing. Inwards the offset's meridians fall short of
+# the axis there, where at a peak they cross it; the gap was taken for a
+# crossing and trimmed. It is left open now, for the sphere round the apex.
+issue346 = Part.Shape()
+issue346.importBrep(os.path.join(MODELS, "issue346_revolve.brep"))
+offset_case("issue346_revolve_in", issue346, -2.0, "pass", 5966.6887)
+offset_case("issue346_revolve_in_0.5", issue346, -0.5, "pass", 5626.8200)
+offset_case("issue346_revolve_in_10", issue346, -10.0, "pass", 7949.8995)
+offset_case("issue346_revolve_out", issue346, 2.0, "pass", 5002.0810, exact=False)
+# The same apex crossed -- a peak inwards, or a dimple on a solid inwards
+# (its outside the other way): the seam trimmed at the apex ran from -2e100
+# to 2e100 on the face: invalid.
+offset_case("issue346_peak_shell_in", issue346_profile(-1.05), -2.0, "pass", 5991.6768)
+offset_case("issue346_dimple_solid_in", issue346_profile(1.05, True), -1.0, "pass", 14455.0033)
+offset_case("issue346_peak_solid_in", issue346_profile(-1.05, True), -0.5, "pass", 18078.0821)
+thickness_case("issue346_dimple_solid_thick", issue346_profile(1.05, True), 3, -1.0, "pass", 5287.5411)
+thickness_case("issue346_peak_solid_thick", issue346_profile(-1.05, True), 3, -0.5, "pass", 2712.9873)
+
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets
 # meet in a mitre and both meet the dome tangentially, and their offsets'

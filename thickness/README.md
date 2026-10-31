@@ -1161,6 +1161,63 @@ draft 105, plain and frozen; boolean 43; the thickness sweep right in all
 Arc join). The fillet and draft sweeps were not run: neither reaches the
 offset.
 
+## #346: an offset inward where a dome comes to a point (`e306bb1ae4`, 2026-10-31, sec 40)
+
+**What was broken.** The issue's Revolve -- a shell, a cone and a dome
+turned about y -- given a Part Offset of -2 with the Arc join: "Unknown OCC
+exception" (`StdFail_NotDone` from a projection); +2 was fine. Upstream too.
+
+The dome's meridian is an arc whose centre is 1.05 off the axis: it rises
+past its own top and comes down to the axis, 0.015 below the flat -- the top
+is a dimple, 0.9 degrees deep. The offset of a face coming to a point is
+trimmed where its meridians cross the axis, or extended to it where they
+fall short (`BRepOffset_Offset`), and which of the two was told by the sign
+of the offset alone: a cone point is crossed inward and falls short outward.
+At a dimple it is the other way round: inward the offset's meridians end
+0.03 short of the axis, and the trim looked for their crossing beyond the end
+of the surface. Such a gap is told by where the generatrix meets the axis
+now, and with the Arc join left open, as one is outward: the sphere round the
+apex closes it (`BRepOffset_MakeOffset::CorrectConicalFaces`), of radius
+|offset| and reversed inward, where it took the offset as its radius and
+threw on a negative one.
+
+Where the apex is crossed -- a peak inward, or a dimple on a solid inward,
+its outside being the other side -- the face is trimmed there, and that was
+invalid with any such surface of revolution: the seam trimmed at the apex
+got its second curve on the face after its range was set, a new
+representation with none, and ran from -2e100 to 2e100. The range is set
+on the pair now.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_revolve_in`, `_in_0.5`, `_in_10` | the Revolve (`models/issue346_revolve.brep`), -2, -0.5, -10, the Arc join | areas 5966.6887, 5626.8200, 7949.8995, every face at the offset distance from the input's; refused before |
+| `issue346_revolve_out` | the same, +2 | 5002.0810, as before |
+| `issue346_peak_shell_in` | the profile with its arc centred 1.05 to the other side (a peak), -2 | 5991.6768; invalid before |
+| `issue346_dimple_solid_in`, `issue346_peak_solid_in` | each profile closed by the axis and a disc, a solid, -1 and -0.5 | 14455.0033, 18078.0821 (volumes); invalid and refused before |
+| `issue346_dimple_solid_thick`, `issue346_peak_solid_thick` | the same, a thickness with the disc removed, -1 and -0.5 | 5287.5411, 2712.9873; invalid and refused before |
+
+The offset cases (`offset_case`) are new to the suite: an offset of the
+whole shape, its area (a shell) or volume (a solid), and the points inside
+each of its faces at the offset distance from the input's faces, to 1e-4.
+
+![issue346_revolve](models/pictures/issue346_revolve.png)
+
+Still wrong: the Intersection join on the dimple, -2: refused, as before
+(its gap is extended to the axis, and the extension threw where the trim
+did); +2 valid and wrong, as before -- the dome's offset never gets its
+section with the cone's, and the two share no edge. A shell of revolution
+with its apex cut off is refused with that join either way (an iso line of
+the offset evaluated off its surface, `BRepOffset_Inter2d`). Offsets past a
+solid's own thickness at the axis (2.78 at the dimple) cross the far side:
+valid and wrong, as anywhere.
+
+**Validation** (on `e306bb1ae4`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=460 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the nine cases above among them; the thickness
+sweep right in all 928 runs at both levels, plain and frozen, not one
+changed; the issue's document recomputes, its Offset valid. Fillet, draft
+and boolean were not run: none reaches `BRepOffset_Offset`.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

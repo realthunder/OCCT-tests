@@ -55,6 +55,7 @@ STAGES = {
     "s37": ("ddac69429e", "37"),
     "s38": ("fd833a6672", "38"),
     "s39": ("2ad983305c", "39"),
+    "s40": ("1fbb9fe781", "40"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -195,6 +196,23 @@ def _issue521():
     return s
 
 
+def _issue346(cx):
+    # #346's profile -- a line from (37.71, 51.19) to (30, 42), an arc
+    # centred (cx, -20.08) on to the axis -- closed by the axis and a disc at
+    # the top, turned about y: the dome's top a dimple (cx > 0) or a peak
+    # (cx < 0). Face3 is the disc.
+    cy = -20.083431642721106
+    a, b = V(37.713451316238469, 51.192533317427738, 0), V(30, 42, 0)
+    r = math.hypot(30 - cx, 42 - cy)
+    t = V(0, cy + math.sqrt(r * r - cx * cx), 0)
+    am = 0.5 * (math.atan2(42 - cy, 30 - cx) + math.atan2(t.y - cy, -cx))
+    m = V(cx + r * math.cos(am), cy + r * math.sin(am), 0)
+    c = V(0, a.y, 0)
+    w = Part.Wire([Part.LineSegment(a, b).toShape(), Part.Arc(b, m, t).toShape(),
+                   Part.LineSegment(t, c).toShape(), Part.LineSegment(c, a).toShape()])
+    return Part.Face(w).revolve(V(), V(0, 1, 0), 360)
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -277,6 +295,8 @@ SHAPES = {
     "issue363base": lambda: _issue363base(),
     "step": lambda: _step(),
     "issue521": lambda: _issue521(),
+    "dimple346": lambda: _issue346(1.0500384390052573),
+    "peak346": lambda: _issue346(-1.0500384390052573),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -496,6 +516,8 @@ CASES = {
     # The step with its ceiling removed, the Arc join (sec 39).
     "step_ceiling_in": ("s39", "step", 4, -1, False, 0, 5434.6552),
     "step_ceiling_out": ("s39", "step", 4, 1, False, 0, 6078.0044),
+    "issue346_dimple_solid_thick": ("s40", "dimple346", 3, -1, False, 0, 5287.5411),
+    "issue346_peak_solid_thick": ("s40", "peak346", 3, -0.5, False, 0, 2712.9873),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

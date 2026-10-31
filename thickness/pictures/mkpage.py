@@ -58,6 +58,14 @@ SUMMARY = {
     37: "The Intersection join on a cylinder with a step cut off its side, any face but the side removed, in or out: refused, or valid and wrong, upstream too. The side meets the step's wall at both ends of the step, and their offsets were intersected once, for the first edge, both edges then taking that one line; a removed wall had no section at the second edge at all. And the side's section with the bottom, a whole circle, closed a piece of the side's offset and of the bottom's under the step besides their own. Each shared edge now takes the pieces nearest it, and pieces off their face (a removed face's: away from the thickness) are dropped. All eight come out at the exact volumes.",
     38: "#521: a box with a three-quarter cylinder on its corner edge, -0.5, the Intersection join, the top removed: refused (upstream: valid and wrong). The cylinder's offset was extended a tenth of the quarter it leaves free and did not reach the walls' offsets, 19.5 degrees past its ends; a face of more than half a turn is now taken 0.45 round. And the wall at the end of the cylinder's seam removed was invalid with either join: the cylinder is left-handed, its face reversed, and rebuilt with its seam edge cut, the edge took its other pcurve and the face became the quarter inside the box. The Intersection join's results come out at the exact volumes.",
     39: "The Arc join on the cylinder with a step cut off its side, the step's ceiling removed: refused inward, inside out outward; upstream invalid inward and unhollowed outward. The ceiling's edge with the side is an arc of 137 degrees; its offset was stretched into a whole circle before the ceiling was cut by its neighbours' offsets, and the circle cut the side's offset all the way round. An arc of less than half a turn is now stretched short of closing.",
+    40: "#346: an offset inward of a shell of revolution whose dome comes down to its axis, a dimple: the offset's meridians fall short of the axis inward, and a trim looked for their crossing past the end of the surface, a throw. The gap is left open for the sphere round the apex now, as it is outward, the sphere reversed inward. Where the apex is crossed instead -- a peak inward, the dimple on a solid -- the seam trimmed at the apex had no range on the face, and the result was invalid; it has the trim's range now.",
+}
+
+# Pictures of a section made by make_fix_pictures.sh (a C++ driver of the fix,
+# before and after) rather than from cases of the suite: shown after the
+# section's cases.
+FIXPICS = {
+    40: ["issue346_revolve", "issue346_crossed"],
 }
 
 TAGLINE = "Every pictured case of the OCCT fork's thickness suite, each run three ways"
@@ -129,6 +137,14 @@ def main(out):
                     '<figure id="%s"><img src="img/%s.png" alt="%s: the shape given, upstream, fork before, fork after"'
                     ' loading="lazy" width="%d" height="%d"><figcaption><code>%s</code></figcaption></figure>'
                     % (e(n), e(n), e(n), w, h, e(n)))
+        for n in FIXPICS.get(sec, []):
+            src = os.path.join(PICS, n + ".png")
+            shutil.copyfile(src, os.path.join(out, "img", n + ".png"))
+            w, h = png_size(src)
+            figs.append(
+                '<figure id="%s"><img src="img/%s.png" alt="%s: the fix\'s driver, before and after"'
+                ' loading="lazy" width="%d" height="%d"><figcaption><code>%s</code></figcaption></figure>'
+                % (e(n), e(n), e(n), w, h, e(n)))
         parts.append(
             '<section id="sec%d"><header class="sh"><span class="tag">sec %d</span><h2>%s</h2></header>\n'
             '<p>%s</p>%s\n%s</section>'

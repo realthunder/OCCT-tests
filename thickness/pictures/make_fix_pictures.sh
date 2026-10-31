@@ -75,6 +75,13 @@ fix domecapout b16d138042 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset
     src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Tool.cxx" \
     dome_cap_removed $HERE/../../boolean/models/dome_fillet_r3.brep --write
 
+# #346: an offset inward where a dome comes to a point -- a gap at a dimple
+# left open for the sphere round the apex, the seam trimmed at an apex
+# crossed given its range (both sources)
+fix 346 e306bb1ae4 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Offset.cxx
+    src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx" \
+    issue346_offset $HERE/../models/issue346_revolve.brep --write
+
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep_fixes.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
 if [ "$(uname)" = Darwin ]; then

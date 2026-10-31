@@ -173,6 +173,77 @@ panel(pic, half, "after, cut open", "beyond y = 25 cut away: the wall 2 thick, r
       "dome's edge", [0.5, 1.2, 0.6], [40, 12, 15], 115)
 pictures.append(pic)
 
+# #346: the issue's Revolve, a cone and a dome whose top is a dimple, offset
+# -2 (Part Offset as it comes). Before: a throw. After: the gap the offset's
+# meridians leave at the axis, 0.03 across, closed by the sphere round the
+# apex (orange), seen in the last panel.
+GREY = (0.62, 0.62, 0.62)
+revolve = Part.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                                 "issue346_revolve.brep"))
+
+
+def spheres(shape):
+    return {str(i): ORANGE for i, f in enumerate(shape.Faces)
+            if f.Surface.TypeId == "Part::GeomSphere"}
+
+
+def halves(given, res, box):
+    # the input's half grey, the result's half with its spheres orange
+    a, r = given.common(box), res.common(box)
+    colors = {str(i): GREY for i in range(len(a.Faces))}
+    colors.update({str(len(a.Faces) + int(k)): c for k, c in spheres(r).items()})
+    return Part.makeCompound([a, r]), colors
+
+
+SIDE346, CENTER346 = [0.35, 0.5, 1.2], [0, 45, 0]
+in2 = Part.read(os.path.join(W, "346", "after", "revolve_in2.brep"))
+pic = dict(name="issue346_revolve",
+           title="#346: a cone and a dome turned about y, the dome's top a dimple, offset 2 inward",
+           caption="BRepOffsetAPI_MakeOffsetShape::PerformByJoin, -2, the Arc join (FreeCAD's Part "
+                   "Offset as it comes). The dome's meridian is an arc centred 1.05 off the axis: it "
+                   "comes down to the axis, 0.9 degrees, a dimple. Inward the offset's meridians end "
+                   "0.03 short of the axis; that was taken for a crossing, and the trim found none: "
+                   "StdFail_NotDone, upstream too. The gap is closed by the sphere round the apex.",
+           panels=[])
+panel(pic, revolve, "the input", "the Revolve, a shell: the cone, and the dome inside it",
+      SIDE346, CENTER346, 90)
+panel(pic, in2, "after", "valid, area %.4f; every face at 2 from the input's" % in2.Area,
+      SIDE346, CENTER346, 90, spheres(in2))
+FRONT = [0.0, 0.12, 1.0]
+half, colors = halves(revolve, in2, Part.makeBox(100, 100, 100, V(-50, 0, -100)))
+panel(pic, half, "after, cut open", "the near half cut away: the input grey, its offset 2 "
+      "below it", FRONT, CENTER346, 80, colors)
+tip = in2.common(Part.makeBox(0.3, 0.3, 0.3, V(-0.15, 46.3, -0.15)))
+panel(pic, tip, "after, at the apex", "0.3 across: the offset stops 0.03 off the axis; the "
+      "sphere round the apex (orange) closes it", [0.35, 0.8, 0.6], [0, 46.41, 0],
+      0.16, spheres(tip))
+pictures.append(pic)
+
+# The same apex crossed: the profile with its arc centred to the other side
+# of the axis (a peak), -2; the dimpled profile made a solid, a thickness -1
+# with the disc removed. Before: the seam trimmed at the apex ran from -2e100
+# to 2e100 on the face.
+peak = Part.read(os.path.join(W, "346", "after", "peak_in2.brep"))
+thick = Part.read(os.path.join(W, "346", "after", "dimple_solid_thick1.brep"))
+pic = dict(name="issue346_crossed",
+           title="#346's apex crossed: a peak 2 inward, and the dimple on a solid, 1 inward",
+           caption="BRepOffsetAPI_MakeOffsetShape and MakeThickSolidByJoin, the Arc join. Where the "
+                   "offset's meridians cross the axis the face is trimmed there; the seam trimmed "
+                   "with it got its second curve with no range, -2e100 to 2e100, and the face was "
+                   "unbounded: invalid, upstream too.",
+           panels=[])
+half, colors = halves(Part.read(os.path.join(W, "346", "after", "peak.brep")), peak,
+                      Part.makeBox(100, 100, 100, V(-50, 0, -100)))
+panel(pic, half, "a peak, -2, cut open", "valid, area %.4f; the input grey, its offset 2 below it"
+      % peak.Area, FRONT, CENTER346, 80, colors)
+tip = peak.common(Part.makeBox(3, 3, 3, V(-1.5, 46.3, -1.5)))
+panel(pic, tip, "a peak, at the apex", "3 across: the offset's meridians meet on the axis, 2 "
+      "below the peak, a point", [0.35, 0.8, 0.6], [0, 47.3, 0], 2.2)
+cut = thick.common(Part.makeBox(100, 100, 100, V(-50, 0, 0)))
+panel(pic, cut, "the dimple, a solid, 1 inward", "the disc removed: valid, volume %.4f"
+      % thick.Volume, [0.3, -0.6, 1.4], CENTER346, 85)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

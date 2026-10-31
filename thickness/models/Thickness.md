@@ -2593,6 +2593,74 @@ draft 105, plain and frozen; boolean 43; the thickness sweep right in all
 Arc join). The fillet and draft sweeps were not run: neither reaches the
 offset.
 
+### Sec 40: #346, an offset inward where a dome comes to a point
+
+**Two faults** (`e306bb1ae4`, `BRepOffset_Offset.cxx`, `BRepOffset_MakeOffset.cxx`).
+The issue's Revolve is a shell: a cone from r 37.71 at y = 51.19 down to r 30
+at y = 42, and a dome from there up to the axis at y = 48.41, all turned
+about y. Its Part Offset of +2 was right; -2 threw ("Unknown OCC exception",
+`StdFail_NotDone` from `GeomAPI_ProjectPointOnCurve`), upstream too. It is
+not a thickness: no face is removed, and the suite's new `offset_case` runs
+it, checking besides the area that every point inside the result's faces
+lies at the offset distance from the input's.
+
+The dome's meridian is an arc of radius 68.5 centred at (1.05, -20.08): it
+passes its own top at x = 1.05 and comes down to the axis, 0.015 below the
+flat, 0.9 degrees -- the top is a dimple. Where a face comes to a point (a
+degenerated edge whose offset is not one), `BRepOffset_Offset::Init` trims
+the offset surface where its meridians cross the axis, or extends it to the
+axis where they fall short, and it took which from the sign of the offset:
+outward short, inward crossing, as at the point of a cone. At a dimple it is
+the other way round. Inward the offset's meridian, r 66.5, ends 0.03 short
+of the axis; the trim projected the point where its tangent meets the axis
+onto it, past its end, and found nothing. The side is told by that point
+now (`IsApexBeyondEnd`): beyond the end, a gap. With the Arc join a gap is
+left open, as one is outward -- the Arc join never entered that code
+outward -- and `CorrectConicalFaces` closes it with the sphere round the
+apex. That took the offset for its radius and threw on -2: it is |offset|
+now, the sphere's face reversed for an inward offset, its normal towards
+the apex as the dome's is. The Intersection join is left as it was: its
+extension at the gap gave a valid result with the dome's offset never cut
+by the cone's, the same as it gives outward; a refusal is kept rather than
+that.
+
+Where the apex is crossed -- the profile's arc centred 1.05 the other side
+of the axis, a peak, inward; or the dimpled profile closed into a solid,
+whose outside is below the dome, inward -- the trim was made, and the
+result was invalid, its area 8e104. The seam trimmed at the apex is given
+a line for each of its two curves on the face, and the pair went in after
+the edge's range on the face was set: `BRep_Builder::UpdateEdge` with two
+curves makes a new representation, with no range, -2e100 to 2e100, and the
+face's bounds with it. An earlier fix restored the 3d curve's range only.
+The pair gets the range of the lines now, which run alike from their ends
+at the side.
+
+Over a corpus of 505 runs -- the profile with its arc centred -3, -1.05, 0,
+1.05 and 3 off the axis, as shells and as solids, a cone, a ball and a
+spindle torus, offsets of +/-0.5, 1 and 2 of the whole and thicknesses with
+each face removed, both joins -- 72 change, none of them right before. 36
+come out valid where they were invalid or threw, all with the Arc join: of
+the 24 offsets among them every face lies at the offset distance from the
+input's, but in 6 of the solids, offset past their thickness at the axis
+(2.78 at a dimple, less at a peak), which cross their far side, valid and
+wrong as anywhere. 15 thicknesses of the open shells that were invalid or
+threw are refused. 21 that threw are invalid: 18 with the Intersection join,
+and 3 thicknesses of the open shell with its arc centred 3 off the axis, its
+cone removed. The cone, the ball and the torus do not change.
+
+![issue346_revolve](pictures/issue346_revolve.png)
+
+![issue346_crossed](pictures/issue346_crossed.png)
+
+![issue346_dimple_solid_thick](pictures/issue346_dimple_solid_thick.png)
+
+**Validation** (on `e306bb1ae4`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=460 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the nine cases above among them; the thickness
+sweep right in all 928 runs at both levels, plain and frozen, not one
+changed; the issue's document recomputes, its Offset valid. Fillet, draft
+and boolean were not run: none reaches `BRepOffset_Offset`.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
