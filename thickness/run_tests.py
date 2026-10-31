@@ -1463,6 +1463,32 @@ thickness_case("step_wall_out_join", _step, _step_wall, +1.0, "pass", 6205.8133,
 thickness_case("step_ceiling_out_join", _step, _step_ceiling, +1.0, "pass", 6148.6061, False, 2)
 thickness_case("step_bottom_out_join", _step, _step_bottom, +1.0, "pass", 4996.9311, False, 2)
 
+# #521: the issue's Connect -- a box 10 with a cylinder r 2 h 10 at its corner,
+# fused and refined (models/issue521_connect.brep): faces 1 x = 10, 2 y = 10,
+# 3 y = 0, 4 the cylinder, 5 x = 0, 6 the top, 7 the bottom. Its Thickness,
+# -0.5, the Intersection join, intersection on, the top removed (Face6), was
+# refused, and so was any face removed but the walls beside the cylinder; the
+# wall x = 0 removed was valid and wrong (315.4663). The cylinder's offset,
+# extended a tenth of the quarter it lacks, did not reach the walls' offsets.
+# The wall y = 0 removed, at the end of the cylinder's seam, was invalid with
+# either join: the cylinder is left-handed, its face reversed, and its edge
+# there closed on it (two pcurves); rebuilt with that edge cut, it took the
+# other pcurve and became the quarter inside the box.
+def issue521_connect():
+    shape = Part.Shape()
+    shape.importBrep(os.path.join(MODELS, "issue521_connect.brep"))
+    return shape
+
+
+issue521 = issue521_connect()
+thickness_case("issue521_connect_top_in_join", issue521, 6, -0.5, "pass", 262.7776, True, 2)
+thickness_case("issue521_connect_bottom_in_join", issue521, 7, -0.5, "pass", 262.7776, True, 2)
+thickness_case("issue521_connect_wall_x10_in_join", issue521, 1, -0.5, "pass", 266.0392, True, 2)
+thickness_case("issue521_connect_wall_y10_in_join", issue521, 2, -0.5, "pass", 266.0392, True, 2)
+thickness_case("issue521_connect_wall_x0_in_join", issue521, 5, -0.5, "pass", 270.4120, True, 2)
+thickness_case("issue521_connect_wall_y0_in_join", issue521, 3, -0.5, "pass", 270.4120, True, 2)
+thickness_case("issue521_connect_wall_y0_in", issue521, 3, -0.5, "pass", 269.8020)
+
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets
 # meet in a mitre and both meet the dome tangentially, and their offsets'

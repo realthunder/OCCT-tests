@@ -2466,6 +2466,86 @@ reaches). A first form of the piece test, one-way, refused six outward runs
 of the sweep that were right (a box with a hole, a cone's hole, a T, the
 Intersection join): a piece grown past its face had its point there.
 
+### Sec 38: #521, a three-quarter cylinder on a box's edge
+
+**Two faults** (`79eb149f50`, `BRepOffset_Tool.cxx`, `BRepOffset_Inter3d.cxx`,
+`BRepAlgo_Loop.cxx`). The issue's Connect is a box 10 fused with a cylinder
+r 2 h 10 standing on its corner edge, refined: three quarters of the
+cylinder stand out of the box. Its faces: 1 the wall x = 10, 2 y = 10, 3
+y = 0 (x from 2 to 10), 4 the cylinder, 5 x = 0 (y from 2 to 10), 6 the top,
+7 the bottom. The issue's Thickness, -0.5, the Intersection join, the top
+removed: refused. So was every face removed but the walls 3 and 5 beside the
+cylinder; 5 came out valid and wrong, 315.4663 for 270.4120, and 3 invalid,
+with the Arc join too. Upstream: the top removed valid and wrong, 324.75,
+and either wall handed back unhollowed.
+
+*Not far enough round.* The Intersection join extends every offset face
+before cutting it with its neighbours' (`EnLargeFace`, extension mode 1):
+a periodic face a tenth of the turn it leaves free each way -- here 9
+degrees, a tenth of the missing quarter. The cylinder's offset, r 1.5,
+crosses the walls' offsets, x = 0.5 and y = 0.5, at (0.5, 1.4142) and
+(1.4142, 0.5): 19.5 degrees past its own ends (the angle whose sine is the
+offset over the radius, 0.5 / 1.5). The extended face stopped short; the
+section kept was the far crossing, and the loops failed. Mode 3, given by
+`ConnexIntByInt` and `ContextIntByInt` (the Intersection join's own
+extensions), takes a face of more than half a turn round half of what it
+leaves free each way -- a whole turn. A face of less than half a turn keeps
+the tenth: a groove of two quarters taken so far round reached into its
+neighbour's turn (the groove of radius 5 in two faces went from refused to
+invalid when every periodic face was taken 0.45 round). The top removed: 262.7776, the
+exact value (the box and the cylinder less their offset, (10 - 1)^2 plus the
+disc r 1.5 less its part in the square, times 9.5). At 0.75 and 0.8:
+380.8459 and 403.5185, exact; the crossing is 45 degrees past the ends at
+about 0.83 and the whole quarter at 1, where the offsets only touch.
+
+*The other pcurve.* With the extension right, the wall y = 0 removed was
+still invalid, with either join, and the wall x = 0 -- its mirror image --
+right. The issue's cylinder is left-handed (its axis -z, the Pad's way), its
+face reversed in the solid, and its edge at the seam's end, (2, 0, z), is
+closed on it: two pcurves, u = 0 and u = 2 pi; the face runs from pi/2 to
+2 pi and uses the second. The rim of the wall y = 0 cut that edge at z = 0.5
+and 9.5, and `MakeLoops` rebuilt the cylinder's face with the three pieces
+(`BRepAlgo_Loop`). The loop made its wire on the face as it is, reversed;
+`WiresToFaces` hands the wires to the face's forward copy as they were. An
+edge's pcurve on a face is taken by the edge's orientation on it, reversed
+with the face (`BRep_Tool::CurveOnSurface`): on the forward copy each piece
+took u = 0, and the face came out with its wire across the gap -- the
+quarter of the cylinder inside the box, 31.4159 for 94.2478. For an edge
+not closed on the face the same thing only turns its wire round, which the
+restrictor's orientation check turns back; for this one it changed the
+curve. On a reversed face the wires go to the forward copy reversed now,
+each edge keeping the pcurve the loop used. A right-handed cylinder, its
+face forward, was right; so was the left-handed one with its seam turned
+away from the walls. The wall y = 0 removed: 270.4120 with the Intersection
+join, as the wall x = 0, and 269.8020 with the Arc join.
+
+![issue521_connect_top_in_join](pictures/issue521_connect_top_in_join.png)
+
+![issue521_connect_wall_y0_in_join](pictures/issue521_connect_wall_y0_in_join.png)
+
+The red line down the cylinder's edge with the wall y = 0 is the input's
+own: that edge, closed on the cylinder, is drawn as used the wrong way round
+(upstream's panel, the input handed back, has it as well).
+
+Still wrong: the cylinder removed, refused (the Arc join invalid); past an
+offset of 0.83 the faces away from the cylinder removed are refused, as
+before, and a wall beside it removed comes out valid and wrong (483.0689 at
+0.9; the Arc join gives 449.4422) -- as the wall x = 0 did before; the wall
+y = 0 was invalid.
+
+**Validation** (on `79eb149f50`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=449 XFAIL=2 at fix levels
+0 and 1, plain and frozen, the seven cases above among them; fillet 815/1
+and draft 105, plain and frozen; boolean 43; the thickness sweep right in
+all 928 runs at both levels, plain and frozen, not one changed. Over the 224
+runs of the groove, slot and step shapes of sec 37 nothing changed but two
+invalid runs, invalid still (the box with the groove, its far wall removed,
+outward). The fillet and draft sweeps were not run: neither reaches the
+offset or `BRepAlgo_Loop`. A whole turn at first took the groove of
+Thickness001's base too, half a turn by its bounds and a hair over, and
+twelve of its runs (three faces, four offsets) threw where they were
+refused or invalid: a face must be more than half a turn by a margin now.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

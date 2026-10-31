@@ -53,6 +53,7 @@ STAGES = {
     "s35": ("eebc4a98b5", "35"),
     "s36": ("c1f874898c", "36"),
     "s37": ("ddac69429e", "37"),
+    "s38": ("fd833a6672", "38"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -183,6 +184,16 @@ def _issue363base():
     return s
 
 
+def _issue521():
+    # #521's Connect: a box 10 fused with a cylinder r 2 at its corner edge,
+    # left-handed, refined: 1 x = 10, 2 y = 10, 3 y = 0, 4 the cylinder,
+    # 5 x = 0, 6 the top, 7 the bottom.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue521_connect.brep"))
+    return s
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -264,6 +275,7 @@ SHAPES = {
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
     "step": lambda: _step(),
+    "issue521": lambda: _issue521(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -475,6 +487,11 @@ CASES = {
     "step_wall_out_join": ("s37", "step", 3, 1, False, 2, 6205.8133),
     "step_ceiling_out_join": ("s37", "step", 4, 1, False, 2, 6148.6061),
     "step_bottom_out_join": ("s37", "step", 2, 1, False, 2, 4996.9311),
+    # #521's Connect, -0.5, intersection on (sec 38).
+    "issue521_connect_top_in_join": ("s38", "issue521", 6, -0.5, True, 2, 262.7776),
+    "issue521_connect_wall_x0_in_join": ("s38", "issue521", 5, -0.5, True, 2, 270.4120),
+    "issue521_connect_wall_y0_in_join": ("s38", "issue521", 3, -0.5, True, 2, 270.4120),
+    "issue521_connect_wall_y0_in": ("s38", "issue521", 3, -0.5, False, 0, 269.8020),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
