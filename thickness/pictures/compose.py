@@ -61,7 +61,8 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "step": "cylinder with a square step cut off its side",
          "issue521": "#521's Connect: a box with a left-handed cylinder r2 on its corner edge",
          "dimple346": "#346's profile made a solid: a cone, a disc, and a dome whose top is a dimple",
-         "peak346": "#346's profile, its arc to the other side, a solid: the dome's top a peak"}
+         "peak346": "#346's profile, its arc to the other side, a solid: the dome's top a peak",
+         "issue613": "#613's part: a cylinder under a cone with a filleted ridge across its top"}
 JOIN = {0: "Arc join", 2: "Intersection join"}
 def status(d):
     if d["ok"] and d.get("refused"):
@@ -105,7 +106,7 @@ for name in names:
     nf = 6 if sk.startswith(("box", "short")) and "cyl" not in sk else 3
     if not isinstance(fi, list):
         faces = "Face%d" % fi
-    elif len(fi) == nf - 1:
+    elif len(fi) == nf - 1 and max(fi) <= nf:
         faces = "all but Face%d" % [i for i in range(1, nf + 1) if i not in fi][0]
     else:
         faces = "Faces " + ", ".join(str(i) for i in fi)

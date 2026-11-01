@@ -493,13 +493,13 @@ a pave filler bug for any whole turn with its seam a hair off
 10194.8311, every face on the input or 2 inside it. One loose end is left
 and allowed in the cases: the inner cone's seam ends where the offset cone
 and cylinder meet (z 7.9476 at 2), its vertex at z 8, the corner moved by
-the cylinder's normal only (0.0524 at 2, 0.0131 at 0.5). Outward is still
-invalid (-14917.4397, inside out).
+the cylinder's normal only (0.0524 at 2, 0.0131 at 0.5). Outward was
+invalid (-14917.4397, inside out); made in sec 41.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
 | `issue613_fillet_top_bottom_in`, `_top_in`, `_top_bottom_in_half` | #613's part, faces 7 and 16 (or 7) removed, -2 (or -0.5), Arc | 10194.8311, 12835.3408, 2647.5510; it ran for ever, then threw, then was refused. A loose end of 0.0524 (0.0131) allowed |
-| `issue613_fillet_top_bottom_out` | the same, +2 | `XFAIL`: invalid |
+| `issue613_fillet_top_bottom_out`, `_top_out`, `_top_bottom_out_half` | the same, +2 (or +0.5) | 11247.7097, 14889.3719, 2713.3574; invalid before sec 41. The same loose ends allowed |
 
 ## #363: a groove across a cylinder's end (2026-10-28)
 
@@ -1217,6 +1217,57 @@ with shape values frozen and not; thickness PASS=460 XFAIL=2 at fix levels
 sweep right in all 928 runs at both levels, plain and frozen, not one
 changed; the issue's document recomputes, its Offset valid. Fillet, draft
 and boolean were not run: none reaches `BRepOffset_Offset`.
+
+## #613 outward: a whole turn enlarged a hair off its seam (`894ce673c9`, `79b1a21718`, 2026-11-01, sec 41)
+
+**What was broken.** #613's part (above) with its ridge's top and bottom
+removed, thickness +2 with the Arc join: invalid, inside out, -14917.4397;
+the top alone, +2: invalid, two shells. Upstream inside out both.
+
+The cap at the ridge's top is cut by its neighbours' offsets enlarged, and
+inward the cone's gave no section with it until the pave filler's fix
+(`59ca72bbcc`). Outward it still gave none, now in `ExtentFace`: the
+enlarged cone offset is a whole turn, and its u bounds came out of
+`CompactUVBounds` at 2.1e-8 to 2 pi + 2.1e-8 -- a hair off the seam, where
+the circle cut by the cap's plane starts. That start fell outside the face,
+the filler made no paves to bound the curve, and no section edge came of
+it: the cone's offset top was left 0.05 above the plane, and the face
+between collapsed. A whole turn that `EnLargeFace` makes within 1e-6 of
+its seam starts at the seam now (`BRepOffset_Tool`).
+
+With that, the part's top blend removed and +0.5 with the Intersection
+join, no longer throwing, came back as the input itself -- the blend split
+in two, valid, at the input's volume -- and was taken for a thick solid.
+A skin outward reaches past the shape by the offset wherever a face stays,
+so a result whose bounds are the input's, to 1e-3 of the offset, is
+unhollowed now (`BRepOffset_MakeOffset`), and refused as before.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue613_fillet_top_bottom_out`, `_top_out` | #613's part, faces 7 and 16 (or 7) removed, +2, Arc | 11247.7097, 14889.3719: every face on the input or 2 outside it, but the rim; invalid before |
+| `issue613_fillet_top_bottom_out_half` | the same, faces 7 and 16, +0.5 | 2713.3574 |
+
+![issue613_fillet_top_bottom_out](models/pictures/issue613_fillet_top_bottom_out.png)
+
+![issue613_fillet_top_out](models/pictures/issue613_fillet_top_out.png)
+
+Over 1088 runs -- thicknesses of each face and offsets of the whole, +/-1
+and +/-0.5, both joins, on the groove, step and #521 shapes of secs 36
+to 39, the apex corpus of sec 40 and #613's part -- 82 change, all on #613's
+part, 80 of them refused before and 2 invalid: 10 come out valid (the 2
+invalid among them), 64 are still refused, and 8 refusals throw now, in an
+evaluation of a surface or a trim. None comes back unhollowed.
+
+Still wrong: the same window in the face-face intersection itself --
+`IntTools_FaceFace` loses the curves of a whole turn bounded 0 to 2 pi +
+eps for eps of 1e-9 to 1e-7. Nothing in the suite reaches it now.
+
+**Validation** (on `79b1a21718`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=463 XFAIL=1 at fix levels
+0 and 1, plain and frozen, the three outward #613 cases among them; the
+thickness sweep right in all 928 runs at both levels, plain and frozen, not
+one changed. Fillet, draft and boolean were not run: none reaches
+`EnLargeFace` or the unhollowed check.
 
 ## Determinism cases (intersection mode, Arc join)
 

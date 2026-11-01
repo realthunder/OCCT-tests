@@ -25,10 +25,13 @@ for name in names:
             breps.append(f)
     fi = CASES[name][2]
     removed = [i - 1 for i in (fi if isinstance(fi, list) else [fi])]
+    # A fillet's opening shows best in plan -- unless the face removed looks
+    # up, when a plan cut has no direction to lie in (#613's ridge top).
+    plan = "_fillet_" in name and abs(after["normal"][2]) < 0.99
     for cut in (0, 1):
         panels.append(dict(brep=inp, ghost=False, input=True, removed=removed, mark=False, cut=cut,
                            normal=after["normal"], center=after["center"], bbox_breps=breps,
-                           cutaxis=[0, 0, 1] if "_fillet_" in name else None,
+                           cutaxis=[0, 0, 1] if plan else None,
                            png=W + "/png/%s.in.%d.png" % (name, cut)))
     for v, k in var:
         d = R[k][name]
@@ -37,8 +40,7 @@ for name in names:
         for cut in (0, 1):
             panels.append(dict(brep=inp if ghost else f, ghost=ghost, mark=not ghost, cut=cut,
                                normal=after["normal"], center=after["center"], bbox_breps=breps,
-                               # a fillet's opening shows best in plan
-                               cutaxis=[0, 0, 1] if "_fillet_" in name else None,
+                               cutaxis=[0, 0, 1] if plan else None,
                                png=W + "/png/%s.%s.%d.png" % (name, v, cut)))
 json.dump(dict(size=[360, 300], panels=panels), open(W + "/jobs.json", "w"), indent=0)
 print(len(panels), "panels")

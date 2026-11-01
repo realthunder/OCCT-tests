@@ -56,6 +56,7 @@ STAGES = {
     "s38": ("fd833a6672", "38"),
     "s39": ("2ad983305c", "39"),
     "s40": ("1fbb9fe781", "40"),
+    "s41": ("ec1bf4cdc8", "41"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -196,6 +197,16 @@ def _issue521():
     return s
 
 
+def _issue613():
+    # #613's part: the issue file's stored Fillet, a cylinder under a cone
+    # with a ridge across its top, filleted. Face7 is the top of the ridge,
+    # Face16 the bottom.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue613_fillet.brep"))
+    return s
+
+
 def _issue346(cx):
     # #346's profile -- a line from (37.71, 51.19) to (30, 42), an arc
     # centred (cx, -20.08) on to the axis -- closed by the axis and a disc at
@@ -297,6 +308,7 @@ SHAPES = {
     "issue521": lambda: _issue521(),
     "dimple346": lambda: _issue346(1.0500384390052573),
     "peak346": lambda: _issue346(-1.0500384390052573),
+    "issue613": lambda: _issue613(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -518,6 +530,8 @@ CASES = {
     "step_ceiling_out": ("s39", "step", 4, 1, False, 0, 6078.0044),
     "issue346_dimple_solid_thick": ("s40", "dimple346", 3, -1, False, 0, 5287.5411),
     "issue346_peak_solid_thick": ("s40", "peak346", 3, -0.5, False, 0, 2712.9873),
+    "issue613_fillet_top_bottom_out": ("s41", "issue613", [7, 16], 2, False, 0, 11247.7097),
+    "issue613_fillet_top_out": ("s41", "issue613", 7, 2, False, 0, 14889.3719),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

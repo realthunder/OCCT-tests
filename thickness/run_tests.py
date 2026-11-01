@@ -626,8 +626,12 @@ thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844, loos
 # kept whole: refused as unhollowed. Made now: its faces on the input or 2
 # inside it, but for one loose end (allowed below): the inner cone's seam
 # ends where the offset cone and cylinder meet, z 7.9476 at 2, its vertex at
-# z 8, the corner moved by the cylinder's normal only. Outward is still
-# invalid (README.md, #613).
+# z 8, the corner moved by the cylinder's normal only. Outward the top's
+# offset cone again gave no section with the top's plane, now in
+# ExtentFace: enlarged to a whole turn it started 2.1e-8 off the cone's
+# seam, where the circle starts (BRepOffset_Tool::EnLargeFace), and the
+# offset was left 0.05 above the plane; invalid. Made now, with the same
+# loose end (README.md, #613, sec 41).
 issue613 = Part.Shape()
 issue613.importBrep(os.path.join(MODELS, "issue613_fillet.brep"))
 thickness_case("issue613_fillet_top_bottom_in", issue613, [7, 16], -2.0, "pass", 10194.8311,
@@ -635,7 +639,11 @@ thickness_case("issue613_fillet_top_bottom_in", issue613, [7, 16], -2.0, "pass",
 thickness_case("issue613_fillet_top_in", issue613, [7], -2.0, "pass", 12835.3408, loose_ok=0.06)
 thickness_case("issue613_fillet_top_bottom_in_half", issue613, [7, 16], -0.5, "pass", 2647.5510,
                loose_ok=0.015)
-thickness_case("issue613_fillet_top_bottom_out", issue613, [7, 16], +2.0, "xfail")
+thickness_case("issue613_fillet_top_bottom_out", issue613, [7, 16], +2.0, "pass", 11247.7097,
+               loose_ok=0.06)
+thickness_case("issue613_fillet_top_out", issue613, [7], +2.0, "pass", 14889.3719, loose_ok=0.06)
+thickness_case("issue613_fillet_top_bottom_out_half", issue613, [7, 16], +0.5, "pass", 2713.3574,
+               loose_ok=0.015)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

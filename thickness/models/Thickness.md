@@ -2661,6 +2661,65 @@ sweep right in all 928 runs at both levels, plain and frozen, not one
 changed; the issue's document recomputes, its Offset valid. Fillet, draft
 and boolean were not run: none reaches `BRepOffset_Offset`.
 
+### Sec 41: #613 outward, a whole turn enlarged a hair off its seam
+
+**Two changes** (`894ce673c9`, `BRepOffset_Tool.cxx`; `79b1a21718`,
+`BRepOffset_MakeOffset.cxx`). #613's part -- the issue file's stored Fillet,
+a cylinder under a cone with a filleted ridge across its top -- was made
+inward in the #613 section, its faces 7 and 16 (the ridge's top and
+bottom) removed. Outward, +2 with the Arc join, it was invalid, inside out
+at -14917.4397, and with the top alone removed two shells; upstream inside
+out both ways.
+
+The top's cap is cut by its neighbours' offsets, each enlarged
+(`BRepOffset_Tool::ExtentFace`); inward the cone's offset gave no section
+with the cap's plane until the pave filler learnt to close a whole turn
+whose seam is a hair off (`59ca72bbcc`). Outward the same pair met again
+one step earlier, in `ExtentFace`'s own intersection of the enlarged faces.
+`EnLargeFace` makes the cone's offset a whole turn, and its u bounds came
+out of `CompactUVBounds` at 2.1e-8 and 2 pi + 2.1e-8 -- noise of the
+bounding of the face's pcurves. The circle the plane cuts from the cone
+starts at u = 0, outside that face; the filler got the curve with no paves
+to bound it and made no section edge; the cone's offset top stayed 0.05
+above the plane, and the face between them collapsed to nothing. Such a
+whole turn, within 1e-6 of its seam, starts at the seam now
+(`SnapWholeTurnToSeam`, in u and in v). The face-face intersection itself
+keeps the fault one level down: `IntTools_FaceFace` on a whole turn
+bounded 0 to 2 pi + eps loses its curves for eps of 1e-9 to 1e-7. Nothing
+in the suite reaches it with the bounds snapped.
+
+Made now: faces 7 and 16, 11247.7097 -- of its faces 19 lie on the input,
+19 at 2 outside it, and two are the rims; the top alone, 14889.3719; both
+at +0.5, 2713.3574. The inward cases' loose end is here too, where the
+offset cone and cylinder meet, and the same allowance holds.
+
+The snap also let #613's part, its top blend removed and +0.5 with the
+Intersection join, get past the throw it ended in: the blend came back in
+two pieces and the whole was the input, valid, at the input's volume,
+which the unhollowed check (a thickness whose faces are the input's face
+images) let through. Outward, a skin reaches past the shape by the offset
+wherever a face stays; a result whose bounding box is the input's to
+1e-3 of the offset was not offset at all, and is unhollowed now -- that
+run, and the one beside it, refused as they were.
+
+Over 1088 runs -- thicknesses of each face and offsets of the whole, +/-1
+and +/-0.5, both joins, on the groove, step and #521 shapes of secs 36 to
+39, the apex corpus of sec 40 and #613's part -- 82 change, all on #613's
+part, 80 of them refused before and 2 invalid. 10 come out valid, the 2
+invalid among them; 64 are still refused; 8 refusals throw now, from
+surface evaluations (6) and a trim (2). None comes back unhollowed.
+
+![issue613_fillet_top_bottom_out](pictures/issue613_fillet_top_bottom_out.png)
+
+![issue613_fillet_top_out](pictures/issue613_fillet_top_out.png)
+
+**Validation** (on `79b1a21718`): Part 390 and PartDesign 486 tests OK,
+with shape values frozen and not; thickness PASS=463 XFAIL=1 at fix levels
+0 and 1, plain and frozen, the three outward #613 cases among them; the
+thickness sweep right in all 928 runs at both levels, plain and frozen, not
+one changed. Fillet, draft and boolean were not run: none reaches
+`EnLargeFace` or the unhollowed check.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
