@@ -156,6 +156,70 @@ panel(pic, half, "after, cut open", "valid, 20254.4308, the volume booleans give
       "away", [0.5, 1.2, 0.6], [40, 12, 15], 100, mark=True)
 pictures.append(pic)
 
+# #617: the revolution cut by z = 0, the cut red; the two prisms on its
+# lobes with the lines of their side faces' spans (the cut's knots) red --
+# the whole and the knots bunched where the cut turns; the integrals'
+# numbers, before and after, from the driver's output.
+def prisms_line(stage):
+    for line in open(os.path.join(W, "617", stage + ".txt")):
+        if line.startswith("prisms:"):
+            w = line.split()
+            return float(w[2]), float(w[4].rstrip(",")), float(w[8]), float(w[10].rstrip(","))
+
+
+pic = dict(name="issue617_gprop",
+           title="#617: two prisms on the cut of a revolution, their volume and area",
+           caption="BRepGProp::VolumeProperties and SurfaceProperties (no precision given, what "
+                   "Shape.Volume and Shape.Area run). The cut (BRepAlgoAPI_Section, Approximation "
+                   "on) is two degree 8 B-splines of 29 spans; the red lines on the prisms are its "
+                   "knots. Held against the shoelace over a dense polygon of each lobe and the "
+                   "curve's length.",
+           panels=[])
+rev = Part.read(os.path.join(W, "617", "after", "revolution.brep"))
+sec = os.path.join(W, "617_section.brep")
+Part.read(os.path.join(W, "617", "after", "section.brep")).exportBrep(sec)
+bb = rev.BoundBox
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+rev.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=[0.6, -1.0, 0.8], center=[bb.Center.x, bb.Center.y,
+                 bb.Center.z], height=1.1 * max(bb.XLength, bb.YLength, bb.ZLength),
+                 transparency=70, extras=[dict(brep=sec, color=[0.85, 0.1, 0.1], linewidth=5)]))
+pic["panels"].append(dict(png=png, title="the input", note="the revolution, cut by z = 0 (red): "
+                          "two lobes", bad=False))
+prisms = Part.read(os.path.join(W, "617", "after", "prisms.brep"))
+ticks = []
+for e in Part.read(os.path.join(W, "617", "after", "section.brep")).Edges:
+    for k in e.Curve.getKnots():
+        p = e.Curve.value(k)
+        ticks.append(Part.makeLine(V(p.x, p.y, 0), V(p.x, p.y, 100)))
+knots = os.path.join(W, "617_knots.brep")
+Part.makeCompound(ticks).exportBrep(knots)
+bv, vw, ba, aw = prisms_line("before")
+av, _, aa, _ = prisms_line("after")
+pb = prisms.BoundBox
+# where the knots bunch: the densest stretch of nine knots along the cut
+pts = sorted((t.Vertexes[1].Point for t in ticks), key=lambda q: q.x)
+best = min(range(len(pts) - 8), key=lambda j: (pts[j + 8] - pts[j]).Length)
+zoom = (pts[best] + pts[best + 8]) * 0.5
+span = max((pts[best + 8] - pts[best]).Length, 2.0)
+EYE617 = [0.3, -0.55, 1.0]
+for title, note, center, height, bad in (
+        ("before", "volume %.1f (%+.0f%%), area %.1f (%+.0f%%) for %.2f and %.2f"
+         % (bv, 100 * (bv / vw - 1), ba, 100 * (ba / aw - 1), vw, aw),
+         [pb.Center.x, pb.Center.y, pb.Center.z], 1.2 * max(pb.XLength, pb.YLength) + 40, True),
+        ("after: the knots bunched, near", "volume %.4f, area %.4f: the shoelace's to 1e-7"
+         % (av, aa), [zoom.x, zoom.y, 100], 4 * span, False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    prisms.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    jobs.append(dict(brep=out, png=png, eye=EYE617, center=center, height=height,
+                     extras=[dict(brep=knots, color=[0.85, 0.1, 0.1], linewidth=2)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

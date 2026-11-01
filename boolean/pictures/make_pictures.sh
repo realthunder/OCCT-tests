@@ -60,6 +60,9 @@ fix 580 c20f921783 src/ModelingData/TKBRep/BRepTools/BRepTools_TrsfModification.
 # a section's tangent end at a corner: the offsets of two fillets of a dome
 fix dome e9ded0215d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
     dome_tangent_corner $HERE/../models/dome_fillet_r3.brep --write
+# #617: the volume and area integrals of two B-spline prisms, span by span
+fix 617 2c45873435 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
+    issue617_gprop_prism $HERE/../models/issue617_revolution.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

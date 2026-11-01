@@ -1093,20 +1093,20 @@ CASES = {
     # fillet and the round touched there, and their curve was not found
     "issue273_f001_apex_off_round_e39_r0.3": (
         "soffround", "p273b", ((0, 15.013479, 31), (1.524712, 7.124642, 31)), 0.3,
-        8534.9956, (0.05, 15.25, 30.9), (1, -0.5, 1.1)),
+        8534.9736, (0.05, 15.25, 30.9), (1, -0.5, 1.1)),
     # its mirror E40: the stripe ended where its side on the wall met the
     # apex's edge, short of the top's end; its line on the top runs on to it,
     # and the cut off the top is now taken from the line's end
     "issue273_f001_apex_line_end_e40_r0.3": (
         "soffend", "p273b", ((-1.524712, 7.124642, 31), (0, 15.013479, 31)), 0.3,
-        8534.9958, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
+        8534.9736, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
     # the same with the flat end at a vertex (FLAT), as a new FreeCAD Fillet
     # makes it: the flat end took the line's end, on the top's edge, for the
     # stripe's point and was not made, the cut run into the round instead;
     # the point found on the line, the fillet ends at the apex, flat
     "issue273_f001_apex_flat_e40_r0.3": (
         "sflatline", "p273b", ((-1.524712, 7.124642, 31), (0, 15.013479, 31)), 0.3,
-        8534.9994, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
+        8534.9767, (-0.05, 15.25, 30.9), (-1, -0.5, 1.1)),
     # #474's coil leaving its block: the block's top edge beside the coil's
     # foot, the plate's corner; the top edge's line ran on to the block's far
     # end, and the plate took that end's parameter on the far edge for one on
@@ -1468,7 +1468,7 @@ CASES = {
     "issue273_f001_rim_onto_edge_e9_e22_r1": (
         "sonto", "p273b", [((16.75, 0, 18), (2.33386518011688, 16.5866082524739, 18)),
                            ((1.947393966, 16.212920582, 30.034899497),
-                            (2.33386518011688, 16.5866082524739, 18))], 1.0, 8524.0432,
+                            (2.33386518011688, 16.5866082524739, 18))], 1.0, 8523.9884,
         (2.3, 16.5, 17.8), (0.6, 1, 0.5)),
     # #876's top split by a rounded rectangle, a corner arc (r 0.69) between two coplanar planes:
     # the arc's pcurves sampled past their first period, the faces taken for

@@ -561,7 +561,7 @@ ewall = edge_between(p2, (38.5, 10.2, -3.75), (38.5, 27.2, -3.75))
 for r, vol in ((0.3, 11584.468959), (0.8, 11586.488030), (2.0, 11598.939732)):
     fillet_case("issue962_top_wall_r%g" % r, p2, ewall, r, "pass", vol, 1e-4, vol_tol=1e-5,
                 bop=True)
-for r, vol in ((0.8, 11580.223860), (2.0, 11559.992535)):
+for r, vol in ((0.8, 11580.222847), (2.0, 11559.995738)):
     fillet_case("issue962_top_slant_r%g" % r, p2, e33, r, "pass", vol, 1e-4, vol_tol=1e-5,
                 bop=True)
 for r, vol in ((0.8, 11589.625952), (2.0, 11618.859178)):
@@ -2357,7 +2357,7 @@ finally:
 # fillet ends at the handle now, the mirror of the input's own. No bop: the
 # input fails BOP's check itself (its vertices at 0.7).
 p273f1 = Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep"))
-for es, vol in (([9], 8525.7820), ([9, 22], 8524.0432), ([9, 16], 8532.5212)):
+for es, vol in (([9], 8525.7565), ([9, 22], 8523.9884), ([9, 16], 8532.4959)):
     fillet_case("issue273_f001_rim_onto_edge_%s_r1" % "_".join("e%d" % e for e in es), p273f1,
                 es, 1.0, "pass", vol, vol_tol=1e-3)
 # #876's top split along a rounded rectangle, two of its corner arcs (r 0.69;
@@ -2894,19 +2894,19 @@ sound_case("issue273_f001_e12_r0.3_ends",
 # with its ends. No bop: the input fails BOP's check itself.
 fillet_case("issue273_f001_apex_off_round_e39_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 39, 0.3,
-            "pass", 8534.9956, vol_tol=1e-3)
+            "pass", 8534.9736, vol_tol=1e-3)
 # Its mirror E40: the stripe ends where its side on the wall meets the
 # apex's edge (E45), its point on the top 0.26 short of the top's end, and
 # the cut off the top was taken only from a point on the top's edge --
 # refused. Its line on the top runs on to that edge: its end there is the
 # point now (README.md, "The cut off the face from the line's end"). As E39,
-# 0.0002 apart; both rims at once 8534.8383, within 0.005 of the two alone.
+# 0.0002 apart; both rims at once 8534.8173, within 0.005 of the two alone.
 fillet_case("issue273_f001_apex_line_end_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 40, 0.3,
-            "pass", 8534.9958, vol_tol=1e-3)
+            "pass", 8534.9736, vol_tol=1e-3)
 fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
-            0.3, "pass", 8534.8383, vol_tol=1e-3)
+            0.3, "pass", 8534.8173, vol_tol=1e-3)
 # The same with the flat end at a vertex, as FreeCAD's Fillets from version 1
 # make them: each rim ends at the apex, nothing cut past it into the round,
 # 0.0036 less taken than the cut above. E40's line on the top runs on past
@@ -2915,19 +2915,19 @@ fillet_case("issue273_f001_apex_both_rims_e39_e40_r0.3",
 # instead) -- the point is now found on the line (README.md, "The flat end
 # where the line runs on"). Both rims: the apex's edge E45 filleted too, the
 # three making the corner in the tip (README.md, "Both rims: the tip
-# filleted"; 8534.8383 before, as without the flat end).
-for e, vol in ((39, 8534.9992), (40, 8534.9994)):
+# filleted"; 8534.8173 before, as without the flat end).
+for e, vol in ((39, 8534.9767), (40, 8534.9767)):
     fillet_case("issue273_f001_apex_flat_e%d_r0.3" % e,
                 Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), e,
                 0.3, "pass", vol, vol_tol=1e-3, flat=True)
 fillet_case("issue273_f001_apex_flat_both_rims_e39_e40_r0.3",
             Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), [39, 40],
-            0.3, "pass", 8535.2232, vol_tol=1e-3, flat=True)
+            0.3, "pass", 8535.2028, vol_tol=1e-3, flat=True)
 # The base rim E38 the same: its line runs on past both base corners (79
 # deg), and with the flat end the cut ran past each, 0.05 at 0.3, 0.15 at
 # 0.8; now flat at both, nothing past them (8535.096796 and 8534.727931
 # before).
-for r, vol, tol in ((0.3, 8535.09671, 2e-5), (0.8, 8534.7369, 1e-3)):
+for r, vol, tol in ((0.3, 8535.073955, 2e-5), (0.8, 8534.7140, 1e-3)):
     fillet_case("issue273_f001_base_flat_e38_r%g" % r,
                 Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 38,
                 r, "pass", vol, vol_tol=tol, flat=True)

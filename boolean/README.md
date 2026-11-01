@@ -2,8 +2,9 @@
 
 The fork's fixes met through the booleans and the general fuse
 (`BOPAlgo_Builder`, what FreeCAD's Split, Fragments, Cut and Fuse run), what
-they call -- the surface intersections -- and what makes their arguments --
-the transforms of a shape. Most come from the issues of `../occ-issues/`.
+they call -- the surface intersections -- what makes their arguments --
+the transforms of a shape -- and what measures their results, the volume
+and area integrals. Most come from the issues of `../occ-issues/`.
 
 ```
 FreeCADCmd tests/fork/boolean/run_tests.py      # the cases, through FreeCAD
@@ -219,3 +220,60 @@ OK; the fillet suite PASS=815 XFAIL=1, thickness 400 (with the two new
 cases), draft 105, boolean 43; the six fillet sweeps and the three draft
 sweeps not one result changed; the thickness sweep right in all 928 runs,
 not one changed.
+
+## #617: a volume integrated a point or two a span (`2c45873435`, 2026-11-01)
+
+**Where it was met.** #617's sketch: a revolution cut by the plane z = 0
+(Approximation on), the section's two lobes padded 100. FreeCAD showed the
+pad's volume as 92341; it is 71190.80. Its shapes are
+`models/issue617_revolution.brep` and `models/issue617_prisms.brep`.
+
+**What was broken.** `BRepGProp`'s plain volume and area integrals
+(`BRepGProp_Gauss`, what `Shape.Volume` and `Shape.Area` run) integrate a
+face along its boundary edges with one Gauss rule per edge, and across the
+face with one rule per point, each capped at 61 points over the whole edge
+or the whole range. The section's lobes are degree 8 B-splines of 29 spans,
+their knots bunched where the cut turns: one rule of 61 points over 29
+spans gives a point or two a span, and no polynomial rule integrates a
+piecewise curve across its knots. Each lobe's area came out 343.65 for
+355.95, the prisms' volume 91909 for 71191 (29% over), their area 3% short.
+Any B-spline curve or surface of many spans, or of knots bunched, is
+integrated as badly; upstream the same.
+
+**The fix.** Where a rule over the whole edge or range would give a span
+fewer points than its degree asks, the integral is taken span by span: the
+edge is broken at its pcurve's knots and where it crosses the face's own
+knots (a B-spline surface's, or the B-spline basis of an extrusion or a
+revolution), the range across the face at the surface's knots in that
+direction, each piece with its own rule. An edge and a face with no such
+knots are integrated as before, to the bit.
+
+**The cases.** `models/issue617_gprop_prism.cpp` and `run_tests.py`: the
+prisms' volume and area against what does not come from the integrals --
+each lobe's area by the shoelace over a dense polygon of its curve, times
+the height, and the curve's length. Before: volume 91908.84 for 71190.80,
+area 23709.16 for 24367.92. After: within 1e-10 of both.
+
+![#617: a volume integrated a point or two a span: before and after](models/pictures/issue617_gprop.png)
+
+**What it moved.** Volumes only, and only where a B-spline has more spans
+than one rule follows; never a shape. The suites' references moved, each
+toward the adaptive integral: 13 of the fillet suite's (1e-7 to 6e-6 --
+#273's `Fillet001` and #962's slanting side), FreeCAD's Part test of the
+ellipse's thickness (608.6631 to 608.6621) and PartDesign's loft of
+`FaceRefs_fork_whole_names` (12238.1843 to 12238.1739, the adaptive
+integral's to 2e-12). In the fillet sweeps 5175 results moved their
+volume, by at most 4.3e-4 (#474's `Fillet003` at `V26:44,53@1`, now the
+adaptive integral's; it was 0.82 off), the others by less than 1e-4;
+in the thickness sweep 10, in the last digit printed. Over 80121 shapes of the sweeps and
+models, 2634 moved, by 1e-4 or more only #617's, a dome's and #423's, each
+closer to the adaptive integral or a dense polygon. The plain integral's
+order on an offset surface is fixed (18 points) and stays: the ellipse's
+thickness reads 608.66 for 609.89.
+
+**Validation** (against `d0d93c69c2`): Part 390 and PartDesign 486 tests
+OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen
+(the 13 references moved); thickness 463 XFAIL=1 at levels 0 and 1, plain
+and frozen; draft 105, boolean 44; the thickness sweep right in all 928
+runs in the four modes; the three draft sweeps not one result changed; the
+six fillet sweeps not one status, face count or tolerance changed.

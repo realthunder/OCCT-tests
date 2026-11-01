@@ -166,6 +166,33 @@ def dome_tangent_corner():
 
 guarded(dome_tangent_corner)
 
+
+# #617: the pad's two prisms on the cut of the revolution by z = 0 -- degree
+# 8 B-splines of 29 spans, the knots bunched where the cut turns. The volume
+# and area integrals gave a point or two a span: 92341 for 71191. Held
+# against what does not come from them: each lobe's area by the shoelace
+# over a dense polygon of its curve, the curve's length (README.md, "#617: a
+# volume integrated a point or two a span").
+def issue617_gprop():
+    prisms = Part.Shape()
+    prisms.importBrep(os.path.join(HERE, "models", "issue617_prisms.brep"))
+    vol, area = 0.0, 0.0
+    for solid in prisms.Solids:
+        top = max(solid.Faces, key=lambda f: f.CenterOfMass.z)
+        edge = top.OuterWire.Edges[0]
+        pts = edge.discretize(Number=200001)
+        lobe = 0.5 * abs(sum(p.x * q.y - q.x * p.y for p, q in zip(pts, pts[1:] + pts[:1])))
+        height = top.CenterOfMass.z - min(f.CenterOfMass.z for f in solid.Faces)
+        vol += lobe * height
+        area += 2 * lobe + edge.Length * height
+    ok = (len(prisms.Solids) == 2 and abs(prisms.Volume - vol) <= 1e-7 * vol
+          and abs(prisms.Area - area) <= 1e-7 * area)
+    report("issue617_gprop_bspline_prisms", ok, "vol %.4f (want %.4f), area %.4f (want %.4f)"
+           % (prisms.Volume, vol, prisms.Area, area))
+
+
+guarded(issue617_gprop)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))
