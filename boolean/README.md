@@ -268,8 +268,8 @@ adaptive integral's; it was 0.82 off), the others by less than 1e-4;
 in the thickness sweep 10, in the last digit printed. Over 80121 shapes of the sweeps and
 models, 2634 moved, by 1e-4 or more only #617's, a dome's and #423's, each
 closer to the adaptive integral or a dense polygon. The plain integral's
-order on an offset surface is fixed (18 points) and stays: the ellipse's
-thickness reads 608.66 for 609.89.
+order on an offset surface was left at 18 points: the ellipse's thickness
+read 608.66 for 609.89, the next section's fix.
 
 **Validation** (against `d0d93c69c2`): Part 390 and PartDesign 486 tests
 OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen
@@ -277,3 +277,95 @@ OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen
 and frozen; draft 105, boolean 44; the thickness sweep right in all 928
 runs in the four modes; the three draft sweeps not one result changed; the
 six fillet sweeps not one status, face count or tolerance changed.
+
+## An offset surface integrated at 18 points (`54de50c4c1`, 2026-11-01)
+
+**Where it was met.** FreeCAD's Part test of thickness on seam faces and an
+ellipse (`test_thickness_of_seam_faces_and_an_ellipse`): a prism on an
+ellipse of 10 x 5, its top removed, 1 outward -- 608.6621 by the volume
+integral where the solid is 609.8911 (a fine mesh: 609.889), and its bottom
+removed, 1 inward, 473.2070 for 474.1842. The thickness's wall is the
+offset (`Geom_OffsetSurface`) of the prism's.
+
+**What was broken.** An offset surface carries its basis's unit normal, and
+the integrands with it the square root of the basis's speed. For an ellipse
+of a by b that has zeros off the real axis by about atanh(b/a) -- 0.55 for
+10 x 5, 0.2 for 10 x 2 -- where the normal turns fastest, and one Gauss rule
+over the whole turn converges only as fast as that distance against the
+range allows. `BRepGProp_Face` gives an offset surface the default order,
+18 points over the range: 0.08% short on the 10 x 5 ellipse, 5% on 10 x 2,
+15% on 10 x 1. More points over the whole range do not cure it (60 points:
+4e-4 on 10 x 2).
+
+**The fix.** An offset surface whose basis's normal turns unevenly along u
+or v -- the fastest turning more than 1.2 times the slowest, sampled on
+three iso lines -- has its range in that parameter cut into pieces, each
+integrated with a rule of 20 points, the way the B-spline spans of "#617: a
+volume integrated a point or two a span" are. The zeros lie off the axis by the inverse of
+the turning at its peak, and further off with the distance from the peak
+(an ellipse's turning is d / (t^2 + d^2) about a peak of 1 / d), so the
+pieces are graded toward the peaks: spaced by the integral of the square
+root of the turning times its maximum, 1 / sqrt(t^2 + d^2) about such a
+peak -- a few pieces each time the distance grows tenfold, at most 64; 12
+on the 10 x 2 ellipse, 16 on 30 x 1. It is the basis's normal that is
+sampled, the one the integrands carry: the offset's own turns back where
+the offset folds, beyond a radius of curvature, and the integrands pass
+smoothly through. A normal turning evenly (an offset cylinder's, a
+circle's) has no such zero, and is integrated as before.
+
+An offset of a B-spline (or of an extrusion or a revolution of one) is cut
+at every knot of its basis inside the face as well, not only when one rule
+cannot follow that many spans: the offset's derivatives take in the
+basis's next ones, which jump at a knot. A face of the corpus, an offset by
+-2 of a degree 2 B-spline curved between its knots at u = 0 and 4.115 and
+flat beyond, reached 0.00127 past one of them: its area element doubles
+there, and a rule across the jump converged on nothing -- 1.5e-4 off with
+the rule over the whole range, and wandering by as much as more pieces were
+put in. Cut there, it is the same to 1e-15 at any number of pieces (and a
+dense mesh agrees).
+
+Along an edge not cut at its own knots, each piece keeps the rule the whole
+edge would have had, when that is the finer. Since `2c45873435` an edge cut
+only where it crosses the face's knot cuts took each piece with the span's
+rule (8 points on a cubic) in place of the edge's (up to 61): coarser, not
+finer. An interpolated 9 x 7 cubic B-spline face (FreeCAD's Surface test of
+a split, `waveFace`) read 251.376140 for 251.377801, 64 times further off
+than before; it reads 251.377797 now. A face of #346's corpus with a near
+pinch inside a span: 4804.61886 by the span's rule, 4804.62607 by the
+edge's, 4804.62500 adaptively.
+
+**The cases.** `models/offset_surface_gprop.cpp` and `run_tests.py`: a prism
+on an ellipse (10 x 5, 10 x 2, 6 x 5, 10 x 1, 30 x 1; height 8), offset by 1
+(and 10 x 5 by -1) with the Intersection join -- the wall the offset of the
+prism's, the caps planes -- against Steiner: the offset region's area
+pi a b + L d + pi d^2, its curve L + 2 pi d (L the ellipse's length), the
+solid that region times 8 + 2 d. Before: 0.08% to 18% off. After: within
+2e-8 (30 x 1), the others 4e-10.
+
+![An offset surface integrated at 18 points: before and after](models/pictures/offset_surface_gprop.png)
+
+**What it moved.** Volumes and areas only, never a shape. The ellipse's
+thickness: 608.6621 to 609.8911 (top, out) and 473.2070 to 474.1842
+(bottom, in) -- FreeCAD's Part test and the thickness suite's four
+ellipse references, each now Steiner's (`thickness/sweep/hand.py`), as are
+the thickness sweep's 16 ellipse results. Over 80049 shapes of the sweeps
+and models, 479 moved; of the 409 not degenerate, 389 moved closer to a
+build giving an offset 60 points over the whole range. The largest, 1.5e-4,
+are seven shapes of #613's corpus holding the offset of the degree 2
+B-spline above, now converged (the 60 point rule is as far off: it crosses
+the knot too); next a shape of the dome corpus, 6.7e-6, now the 60 point
+rule's to 3e-10. The integrals over
+those shapes took 28% longer (556 s for 434 s), most of it the edge rule
+on #346's offsets (2.5 s to 5.2 s a shape) and #617's fuse. In the fillet
+sweeps 125 results moved their volume, by the edge rule, at most 7.3e-7
+(#876's fillets of 10, by 0.0044): each to within 1e-7 of the adaptive
+integral, ten times nearer than it was (`E76@10`: 6017.2417 to 6017.2372,
+adaptively 6017.2368).
+
+**Validation** (against `e276ca1858`): Part 390 and PartDesign 486 tests
+OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen;
+thickness 463 XFAIL=1 at levels 0 and 1, plain and frozen (its four
+ellipse references moved); draft 105, boolean 50; the thickness sweep right
+in all 928 runs in the four modes (16 ellipse volumes moved, to Steiner's);
+the three draft sweeps not one result changed; the six fillet sweeps not
+one status, face count or tolerance changed.

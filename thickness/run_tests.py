@@ -357,13 +357,15 @@ thickness_case("hole_inner_in",   ann, 4, -1.0, "pass", 358.1416)
 # Elliptic pad (a single closed ellipse edge, extruded): Face2 = bottom,
 # Face3 = top. The offset of the ellipse is a closed B-spline that is not
 # periodic, which the context extension used to stretch 100 lengths past its
-# ends: the top came back unhollowed, the bottom as two shells.
+# ends: the top came back unhollowed, the bottom as two shells. The volumes
+# are Steiner's, sweep/hand.py (the volume integral read them 1.2 short until
+# an offset surface's wall was integrated in pieces, 54de50c4c1).
 ell = Part.Face(Part.Wire(Part.Ellipse(App.Vector(0, 0, 0), 10, 5).toShape())).extrude(
     App.Vector(0, 0, 8))
-thickness_case("ellipse_bottom_out", ell, 2, +1.0, "pass", 608.6622)
-thickness_case("ellipse_bottom_in",  ell, 2, -1.0, "pass", 473.2070)
-thickness_case("ellipse_top_out",    ell, 3, +1.0, "pass", 608.6631)
-thickness_case("ellipse_top_in",     ell, 3, -1.0, "pass", 473.2073)
+thickness_case("ellipse_bottom_out", ell, 2, +1.0, "pass", 609.8911)
+thickness_case("ellipse_bottom_in",  ell, 2, -1.0, "pass", 474.1842)
+thickness_case("ellipse_top_out",    ell, 3, +1.0, "pass", 609.8911)
+thickness_case("ellipse_top_in",     ell, 3, -1.0, "pass", 474.1842)
 
 # Cylinder with a blind pocket in its top: Face3 = bottom. The loop on the
 # offset pocket wall lost the orientation of a circle and closed its seam

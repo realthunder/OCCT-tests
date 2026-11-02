@@ -193,6 +193,33 @@ def issue617_gprop():
 
 guarded(issue617_gprop)
 
+
+# A prism on an ellipse (height 8) offset by d with the Intersection join:
+# its wall the offset surface of the prism's, its caps planes. The volume
+# and area integrals of an offset took one rule of 18 points over the turn,
+# 0.08% to 18% off as the ellipse narrows. Held against Steiner: the offset
+# region pi a b + L d + pi d^2, its curve L + 2 pi d, L the ellipse's length
+# (README.md, "An offset surface integrated at 18 points").
+def offset_surface_gprop():
+    for a, b, d in ((10, 5, 1), (10, 5, -1), (10, 2, 1), (6, 5, 1), (10, 1, 1), (30, 1, 1)):
+        base = Part.Face(Part.Wire(Part.Ellipse(V(0, 0, 0), a, b).toShape()))
+        solid = base.extrude(V(0, 0, 8)).makeOffsetShape(d, 1e-7, join=2)
+        # the ellipse's length: the trapezoid sum of a periodic integrand
+        n = 4000
+        ts = [2 * math.pi * k / n for k in range(n)]
+        length = sum(math.hypot(a * math.sin(t), b * math.cos(t)) for t in ts) * 2 * math.pi / n
+        region = math.pi * a * b + length * d + math.pi * d * d
+        vol, area = region * (8 + 2 * d), 2 * region + (length + 2 * math.pi * d) * (8 + 2 * d)
+        walls = [f for f in solid.Faces if f.Surface.__class__.__name__ == "OffsetSurface"]
+        ok = (solid.isValid() and len(walls) == 1 and abs(solid.Volume - vol) <= 1e-7 * vol
+              and abs(solid.Area - area) <= 1e-7 * area)
+        report("offset_surface_gprop_%gx%g_%+g" % (a, b, d), ok,
+               "vol %.6f (want %.6f), area %.6f (want %.6f)"
+               % (solid.Volume, vol, solid.Area, area))
+
+
+guarded(offset_surface_gprop)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

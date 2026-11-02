@@ -10,7 +10,7 @@
 #  - faces left in pieces give one solid a piece, a pocket's piece floating
 #    in the cavity where nothing joins it to the walls.
 import os
-from math import pi
+from math import cos, pi, sin
 
 EDGE = 1 - pi / 4          # a sharp unit corner less a quarter disc, per unit length
 CORNER = 1 - pi / 6        # a unit cube less an eighth of a ball
@@ -128,6 +128,22 @@ HAND[("pocket", 3, -1)][0] = 280 + 121 - 32 * EDGE - 4 * CORNER
 for a, b in ((7, 8), (7, 9), (7, 10)):
     for d in (+1, -1):
         HAND[("pocket", b, d)] = HAND[("pocket", a, d)]
+
+# The elliptic pad (10 x 5, 8 high), its bottom or top removed. The offset
+# ellipse's region is 50 pi + L d + pi (Steiner; L the ellipse's length, the
+# trapezoid sum of a periodic integrand). Inward the cavity is that region
+# (d = -1) 7 high; outward the region (d = +1) 9 high less the pad, the Arc
+# join rounding the kept cap's rim: a unit square along it (Pappus, centroid
+# 1/2 out: L + pi) less the quarter tube (centroid 4 / (3 pi) out). Upstream
+# read these 1.2 short: an offset surface's wall integrated at 18 points
+# (../../boolean/README.md, "An offset surface integrated at 18 points").
+_T = [2 * pi * k / 4000 for k in range(4000)]
+ELL_L = sum((100 * sin(t) ** 2 + 25 * cos(t) ** 2) ** 0.5 for t in _T) * 2 * pi / 4000
+_ELL_OUT = (51 * pi + ELL_L) * 9 - 400 * pi
+_ELL_IN = 400 * pi - (51 * pi - ELL_L) * 7
+for _f in (2, 3):
+    HAND[("ellipse", _f, +1)] = {0: _ELL_OUT - (EDGE * ELL_L + pi / 3), 2: _ELL_OUT}
+    HAND[("ellipse", _f, -1)] = {0: _ELL_IN, 2: _ELL_IN}
 
 
 # The pole solids -- a ball cut by its equator and by planes through its axis

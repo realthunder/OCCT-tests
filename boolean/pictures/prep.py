@@ -3,9 +3,11 @@
 # out as panels; $W/jobs.json for ../../fillet/pictures/render.py and
 # $W/pictures.json for compose.py.
 import json
+import math
 import os
 
 import FreeCAD as App
+import numpy
 import Part
 
 V = App.Vector
@@ -217,6 +219,84 @@ for title, note, center, height, bad in (
     png = os.path.join(W, "panel%d.png" % i)
     jobs.append(dict(brep=out, png=png, eye=EYE617, center=center, height=height,
                      extras=[dict(brep=knots, color=[0.85, 0.1, 0.1], linewidth=2)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
+# An offset surface integrated at 18 points: the prism on an ellipse of 10 x 2
+# offset by 1, the wall (the offset surface) orange; before, the 18 points
+# the rule over the turn took (iso lines, red), after, where the turn is cut
+# in pieces of 20 points each -- graded toward where the basis's normal
+# turns fastest, as the integral finds it on three iso lines.
+def offset_line(stage, case):
+    for line in open(os.path.join(W, "off", stage + ".txt")):
+        if line.startswith(case):
+            w = line.replace(",", " ").replace("(", " ").split()
+            return float(w[w.index("volume") + 1]), float(w[w.index("area") + 1]), \
+                float(w[w.index("volume") + 3]), float(w[w.index("area") + 3])
+
+
+def iso_lines(face, us):
+    u0, u1, v0, v1 = face.ParameterRange
+    return Part.makeCompound([Part.Edge(face.Surface.uIso(u), v0, v1) for u in us])
+
+
+def turning_pieces(face):
+    # BRepGProp_Gauss.cxx, turningBreaks: the seam and the breaks in u
+    u0, u1, v0, v1 = face.ParameterRange
+    basis = face.Surface.BasisSurface
+    rates = [0.0] * 128
+    for w in (1, 2, 3):
+        v = v0 + (v1 - v0) * w / 4.0
+        ns = [basis.normal(u0 + (u1 - u0) * i / 128.0, v) for i in range(129)]
+        for i in range(128):
+            rates[i] = max(rates[i], ns[i].getAngle(ns[i + 1]) * 128 / (u1 - u0))
+    top = max(rates)
+    sums = [0.0]
+    for r in rates:
+        sums.append(sums[-1] + math.sqrt(r * top) * (u1 - u0) / 128)
+    k = min(64, int(math.ceil(sums[-1])))
+    cuts, i = [u0], 0
+    for j in range(1, k):
+        s = sums[-1] * j / k
+        while sums[i + 1] < s:
+            i += 1
+        cuts.append(u0 + (u1 - u0) * (i + (s - sums[i]) / (sums[i + 1] - sums[i])) / 128)
+    return cuts, k
+
+
+pic = dict(name="offset_surface_gprop",
+           title="An offset surface: a prism on an ellipse of 10 x 2 (height 8), offset by 1",
+           caption="BRepOffsetAPI_MakeOffsetShape, the Intersection join: the wall (orange) the "
+                   "offset of the prism's, the caps planes. Its volume and area by BRepGProp "
+                   "(no precision given), held against Steiner's: the offset region's area "
+                   "pi a b + L d + pi d^2 times the height 10.",
+           panels=[])
+solid = Part.read(os.path.join(W, "off", "after", "10x2_1.brep"))
+wall = [i for i, f in enumerate(solid.Faces) if f.Surface.__class__.__name__ == "OffsetSurface"]
+wf = solid.Faces[wall[0]]
+u0, u1 = wf.ParameterRange[:2]
+nodes = numpy.polynomial.legendre.leggauss(18)[0]
+before_lines = iso_lines(wf, [0.5 * (u0 + u1) + 0.5 * (u1 - u0) * x for x in nodes])
+cuts, k = turning_pieces(wf)
+after_lines = iso_lines(wf, cuts)
+bv, ba, vw, aw = offset_line("before", "10x2 d +1")
+av, aa, _, _ = offset_line("after", "10x2 d +1")
+bb = solid.BoundBox
+for title, note, lines, bad in (
+        ("before: one rule of 18 points", "volume %.3f (%+.1f%%), area %.3f (%+.2f%%) for %.3f "
+         "and %.3f" % (bv, 100 * (bv / vw - 1), ba, 100 * (ba / aw - 1), vw, aw), before_lines,
+         True),
+        ("after: %d pieces of 20 points" % k, "volume %.6f, area %.6f: Steiner's to 1e-9"
+         % (av, aa), after_lines, False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    solid.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    ln = os.path.join(W, "off_lines%d.brep" % i)
+    lines.exportBrep(ln)
+    jobs.append(dict(brep=out, png=png, eye=[0.35, -0.8, 1.0], center=[0, 0, 4],
+                     height=1.15 * max(bb.XLength, bb.YLength), facecolors={str(wall[0]): ORANGE},
+                     extras=[dict(brep=ln, color=[0.85, 0.1, 0.1], linewidth=2)]))
     pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
 pictures.append(pic)
 

@@ -63,6 +63,9 @@ fix dome e9ded0215d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx
 # #617: the volume and area integrals of two B-spline prisms, span by span
 fix 617 2c45873435 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
     issue617_gprop_prism $HERE/../models/issue617_revolution.brep --write
+# an offset surface's integrals in pieces where its normal turns unevenly
+fix off 54de50c4c1 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
+    offset_surface_gprop --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
