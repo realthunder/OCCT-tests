@@ -369,3 +369,51 @@ ellipse references moved); draft 105, boolean 50; the thickness sweep right
 in all 928 runs in the four modes (16 ellipse volumes moved, to Steiner's);
 the three draft sweeps not one result changed; the six fillet sweeps not
 one status, face count or tolerance changed.
+
+## An ellipse's extrusion: its area integrated at 18 points (`8655926813`, 2026-11-02)
+
+**Where it was met.** Measuring the offset fix above: the plain area of a
+prism on an ellipse (no offset) was off too -- 1.8e-5 on 10 x 5, 0.1% on
+10 x 2, 0.45% on 30 x 1 -- where its volume came out exact. A pad of an
+ellipse, FreeCAD's `Shape.Area`.
+
+**What was broken.** The same integrand as an offset's: the area element of
+an extrusion of a curve is the curve's speed times the extrusion's, the
+square root of a polynomial in the curve's derivatives, with zeros off the
+real axis where the curve turns fastest; a revolution's carries the speed
+of the curve revolved. `BRepGProp_Face` gives both the default order, 18
+points over the whole range. The volume integrand has no square root and
+was exact.
+
+**The fix.** An extrusion and a revolution are cut in pieces as an offset
+is, where their own normal turns unevenly: an extrusion in u (along its
+curve), a revolution in v (its curve; the turn about the axis is even). Cut
+in pieces, an extrusion or a revolution of a B-spline is cut at every knot
+of the curve as well, as an offset is: a piece across a knot follows
+nothing. #617's revolution (a cubic of four spans, revolved) shows why: its
+volume read 62064.29 for 62081.90, 3e-4 short, and now agrees with its
+meridian integrated directly (Pappus, span by span, refined) to 1e-12.
+
+**The cases.** `models/extrusion_area_gprop.cpp` and `run_tests.py`: a
+prism on an ellipse (10 x 5, 10 x 2, 6 x 5, 10 x 1, 30 x 1; height 8)
+against 2 pi a b + 8 L, and four spheroids -- half an ellipse revolved
+about its axis, 10 x 2, 10 x 5 oblate, 2 x 10, 5 x 10 prolate -- against
+their closed forms. Before: the prisms 1.4e-8 to 0.45% off, the spheroids
+up to 1.7e-4 (10 x 2). After: within 2e-15.
+
+![An ellipse's extrusion: its area integrated at 18 points: before and after](models/pictures/extrusion_area_gprop.png)
+
+**What it moved.** Over 79992 shapes of the sweeps and models, 7: #617's
+revolution and its pad (3e-4 in volume, 9e-4 in area, now exact), four of
+#617's fuses (invalid, their faces' wires crossing) and a face of #64's
+split, an extrusion of a cubic, 1.6e-6 in area (2302.8428 to 2302.8390;
+Green's theorem over its pcurves, refined: 2302.8390). The integrals over
+them took 0.8% longer, but for the two invalid fuses of #617 (133 s and
+142 s to 222 s each).
+
+**Validation** (against `73a6940466`): Part 390 and PartDesign 486 tests
+OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen;
+thickness 463 XFAIL=1 at levels 0 and 1, plain and frozen; draft 105,
+boolean 59; the thickness sweep right in all 928 runs in the four modes,
+not one result changed; the three draft sweeps not one result changed; the
+six fillet sweeps not one status, face count, tolerance or volume changed.

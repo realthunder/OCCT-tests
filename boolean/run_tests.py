@@ -220,6 +220,47 @@ def offset_surface_gprop():
 
 guarded(offset_surface_gprop)
 
+
+# A prism on an ellipse (height 8), and spheroids, half an ellipse revolved
+# about its axis: the area element of an extrusion or a revolution carries
+# the curve's speed under a square root, one rule of 18 points over the
+# turn: 1.8e-5 to 0.45% off. Held against closed forms (README.md, "An
+# ellipse's extrusion: its area integrated at 18 points").
+def ellipse_length(a, b, n=4000):
+    ts = [2 * math.pi * k / n for k in range(n)]
+    return sum(math.hypot(a * math.sin(t), b * math.cos(t)) for t in ts) * 2 * math.pi / n
+
+
+def extrusion_area_gprop():
+    for a, b in ((10, 5), (10, 2), (6, 5), (10, 1), (30, 1)):
+        base = Part.Face(Part.Wire(Part.Ellipse(V(0, 0, 0), a, b).toShape()))
+        solid = base.extrude(V(0, 0, 8))
+        vol, area = 8 * math.pi * a * b, 2 * math.pi * a * b + 8 * ellipse_length(a, b)
+        ok = abs(solid.Volume - vol) <= 1e-9 * vol and abs(solid.Area - area) <= 1e-9 * area
+        report("extrusion_area_gprop_prism_%gx%g" % (a, b), ok, "area %.6f (want %.6f), vol %.6f"
+               % (solid.Area, area, solid.Volume))
+    # a across the axis, c along it
+    for a, c in ((10, 2), (10, 5), (2, 10), (5, 10)):
+        if a > c:
+            ell, t1, t2 = Part.Ellipse(V(a, 0, 0), V(0, 0, c), V(0, 0, 0)), -math.pi / 2, math.pi / 2
+            e = math.sqrt(1 - c * c / (a * a))
+            area = 2 * math.pi * a * a + math.pi * c * c / e * math.log((1 + e) / (1 - e))
+        else:
+            ell, t1, t2 = Part.Ellipse(V(0, 0, c), V(a, 0, 0), V(0, 0, 0)), 0, math.pi
+            e = math.sqrt(1 - a * a / (c * c))
+            area = 2 * math.pi * a * a * (1 + c / (a * e) * math.asin(e))
+        arc = ell.toShape(t1, t2)
+        p1, p2 = arc.Vertexes[0].Point, arc.Vertexes[-1].Point
+        face = Part.Face(Part.Wire([arc, Part.makeLine(p2, p1)]))
+        solid = Part.Solid(Part.Shell(face.revolve(V(0, 0, 0), V(0, 0, 1), 360).Faces))
+        vol = 4 / 3 * math.pi * a * a * c
+        ok = abs(abs(solid.Volume) - vol) <= 1e-9 * vol and abs(solid.Area - area) <= 1e-9 * area
+        report("extrusion_area_gprop_spheroid_%gx%g" % (a, c), ok,
+               "area %.6f (want %.6f), vol %.6f (want %.6f)" % (solid.Area, area, abs(solid.Volume), vol))
+
+
+guarded(extrusion_area_gprop)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

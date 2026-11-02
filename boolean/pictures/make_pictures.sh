@@ -66,6 +66,9 @@ fix 617 2c45873435 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cx
 # an offset surface's integrals in pieces where its normal turns unevenly
 fix off 54de50c4c1 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
     offset_surface_gprop --write
+# an ellipse's extrusion and revolution: their area in pieces where the normal turns unevenly
+fix ext 8655926813 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
+    extrusion_area_gprop --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

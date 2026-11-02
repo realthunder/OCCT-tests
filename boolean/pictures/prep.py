@@ -240,10 +240,11 @@ def iso_lines(face, us):
     return Part.makeCompound([Part.Edge(face.Surface.uIso(u), v0, v1) for u in us])
 
 
-def turning_pieces(face):
-    # BRepGProp_Gauss.cxx, turningBreaks: the seam and the breaks in u
+def turning_pieces(face, basis=None):
+    # BRepGProp_Gauss.cxx, turningBreaks: the seam and the breaks in u, on the
+    # surface whose normal is sampled (an offset's basis)
     u0, u1, v0, v1 = face.ParameterRange
-    basis = face.Surface.BasisSurface
+    basis = basis or face.Surface.BasisSurface
     rates = [0.0] * 128
     for w in (1, 2, 3):
         v = v0 + (v1 - v0) * w / 4.0
@@ -293,6 +294,52 @@ for title, note, lines, bad in (
     solid.exportBrep(out)
     png = os.path.join(W, "panel%d.png" % i)
     ln = os.path.join(W, "off_lines%d.brep" % i)
+    lines.exportBrep(ln)
+    jobs.append(dict(brep=out, png=png, eye=[0.35, -0.8, 1.0], center=[0, 0, 4],
+                     height=1.15 * max(bb.XLength, bb.YLength), facecolors={str(wall[0]): ORANGE},
+                     extras=[dict(brep=ln, color=[0.85, 0.1, 0.1], linewidth=2)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
+# An ellipse's extrusion: its area integrated at 18 points -- the prism on an
+# ellipse of 10 x 2, its wall (an extrusion) orange; before, the 18 points the
+# rule over the turn took (iso lines, red), after, the pieces of 20 points
+# each, graded toward where the wall's normal turns fastest.
+def ext_line(stage, case, fix="ext", what="area"):
+    for line in open(os.path.join(W, fix, stage + ".txt")):
+        if line.startswith(case + ":"):
+            w = line.replace(",", " ").replace("(", " ").split()
+            return float(w[w.index(what) + 1]), float(w[w.index(what) + 3])
+
+
+pic = dict(name="extrusion_area_gprop",
+           title="An ellipse's extrusion: a prism on an ellipse of 10 x 2 (height 8)",
+           caption="BRepPrimAPI_MakePrism: the wall (orange) the extrusion of the ellipse, the "
+                   "caps planes. Its area by BRepGProp (no precision given), held against "
+                   "2 pi a b + 8 L, L the ellipse's length. The volume was exact before and is.",
+           panels=[])
+solid = Part.read(os.path.join(W, "ext", "after", "prism_10x2.brep"))
+wall = [i for i, f in enumerate(solid.Faces)
+        if f.Surface.__class__.__name__ == "SurfaceOfExtrusion"]
+wf = solid.Faces[wall[0]]
+u0, u1 = wf.ParameterRange[:2]
+nodes = numpy.polynomial.legendre.leggauss(18)[0]
+before_lines = iso_lines(wf, [0.5 * (u0 + u1) + 0.5 * (u1 - u0) * x for x in nodes])
+cuts, k = turning_pieces(wf, wf.Surface)
+after_lines = iso_lines(wf, cuts)
+ba, aw = ext_line("before", "prism_10x2")
+aa, _ = ext_line("after", "prism_10x2")
+bb = solid.BoundBox
+for title, note, lines, bad in (
+        ("before: one rule of 18 points", "area %.4f (%+.2f%%) for %.4f"
+         % (ba, 100 * (ba / aw - 1), aw), before_lines, True),
+        ("after: %d pieces of 20 points" % k, "area %.6f: the closed form's to 1e-15" % aa,
+         after_lines, False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    solid.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    ln = os.path.join(W, "ext_lines%d.brep" % i)
     lines.exportBrep(ln)
     jobs.append(dict(brep=out, png=png, eye=[0.35, -0.8, 1.0], center=[0, 0, 4],
                      height=1.15 * max(bb.XLength, bb.YLength), facecolors={str(wall[0]): ORANGE},
