@@ -1205,7 +1205,7 @@ each of its faces at the offset distance from the input's faces, to 1e-4.
 Still wrong: the Intersection join on the dimple, -2: refused, as before
 (its gap is extended to the axis, and the extension threw where the trim
 did); +2 valid and wrong, as before -- the dome's offset never gets its
-section with the cone's, and the two share no edge. A shell of revolution
+section with the cone's, and the two share no edge. (Both made in sec 43.) A shell of revolution
 with its apex cut off is refused with that join either way (an iso line of
 the offset evaluated off its surface, `BRepOffset_Inter2d`). Offsets past a
 solid's own thickness at the axis (2.78 at the dimple) cross the far side:
@@ -1333,6 +1333,86 @@ levels 0 and 1, plain and frozen, the four cases above among them (PASS=463
 XFAIL=1 before); the thickness sweep right in all 928 runs at both levels,
 plain and frozen, not one changed. Fillet, draft and boolean were not run:
 none reaches `ContextIntByInt` or `ShareTurns`.
+
+## #346 with the Intersection join: the dimple's apex closed by a sphere (2026-11-03, sec 43)
+
+**What was broken.** #346's Revolve (sec 40) with the Intersection join:
+inward (-2, -1, -0.5) a throw, the projection sec 40 took out of the Arc
+join's way; outward (+2, +1, +0.5) valid and wrong, area 6965.7364 at +2
+where the right one is 5002.0810. Thickened with the cone removed, refused
+or a throw. Upstream too.
+
+At the dimple the offset's meridians fall short of the axis inward and cross
+it outward. Sec 40 left the gap open for the Arc join, for the sphere round
+the apex; the Intersection join still extended the offset to the axis
+outward and trimmed it inward, both the wrong way round at a dimple: the
+extension ran on 8 past the axis and folded the dome's offset over itself,
+never cut by the cone's. Decided 2026-11-03: the apex is left open with
+either join and closed by the sphere, as the Arc join does --
+`BRepOffset_Offset` opens it where the generatrix meets the axis on the
+other side from a cone point's, and `CorrectConicalFaces` runs for both
+joins. Three more faults stood behind it:
+
+- The open apex is a circle 0.06 across that keeps the degenerated flag
+  (`CorrectConicalFaces` finds it by it). `BRepAlgo_Loop` held it back as a
+  pole, for a wire through its vertex, and the dome's face came out a
+  sliver along the rim. A degenerated edge that is no point in 3D bounds the
+  face as any closed edge does now.
+- The Intersection join enlarges the dome's offset, its surface of
+  revolution made a rational B-spline, and the offset of that B-spline is
+  unstable at its pole: a hair either side of it, the normal came out
+  along the parallel, 2 off. The result was valid as made, and invalid once
+  written and read back: the topology section of a BRep file was written to
+  15 digits (the curves and surfaces to 17), and the seam's range, ending on
+  the pole, came back 1.5e-15 past it. `TopTools_ShapeSet` and
+  `TopTools_LocationSet` write 17 digits now -- every double reads back as
+  it was. That is any BRep text file, FreeCAD's documents among them.
+- The same instability gave `CorrectConicalFaces` the two ends of the
+  apex circle 3e-5 apart, taken off the surface at u 0 and 2 pi, and the
+  sphere stopped short of a whole turn: its seam two edges, each on one
+  face, the thickness invalid. A circle on one vertex ends where it starts.
+
+Outward the Intersection join gives the Arc join's area to 6e-3 in 5002
+(the rim between cone and dome is concave there, a sharp corner with
+either join; the dome's offset is a B-spline with this join). Inward the rim
+is convex, a sharp corner where the Arc join rounds it, every point at 2
+from the input but the corner's, at most 1.263 times the offset away. The
+thicknesses with the cone removed are the dome's area and its offset's,
+averaged, times the thickness, to 0.1%. With the Arc join they stay refused.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_revolve_in_join`, `_in_0.5_join` | the Revolve, -2 and -0.5, the Intersection join | areas 6053.7243, 5648.2105; a throw before |
+| `issue346_revolve_out_join` | the same, +2 | 5002.0869; 6965.7364 before |
+| `issue346_revolve_thick_out_join`, `_thick_in_join` | the Revolve, the cone (face 1) removed, +2 and -1, the Intersection join | volumes 6198.1628, 2896.5118; refused and a throw before |
+
+![issue346_revolve_thick_out_join](models/pictures/issue346_revolve_thick_out_join.png)
+
+![issue346_revolve_thick_in_join](models/pictures/issue346_revolve_thick_in_join.png)
+
+Over 952 runs -- sec 41's corpus (thicknesses of each face and offsets of
+the whole, +/-1 and +/-0.5, both joins, on the groove, step and #521 shapes,
+the apex corpus of sec 40 and #613's part) and #346's Revolve -- 87 change,
+all on the Revolve and the apex corpus: 55 are made, valid, that were
+refused (31), threw (16) or were invalid (8); 14 that were valid and wrong
+(the dome's offset folded over the axis, up to 7.7 from the input at an
+offset of 1) are right now (6) or invalid (8); 12 refused or throwing are
+invalid now, and 6 stay invalid. All the invalid ones are the Intersection
+join on the apex corpus's dimples and peaks made otherwise than the
+issue's file -- the dimpled shell, the dimpled solid outward and the
+peaked shell, offsets and thicknesses -- where the dome's face comes out of
+`BRepAlgo_Loop`'s angle loops turned over, its wire open in (u, v). Still
+wrong, those; and with the Arc join, #346's Revolve with the cone removed
+stays refused.
+
+**Validation** (on `3dc75258b5`): Part 390, PartDesign 486 and
+ShapeStorage 63 tests OK, with shape values frozen and not; thickness
+PASS=472 at fix levels 0 and 1, plain and frozen, the five cases above among
+them (PASS=467 before); the thickness sweep right in all 928 runs at both
+levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
+105 and boolean 65, as before, fillet and draft frozen too -- run for the
+17-digit writing, which every BRep text file goes through, and for
+`BRepAlgo_Loop`.
 
 ## Determinism cases (intersection mode, Arc join)
 

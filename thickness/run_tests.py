@@ -1596,6 +1596,16 @@ offset_case("issue346_dimple_solid_in", issue346_profile(1.05, True), -1.0, "pas
 offset_case("issue346_peak_solid_in", issue346_profile(-1.05, True), -0.5, "pass", 18078.0821)
 thickness_case("issue346_dimple_solid_thick", issue346_profile(1.05, True), 3, -1.0, "pass", 5287.5411)
 thickness_case("issue346_peak_solid_thick", issue346_profile(-1.05, True), 3, -0.5, "pass", 2712.9873)
+# Sec 43: with the Intersection join the dimple was refused inwards, and
+# outwards the dome's offset ran on through the axis (area 6965.7364, valid
+# and wrong). Its apex is left open for the sphere too now, as with the Arc
+# join. Inwards the rim is a sharp corner, past |value| from the input.
+offset_case("issue346_revolve_in_join", issue346, -2.0, "pass", 6053.7243, join=2, exact=False)
+offset_case("issue346_revolve_in_0.5_join", issue346, -0.5, "pass", 5648.2105, join=2, exact=False)
+offset_case("issue346_revolve_out_join", issue346, 2.0, "pass", 5002.0869, join=2, exact=False)
+# Thickened with the cone removed, the Intersection join: refused, or a throw.
+thickness_case("issue346_revolve_thick_out_join", issue346, 1, 2.0, "pass", 6198.1628, False, 2)
+thickness_case("issue346_revolve_thick_in_join", issue346, 1, -1.0, "pass", 2896.5118, False, 2)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

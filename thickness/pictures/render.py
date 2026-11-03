@@ -102,8 +102,11 @@ for job in jobs["panels"][first:first + count]:
     w = n.cross(u)
     bb = App.BoundBox()
     for f in job["bbox_breps"]:
-        # A result without bounds does not set the row's scale.
-        if bbcache_get(f).DiagonalLength < 1e6:
+        # A result without bounds does not set the row's scale, nor one ten
+        # times the input's size (#346's Revolve outward, upstream: a shell
+        # of the dome's offset run on 1700 past an input of 100).
+        d = bbcache_get(f).DiagonalLength
+        if d < 1e6 and d < 10 * ib.DiagonalLength:
             bb.add(bbcache_get(f))
     height = bb.DiagonalLength * 1.02
     shape = Part.Shape(); shape.read(job["brep"])

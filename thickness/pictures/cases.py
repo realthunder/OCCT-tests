@@ -58,6 +58,7 @@ STAGES = {
     "s40": ("1fbb9fe781", "40"),
     "s41": ("ec1bf4cdc8", "41"),
     "s42": ("1fcefd3de8", "42"),
+    "s43": ("ef5ab58d9e", "43"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -208,6 +209,15 @@ def _issue613():
     return s
 
 
+def _revolve346():
+    # #346's Revolve as the issue has it, a shell: Face1 the cone, Face2 the
+    # dome, its top a dimple.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue346_revolve.brep"))
+    return s
+
+
 def _issue346(cx):
     # #346's profile -- a line from (37.71, 51.19) to (30, 42), an arc
     # centred (cx, -20.08) on to the axis -- closed by the axis and a disc at
@@ -310,6 +320,7 @@ SHAPES = {
     "dimple346": lambda: _issue346(1.0500384390052573),
     "peak346": lambda: _issue346(-1.0500384390052573),
     "issue613": lambda: _issue613(),
+    "revolve346": lambda: _revolve346(),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -535,6 +546,8 @@ CASES = {
     "issue613_fillet_top_out": ("s41", "issue613", 7, 2, False, 0, 14889.3719),
     "issue363_thickness001_in_join": ("s42", "issue363base", [3, 5], -1, False, 2, 5495.9827),
     "issue363_thickness001_out_join": ("s42", "issue363base", [3, 5], 1, False, 2, 5843.3934),
+    "issue346_revolve_thick_out_join": ("s43", "revolve346", 1, 2, False, 2, 6198.1628),
+    "issue346_revolve_thick_in_join": ("s43", "revolve346", 1, -1, False, 2, 2896.5118),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

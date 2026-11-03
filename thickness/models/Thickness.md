@@ -2772,6 +2772,77 @@ XFAIL=1 before); the thickness sweep right in all 928 runs at both levels,
 plain and frozen, not one changed. Fillet, draft and boolean were not run:
 none reaches `ContextIntByInt` or `ShareTurns`.
 
+### Sec 43: #346 with the Intersection join, the dimple's apex closed by a sphere
+
+**Four changes** (`BRepOffset_Offset.cxx`, `BRepOffset_MakeOffset.cxx`,
+`BRepAlgo_Loop.cxx`, `TopTools_ShapeSet.cxx` with `TopTools_LocationSet.cxx`).
+#346's Revolve was made with the Arc join in sec 40. With the Intersection
+join it threw inward and came out valid and wrong outward (area 6965.7364 at
++2, the right one 5002.0810); thickened with the cone removed, refused or a
+throw. Upstream too.
+
+At a dimple the offset's meridians fall short of the axis inward and cross it
+outward, the other way round from a cone point. Sec 40 left the gap open for
+the Arc join, for `CorrectConicalFaces`' sphere; the Intersection join still
+trimmed inward and extended outward, and the extension ran 8 past the axis,
+the dome's offset folded over itself and never cut by the cone's. Decided
+2026-11-03: the apex is left open with either join and closed by the sphere,
+as the Arc join does. Behind it:
+
+- the open apex, a circle 0.06 across, keeps the degenerated flag the sphere
+  is found by, and `BRepAlgo_Loop` held it back as a pole: the dome's face
+  came out a sliver along the rim. A degenerated edge that is no point in 3D
+  bounds the face as a closed edge now;
+- the enlarged dome's offset is a B-spline's, unstable at its pole: a hair
+  either side, its normal along the parallel. Valid as made, the result was
+  invalid read back -- BRep text wrote the topology (ranges, parameters,
+  points, locations) to 15 digits, the curves to 17, and the seam's range
+  came back 1.5e-15 past the pole. Written to 17 digits now;
+- the same instability put the apex circle's two ends 3e-5 apart in
+  `CorrectConicalFaces`, and the sphere stopped short of a turn. A circle
+  on one vertex ends where it starts.
+
+Made now: outward the Arc join's area to 6e-3 (the rim concave, a sharp
+corner either way); inward 6053.7243 at -2 and 5648.2105 at -0.5, the rim a
+sharp corner where the Arc join rounds it; thickened with the cone removed,
+6198.1628 at +2 and 2896.5118 at -1. With the Arc join those stay refused.
+
+Tried and dropped: keeping the enlarged dome a surface of revolution (its
+meridian lengthened on its circle) -- right for the issue's file, but a
+meridian whose parameter starts at 0 is moved a period by every copy of a
+trim, and turned whole it crosses the axis; stopping the open apex 2e-6
+short of the pole -- the sphere still came out short of a turn. And
+`Geom_OsculatingSurface` builds its surface from the poles without the
+weights, wrong for a rational B-spline; not the cause here, left alone.
+
+![issue346_revolve_thick_out_join](pictures/issue346_revolve_thick_out_join.png)
+
+![issue346_revolve_thick_in_join](pictures/issue346_revolve_thick_in_join.png)
+
+Over 952 runs -- sec 41's corpus (thicknesses of each face and offsets of
+the whole, +/-1 and +/-0.5, both joins, on the groove, step and #521 shapes,
+the apex corpus of sec 40 and #613's part) and #346's Revolve -- 87 change,
+all on the Revolve and the apex corpus: 55 are made, valid, that were
+refused (31), threw (16) or were invalid (8); 14 that were valid and wrong
+(the dome's offset folded over the axis, up to 7.7 from the input at an
+offset of 1) are right now (6) or invalid (8); 12 refused or throwing are
+invalid now, and 6 stay invalid. All the invalid ones are the Intersection
+join on the apex corpus's dimples and peaks made otherwise than the
+issue's file -- the dimpled shell, the dimpled solid outward and the
+peaked shell, offsets and thicknesses -- where the dome's face comes out of
+`BRepAlgo_Loop`'s angle loops turned over, its wire open in (u, v). Still
+wrong, those; and with the Arc join, #346's Revolve with the cone removed
+stays refused.
+
+**Validation** (on `3dc75258b5`): Part 390, PartDesign 486 and
+ShapeStorage 63 tests OK, with shape values frozen and not; thickness
+PASS=472 at fix levels 0 and 1, plain and frozen, the five cases above among
+them (PASS=467 before); the thickness sweep right in all 928 runs at both
+levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
+105 and boolean 65, as before, fillet and draft frozen too -- run for the
+17-digit writing, which every BRep text file goes through, and for
+`BRepAlgo_Loop`.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
