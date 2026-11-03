@@ -491,3 +491,71 @@ cases above); the thickness sweep right in all 928 runs in the four modes,
 not one result changed; the draft sweeps the same but the result above,
 and volumes within 1e-6; the six fillet sweeps not one status, face count
 or tolerance changed.
+
+## The adaptive integral refined along the edges only (`15ce0973f6`, 2026-11-03)
+
+**Where it was met.** Checking #617's prisms (above) against the
+adaptive integral, `BRepGProp::VolumeProperties` given a precision: 14258
+for 71191, the error it reported 1.6e-13. The prisms on an ellipse of the
+extrusion fix came 0.2% to 11% short in area. FreeCAD never asks for it
+(`Shape.Volume`, `Shape.Area` and the rest run the plain integrals); in
+OCCT, the Draw commands and `ShapeUpgrade_FaceDivideArea` do.
+
+**What was broken.** Given a precision, the integral runs along the
+face's edges and, at each point of the rule there, across u from the
+face's first u. The rule along the edges is refined until its error
+estimate meets the precision. The one across u never was: its target
+`EpsU` was set only where its refinement gave up, and its error `ErrorU`
+never updated after the first pass -- so, since `GProp_SGProps`, one rule
+over the surface's spans: the whole range of an extrusion, a revolution or
+an offset, whatever its curve. Along an edge of an extrusion running in v
+the integrand does not change, both rules agree, and the error reported is
+nothing.
+
+**The fix.** The integral across u is refined until the largest interval's
+error estimate is within the precision of the integral's own size, as the
+one along the edges is, the estimate taken on both rules along the edge.
+It starts from the breaks the plain integral takes: the knots of an
+extrusion's or a revolution's B-spline curve, of an offset's basis, and
+where the normal turns unevenly -- 32 bisections of one interval could not
+resolve #617's 29 spans (4.9e-7 off at 1e-8, worse than at 1e-6). A face
+with no edges starts from them along v too.
+
+**The cases.** `models/adaptive_gprop.cpp`, at a precision of 1e-6: the
+prisms on an ellipse of the extrusion fix (10 x 5, 10 x 2, 6 x 5, 10 x 1,
+30 x 1), the 10 x 2 one on GeomConvert's B-spline, the four spheroids, and
+#617's prisms (`models/issue617_prisms.brep`), against the closed forms
+and the shoelace. Before: the prisms on the ellipse 0.2% to 11% short in
+area and 2.1e-5 over in volume, the B-spline one 6% over in volume, #617's
+80% short in volume and 6% over in area, each reporting 2e-9 or less; the
+spheroids right (a revolution's u is the turn, its rule exact). After:
+within 4e-9 (#617's 4e-11); the prolate spheroids 1.9e-8 off as before,
+inside the 3.5e-7 they report. No case in `run_tests.py`: FreeCAD's Python
+reaches only the plain integrals.
+
+![The adaptive integral refined along the edges only: before and after](models/pictures/adaptive_gprop.png)
+
+**What it moved.** The adaptive integrals only; the plain ones not by a
+bit over 16004 shapes of the sweeps and models (every fifth). Of the 521
+with a volume and an area, the adaptive volume came more than 1e-5 off the
+plain one in 15 before, 1 after; the area in 8 before, none after; those
+further off than before by a few 1e-7 at most, at the precision asked. The
+one left is #617's revolution (`pad_deg8`): 4% off before, 2.2e-5 after
+with an error of 1.7e-5 reported, converging as the precision tightens;
+its edges carry tolerances to 39, their curves on the face not the face's
+boundary, the plain and adaptive integrals of its faces apart by twice.
+Of the 953 with an area, the adaptive one more than 1e-5 off the plain one:
+10 before, 2 after -- a sliver of the dome corpus, 2.8% before and 3.6e-5
+now (an area of 0.0237 in a square of 82 on the surface: the difference of
+integrals 1e5 times larger, the two apart by 1e-10 of those), and a shape
+of #346's sweep with an edge 2e100 long, its area 1e104 either way, the
+same before and after. None further off than before by more than twice and
+1e-7. The adaptive integrals took 15.4 s for 11.2 s over those shapes.
+
+**Validation** (against `89c3ee61f3`): Part 390 and PartDesign 486 tests
+OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen;
+thickness 463 XFAIL=1 at levels 0 and 1, plain and frozen; draft 105,
+plain and frozen; boolean 65; the thickness sweep right in all 928 runs in
+the four modes; the draft and fillet sweeps -- every result, face count,
+volume and tolerance -- the same, as FreeCAD never calls the adaptive
+integrals.

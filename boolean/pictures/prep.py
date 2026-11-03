@@ -395,6 +395,65 @@ for title, note, lines, bad in (
     pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
 pictures.append(pic)
 
+# The adaptive integral refined along the edges only -- #617's prisms, their
+# walls (extrusions of degree 8 B-splines of 29 spans) orange; before, where
+# the rule across u started and stayed, one interval over the whole curve
+# (iso lines at its ends, red); after, the intervals it starts from, the
+# curve's knots, refined from there.
+def adapt_line(stage):
+    for line in open(os.path.join(W, "adapt", stage + ".txt")):
+        if line.startswith("issue617_prisms:"):
+            w = line.replace(",", " ").replace("(", " ").replace(")", " ").split()
+            g = [j for j, t in enumerate(w) if t == "given"]
+            return dict(area=float(w[w.index("area") + 1]), area_ref=float(w[w.index("area") + 3]),
+                        vol=float(w[w.index("volume") + 1]),
+                        vol_ref=float(w[w.index("volume") + 3]),
+                        area_err=float(w[g[0] + 1]), vol_err=float(w[g[1] + 1]))
+
+
+pic = dict(name="adaptive_gprop",
+           title="The adaptive integral refined along the edges only: #617's prisms",
+           caption="BRepGProp::VolumeProperties and SurfaceProperties given a precision of 1e-6 "
+                   "(the adaptive integrals; Shape.Volume and Shape.Area run the plain ones). The "
+                   "walls (orange) are extrusions of degree 8 B-splines of 29 spans. Held against "
+                   "the shoelace over a dense polygon of each cap and the curve's length.",
+           panels=[])
+prisms = Part.read(os.path.join(W, "adapt", "after", "issue617_prisms.brep"))
+walls = [i for i, f in enumerate(prisms.Faces)
+         if f.Surface.__class__.__name__ == "SurfaceOfExtrusion"]
+before_lines, after_lines = [], []
+for i in walls:
+    f = prisms.Faces[i]
+    u0, u1 = f.ParameterRange[:2]
+    before_lines.append(iso_lines(f, [u0, u1]))
+    after_lines.append(iso_lines(f, [u0] + [k for k in f.Surface.BasisCurve.getKnots()
+                                            if u0 < k < u1]))
+b, a = adapt_line("before"), adapt_line("after")
+pb = prisms.BoundBox
+for title, note, lines, bad in (
+        ("before: one interval, never refined",
+         "volume %.1f (%+.0f%%), area %.1f (%+.0f%%) for %.2f and %.2f; the error given %.1g"
+         % (b["vol"], 100 * (b["vol"] / b["vol_ref"] - 1), b["area"],
+            100 * (b["area"] / b["area_ref"] - 1), b["vol_ref"], b["area_ref"],
+            max(b["vol_err"], b["area_err"])), Part.makeCompound(before_lines), True),
+        ("after: from the knots, refined",
+         "volume %.4f, area %.4f: the shoelace's to %.0e"
+         % (a["vol"], a["area"], max(abs(a["vol"] / a["vol_ref"] - 1),
+                                     abs(a["area"] / a["area_ref"] - 1))),
+         Part.makeCompound(after_lines), False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    prisms.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    ln = os.path.join(W, "adapt_lines%d.brep" % i)
+    lines.exportBrep(ln)
+    jobs.append(dict(brep=out, png=png, eye=EYE617, center=[pb.Center.x, pb.Center.y,
+                     pb.Center.z], height=1.2 * max(pb.XLength, pb.YLength) + 40,
+                     facecolors={str(c): ORANGE for c in walls},
+                     extras=[dict(brep=ln, color=[0.85, 0.1, 0.1], linewidth=2)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

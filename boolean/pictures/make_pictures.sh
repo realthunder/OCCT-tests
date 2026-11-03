@@ -71,6 +71,9 @@ fix ext 8655926813 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cx
     extrusion_area_gprop --write
 fix knots 66c168acc5 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
     bspline_knots_gprop --write
+# the adaptive integrals refined across u, from the plain integral's breaks
+fix adapt 15ce0973f6 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
+    adaptive_gprop $HERE/../models/issue617_prisms.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
