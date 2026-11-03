@@ -347,6 +347,54 @@ for title, note, lines, bad in (
     pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
 pictures.append(pic)
 
+# A B-spline integrated across its knots -- the prism on an ellipse of 10 x 2
+# made GeomConvert's rational B-spline (three spans, C1 at its knots), the
+# caps orange; before, the 18 points the rule along the caps' edge took over
+# all three spans (iso lines of the wall, the edge's parameter, red); after,
+# the edge cut at its knots, each span its own rule.
+pic = dict(name="bspline_knots_gprop",
+           title="A B-spline integrated across its knots: a prism on an ellipse of 10 x 2",
+           caption="Height 8. GeomConvert::CurveToBSplineCurve: the ellipse a periodic "
+                   "rational B-spline of degree 2, three spans, its derivatives jumping at "
+                   "the knots; the caps "
+                   "(orange) bounded by it. The area and volume by BRepGProp (no precision "
+                   "given), held against 2 pi a b + 8 L and 8 pi a b.",
+           panels=[])
+solid = Part.read(os.path.join(W, "knots", "after", "prism_10x2.brep"))
+wall = [i for i, f in enumerate(solid.Faces)
+        if f.Surface.__class__.__name__ == "SurfaceOfExtrusion"]
+caps = [i for i, f in enumerate(solid.Faces) if f.Surface.__class__.__name__ == "Plane"]
+wf = solid.Faces[wall[0]]
+u0, u1 = wf.ParameterRange[:2]
+nodes = numpy.polynomial.legendre.leggauss(18)[0]
+before_lines = iso_lines(wf, [0.5 * (u0 + u1) + 0.5 * (u1 - u0) * x for x in nodes])
+knots = [k for k in wf.Surface.BasisCurve.getKnots() if u0 < k < u1]
+after_lines = iso_lines(wf, [u0] + knots)
+ba, aw = ext_line("before", "prism_10x2", "knots")
+aa, _ = ext_line("after", "prism_10x2", "knots")
+bv, vw = ext_line("before", "prism_10x2", "knots", "volume")
+av, _ = ext_line("after", "prism_10x2", "knots", "volume")
+bb = solid.BoundBox
+for title, note, lines, bad in (
+        ("before: 18 points over 3 spans",
+         "area %.4f (%+.2f%%) for %.4f, volume %.4f (%+.2f%%)"
+         % (ba, 100 * (ba / aw - 1), aw, bv, 100 * (bv / vw - 1)), before_lines, True),
+        ("after: %d pieces, cut at the knots" % (len(knots) + 1),
+         "area %.6f, volume %.6f: the closed forms' to 1e-15" % (aa, av),
+         after_lines, False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    solid.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    ln = os.path.join(W, "knots_lines%d.brep" % i)
+    lines.exportBrep(ln)
+    jobs.append(dict(brep=out, png=png, eye=[0.35, -0.8, 1.0], center=[0, 0, 4],
+                     height=1.15 * max(bb.XLength, bb.YLength),
+                     facecolors={str(c): ORANGE for c in caps},
+                     extras=[dict(brep=ln, color=[0.85, 0.1, 0.1], linewidth=2)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

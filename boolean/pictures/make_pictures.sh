@@ -69,6 +69,8 @@ fix off 54de50c4c1 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cx
 # an ellipse's extrusion and revolution: their area in pieces where the normal turns unevenly
 fix ext 8655926813 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
     extrusion_area_gprop --write
+fix knots 66c168acc5 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
+    bspline_knots_gprop --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

@@ -2066,7 +2066,7 @@ for r, vol in ((0.3, 794.545534), (0.8, 796.905452), (2.0, 811.298183)):
 # the model's own, edge 9, in pieces and refined
 s309 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue309_shape.brep"))
 s309r = s309.removeSplitter()
-for r, vol in ((0.3, 12765.2985), (0.8, 12777.1032), (2.0, 12849.1968)):
+for r, vol in ((0.3, 12765.2985), (0.8, 12777.1015), (2.0, 12849.2020)):
     pair_case("issue309_arch_foot_r%g" % r, lambda: s309.copy(), [((0, -50, 0), (0, 50, 0))], r,
               vol_tol=1e-3, max_tol=2e-4)
     fillet_case("issue309_refined_arch_foot_r%g" % r, s309r,
@@ -2208,13 +2208,14 @@ for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
 # The result is the input fused with the strip between the faces and the
 # fillet's cylinder, cut to the cone the handle's ends lie on: BOP's
 # difference both ways is empty; the volumes are those made, held to 1e-3
-# (the faces' integration differs by more from the plain to the adaptive).
+# (the plain integral of its B-spline faces was up to 0.11 off the adaptive
+# one before occt 66c168acc5 cut them at their knots; the two agree now).
 # Each on a copy of its own: at 2 the fillet raises the tolerance of the
 # rim's vertex, which its input shares with the result (as upstream), and
 # every later case on the same input would carry it.
-for e, r, vol, tol in ((11, 0.3, 8560.0641, 0.031), (11, 0.8, 8563.6287, 0.031),
-                       (11, 2, 8585.0031, 0.19), (15, 0.3, 8560.0709, 0.031),
-                       (15, 0.8, 8563.6332, 0.031), (15, 2, 8585.2381, 0.19)):
+for e, r, vol, tol in ((11, 0.3, 8560.0650, 0.031), (11, 0.8, 8563.6080, 0.031),
+                       (11, 2, 8585.1123, 0.19), (15, 0.3, 8560.0720, 0.031),
+                       (15, 0.8, 8563.6385, 0.031), (15, 2, 8585.2947, 0.19)):
     fillet_case("issue273_handle_foot_e%d_r%g" % (e, r), p273f.copy(), e, r, "pass", vol,
                 tol, vol_tol=1e-3, bop=True)
 # #273's pocket in the handle's top, its rims (E23, E24; E22 the base): the
@@ -2357,7 +2358,7 @@ finally:
 # fillet ends at the handle now, the mirror of the input's own. No bop: the
 # input fails BOP's check itself (its vertices at 0.7).
 p273f1 = Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep"))
-for es, vol in (([9], 8525.7565), ([9, 22], 8523.9884), ([9, 16], 8532.4959)):
+for es, vol in (([9], 8525.7565), ([9, 22], 8523.9843), ([9, 16], 8532.4959)):
     fillet_case("issue273_f001_rim_onto_edge_%s_r1" % "_".join("e%d" % e for e in es), p273f1,
                 es, 1.0, "pass", vol, vol_tol=1e-3)
 # #876's top split along a rounded rectangle, two of its corner arcs (r 0.69;
@@ -2927,7 +2928,7 @@ fillet_case("issue273_f001_apex_flat_both_rims_e39_e40_r0.3",
 # deg), and with the flat end the cut ran past each, 0.05 at 0.3, 0.15 at
 # 0.8; now flat at both, nothing past them (8535.096796 and 8534.727931
 # before).
-for r, vol, tol in ((0.3, 8535.073955, 2e-5), (0.8, 8534.7140, 1e-3)):
+for r, vol, tol in ((0.3, 8535.073921, 2e-5), (0.8, 8534.7140, 1e-3)):
     fillet_case("issue273_f001_base_flat_e38_r%g" % r,
                 Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep")), 38,
                 r, "pass", vol, vol_tol=tol, flat=True)

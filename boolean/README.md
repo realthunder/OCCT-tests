@@ -417,3 +417,77 @@ thickness 463 XFAIL=1 at levels 0 and 1, plain and frozen; draft 105,
 boolean 59; the thickness sweep right in all 928 runs in the four modes,
 not one result changed; the three draft sweeps not one result changed; the
 six fillet sweeps not one status, face count, tolerance or volume changed.
+
+## A B-spline integrated across its knots (`66c168acc5`, 2026-11-03)
+
+**Where it was met.** Measuring the extrusion fix above on an ellipse made
+a B-spline: GeomConvert's exact rational one (three spans of degree 2, C1
+at its knots). The prism on it, 10 x 2, came 1.2e-3 off in area and 1.4e-3
+in volume, where on the ellipse itself it was exact.
+
+**What was broken.** A Gauss rule across a knot of a B-spline converges
+only as a power of its points: the integrand's derivatives jump there.
+`2c45873435` (#617 above) cut a B-spline at its knots only where a rule of
+61 points could not give each span its degree's share, so a curve of few
+spans was integrated across them: the caps' edge, one rule of 18 points
+over the whole ellipse (61 points: still 1e-4). Over each span alone the
+rule converges as over a smooth curve: 6 points 2e-7, 16 exact.
+
+And where an edge crosses a surface's knot is found on a sampling of the
+edge: a sample landing on the knot exactly gave a product of zero on both
+sides, and the knot was missed. An oblate spheroid, half the ellipse's
+B-spline revolved (its knots GeomConvert's, 3 pi / 2, 2 pi, 5 pi / 2), has
+its seam run from the first to the last, the middle sample on the middle
+knot: 6.9e-6 over in area.
+
+**The fix.** A B-spline -- a surface in u or v, the curve of an extrusion
+or a revolution, an edge's curve on the face -- is cut at every knot
+inside the range, every period of a periodic one, each span with
+2 (degree + 1) points, 10 more for a rational one (a third of a turn of a
+conic wants 16). An edge's knots are its own curve's on the face, mirrored
+for a reversed edge as `BRepGProp_Face` loads it. A sample on a knot is
+the crossing.
+
+**The cases.** `models/bspline_knots_gprop.cpp` and `run_tests.py`: prisms
+on the B-spline ellipse (10 x 5, 10 x 2, 10 x 1, and 10 x 2 made
+periodic), a plate 30 x 20 with the ellipse cut through it (its edge
+reversed on the plate's faces), and the spheroids 10 x 2 and 2 x 10,
+against closed forms. Before: the prisms 7e-4 to 1.9e-3 off, the plate
+6.5e-4, the oblate spheroid 6.9e-6 (the prolate one was exact). After:
+within 1e-15.
+
+![A B-spline integrated across its knots: before and after](models/pictures/bspline_knots_gprop.png)
+
+**What it moved.** Over 79992 shapes of the sweeps and models, 1184 of
+those with a volume and an area moved, 662 by more than 1e-7, 4 by more
+than 1e-5 -- at most 3.2e-5, faces of #363's groove and its sweeps --
+and each toward the same integral taken with 61
+points a span, but one, as far from it (6e-7) either way. The integrals
+over them took 4.9% longer (the rational spans' points, mostly on #346's
+offsets), but for #617's invalid fuses.
+
+In the fillet suite nine volumes moved past their references, #273's handle
+and Fillet001 and #309's refined arch: at most 0.11 (`issue273_handle_foot_e11_r2`,
+8585.0031 to 8585.1123, 1.3e-5), each now the integral at 61 points a span
+to 1e-11 and the adaptive one (`BRepGProp` with an epsilon, the old
+library) to its last printed digit; their references are those. The fillet
+sweeps moved 2471 volumes of the vertex sweeps, 538 of the edge sweep, 205
+of the large radii, 418 of the chamfers, at most 3.5e-5: #876's fillets and
+chamfers at 2, 0.30 high before, now the 61-point and adaptive integrals'
+(twelve largest checked, the same way). Not one status, face count,
+tolerance or BOP check changed. The draft chains sweep has one result
+changed: `issue631_Fillet003 18 13 5` failed (RefilletFails) and now makes
+a valid solid of 19 faces. FreeCAD's cell draft joins the edges the draft
+split before refilleting, and keeps the join only if the volume stays
+within 1e-9 (`CellDraft.cpp`, `joinSplitEdges`); the old integral gave the
+solid two volumes further apart than that, its edges split and joined, and
+the join was refused.
+
+**Validation** (against `318d7f1478`): Part 390 and PartDesign 486 tests
+OK, plain and frozen; the fillet suite PASS=815 XFAIL=1, plain and frozen
+(its nine references moved); thickness 463 XFAIL=1 at levels 0 and 1,
+plain and frozen; draft 105, plain and frozen; boolean 65 (59 and the six
+cases above); the thickness sweep right in all 928 runs in the four modes,
+not one result changed; the draft sweeps the same but the result above,
+and volumes within 1e-6; the six fillet sweeps not one status, face count
+or tolerance changed.

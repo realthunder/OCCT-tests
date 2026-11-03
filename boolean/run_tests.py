@@ -261,6 +261,64 @@ def extrusion_area_gprop():
 
 guarded(extrusion_area_gprop)
 
+
+# A B-spline integrated across its knots: an ellipse's exact rational
+# B-spline (four quarters, its knots C1) -- the rule of an edge on it, or of
+# the face it is extruded or revolved from, ran across the knots: 1e-3 off.
+# Held against closed forms (README.md, "A B-spline integrated across its
+# knots").
+def bspline_ellipse(a, b, quarters=4, periodic=False, plane="xy", knots=None):
+    w = math.sqrt(0.5)
+    pts = [(a, 0), (a, b), (0, b), (-a, b), (-a, 0), (-a, -b), (0, -b), (a, -b), (a, 0)]
+    pts = pts[: 2 * quarters + 1]
+    weights = [1 if i % 2 == 0 else w for i in range(len(pts))]
+    if plane == "xy":
+        poles = [V(x, y, 0) for x, y in pts]
+    else:  # xz, from -z to +z about x >= 0 for a half
+        poles = [V(y, 0, -x) for x, y in pts]
+    knots = knots or list(range(quarters + 1))
+    curve = Part.BSplineCurve()
+    if periodic:
+        curve.buildFromPolesMultsKnots(poles[:-1], [2] * (quarters + 1), knots, True, 2,
+                                       weights[:-1])
+    else:
+        curve.buildFromPolesMultsKnots(poles, [3] + [2] * (quarters - 1) + [3], knots, False, 2,
+                                       weights)
+    return curve
+
+
+def bspline_knots_gprop():
+    def check(name, solid, vol, area):
+        ok = abs(abs(solid.Volume) - vol) <= 1e-9 * vol and abs(solid.Area - area) <= 1e-9 * area
+        report("bspline_knots_gprop_" + name, ok, "area %.6f (want %.6f), vol %.6f (want %.6f)"
+               % (solid.Area, area, abs(solid.Volume), vol))
+
+    for a, b, periodic in ((10, 5, False), (10, 2, False), (10, 1, False), (10, 2, True)):
+        base = Part.Face(Part.Wire(bspline_ellipse(a, b, periodic=periodic).toShape()))
+        check("prism_%gx%g%s" % (a, b, "_periodic" if periodic else ""), base.extrude(V(0, 0, 8)),
+              8 * math.pi * a * b, 2 * math.pi * a * b + 8 * ellipse_length(a, b))
+    # a plate with the ellipse cut through it: the B-spline edge reversed on its faces
+    rect = Part.makePolygon([V(-15, -10, 0), V(15, -10, 0), V(15, 10, 0), V(-15, 10, 0),
+                             V(-15, -10, 0)])
+    plate = Part.makeFace([rect, Part.Wire(bspline_ellipse(10, 5).toShape())],
+                          "Part::FaceMakerBullseye").extrude(V(0, 0, 8))
+    cap = 600 - 50 * math.pi
+    check("plate_hole_10x5", plate, 8 * cap, 2 * cap + 8 * (100 + ellipse_length(10, 5)))
+    # an oblate spheroid 10 x 2: half the B-spline revolved, its knots
+    # GeomConvert's, the middle one on the seam's middle sample
+    a, c = 10, 2
+    arc = bspline_ellipse(c, a, quarters=2, plane="xz",
+                          knots=[1.5 * math.pi, 2 * math.pi, 2.5 * math.pi]).toShape()
+    p1, p2 = arc.Vertexes[0].Point, arc.Vertexes[-1].Point
+    face = Part.Face(Part.Wire([arc, Part.makeLine(p2, p1)]))
+    solid = Part.Solid(Part.Shell(face.revolve(V(0, 0, 0), V(0, 0, 1), 360).Faces))
+    e = math.sqrt(1 - c * c / (a * a))
+    check("spheroid_%gx%g" % (a, c), solid, 4 / 3 * math.pi * a * a * c,
+          2 * math.pi * a * a + math.pi * c * c / e * math.log((1 + e) / (1 - e)))
+
+
+guarded(bspline_knots_gprop)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))
