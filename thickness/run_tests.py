@@ -1445,7 +1445,16 @@ issue363 = issue363_base()
 thickness_case("issue363_thickness001_top_in", issue363, 6, -1.0, "pass", 4576.7701)
 thickness_case("issue363_thickness001_in", issue363, [3, 5], -1.0, "pass", 5496.0504)
 thickness_case("issue363_thickness001_out", issue363, [3, 5], +1.0, "pass", 5816.1031)
-thickness_case("issue363_thickness001_in_join", issue363, [3, 5], -1.0, "xfail", None, False, 2)
+# Both bottoms removed with the Intersection join: each bottom's section with
+# the side's offset was the whole circle, given whole to each, and the two lay
+# on each other on the side's offset -- refused, upstream too (README.md,
+# sec 42). Inward the Arc join's volumes, every edge between kept faces convex.
+thickness_case("issue363_thickness001_in_join", issue363, [3, 5], -1.0, "pass", 5495.9827, False, 2)
+thickness_case("issue363_thickness001_in_half_join", issue363, [3, 5], -0.5, "pass", 2792.2176, False,
+               2)
+thickness_case("issue363_thickness001_out_join", issue363, [3, 5], +1.0, "pass", 5843.3934, False, 2)
+thickness_case("issue363_thickness001_out_half_join", issue363, [3, 5], +0.5, "pass", 2879.0411,
+               False, 2)
 # The Intersection join on #363's cylinder with a square step cut off its
 # side instead of the groove (x < -10.062591, z < 10.062591), 1 in or out: with
 # any face removed it was refused or invalid, upstream too. The side meets the

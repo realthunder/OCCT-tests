@@ -2720,6 +2720,58 @@ thickness sweep right in all 928 runs at both levels, plain and frozen, not
 one changed. Fillet, draft and boolean were not run: none reaches
 `EnLargeFace` or the unhollowed check.
 
+### Sec 42: #363 with the Intersection join, a circle two bottoms' arcs lie on
+
+**One change** (`a151b3b0df`, `BRepOffset_Inter3d.cxx`). #363's Thickness001
+-- a chamfered cylinder with a groove across its end, both bottoms removed --
+was made with the Arc join in sec 36. With the Intersection join it was
+refused inward (-1, -0.5) and invalid outward (+1, +0.5); upstream too. It was
+the suite's last expected failure.
+
+A removed face is cut by the offsets of the faces it meets, each enlarged,
+and with the Intersection join that is a section of the two enlarged faces
+(`ContextIntByInt`): for each bottom with the side's offset, the whole circle
+r 24.81, given whole to the bottom's edges on the side -- the right bottom's
+two arcs, split by the side's seam, and the left bottom's one. On the side's
+offset the two circles lay on each other, and its loops were made of the
+slivers between them: the side's image was a wire of its top circle and the
+two pieces under the groove -- what is cut away -- and the shell builder
+dropped every face as hanging. The Arc join shares such a circle out since
+sec 36 (`ShareTurns`): each arc stretched to the middle of the gap either side
+of it, to a vertex the next arc takes too. The Intersection join's sections
+are shared out the same way now (`ShareSection`, over `ShareArcs`, the
+sharing taken out of `ShareTurns`): a bottom's section that is one closed edge
+is given to its edges a piece each -- the right bottom two quarters meeting at
+the seam, the left one half, ending on the vertices at the gaps' middles. Only
+a circle the arcs of two caps or more lie on: one bottom's arc split by the
+seam keeps its whole circle, which the step cut off a cylinder of sec 37
+needs (three of its runs, valid, went invalid or refused when it was shared).
+
+Made now: inward 5495.9827 and 2792.2176, the Arc join's volumes, every edge
+between kept faces convex; outward 5843.3934 and 2879.0411, the square corners
+holding 27.2932 and 7.0707 more than the Arc join's rounded ones -- a quarter
+at half the offset -- the Arc join's result inside, the extra within 1.8 of
+the kept faces' edges and corners.
+
+The 224 runs of the Intersection join corpus of sec 37 (each face removed
+alone, +/-1 and +/-0.5) do not change. Still refused: the grooves of radius 5
+and 10 and the chamfered one built in FreeCAD, both bottoms removed -- shared
+out too, they fail on another fault, the groove two faces and the side's
+offset image unbounded. And #363's base with one bottom removed stays invalid
+or refused with the Intersection join; sharing its one seam-split circle made
+it valid, at the cost of the step's three runs.
+
+![issue363_thickness001_in_join](pictures/issue363_thickness001_in_join.png)
+
+![issue363_thickness001_out_join](pictures/issue363_thickness001_out_join.png)
+
+**Validation** (on `a151b3b0df`): Part 390, PartDesign 486 and ShapeStorage
+63 tests OK, with shape values frozen and not; thickness PASS=467 at fix
+levels 0 and 1, plain and frozen, the four cases above among them (PASS=463
+XFAIL=1 before); the thickness sweep right in all 928 runs at both levels,
+plain and frozen, not one changed. Fillet, draft and boolean were not run:
+none reaches `ContextIntByInt` or `ShareTurns`.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

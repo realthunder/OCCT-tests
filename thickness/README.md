@@ -553,7 +553,7 @@ which makes a step cut off the side right with that join).
 | `issue363_groove5_both_bottoms_in`, `_groove5_seam90_both_bottoms_in`, `_groove10_both_bottoms_in`, `_thickness001_in` | both bottoms removed, -1 | 4927.3387, 4927.0697, 5403.7097, 5496.0504; invalid, then refused |
 | `issue363_groove10_both_bottoms_out`, `_thickness001_out` | both bottoms removed, +1 | 5749.5607, 5816.1031; refused before |
 | `issue363_groove5_groove_seam_left_bottom_in`, `_thickness001_left_bottom_in` | the groove a single face with its seam on the right bottom's edge, the left bottom removed | 5600.5842, 5933.2710; valid and wrong before (2142.0698, -3798.5363), until sec 36 |
-| `issue363_thickness001_in_join` | Thickness001, the Intersection join | `XFAIL`: invalid; refused since sec 37 |
+| `issue363_thickness001_in_join` | Thickness001, the Intersection join | 5495.9827; invalid, refused since sec 37, made in sec 42 |
 
 `models/issue363_groove.cpp` is the C++ driver of both (the groove of
 radius 5, 10.06 and 10.06 under a chamfer, the top, both bottoms or the
@@ -1018,7 +1018,7 @@ open through the face removed.
 ![step_ceiling_out_join](models/pictures/step_ceiling_out_join.png)
 
 Still wrong: the groove with the Intersection join -- #363's own
-(`issue363_thickness001_in_join`, now refused), the groove of radius 5 in
+(`issue363_thickness001_in_join`, now refused; made in sec 42), the groove of radius 5 in
 two faces (the side's offset walked in (u, v) and cut by the offsets of the
 groove's two faces, which are one cylinder once extended), a slot with flat
 sides across the end (the side's loop gives the slot ceiling's offset two
@@ -1268,6 +1268,71 @@ with shape values frozen and not; thickness PASS=463 XFAIL=1 at fix levels
 thickness sweep right in all 928 runs at both levels, plain and frozen, not
 one changed. Fillet, draft and boolean were not run: none reaches
 `EnLargeFace` or the unhollowed check.
+
+## #363 with the Intersection join: a circle the two bottoms' arcs lie on (`a151b3b0df`, 2026-11-03, sec 42)
+
+**What was broken.** #363's Thickness001 -- the chamfered cylinder with a
+groove across its end, both bottoms removed -- with the Intersection join:
+refused at -1 and -0.5, invalid at +1 and +0.5 (28082.3223, 26668.3828);
+upstream too. It was the suite's last `XFAIL`.
+
+Each removed bottom is cut by the offsets of the faces it meets, the side's
+among them, and with the Intersection join that cut is the section of the
+bottom's plane, enlarged, with the side's offset enlarged: the whole circle,
+r 24.81. Each bottom's edges on the side were given all of it -- the right
+bottom's two arcs (the side's seam splits its arc) and the left bottom's one
+-- and on the side's offset the two circles lay on each other. The side's
+loops took the slivers between them: its image kept a wire of the top
+circle alone and the two pieces under the groove, the parts that are cut
+away, and the shell builder dropped every face as hanging. The Arc join had
+the same overlap with the arcs' offsets, each stretched round, and shares
+the circle out (`ShareTurns`, sec 36): each arc stretched to the middle of
+the gap on either side of it, to a vertex the arc beyond takes too. The
+Intersection join's sections are shared out the same way now
+(`ShareSection`, `BRepOffset_Inter3d`): where a bottom's section is one
+closed edge and each of its edges on that face has a share, each gets its
+piece of the circle -- the right bottom two quarters meeting at the seam,
+the left one half, all three ending on the same vertices at the middles of
+the gaps. Only a circle the arcs of two caps or more lie on: one cap's arc
+that the seam splits keeps the whole circle, which the step cut off a
+cylinder (sec 37) needs -- shared out there, its bottom removed came out
+invalid or refused at three offsets that are made.
+
+Inward the results are the Arc join's to the digit, every edge between kept
+faces convex there; outward the Intersection join's square corners hold
+more: 27.2932 at +1 and 7.0707 at +0.5, a quarter of it, the Arc join's
+result inside the Intersection join's (their boolean difference that way
+0), the extra within 1.8 of the kept faces' edges and corners.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_thickness001_in_join`, `_in_half_join` | Thickness001, both bottoms removed, -1 and -0.5, the Intersection join | 5495.9827, 2792.2176 (the Arc join's); refused before |
+| `issue363_thickness001_out_join`, `_out_half_join` | the same, +1 and +0.5 | 5843.3934, 2879.0411; invalid before |
+
+![issue363_thickness001_in_join](models/pictures/issue363_thickness001_in_join.png)
+
+![issue363_thickness001_out_join](models/pictures/issue363_thickness001_out_join.png)
+
+Over the 224 runs of the Intersection join corpus of sec 37 -- the step,
+the slot, the grooves of radius 5 and 10, the chamfered one, #363's base
+and two more, each face removed alone, +/-1 and +/-0.5 -- not one changes:
+none has two caps on one circle.
+
+Still wrong: the same groove built in FreeCAD -- the grooves of radius 5
+and 10 and the chamfered one, their side a right-handed cylinder, both
+bottoms removed -- refused as before at all four offsets. The circle is
+shared out there too; what fails is another fault: the groove is two faces,
+and the side's offset image comes out unbounded (z to 1e7). And #363's base
+with one bottom removed, the Intersection join, invalid or refused: sharing
+its one bottom's seam-split circle out made it valid, at the cost of the
+step's three runs above.
+
+**Validation** (on `a151b3b0df`): Part 390, PartDesign 486 and ShapeStorage
+63 tests OK, with shape values frozen and not; thickness PASS=467 at fix
+levels 0 and 1, plain and frozen, the four cases above among them (PASS=463
+XFAIL=1 before); the thickness sweep right in all 928 runs at both levels,
+plain and frozen, not one changed. Fillet, draft and boolean were not run:
+none reaches `ContextIntByInt` or `ShareTurns`.
 
 ## Determinism cases (intersection mode, Arc join)
 

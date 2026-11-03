@@ -57,6 +57,7 @@ STAGES = {
     "s39": ("2ad983305c", "39"),
     "s40": ("1fbb9fe781", "40"),
     "s41": ("ec1bf4cdc8", "41"),
+    "s42": ("1fcefd3de8", "42"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -532,6 +533,8 @@ CASES = {
     "issue346_peak_solid_thick": ("s40", "peak346", 3, -0.5, False, 0, 2712.9873),
     "issue613_fillet_top_bottom_out": ("s41", "issue613", [7, 16], 2, False, 0, 11247.7097),
     "issue613_fillet_top_out": ("s41", "issue613", 7, 2, False, 0, 14889.3719),
+    "issue363_thickness001_in_join": ("s42", "issue363base", [3, 5], -1, False, 2, 5495.9827),
+    "issue363_thickness001_out_join": ("s42", "issue363base", [3, 5], 1, False, 2, 5843.3934),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
