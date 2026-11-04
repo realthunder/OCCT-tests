@@ -3032,13 +3032,40 @@ Made: -1 6128.2407, -0.5 3160.6653, the hand values (the right wall's).
 
 ![slot_left_wall_in_join](pictures/slot_left_wall_in_join.png)
 
-Over sec 44's 952 runs 2 change, both to valid (the left wall inward at
-1 and 0.5), the hand values.
+Over sec 44's corpus -- 936 runs, #613's model gone from it (sec 49) -- 2
+change, both to valid (the left wall inward at 1 and 0.5), the hand
+values.
 
 Regression (`9e7dcb27bd`): Part, PartDesign, ShapeStorage OK, plain and
 frozen; thickness PASS=519 at both fix levels, plain and frozen (517 + 2);
 sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
 65, fillet and draft frozen too.
+
+### Sec 49: the groove of two faces, both bottoms removed
+
+**One change** (`BRepOffset_MakeOffset.cxx`, `FindParameter`). The groove
+of two faces with both bottoms removed and the Intersection join: invalid
+at three offsets, refused inward.
+
+- A bottom's section with the side's offset is the circle split at the
+  side's seam, the two halves on one curve; the seam's vertex carried the
+  first half's parameter, 2 pi, and the second half (0 to pi/2) was trimmed
+  the long way round, over the first. A parameter a period outside an
+  edge's range on a periodic curve is brought into it when that lands
+  inside.
+
+Made: every volume the hand value, both radii, +/-1 and +/-0.5.
+
+![issue363_groove10_both_bottoms_out_half_join](pictures/issue363_groove10_both_bottoms_out_half_join.png)
+
+Over sec 44's corpus nothing moves (936 runs: #613's model had been
+purged from it since sec 44, its 16 lines empty; its 176 runs on the
+suite's copy, from sec 47's library to this one, are unchanged).
+
+Regression (`427507ac59`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=526 at both fix levels, plain and frozen (519 + 7);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too.
 
 ## Where the chase stands (2026-10-04)
 

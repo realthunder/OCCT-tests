@@ -64,6 +64,7 @@ STAGES = {
     "s46": ("8d4483af45", "46"),
     "s47": ("9cd33c4b68", "47"),
     "s48": ("7f0d86814c", "48"),
+    "s49": ("a0f53eb60e", "49"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -578,6 +579,7 @@ CASES = {
     "issue363_groove10_top_out_join": ("s47", "groove10", 6, 1, False, 2, 4854.5817),
     "issue363_groove10_bottom_out_join": ("s47", "groove10", 2, 1, False, 2, 6459.0048),
     "slot_left_wall_in_join": ("s48", "slot", 5, -1, False, 2, 6128.2407),
+    "issue363_groove10_both_bottoms_out_half_join": ("s49", "groove10", [2, 5], 0.5, False, 2, 2853.0372),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

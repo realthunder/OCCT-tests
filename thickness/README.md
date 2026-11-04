@@ -1704,9 +1704,10 @@ with the removed face left in place, taken from the input.
 
 ![slot_left_wall_in_join](models/pictures/slot_left_wall_in_join.png)
 
-Over the 952 runs of sec 44's corpus 2 change, both to valid: these, the
+Over the 936 runs of sec 44's corpus 2 change, both to valid: these, the
 left wall removed inward at 1 and 0.5, refused before, the hand values.
-Not one other moves.
+Not one other moves. (The corpus is 936 runs, not 952: #613's model had
+dropped out of it since sec 44 -- sec 49.)
 
 **Regression** (`9e7dcb27bd`): Part 390, PartDesign 486 and ShapeStorage 63
 OK, plain and frozen; thickness PASS=519 at fix levels 0 and 1, plain and
@@ -1714,6 +1715,51 @@ frozen, the 2 cases above among them (PASS=517 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen, not one changed;
 fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as before, fillet and
 draft frozen too.
+
+## #363's groove of two faces, both bottoms removed, with the Intersection join (2026-11-04, sec 49)
+
+**What was broken.** The groove of two faces (sec 47) with both bottoms
+removed and the Intersection join: valid only at 1, invalid at 0.5 (both
+radii) and at 1 with radius 5, refused inward; refused before sec 47,
+upstream too.
+
+Each bottom's section with the side's offset is the circle the bottoms'
+plane cuts from it, split at the side's seam into two halves that share
+one curve. The seam's vertex holds its parameter on that curve from the
+first half, 2 pi; `FindParameter` gave the second half -- its range from 0
+to pi/2 -- that parameter, and `TrimEdge` trimmed it from its crossing with
+the groove's offset round to 2 pi, the long way, over the first half. The
+side's offset then had two edges along the same arc, its loops closed on
+them and on the top's circle alone, and the shell came out inside out. A
+parameter a period outside the edge's range on a periodic curve is brought
+into it now when that lands inside.
+
+Every volume is the hand value -- the offset with the bottoms left in
+place, against the input (`grvexp`).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove10_both_bottoms_in_join`, `_out_half_join`, `_in_half_join` | radius 10.062591, both bottoms removed, -1, +0.5, -0.5 | 5403.7018, 2853.0372, 2752.5724; refused or invalid before |
+| `issue363_groove5_both_bottoms_out_join`, `_in_join`, `_out_half_join`, `_in_half_join` | radius 5, both bottoms removed, +1, -1, +0.5, -0.5 | 5245.5567, 4927.2864, 2583.1450, 2503.5899; invalid or refused before |
+
+![issue363_groove10_both_bottoms_out_half_join](models/pictures/issue363_groove10_both_bottoms_out_half_join.png)
+
+Over sec 44's corpus nothing moves -- the both-bottoms cases remove two
+faces, the corpus one at a time. The corpus is 936 runs, not the 952 the
+sections since sec 44 give: the scratch copy of #613's model had been
+purged, and its 16 lines ran nothing. Its runs on the suite's own copy
+(`models/issue613_fillet.brep`, 176: every face of 21 and the whole, +/-1
+and +/-0.5, both joins), with sec 47's library and with this one: not one
+changes.
+
+The red along the groove's top in the cut is the input's own seam edge,
+as in sec 47.
+
+**Regression** (`427507ac59`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=526 at fix levels 0 and 1, plain and
+frozen, the 7 cases above among them (PASS=519 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen; fillet PASS=815
+XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 
 ## Determinism cases (intersection mode, Arc join)
 

@@ -1436,6 +1436,25 @@ thickness_case("issue363_groove10_bottom_in_join", _g10, planar_faces(_g10)[1][0
                5840.9880, False, 2)
 thickness_case("issue363_groove10_both_bottoms_out_join", _g10, planar_faces(_g10)[1], +1.0,
                "pass", 5805.6776, False, 2)
+# Both bottoms removed (sec 49): each bottom's section with the side's
+# offset is the circle split at the side's seam, the halves on one curve; the
+# seam's vertex carried the first half's parameter, 2 pi, and the second half
+# was trimmed the long way round over the first -- invalid at three offsets,
+# refused inward. The hand volumes, as above.
+thickness_case("issue363_groove10_both_bottoms_in_join", _g10, planar_faces(_g10)[1], -1.0,
+               "pass", 5403.7018, False, 2)
+thickness_case("issue363_groove10_both_bottoms_out_half_join", _g10, planar_faces(_g10)[1], +0.5,
+               "pass", 2853.0372, False, 2)
+thickness_case("issue363_groove10_both_bottoms_in_half_join", _g10, planar_faces(_g10)[1], -0.5,
+               "pass", 2752.5724, False, 2)
+thickness_case("issue363_groove5_both_bottoms_out_join", _g5, _g5_bottoms, +1.0, "pass",
+               5245.5567, False, 2)
+thickness_case("issue363_groove5_both_bottoms_in_join", _g5, _g5_bottoms, -1.0, "pass",
+               4927.2864, False, 2)
+thickness_case("issue363_groove5_both_bottoms_out_half_join", _g5, _g5_bottoms, +0.5, "pass",
+               2583.1450, False, 2)
+thickness_case("issue363_groove5_both_bottoms_in_half_join", _g5, _g5_bottoms, -0.5, "pass",
+               2503.5899, False, 2)
 thickness_case("issue363_groove5_top_out_join", _g5, _g5_top, +1.0, "pass", 4822.6883, False, 2)
 thickness_case("issue363_groove5_top_in_join", _g5, _g5_top, -1.0, "pass", 4340.4396, False, 2)
 thickness_case("issue363_groove10_chamfer_top_out_join", _g10c, _g10c_top, +1.0, "pass", 5071.2208,
