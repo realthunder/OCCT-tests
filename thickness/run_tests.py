@@ -1606,6 +1606,28 @@ offset_case("issue346_revolve_out_join", issue346, 2.0, "pass", 5002.0869, join=
 # Thickened with the cone removed, the Intersection join: refused, or a throw.
 thickness_case("issue346_revolve_thick_out_join", issue346, 1, 2.0, "pass", 6198.1628, False, 2)
 thickness_case("issue346_revolve_thick_in_join", issue346, 1, -1.0, "pass", 2896.5118, False, 2)
+# Sec 44: the same apex made otherwise than the issue's file, the Intersection
+# join. The dome's offset is a B-spline closed in u and not periodic, and
+# BRepAlgo_Loop walked its face by angle, a seam's two sides taken for one:
+# invalid (the dimpled and peaked shells), or with nowhere to go. And at a
+# peak the dome's offset is extended to the axis by an approximation that ran
+# round a loop 1.3e-3 across there, taken for an open apex and closed by a
+# sphere the dome's edge did not lie on (the dimpled solid outward, its top a
+# peak of the solid; valid and 7.6 off before sec 43).
+offset_case("issue346_dimple_shell_out_join", issue346_profile(1.05), 1.0, "pass", 5255.6140,
+            join=2, exact=False)
+offset_case("issue346_dimple_shell_in_join", issue346_profile(1.05), -1.0, "pass", 5782.0144,
+            join=2, exact=False)
+offset_case("issue346_peak_shell_out_join", issue346_profile(-1.05), 1.0, "pass", 5278.6022,
+            join=2, exact=False)
+offset_case("issue346_peak_shell_in_join", issue346_profile(-1.05), -1.0, "pass", 5810.5123,
+            join=2, exact=False)
+offset_case("issue346_dimple_solid_out_join", issue346_profile(1.05, True), 1.0, "pass",
+            34447.9224, join=2, exact=False)
+offset_case("issue346_dimple_solid_in_join", issue346_profile(1.05, True), -1.0, "pass",
+            14455.0033, join=2, exact=False)
+thickness_case("issue346_dimple_solid_thick_out_join", issue346_profile(1.05, True), 3, 1.0,
+               "pass", 5749.7112, False, 2)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

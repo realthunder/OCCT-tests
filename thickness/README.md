@@ -1402,8 +1402,8 @@ join on the apex corpus's dimples and peaks made otherwise than the
 issue's file -- the dimpled shell, the dimpled solid outward and the
 peaked shell, offsets and thicknesses -- where the dome's face comes out of
 `BRepAlgo_Loop`'s angle loops turned over, its wire open in (u, v). Still
-wrong, those; and with the Arc join, #346's Revolve with the cone removed
-stays refused.
+wrong, those (made in sec 44); and with the Arc join, #346's Revolve with
+the cone removed stays refused.
 
 **Validation** (on `3dc75258b5`): Part 390, PartDesign 486 and
 ShapeStorage 63 tests OK, with shape values frozen and not; thickness
@@ -1412,6 +1412,65 @@ them (PASS=467 before); the thickness sweep right in all 928 runs at both
 levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
 105 and boolean 65, as before, fillet and draft frozen too -- run for the
 17-digit writing, which every BRep text file goes through, and for
+`BRepAlgo_Loop`.
+
+## #346's apex made otherwise, the Intersection join: a seam walked by angle, a peak's end not a point (2026-11-04, sec 44)
+
+**What was broken.** Sec 43 made the issue's Revolve with the Intersection
+join; the apex corpus of sec 40, the same profile made in FreeCAD, still
+came out invalid with it: the dimpled shell and the peaked shell, both
+ways, and the dimpled solid outward (valid before sec 43, and wrong, its
+dome's offset 7.6 from the input). Two faults:
+
+- The Intersection join enlarges the dome's offset into a B-spline closed
+  in u and not periodic, and `BRepAlgo_Loop` searches a face that is not
+  periodic by walking its edges by angle in (u, v). The walk takes an
+  edge's one pcurve both ways, and a seam's other side is its other pcurve:
+  the dome's face came out with the seam's two sides each where the other
+  should be, its wire open in (u, v) whichever way it was turned, or -- the
+  dome ending at a pole -- with no wire at all. A seam across a face, from
+  one vertex to another, now makes its search the periodic one, seam bands
+  and the walk in (u, v) that knows a seam's two sides. A closed edge lying
+  on a seam does not: an Arc join thickness of #346 cut its enlarged dome
+  only far out on the extension, and that face is left out as before.
+- The dimpled solid's top is a peak of the solid, and outward the dome's
+  offset is rightly carried on to the axis. The extension is an
+  approximation, and it ended round a loop 1.3e-3 across where the face
+  ends at the apex: `CorrectConicalFaces`, which runs for the Intersection
+  join since sec 43, took it for an open apex and closed it by a sphere the
+  dome's edge did not lie on. The end row of the extension's poles is made
+  the apex point now, and the end is that point.
+
+The areas run in step across the corpus: outward at +1, peaked shell
+5278.6022, flat top 5266.8614, dimpled 5255.6140; the dimpled solid's dome
+at 1 from the input to 2e-4 (the offset's approximation).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_dimple_shell_out_join`, `_in_join` | #346's profile, a dimple, a shell, +1 and -1, the Intersection join | areas 5255.6140, 5782.0144; invalid before (and a throw before sec 43) |
+| `issue346_peak_shell_out_join`, `_in_join` | the same with a peak | 5278.6022, 5810.5123; invalid before |
+| `issue346_dimple_solid_out_join`, `_in_join` | the dimple closed by a disc, +1 and -1 | volumes 34447.9224, 14455.0033; invalid before |
+| `issue346_dimple_solid_thick_out_join` | the same, the disc (face 3) removed, +1 | 5749.7112; invalid before, refused before sec 43 -- upstream makes it, the fork had lost it |
+
+![issue346_dimple_solid_thick_out_join](models/pictures/issue346_dimple_solid_thick_out_join.png)
+
+Over sec 43's 952 runs (thicknesses of each face and offsets of the whole,
++/-1 and +/-0.5, both joins, on the groove, step and #521 shapes, the apex
+corpus and #613's part, and #346's Revolve) 38 change, all on the apex
+corpus and all to valid: 32 that were invalid -- every Intersection join
+offset of the dimpled and peaked shells and of the dimpled solid, and the
+dimpled solid's disc removed -- and 6 refused, the dimpled solids' cone
+removed (two solids, the dome's and the disc's, as with the Arc join). Not
+one is worse. Still invalid on the apex corpus, as before: a shell with its
+dome removed, thickened inward, with either join, and the flat-topped
+shell's cone removed with the Arc join.
+
+**Validation** (on `b7774e0a77`): Part 390, PartDesign 486 and
+ShapeStorage 63 tests OK, with shape values frozen and not; thickness
+PASS=479 at fix levels 0 and 1, plain and frozen, the seven cases above among
+them (PASS=472 before); the thickness sweep right in all 928 runs at both
+levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
+105 and boolean 65, as before, fillet and draft frozen too -- run for
 `BRepAlgo_Loop`.
 
 ## Determinism cases (intersection mode, Arc join)
