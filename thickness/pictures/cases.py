@@ -60,6 +60,7 @@ STAGES = {
     "s42": ("1fcefd3de8", "42"),
     "s43": ("ef5ab58d9e", "43"),
     "s44": ("4c8778375c", "44"),
+    "s45": ("336f3d38c9", "45"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -550,6 +551,8 @@ CASES = {
     "issue346_revolve_thick_out_join": ("s43", "revolve346", 1, 2, False, 2, 6198.1628),
     "issue346_revolve_thick_in_join": ("s43", "revolve346", 1, -1, False, 2, 2896.5118),
     "issue346_dimple_solid_thick_out_join": ("s44", "dimple346", 3, 1, False, 2, 5749.7112),
+    "issue521_connect_cylinder_in": ("s45", "issue521", 4, -0.5, False, 0, 264.8641),
+    "issue521_connect_cylinder_in_join": ("s45", "issue521", 4, -0.5, True, 2, 264.8641),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

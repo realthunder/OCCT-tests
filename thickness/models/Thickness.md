@@ -2895,6 +2895,48 @@ levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
 105 and boolean 65, as before, fillet and draft frozen too -- run for
 `BRepAlgo_Loop`.
 
+### Sec 45: #521 with the cylinder removed, inward
+
+**Four changes** (`BRepOffset_Tool.cxx`, `BRepOffset_Inter3d.cxx`,
+`BRepOffset_Inter2d.cxx`, `BRepAlgo_Loop.cxx`). #521's Connect with its
+three-quarter cylinder removed, inward: invalid with the Arc join, refused
+with the Intersection join.
+
+- The removed face, the stop of its neighbours' extended offsets, went a
+  tenth of its free quarter round (9 degrees); the walls' offsets cross it
+  14.5 degrees past its ends at 0.5, and the far crossing was taken. Mode 3
+  now (half the free part), in `ExtentFace` and `ContextIntByInt`.
+- Its edge at 2 pi is closed on it (pcurves at 0 and 2 pi), used once; the
+  pieces cut from it kept both and made the lips a periodic search, ten
+  faces over each other. A piece keeps the pcurve the face reaches.
+- `IsInOnePeriod` gave up past nine tenths of a turn; the lips at 1 span 330
+  degrees. A hundredth short now.
+- With the Intersection join the 2D intersection read that edge at 0, and
+  the inner top's section, past 2 pi, never met it: tried a period apart,
+  kept only when every crossing found is inside both edges -- at an end it
+  is the common vertex across the seam, and #363's Thickness001 with both
+  bottoms removed (Intersection join, sec 42) was cut there: refused in,
+  invalid out, in the first run of the regression.
+
+Made: 264.8641 at 0.5, 484.2380 at 1, both joins -- the hand value.
+
+Tried and dropped: taking an edge like that one for no seam of a face that
+ends on its pcurve, for the outward thicknesses (all four were made, valid,
+the lips at 0 to 0.5 from the input): a groove's quarter cylinders share
+such an edge, and their lips came out inside out -- eight thicknesses
+refused that were made, two invalid. Outward stays invalid.
+
+![issue521_connect_cylinder_in](pictures/issue521_connect_cylinder_in.png)
+
+![issue521_connect_cylinder_in_join](pictures/issue521_connect_cylinder_in_join.png)
+
+Over sec 44's 952 runs 4 change, these four, to valid.
+
+Regression (`5aa0a2e5ff`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=483 at both fix levels, plain and frozen; sweep 928
+of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet
+and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

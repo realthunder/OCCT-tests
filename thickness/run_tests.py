@@ -1507,6 +1507,21 @@ thickness_case("issue521_connect_wall_y10_in_join", issue521, 2, -0.5, "pass", 2
 thickness_case("issue521_connect_wall_x0_in_join", issue521, 5, -0.5, "pass", 270.4120, True, 2)
 thickness_case("issue521_connect_wall_y0_in_join", issue521, 3, -0.5, "pass", 270.4120, True, 2)
 thickness_case("issue521_connect_wall_y0_in", issue521, 3, -0.5, "pass", 269.8020)
+# Sec 45: the cylinder removed (Face4), inward: invalid with the Arc join (990,
+# the inner walls run on across the cylinder), refused with the Intersection
+# join. The walls' offsets cross the three-quarter cylinder past its ends, by
+# the angle whose sine is the thickness over its radius (14.5 degrees at
+# 0.5), and the cylinder taken a tenth of the free quarter round (9) met them
+# on the far side; the cylinder's edge at 2 pi, closed, cut into pieces that
+# kept both pcurves and made its lips a periodic search (ten faces over each
+# other); at 1 the lips span 330 degrees, past nine tenths of a turn; and with
+# the Intersection join the inner top's section, past 2 pi, missed that edge
+# read at 0. By hand: the box less the hollow 9 high over its inner square
+# and the disc, 264.8641 at 0.5, 484.2380 at 1, either join.
+thickness_case("issue521_connect_cylinder_in", issue521, 4, -0.5, "pass", 264.8641)
+thickness_case("issue521_connect_cylinder_in_1", issue521, 4, -1.0, "pass", 484.2380)
+thickness_case("issue521_connect_cylinder_in_join", issue521, 4, -0.5, "pass", 264.8641, True, 2)
+thickness_case("issue521_connect_cylinder_in_1_join", issue521, 4, -1.0, "pass", 484.2380, True, 2)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset

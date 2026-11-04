@@ -1473,6 +1473,71 @@ levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1, draft
 105 and boolean 65, as before, fillet and draft frozen too -- run for
 `BRepAlgo_Loop`.
 
+## #521 with the cylinder removed, inward (2026-11-04, sec 45)
+
+**What was broken.** #521's Connect -- a box 10 with a three-quarter
+cylinder r 2 at a corner (sec 38) -- thickened inward with the cylinder
+removed: invalid with the Arc join (990.5 at -0.5, near the solid's whole
+volume: the inner walls ran on across the cylinder), refused with the
+Intersection join. Four faults, each needed:
+
+- The removed face is the stop the neighbours' offsets are extended to, and
+  it was enlarged a tenth of the quarter it leaves free, 9 degrees each way.
+  The walls' offsets cross the three-quarter cylinder past its ends, by the
+  angle whose sine is the thickness over the radius -- 14.5 degrees at 0.5,
+  30 at 1 -- and the crossing found was the one on the far side. The
+  removed face is taken round as the Intersection join's own offset faces
+  are (`EnLargeFace` mode 3: half the free part each way), in
+  `BRepOffset_Tool::ExtentFace` (Arc) and
+  `BRepOffset_Inter3d::ContextIntByInt` (Intersection).
+- The cylinder's edge at 2 pi is closed on it -- two pcurves, at 0 and at
+  2 pi -- and the face uses it once. Its pieces, cut by the inner top and
+  bottom, kept both, and made the removed face's lips a seamed face and its
+  search a periodic one, which found ten cylinder faces lying over each
+  other. In `BRepAlgo_Loop` a piece cut from such an edge keeps the pcurve
+  the face reaches, when the face is at most a period round.
+- At 1 the lips span 330 degrees, and `IsInOnePeriod` gave up past nine
+  tenths of a turn; a hundredth short is enough for the sampling.
+- With the Intersection join the inner top's section ran from 75 degrees on
+  past 2 pi to 375, and the 2D intersection read the edge at 2 pi at 0 and
+  never met it: the section was not cut there and the lip past it never
+  closed. `BRepOffset_Inter2d` tries two edges of a periodic face that do
+  not cross again a period apart, and takes what it finds only when every
+  crossing is inside both edges: one at an end is the two's common vertex
+  read across the seam, and #363's Thickness001 with both bottoms removed
+  and the Intersection join (sec 42), whose bottoms' quarter arcs end on the
+  side's seam line, was cut there and lost its shell -- refused inward,
+  invalid outward, until the shift was held to that.
+
+Both joins now give the volume worked out by hand -- the box less the hollow
+9 high over its inner square and the disc: 264.8641 at 0.5, 484.2380 at 1.
+Outward the cylinder removed stays invalid: there the edge at 2 pi is not
+cut, it is the input's own, and taken for no seam of the face (its other
+pcurve beyond the face) it put a groove's quarter cylinders' lips inside
+out -- tried and dropped.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue521_connect_cylinder_in`, `_in_1` | #521's Connect, the cylinder (face 4) removed, -0.5 and -1, the Arc join | 264.8641, 484.2380; invalid before |
+| `issue521_connect_cylinder_in_join`, `_in_1_join` | the same, the Intersection join, intersection on | the same; refused before |
+
+![issue521_connect_cylinder_in](models/pictures/issue521_connect_cylinder_in.png)
+
+![issue521_connect_cylinder_in_join](models/pictures/issue521_connect_cylinder_in_join.png)
+
+Over the 952 runs of sec 44's corpus 4 change: these, #521's cylinder
+removed inward at 0.5 and 1 with both joins, from invalid or refused to
+valid. Not one other moves.
+
+**Regression** (`5aa0a2e5ff`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=483 at fix levels 0 and 1, plain and
+frozen, the four cases above among them (PASS=479 before); the thickness
+sweep right in all 928 runs at both levels, plain and frozen, not one
+changed; fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as before,
+fillet and draft frozen too. The first run, the shift taken at an end too,
+failed Thickness001's four Intersection join cases; the corpus, one face
+removed at a time, had not caught them.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
