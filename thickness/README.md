@@ -1586,7 +1586,7 @@ removed one not -- less the input outward, taken from it inward
 slot's cylinder less its box). Still refused: the side or the chamfer of
 Thickness001 removed, and the slotted cylinder's side, which leave the
 faces in two parts, nothing between them (upstream too); and the slot's
-left wall removed inward, its right wall made.
+left wall removed inward, its right wall made (made in sec 48).
 
 | Case | Model | What it covers |
 |------|-------|----------------|
@@ -1676,6 +1676,44 @@ frozen, the 13 cases above among them (PASS=504 before); the thickness
 sweep right in all 928 runs at both levels, plain and frozen, not one
 changed; fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as before,
 fillet and draft frozen too.
+
+## The slotted cylinder's left wall removed inward (2026-11-04, sec 48)
+
+**What was broken.** Sec 46's slotted cylinder with its left wall removed,
+inward, the Intersection join: refused, at -1 and -0.5, its mirror -- the
+right wall -- made; upstream too.
+
+The ceiling's offset meets the side's in a circle, the image of the
+ceiling's two arcs, and it is trimmed to one span from the right wall's
+offset round over the far side to the right wall's offset again: the arc
+between the two ends of the slot, over the left bottom, splits the side's
+offset in two. The first piece holds the right wall's edges, the second
+the left's. With the right wall removed its lip's edges -- cut where the
+lip meets the ceiling -- are the first piece's, and `MakeFaces` rebuilt
+that piece with the cuts; with the left wall removed they are the second's,
+and `MakeFaces` went over each face's first piece only. The second kept the
+lip's edges whole, the lip had free edges there, and it was dropped as
+hanging. Each piece is gone over now.
+
+The volumes are the hand values, the right wall's to the digit: the offset
+with the removed face left in place, taken from the input.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `slot_left_wall_in_join`, `slot_left_wall_in_half_join` | the slotted cylinder, the left wall removed, -1 and -0.5 | 6128.2407, 3160.6653; refused before |
+
+![slot_left_wall_in_join](models/pictures/slot_left_wall_in_join.png)
+
+Over the 952 runs of sec 44's corpus 2 change, both to valid: these, the
+left wall removed inward at 1 and 0.5, refused before, the hand values.
+Not one other moves.
+
+**Regression** (`9e7dcb27bd`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=519 at fix levels 0 and 1, plain and
+frozen, the 2 cases above among them (PASS=517 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen, not one changed;
+fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as before, fillet and
+draft frozen too.
 
 ## Determinism cases (intersection mode, Arc join)
 

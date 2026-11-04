@@ -2969,7 +2969,7 @@ refused or invalid; upstream too.
 Made: every volume to the digit the hand value -- the offset with the
 removed face left in place, less the input or taken from it. Still refused:
 a face whose removal leaves two parts (Thickness001's side or chamfer, the
-slot's side), and the slot's left wall inward.
+slot's side), and the slot's left wall inward (made in sec 48).
 
 ![issue363_thickness001_groove_out_join](pictures/issue363_thickness001_groove_out_join.png)
 
@@ -3013,6 +3013,30 @@ chamfered 20), every one the hand value.
 
 Regression (`4d2a9f941a`): Part, PartDesign, ShapeStorage OK, plain and
 frozen; thickness PASS=517 at both fix levels, plain and frozen (504 + 13);
+sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
+65, fillet and draft frozen too.
+
+### Sec 48: the slotted cylinder's left wall removed inward
+
+**One change** (`BRepOffset_MakeOffset.cxx`, `MakeFaces`). The slotted
+cylinder's left wall removed inward with the Intersection join was
+refused, the right wall made.
+
+- The ceiling's section with the side, the circle, is trimmed to a span
+  over the far side, and it splits the side's offset in two; the left
+  wall's lip edges lie on the second piece. `MakeFaces` rebuilt a face's
+  first piece only with the edges later loops cut, and the second kept the
+  lip's edges whole: free edges, the lip dropped. Every piece is rebuilt.
+
+Made: -1 6128.2407, -0.5 3160.6653, the hand values (the right wall's).
+
+![slot_left_wall_in_join](pictures/slot_left_wall_in_join.png)
+
+Over sec 44's 952 runs 2 change, both to valid (the left wall inward at
+1 and 0.5), the hand values.
+
+Regression (`9e7dcb27bd`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=519 at both fix levels, plain and frozen (517 + 2);
 sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
 65, fillet and draft frozen too.
 

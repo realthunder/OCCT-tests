@@ -66,6 +66,7 @@ SUMMARY = {
     45: "#521 with the cylinder removed, inward: the removed three-quarter cylinder, the stop of its neighbours' offsets, went too little of the way round and met them on the far side; its edge at 2 pi, closed on it, made its lips a periodic search; the Intersection join's 2D intersection read that edge a period off. Both joins now give the hand value.",
     46: "#363's Thickness001 and the slotted cylinder with the Intersection join, offset whole or one face removed: the side's loop with the groove, split at the groove's seam, was cut on neither piece; the right bottom's section with the side, the whole circle, was kept whole; with the top removed the chamfer's piece, only in part on its offset, was dropped; the slot's ceiling removed, its section with the side shared out to no arc. Every volume made is the hand value.",
     47: "The groove of two faces, as FreeCAD makes it, with the Intersection join: each quarter's loop with the side split where the quarters meet, its own piece crossed once and never trimmed, the other run on over the other quarter. The own piece is trimmed to the end they share and the other dropped; every volume made is the hand value.",
+    48: "The slotted cylinder's left wall removed inward, the Intersection join: the side's offset came in two pieces, the second holding the lip's edges, and only the first took the lip's cuts -- refused, its mirror made. Every piece is rebuilt now; the volume is the hand value.",
 }
 
 # Pictures of a section made by make_fix_pictures.sh (a C++ driver of the fix,

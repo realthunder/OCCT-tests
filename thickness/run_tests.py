@@ -1534,7 +1534,8 @@ thickness_case("step_bottom_out_join", _step, _step_bottom, +1.0, "pass", 4996.9
 # side's offset the whole circle, and the arc across the left bottom made a
 # face over it (inward valid and wrong, 9476.6104 at 1). The volumes by
 # hand: the offset with the removed face left in place, less the input or
-# taken from it. The left wall removed inward, and the side, stay refused.
+# taken from it. The side stays refused; the left wall removed inward, refused
+# here, is made in sec 48.
 _slot = Part.makeCylinder(25.807914, 14.0).cut(
     Part.makeBox(2 * 10.062591, 120, 10.062591 + 1, App.Vector(-10.062591, -60, -1)))
 _slot_flat = [i + 1 for i, f in enumerate(_slot.Faces) if f.Surface.TypeId == "Part::GeomPlane"]
@@ -1545,6 +1546,8 @@ _slot_ceiling = [i for i in _slot_flat if abs(_slot_c[i].z - 10.062591) < 1e-6
 _slot_right_wall = [i for i in _slot_flat if _slot.Faces[i - 1].BoundBox.ZLength > 1
                     and _slot_c[i].x > 0][0]
 _slot_right_bottom = [i for i in _slot_flat if abs(_slot_c[i].z) < 1e-6 and _slot_c[i].x > 0][0]
+_slot_left_wall = [i for i in _slot_flat if _slot.Faces[i - 1].BoundBox.ZLength > 1
+                   and _slot_c[i].x < 0][0]
 thickness_case("slot_top_out_join", _slot, _slot_top, +1.0, "pass", 5164.2676, False, 2)
 thickness_case("slot_top_in_join", _slot, _slot_top, -1.0, "pass", 4646.5050, False, 2)
 thickness_case("slot_ceiling_out_join", _slot, _slot_ceiling, +1.0, "pass", 6469.0622, False, 2)
@@ -1555,6 +1558,13 @@ thickness_case("slot_bottom_out_join", _slot, _slot_right_bottom, +1.0, "pass", 
                2)
 thickness_case("slot_bottom_in_join", _slot, _slot_right_bottom, -1.0, "pass", 6143.3274, False,
                2)
+# The left wall removed inward (sec 48): the side's offset comes in two
+# pieces, the second holding the lip's edges, and only the first took the
+# lip's cuts (MakeFaces) -- refused. The right wall's mirror, to the digit.
+thickness_case("slot_left_wall_in_join", _slot, _slot_left_wall, -1.0, "pass", 6128.2407, False,
+               2)
+thickness_case("slot_left_wall_in_half_join", _slot, _slot_left_wall, -0.5, "pass", 3160.6653,
+               False, 2)
 
 # #521: the issue's Connect -- a box 10 with a cylinder r 2 h 10 at its corner,
 # fused and refined (models/issue521_connect.brep): faces 1 x = 10, 2 y = 10,
