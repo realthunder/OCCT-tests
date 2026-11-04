@@ -2937,6 +2937,54 @@ frozen; thickness PASS=483 at both fix levels, plain and frozen; sweep 928
 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet
 and draft frozen too.
 
+### Sec 46: Thickness001 and the slotted cylinder with the Intersection join
+
+**Four changes** (`BRepOffset_MakeOffset.cxx`, `BRepOffset_Inter3d.cxx`).
+Thickness001's base offset whole a null shape, one face removed refused or
+invalid; the slotted cylinder offset whole two faces, one face removed
+refused or invalid; upstream too.
+
+- The side's loop with the groove is split at the groove's seam; the
+  bottoms' offset crosses each piece once, and a piece with one vertex was
+  not trimmed. `TrimEdges` gives such a piece the end it shares with the
+  other (`TrimEdge`, `theJoint`), when the two are a period apart there on
+  a periodic surface and both are crossed -- not at the edge between a
+  groove's two quarter cylinders, each one's section running on over the
+  other's (thousands of cuts, four times as long to be refused).
+- The right bottom's section with the side is the whole circle, starting on
+  the side's seam between the bottom's two arcs; trimmed from the least
+  vertex parameter to the greatest it stayed whole. When that is all of it,
+  a closed section keeps the run of spans between its vertices that its
+  edges (`theOrigins`) lie on, across its start when they do; #521's
+  circle, starting inside the span kept, is left as it was.
+- The top removed at 1: the chamfer's piece, 14.41 to 15, and its offset,
+  14.71 to 15.71, overlap in part, neither's point in the other;
+  `PiecesOnTheFace` dropped it. A 5 x 5 grid over the piece is tried too.
+- The slot's ceiling removed meets the side at both ends, its section with
+  the side's offset the whole circle; `ShareArcs` shares a circle among one
+  cap's arcs now when they do not touch (sec 42: two caps or more only),
+  else the arc across the left bottom made a face over it -- valid and
+  wrong inward.
+
+Made: every volume to the digit the hand value -- the offset with the
+removed face left in place, less the input or taken from it. Still refused:
+a face whose removal leaves two parts (Thickness001's side or chamfer, the
+slot's side), and the slot's left wall inward.
+
+![issue363_thickness001_groove_out_join](pictures/issue363_thickness001_groove_out_join.png)
+
+![issue363_thickness001_top_out_join](pictures/issue363_thickness001_top_out_join.png)
+
+![slot_ceiling_in_join](pictures/slot_ceiling_in_join.png)
+
+Over sec 44's 952 runs 46 change, all to valid (Thickness001 20, the
+slot 26), every one the hand value.
+
+Regression (`3f21992bf2`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=504 at both fix levels, plain and frozen (483 + 21);
+sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
+65, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

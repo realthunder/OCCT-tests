@@ -1538,6 +1538,87 @@ fillet and draft frozen too. The first run, the shift taken at an end too,
 failed Thickness001's four Intersection join cases; the corpus, one face
 removed at a time, had not caught them.
 
+## #363's Thickness001 and the slotted cylinder with the Intersection join, whole or one face removed (2026-11-04, sec 46)
+
+**What was broken.** Thickness001's base -- the chamfered cylinder with a
+groove across its end -- with the Intersection join: offset whole a null
+shape at all four offsets; one face removed refused or invalid in all 24
+runs. The same cylinder with a square slot across its end instead: offset
+whole a shell of two faces, the rest dropped; a face removed refused or
+invalid. Upstream too. Sec 42 made Thickness001 with both bottoms removed;
+that was all. Four faults:
+
+- The side's offset and the groove's cross in a loop on either side, split
+  in two at the groove's seam; the bottoms' offset crosses each piece once,
+  and a piece with one vertex of its own was not trimmed (`TrimEdge` needs
+  two): neither was cut, and the side lost its notch over the groove. A
+  piece of a section split at a seam -- the two a period apart there on a
+  periodic surface they lie on -- each piece crossed, is trimmed between its
+  vertex and the end the two share. Not at the edge between a groove's two
+  quarter cylinders: there each quarter's section runs on over the other's,
+  and trimmed to it lay on it, cut at thousands of points (FreeCAD's grooves
+  of two faces took four times as long to be refused).
+- The right bottom's section with the side is the whole circle, starting on
+  the side's seam where the bottom's two arcs meet; trimmed from the least
+  of its vertices' parameters to the greatest it stayed whole, on under the
+  groove and over the left bottom's arc. A closed section whose vertices
+  span all of it so keeps the run of spans between them that the edges it
+  is the image of lie on, across its start if that is where they lie. One
+  whose vertices span less is left as it was: #521's circle round the
+  removed cylinder starts inside the span kept, and is trimmed right.
+- The top removed, at 1: the chamfer's piece from the side's offset up to
+  the top's plane, 14.41 to 15, lies only in part on the chamfer's offset,
+  14.71 to 15.71, neither one's point inside the other, and it was dropped
+  as off the face (`PiecesOnTheFace`, sec 37). Points over the piece are
+  tried too, any of them on the face.
+- The slot's ceiling removed meets the side at both ends of the slot, and
+  its section with the side's offset is the whole circle. Sec 42 shares
+  such a circle out among the arcs of two caps or more on it
+  (`ShareArcs`), not one cap's: one arc that the seam splits keeps the
+  whole circle. A cap's arcs apart from each other are shared out too now;
+  given whole, the arc across the left bottom made a face over it, and
+  inward the thickness came out valid and wrong (9476.6104 for 5519.7372).
+
+Every volume made is the one worked out by hand to the digit: the offset
+with the removed face left in place -- each face's surface moved, the
+removed one not -- less the input outward, taken from it inward
+(Thickness001's revolved profile less the groove's offset cylinder, the
+slot's cylinder less its box). Still refused: the side or the chamfer of
+Thickness001 removed, and the slotted cylinder's side, which leave the
+faces in two parts, nothing between them (upstream too); and the slot's
+left wall removed inward, its right wall made.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_thickness001_offset_out_join`, `_out_half_join`, `_in_join`, `_in_half_join` | Thickness001's base offset whole, +1, +0.5, -1, -0.5, the Intersection join | 30406.3251, 26730.8567, 16885.7222, 19976.4777; a null shape before |
+| `issue363_thickness001_bottom_out_join`, `_bottom_in_join` | the right bottom (face 3) removed, +1 and -1 | 6496.7206, 5933.2689; invalid and refused before |
+| `issue363_thickness001_groove_out_join`, `_groove_in_join` | the groove (face 4) removed, +1 and -1 | 5491.6348, 4891.6354; refused before |
+| `issue363_thickness001_top_out_join`, `_top_out_half_join`, `_top_in_join` | the top (face 6) removed, +1, +0.5 and -1 | 5071.2208, 2471.8739, 4576.7300; refused before |
+| `slot_offset_out_join`, `slot_offset_in_join` | the slotted cylinder offset whole, +1 and -1 | 26534.8013, 12532.8398; two faces before |
+| `slot_top_*_join`, `slot_ceiling_*_join`, `slot_wall_*_join`, `slot_bottom_*_join` | the top, the ceiling, the right wall, the right bottom removed, +1 and -1 | the hand volumes; refused or invalid before |
+
+![issue363_thickness001_groove_out_join](models/pictures/issue363_thickness001_groove_out_join.png)
+
+![issue363_thickness001_top_out_join](models/pictures/issue363_thickness001_top_out_join.png)
+
+![slot_ceiling_in_join](models/pictures/slot_ceiling_in_join.png)
+
+Over the 952 runs of sec 44's corpus 46 change, all to valid -- 30
+refused before, 16 invalid: Thickness001's 20 (offset whole, faces 3 to 6
+removed, at +/-1 and +/-0.5) and the slotted cylinder's 26; every one the
+hand value. Not one other moves. Two first cuts did: the joint taken at the
+edge between two quarter cylinders slowed FreeCAD's grooves of two faces
+to four times as long to be refused, and the closed section's run taken
+whatever its vertices spanned refused #521's cylinder removed and the
+step's ceiling, inward (sec 45, sec 37).
+
+**Regression** (`3f21992bf2`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=504 at fix levels 0 and 1, plain and
+frozen, the 21 cases above among them (PASS=483 before, unchanged with the
+fix before the cases went in); the thickness sweep right in all 928 runs at
+both levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1,
+draft 105 and boolean 65, as before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

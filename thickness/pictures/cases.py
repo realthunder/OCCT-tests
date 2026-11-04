@@ -61,6 +61,7 @@ STAGES = {
     "s43": ("ef5ab58d9e", "43"),
     "s44": ("4c8778375c", "44"),
     "s45": ("336f3d38c9", "45"),
+    "s46": ("8d4483af45", "46"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -181,6 +182,13 @@ def _step():
     # Face5 the top.
     return Part.makeCylinder(25.807914, 14.0).cut(
         Part.makeBox(60 - 10.062591, 120, 10.062591 + 1, V(-60, -60, -1)))
+
+
+def _slot():
+    # The same cylinder with a square slot across its end (run_tests.py's
+    # _slot).
+    return Part.makeCylinder(25.807914, 14.0).cut(
+        Part.makeBox(2 * 10.062591, 120, 10.062591 + 1, V(-10.062591, -60, -1)))
 
 
 def _issue363base():
@@ -318,6 +326,7 @@ SHAPES = {
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
     "step": lambda: _step(),
+    "slot": lambda: _slot(),
     "issue521": lambda: _issue521(),
     "dimple346": lambda: _issue346(1.0500384390052573),
     "peak346": lambda: _issue346(-1.0500384390052573),
@@ -553,6 +562,9 @@ CASES = {
     "issue346_dimple_solid_thick_out_join": ("s44", "dimple346", 3, 1, False, 2, 5749.7112),
     "issue521_connect_cylinder_in": ("s45", "issue521", 4, -0.5, False, 0, 264.8641),
     "issue521_connect_cylinder_in_join": ("s45", "issue521", 4, -0.5, True, 2, 264.8641),
+    "issue363_thickness001_groove_out_join": ("s46", "issue363base", 4, 1, False, 2, 5491.6348),
+    "issue363_thickness001_top_out_join": ("s46", "issue363base", 6, 1, False, 2, 5071.2208),
+    "slot_ceiling_in_join": ("s46", "slot", 4, -1, False, 2, 5519.7372),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

@@ -1455,6 +1455,30 @@ thickness_case("issue363_thickness001_in_half_join", issue363, [3, 5], -0.5, "pa
 thickness_case("issue363_thickness001_out_join", issue363, [3, 5], +1.0, "pass", 5843.3934, False, 2)
 thickness_case("issue363_thickness001_out_half_join", issue363, [3, 5], +0.5, "pass", 2879.0411,
                False, 2)
+# The Intersection join with no face removed, or one: a null shape or
+# refused, upstream too, outward a few invalid (sec 46). The side's section
+# with the groove, split at the groove's seam, was cut by the bottoms on
+# neither piece, and the right bottom's section with the side, the whole
+# circle, kept all of it. Outward the volumes by hand (the revolved profile's
+# offset less the groove's), inward the Arc join's, every edge convex. The
+# side or the chamfer removed leaves two parts apart, refused as before.
+thickness_case("issue363_thickness001_bottom_out_join", issue363, 3, +1.0, "pass", 6496.7206,
+               False, 2)
+thickness_case("issue363_thickness001_bottom_in_join", issue363, 3, -1.0, "pass", 5933.2689,
+               False, 2)
+thickness_case("issue363_thickness001_groove_out_join", issue363, 4, +1.0, "pass", 5491.6348,
+               False, 2)
+thickness_case("issue363_thickness001_groove_in_join", issue363, 4, -1.0, "pass", 4891.6354,
+               False, 2)
+# The top removed at 1: the chamfer's piece from the side's offset up to the
+# top's plane, 14.41 to 15, lies only in part on its offset, 14.71 to 15.71,
+# and was dropped as off it (sec 46).
+thickness_case("issue363_thickness001_top_out_join", issue363, 6, +1.0, "pass", 5071.2208,
+               False, 2)
+thickness_case("issue363_thickness001_top_out_half_join", issue363, 6, +0.5, "pass", 2471.8739,
+               False, 2)
+thickness_case("issue363_thickness001_top_in_join", issue363, 6, -1.0, "pass", 4576.7300,
+               False, 2)
 # The Intersection join on #363's cylinder with a square step cut off its
 # side instead of the groove (x < -10.062591, z < 10.062591), 1 in or out: with
 # any face removed it was refused or invalid, upstream too. The side meets the
@@ -1481,6 +1505,35 @@ thickness_case("step_top_out_join", _step, _step_top, +1.0, "pass", 4443.8934, F
 thickness_case("step_wall_out_join", _step, _step_wall, +1.0, "pass", 6205.8133, False, 2)
 thickness_case("step_ceiling_out_join", _step, _step_ceiling, +1.0, "pass", 6148.6061, False, 2)
 thickness_case("step_bottom_out_join", _step, _step_bottom, +1.0, "pass", 4996.9311, False, 2)
+# The same cylinder with a square slot across its end (|x| < 10.062591,
+# z < 10.062591), the Intersection join (sec 46): offset whole a solid of
+# two faces, the rest dropped; a face removed refused or invalid, upstream
+# too. The bottoms' and the side's sections, as Thickness001's; the ceiling
+# removed meets the side at both ends of the slot, its section with the
+# side's offset the whole circle, and the arc across the left bottom made a
+# face over it (inward valid and wrong, 9476.6104 at 1). The volumes by
+# hand: the offset with the removed face left in place, less the input or
+# taken from it. The left wall removed inward, and the side, stay refused.
+_slot = Part.makeCylinder(25.807914, 14.0).cut(
+    Part.makeBox(2 * 10.062591, 120, 10.062591 + 1, App.Vector(-10.062591, -60, -1)))
+_slot_flat = [i + 1 for i, f in enumerate(_slot.Faces) if f.Surface.TypeId == "Part::GeomPlane"]
+_slot_c = {i: _slot.Faces[i - 1].CenterOfMass for i in _slot_flat}
+_slot_top = max(_slot_flat, key=lambda i: _slot_c[i].z)
+_slot_ceiling = [i for i in _slot_flat if abs(_slot_c[i].z - 10.062591) < 1e-6
+                 and _slot.Faces[i - 1].BoundBox.ZLength < 1e-6][0]
+_slot_right_wall = [i for i in _slot_flat if _slot.Faces[i - 1].BoundBox.ZLength > 1
+                    and _slot_c[i].x > 0][0]
+_slot_right_bottom = [i for i in _slot_flat if abs(_slot_c[i].z) < 1e-6 and _slot_c[i].x > 0][0]
+thickness_case("slot_top_out_join", _slot, _slot_top, +1.0, "pass", 5164.2676, False, 2)
+thickness_case("slot_top_in_join", _slot, _slot_top, -1.0, "pass", 4646.5050, False, 2)
+thickness_case("slot_ceiling_out_join", _slot, _slot_ceiling, +1.0, "pass", 6469.0622, False, 2)
+thickness_case("slot_ceiling_in_join", _slot, _slot_ceiling, -1.0, "pass", 5519.7372, False, 2)
+thickness_case("slot_wall_out_join", _slot, _slot_right_wall, +1.0, "pass", 6918.0336, False, 2)
+thickness_case("slot_wall_in_join", _slot, _slot_right_wall, -1.0, "pass", 6128.2407, False, 2)
+thickness_case("slot_bottom_out_join", _slot, _slot_right_bottom, +1.0, "pass", 6769.6207, False,
+               2)
+thickness_case("slot_bottom_in_join", _slot, _slot_right_bottom, -1.0, "pass", 6143.3274, False,
+               2)
 
 # #521: the issue's Connect -- a box 10 with a cylinder r 2 h 10 at its corner,
 # fused and refined (models/issue521_connect.brep): faces 1 x = 10, 2 y = 10,
@@ -1618,6 +1671,18 @@ thickness_case("issue346_peak_solid_thick", issue346_profile(-1.05, True), 3, -0
 offset_case("issue346_revolve_in_join", issue346, -2.0, "pass", 6053.7243, join=2, exact=False)
 offset_case("issue346_revolve_in_0.5_join", issue346, -0.5, "pass", 5648.2105, join=2, exact=False)
 offset_case("issue346_revolve_out_join", issue346, 2.0, "pass", 5002.0869, join=2, exact=False)
+# Thickness001's base and the slotted cylinder offset whole with the
+# Intersection join (sec 46, cases with their thicknesses above): outward the
+# volumes by hand, the corners square, so the faces' points are not all at
+# the offset distance from the input's.
+offset_case("issue363_thickness001_offset_out_join", issue363, 1.0, "pass", 30406.3251, 2,
+            exact=False)
+offset_case("issue363_thickness001_offset_out_half_join", issue363, 0.5, "pass", 26730.8567, 2,
+            exact=False)
+offset_case("issue363_thickness001_offset_in_join", issue363, -1.0, "pass", 16885.7222, 2)
+offset_case("issue363_thickness001_offset_in_half_join", issue363, -0.5, "pass", 19976.4777, 2)
+offset_case("slot_offset_out_join", _slot, 1.0, "pass", 26534.8013, 2, exact=False)
+offset_case("slot_offset_in_join", _slot, -1.0, "pass", 12532.8398, 2)
 # Thickened with the cone removed, the Intersection join: refused, or a throw.
 thickness_case("issue346_revolve_thick_out_join", issue346, 1, 2.0, "pass", 6198.1628, False, 2)
 thickness_case("issue346_revolve_thick_in_join", issue346, 1, -1.0, "pass", 2896.5118, False, 2)
