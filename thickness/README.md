@@ -1619,6 +1619,64 @@ fix before the cases went in); the thickness sweep right in all 928 runs at
 both levels, plain and frozen, not one changed; fillet PASS=815 XFAIL=1,
 draft 105 and boolean 65, as before, fillet and draft frozen too.
 
+## #363's groove of two faces with the Intersection join (2026-11-04, sec 47)
+
+**What was broken.** The grooved cylinder as FreeCAD's Groove makes it --
+the groove two quarter cylinders, tangent where they meet -- with the
+Intersection join: offset whole a null shape, a face removed refused, at
+both radii (5 and 10.062591) and with the chamfer; upstream too.
+Thickness001 (sec 46) has its groove one face.
+
+Each quarter's offset meets the side's in a loop, and the loop is split
+where the quarters meet: the quarter's own piece, cut once by the bottoms'
+offset, and a piece on over the other quarter, crossed by nothing -- the
+vertex on it lies on its end, another vertex at the same point, and was
+taken for a crossing. The own piece was never trimmed (one vertex), the
+side's offset image came out unbounded, and the shape null. `TrimEdges`
+counts a vertex at a piece's end as that end, trims the crossed piece to
+the end it shares with an uncrossed one -- matched by point, the two
+pieces' vertices there not the same -- and drops the uncrossed piece, which
+would lie on the other quarter's own. Only a section of an edge between two
+kept faces: beside a removed face the lips took it inside out (both
+quarters removed, invalid).
+
+Every volume made is the hand value, as in sec 46: whole offsets, the top
+removed, one bottom removed. Still refused: a quarter removed, both
+quarters, the side; both bottoms removed come out valid at 1 (5805.6776)
+and invalid at three offsets, refused before -- PartDesign's Thickness
+refuses an invalid result as it does a failed one.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove10_offset_out_join`, `_in_join`, `issue363_groove5_offset_*_join`, `issue363_groove10_chamfer_offset_out_join` | the grooves of two faces offset whole, +1 and -1 | 28356.1872, 14965.5810, 34357.3848, 21003.0681, 30406.3251 (Thickness001's); a null shape before |
+| `issue363_groove10_top_*_join`, `issue363_groove5_top_*_join`, `issue363_groove10_chamfer_top_out_join` | the top removed, +1 and -1 | the hand volumes; refused before |
+| `issue363_groove10_bottom_*_join`, `issue363_groove10_both_bottoms_out_join` | one bottom removed, +1 and -1; both, +1 | 6459.0048, 5840.9880, 5805.6776; refused before |
+
+![issue363_groove10_top_out_join](models/pictures/issue363_groove10_top_out_join.png)
+
+The red line along the groove's top is the input's own edge: the groove
+cylinder's seam, where the cut split it into the two quarters, each using
+it once -- the picture's check takes an edge with two pcurves on a face's
+surface for a seam of that face.
+
+![issue363_groove10_bottom_out_join](models/pictures/issue363_groove10_bottom_out_join.png)
+
+Over the 952 runs of sec 44's corpus 52 change, all to valid -- 40
+refused before, 12 invalid -- the grooves of two faces' (radius 5, 10 and
+the chamfered one; whole, the top, a bottom removed, and the chamfer
+removed, two parts then); every one the hand value, the chamfer removed
+inward the Arc join's. Not one other moves. Two first cuts did worse:
+dropping the piece run on beside a removed face took both quarters'
+lips inside out (invalid, refused before), and holding it off wherever a
+neighbour was removed lost the top and the bottoms removed again.
+
+**Regression** (`4d2a9f941a`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=517 at fix levels 0 and 1, plain and
+frozen, the 13 cases above among them (PASS=504 before); the thickness
+sweep right in all 928 runs at both levels, plain and frozen, not one
+changed; fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as before,
+fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

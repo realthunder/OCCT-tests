@@ -1419,6 +1419,27 @@ _g10c_top, _g10c_bottoms = planar_faces(_g10c)
 thickness_case("issue363_groove10_chamfer_top_in", _g10c, _g10c_top, -1.0, "pass", 4576.7380)
 thickness_case("issue363_groove10_chamfer_bottom_in", _g10c, _g10c_bottoms[0], -1.0, "pass",
                5933.2710)
+# The grooves of two faces (two quarter cylinders, as FreeCAD's Groove makes
+# them) with the Intersection join (sec 47): offset whole a null shape, a
+# face removed refused, upstream too. Each quarter's loop with the side's
+# offset is split where the quarters meet, the piece over the other quarter
+# crossed by nothing; the quarter's own was cut by the bottoms once and not
+# trimmed. The volumes by hand: the offset with the removed face left in
+# place, against the input.
+thickness_case("issue363_groove10_top_out_join", _g10, planar_faces(_g10)[0], +1.0, "pass",
+               4854.5817, False, 2)
+thickness_case("issue363_groove10_top_in_join", _g10, planar_faces(_g10)[0], -1.0, "pass",
+               4344.8357, False, 2)
+thickness_case("issue363_groove10_bottom_out_join", _g10, planar_faces(_g10)[1][0], +1.0, "pass",
+               6459.0048, False, 2)
+thickness_case("issue363_groove10_bottom_in_join", _g10, planar_faces(_g10)[1][0], -1.0, "pass",
+               5840.9880, False, 2)
+thickness_case("issue363_groove10_both_bottoms_out_join", _g10, planar_faces(_g10)[1], +1.0,
+               "pass", 5805.6776, False, 2)
+thickness_case("issue363_groove5_top_out_join", _g5, _g5_top, +1.0, "pass", 4822.6883, False, 2)
+thickness_case("issue363_groove5_top_in_join", _g5, _g5_top, -1.0, "pass", 4340.4396, False, 2)
+thickness_case("issue363_groove10_chamfer_top_out_join", _g10c, _g10c_top, +1.0, "pass", 5071.2208,
+               False, 2)
 _g5s90 = grooved_cylinder(5.0, seam_deg=90.0)
 _g5s90_top, _g5s90_bottoms = planar_faces(_g5s90)
 thickness_case("issue363_groove5_seam90_top_in", _g5s90, _g5s90_top, -1.0, "pass", 4340.2907)
@@ -1683,6 +1704,12 @@ offset_case("issue363_thickness001_offset_in_join", issue363, -1.0, "pass", 1688
 offset_case("issue363_thickness001_offset_in_half_join", issue363, -0.5, "pass", 19976.4777, 2)
 offset_case("slot_offset_out_join", _slot, 1.0, "pass", 26534.8013, 2, exact=False)
 offset_case("slot_offset_in_join", _slot, -1.0, "pass", 12532.8398, 2)
+offset_case("issue363_groove10_offset_out_join", _g10, 1.0, "pass", 28356.1872, 2, exact=False)
+offset_case("issue363_groove10_offset_in_join", _g10, -1.0, "pass", 14965.5810, 2)
+offset_case("issue363_groove5_offset_out_join", _g5, 1.0, "pass", 34357.3848, 2, exact=False)
+offset_case("issue363_groove5_offset_in_join", _g5, -1.0, "pass", 21003.0681, 2)
+offset_case("issue363_groove10_chamfer_offset_out_join", _g10c, 1.0, "pass", 30406.3251, 2,
+            exact=False)
 # Thickened with the cone removed, the Intersection join: refused, or a throw.
 thickness_case("issue346_revolve_thick_out_join", issue346, 1, 2.0, "pass", 6198.1628, False, 2)
 thickness_case("issue346_revolve_thick_in_join", issue346, 1, -1.0, "pass", 2896.5118, False, 2)

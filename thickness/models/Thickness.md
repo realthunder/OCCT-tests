@@ -2985,6 +2985,37 @@ frozen; thickness PASS=504 at both fix levels, plain and frozen (483 + 21);
 sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
 65, fillet and draft frozen too.
 
+### Sec 47: the groove of two faces with the Intersection join
+
+**One change** (`BRepOffset_MakeOffset.cxx`, `TrimEdges`). FreeCAD's groove
+-- two quarter cylinders -- with the Intersection join: offset whole a null
+shape, a face removed refused; upstream too.
+
+- Each quarter's loop with the side's offset is split where the quarters
+  meet: its own piece crossed once by the bottoms' offset, the other on over
+  the other quarter, crossed by nothing (a vertex at its end, not the same
+  as the end, was taken for a crossing). The own piece, one vertex, was not
+  trimmed; the side's image came out unbounded. A vertex at a piece's end
+  counts as the end; a crossed piece is trimmed to the end it shares with an
+  uncrossed one (matched by point) and the uncrossed one dropped -- only for
+  an edge between two kept faces.
+
+Made: every volume the hand value (whole, the top removed, a bottom
+removed). Both bottoms removed: valid at 1, invalid at three offsets
+(refused before). A quarter, both quarters, the side: refused.
+
+![issue363_groove10_top_out_join](pictures/issue363_groove10_top_out_join.png)
+
+![issue363_groove10_bottom_out_join](pictures/issue363_groove10_bottom_out_join.png)
+
+Over sec 44's 952 runs 52 change, all to valid (g5 16, g10 16, the
+chamfered 20), every one the hand value.
+
+Regression (`4d2a9f941a`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=517 at both fix levels, plain and frozen (504 + 13);
+sweep 928 of 928, none changed; fillet 815 + 1 XFAIL, draft 105, boolean
+65, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
