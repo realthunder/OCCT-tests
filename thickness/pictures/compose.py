@@ -61,6 +61,7 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "step": "cylinder with a square step cut off its side",
          "slot": "cylinder with a square slot across its end",
          "groove10": "cylinder with a groove of two quarter cylinders across its end",
+         "boxgroove10": "box with a groove r10 of two quarter cylinders across its top",
          "issue521": "#521's Connect: a box with a left-handed cylinder r2 on its corner edge",
          "dimple346": "#346's profile made a solid: a cone, a disc, and a dome whose top is a dimple",
          "peak346": "#346's profile, its arc to the other side, a solid: the dome's top a peak",

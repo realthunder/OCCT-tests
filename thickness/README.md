@@ -1815,6 +1815,62 @@ frozen, the 4 cases above among them (PASS=526 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen; fillet PASS=815
 XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 
+## The groove's other quarter removed, outward (2026-11-05, sec 51)
+
+**What was broken.** The box with #363's groove of two quarter cylinders
+across its bottom, the left quarter (x < 0) removed, outward: invalid with
+both joins, at 0.5 and 1. The right quarter, its mirror, was made in sec 50.
+
+The kept quarter's offset goes on a thickness into the removed one (the
+tangent caps' strip) and the loop of that face finds the strip, the face
+beyond it over the removed quarter, and the rest. The edge at the groove's
+top, where the quarters meet, is closed on the cylinder, each quarter
+reaching one of its pcurves (sec 50). The walk by angle took each edge's
+pcurve FORWARD on the face, and on the left the offset face is reversed:
+FORWARD there is the pcurve at 0 where the face lies by 2 pi. The angles at
+the vertices are the same on either pcurve, the areas are not: the strip's
+loop came out negative and was dropped, the outline round the strip and
+the face beyond it positive, and the two became one face, the strip's
+inside the other's hole. An edge closed on the surface and no seam of the
+face (`IsSeamOfFace`) is walked with the pcurve the face reaches now
+(`ReachedPCurve`, the test `IsSeamOfFace` made, factored out).
+
+That alone let the same quarter on #363's grooved cylinder further than
+before, outward with the Arc join, where both quarters are refused: its
+offset's faces all hang there, and the one left was the removed quarter's
+face built round the other three quarters -- the wire, run the way that
+takes the edge's far pcurve, made the face it leaves free -- and the
+thickness of it invalid (vol 32189.9992, from refused). A face that runs
+further round a period than its wires do, measured as walked, is dropped
+now, and those come out refused again, like their mirrors. The cylinder
+with a quarter removed outward stays open.
+
+By hand, the Intersection join (the tangent caps' design, the reference
+since 2026-11-05): the offset with the removed quarter left in place, the
+quarters stepped at x = 0 (8159.5179 at 1, 3958.0416 at 0.5), plus the
+strip between the groove and the kept quarter's offset, the integral of
+sqrt(r^2 - x^2) - (r - t) over 0..t times the groove's length 2 R + 2 t
+(52.7265, 13.0450): 8212.2444 and 3971.0866, to the digit, both quarters.
+The Arc join not worked out by hand: the two quarters agree to the digit.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_box_groove10_left_out`, `_out_half` | the grooved box, the left quarter removed, +1 and +0.5, the Arc join | 8085.1319, 3940.0897; invalid before |
+| `issue363_box_groove10_left_out_join`, `_out_half_join` | the same, the Intersection join | 8212.2444, 3971.0866; invalid before |
+| `issue363_box_groove10_right_out` ... `_out_half_join` | the right quarter, the four the same | made in sec 50, cased here |
+
+![issue363_box_groove10_left_out_join](models/pictures/issue363_box_groove10_left_out_join.png)
+
+Over the corpus (1072 runs) 4 change: these, the left quarter, invalid to
+valid. The grooved cylinders' quarters stay refused, with the walk alone 6
+of them had turned invalid. Not one other moves.
+
+**Regression** (`b0fe073f00`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=538 at fix levels 0 and 1, plain and
+frozen, the 8 cases above among them (PASS=530 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen; fillet PASS=815
+XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

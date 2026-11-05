@@ -1633,6 +1633,44 @@ thickness_case("issue521_connect_cylinder_out", issue521, 4, +0.5, "pass", 310.0
 thickness_case("issue521_connect_cylinder_out_1", issue521, 4, +1.0, "pass", 664.0403)
 thickness_case("issue521_connect_cylinder_out_join", issue521, 4, +0.5, "pass", 315.9061, True, 2)
 thickness_case("issue521_connect_cylinder_out_1_join", issue521, 4, +1.0, "pass", 688.9322, True, 2)
+
+
+def grooved_box(groove_r):
+    """#363's groove across the bottom of a box 2 R square and 14 high, R
+    25.807914: the groove two quarter cylinders, the seam at its top."""
+    R = 25.807914
+    box = Part.makeBox(2 * R, 2 * R, 14.0, App.Vector(-R, -R, 0))
+    groove = Part.makeCylinder(groove_r, 120, App.Vector(0, -60, 0), App.Vector(0, 1, 0))
+    return box.cut(groove)
+
+
+def groove_quarters(shape):
+    """1-based indices of the groove's two quarter cylinders, x < 0 first"""
+    cyl = [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.TypeId == "Part::GeomCylinder"]
+    return sorted(cyl, key=lambda i: shape.Faces[i - 1].CenterOfMass.x)
+
+
+# One quarter of the groove removed, outward (secs 50, 51): the kept
+# quarter's offset goes on a thickness into the removed one, the tangent
+# caps' strip, before its wall. The edge where the quarters meet is closed on
+# the cylinder, each quarter reaching one of its pcurves; taken for a seam
+# the right quarter came out invalid (sec 50). The left, its offset face
+# reversed, was walked with the edge's other pcurve: the strip and the face
+# beyond it came out one face, invalid (sec 51). By hand, the Intersection
+# join: the offset with the removed quarter stepped at x = 0 (8159.5179 at 1,
+# 3958.0416 at 0.5), plus the strip between the groove and the kept
+# quarter's offset, the integral of sqrt(r^2 - x^2) - (r - t) over 0..t times
+# the groove's length 2 R + 2 t (52.7265, 13.0450). The Arc join measured,
+# the same on both sides.
+_bg10 = grooved_box(10.062591)
+_bg10_left, _bg10_right = groove_quarters(_bg10)
+for _side, _f in (("left", _bg10_left), ("right", _bg10_right)):
+    thickness_case("issue363_box_groove10_%s_out" % _side, _bg10, _f, +1.0, "pass", 8085.1319)
+    thickness_case("issue363_box_groove10_%s_out_half" % _side, _bg10, _f, +0.5, "pass", 3940.0897)
+    thickness_case("issue363_box_groove10_%s_out_join" % _side, _bg10, _f, +1.0, "pass", 8212.2444,
+                   False, 2)
+    thickness_case("issue363_box_groove10_%s_out_half_join" % _side, _bg10, _f, +0.5, "pass",
+                   3971.0866, False, 2)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset

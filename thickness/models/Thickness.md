@@ -3100,6 +3100,42 @@ frozen; thickness PASS=530 at both fix levels, plain and frozen (526 + 4);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too.
 
+### Sec 51: the groove's other quarter removed, outward
+
+**Two changes** (`BRepAlgo_Loop.cxx`). The box with #363's groove of two
+quarter cylinders, the left quarter removed outward, was invalid with both
+joins; the right, its mirror, was made in sec 50.
+
+- The edge where the quarters meet is closed on the cylinder, each quarter
+  reaching one of its pcurves. The walk by angle took each edge's pcurve
+  FORWARD on the face, and the left quarter's offset face is reversed: the
+  pcurve at 0, where the face lies by 2 pi. The angles at the vertices do
+  not tell the two apart, the areas do: the strip the kept quarter's offset
+  carries into the removed one came out negative and was dropped, and the
+  outline round it and the face beyond positive, one face. Such an edge
+  (closed on the surface, no seam of the face) is walked with the pcurve
+  the face reaches now (`ReachedPCurve`, factored out of `IsSeamOfFace`).
+- On #363's grooved cylinder the same quarter, outward with the Arc join,
+  then came out invalid where it was refused: its offset's faces all hang,
+  and the one left was the removed quarter's face built round the other
+  three quarters, its wire running the edge the way that takes the far
+  pcurve. A face running further round a period than its wires do, as
+  walked, is dropped (`WiresToFaces`): refused again, like the mirror.
+
+Made: +1 and +0.5, both joins, both quarters alike; the Intersection join
+the tangent caps' hand value (the step at x = 0 plus the strip, the design
+taken as the reference), the Arc join the same on both sides.
+
+![issue363_box_groove10_left_out_join](pictures/issue363_box_groove10_left_out_join.png)
+
+Over the corpus (1072 runs) 4 change, the left quarter's, invalid to valid;
+nothing else moves.
+
+Regression (`b0fe073f00`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=538 at both fix levels, plain and frozen (530 + 8);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
