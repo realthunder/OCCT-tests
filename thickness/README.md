@@ -1511,10 +1511,10 @@ Intersection join. Four faults, each needed:
 
 Both joins now give the volume worked out by hand -- the box less the hollow
 9 high over its inner square and the disc: 264.8641 at 0.5, 484.2380 at 1.
-Outward the cylinder removed stays invalid: there the edge at 2 pi is not
+Outward the cylinder removed stayed invalid: there the edge at 2 pi is not
 cut, it is the input's own, and taken for no seam of the face (its other
 pcurve beyond the face) it put a groove's quarter cylinders' lips inside
-out -- tried and dropped.
+out -- tried and dropped here, made in sec 50.
 
 | Case | Model | What it covers |
 |------|-------|----------------|
@@ -1758,6 +1758,60 @@ as in sec 47.
 **Regression** (`427507ac59`): Part 390, PartDesign 486 and ShapeStorage 63
 OK, plain and frozen; thickness PASS=526 at fix levels 0 and 1, plain and
 frozen, the 7 cases above among them (PASS=519 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen; fillet PASS=815
+XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
+
+## #521 with the cylinder removed, outward (2026-11-05, sec 50)
+
+**What was broken.** #521's Connect with its three-quarter cylinder removed,
+outward: invalid with both joins, at 0.5 and 1 (sec 45 made it inward).
+
+The cylinder's edge at 2 pi is closed on its surface -- pcurves at 0 and at
+2 pi -- and the cylinder uses it once, reaching only the one at 2 pi.
+Inward the lips cut it and its pieces keep the pcurve the face reaches
+(sec 45); outward nothing cuts it, it is the input's own edge, and
+`BRepAlgo_Loop` took it for a seam of the lips: doubled in the edge map,
+and no single period for the search, which closed the lips inside out. An
+edge of the face itself, closed on its surface, is no seam of it now when
+the face, at most a period round, reaches only one of its pcurves
+(`IsSeamOfFace`), for `IsInOnePeriod` and the edge map. Cut pieces are left
+to sec 45's rule: taken so too, the wall at y = 0 removed inward turned
+invalid.
+
+The groove of two quarter cylinders (sec 47) shares such an edge between
+its quarters, each using one pcurve. With a quarter removed, its lip's wire
+was reversed for `MakeTest`'s test face, the edge took its other pcurve
+and the test face ran round the whole cylinder (inward, refused). The test
+face takes a copy whose such edges carry the face's pcurve both ways, and
+the wire is kept as it was walked.
+
+By hand: the box grown -- with sharp edges for the Intersection join,
+rounded for the Arc join -- with the disc left in place, less the input:
+688.9322 and 315.9061 (Intersection), 664.0403 and 310.0678 (Arc), at 1
+and 0.5. Every one made to the digit.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue521_connect_cylinder_out`, `_out_1` | #521's Connect, the cylinder removed, +0.5 and +1, the Arc join | 310.0678, 664.0403; invalid before |
+| `issue521_connect_cylinder_out_join`, `_out_1_join` | the same, the Intersection join, intersection on | 315.9061, 688.9322; invalid before |
+
+![issue521_connect_cylinder_out_join](models/pictures/issue521_connect_cylinder_out_join.png)
+
+The red edge in the result, the vertical one at (2, 0), is the input's own:
+it is closed on the cylinder it bounds, two pcurves, and the marks count such
+an edge both ways (upstream's unhollowed input carries the same mark).
+
+Over the corpus (1072 runs, sec 44's with #613's model back) 12 change:
+these 4 to valid; the box with a groove of two faces, one quarter removed
+outward (`bg10` face 7), 4 from invalid to valid -- the Intersection join's
+volumes the hand value with the kept quarter's offset carried a thickness
+into the removed one before its wall, as the tangent caps make it
+(8212.2444 at 1, 3971.0866 at 0.5), the Arc join's not worked out by hand;
+and its mirror (face 6) 4 from invalid to invalid. Not one other moves.
+
+**Regression** (`a697362c0f`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=530 at fix levels 0 and 1, plain and
+frozen, the 4 cases above among them (PASS=526 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen; fillet PASS=815
 XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 

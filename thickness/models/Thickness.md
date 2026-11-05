@@ -3067,6 +3067,39 @@ frozen; thickness PASS=526 at both fix levels, plain and frozen (519 + 7);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too.
 
+### Sec 50: #521 with the cylinder removed, outward
+
+**One change** (`BRepAlgo_Loop.cxx`). #521's cylinder removed outward was
+invalid with both joins.
+
+- The cylinder's edge at 2 pi, closed on it, the input's own and not cut
+  outward, is used by it once, reaching one pcurve; taken for a seam of the
+  lips (doubled in the edge map, a periodic search) they came out inside
+  out. An edge of the face itself that the face, at most a period round,
+  reaches by one pcurve only is no seam of it (`IsSeamOfFace`). A wire
+  holding one is kept as walked for the test face, which takes a copy of
+  it with the face's pcurve both ways -- reversed, the edge took its other
+  pcurve (a groove's quarter removed inward, refused).
+
+Made: +1 and +0.5, both joins, the hand values (the box grown, the disc
+left in place). The box with a groove of two faces, a quarter removed
+outward: one quarter now valid (the Intersection join the tangent caps'
+value), its mirror still invalid.
+
+![issue521_connect_cylinder_out_join](pictures/issue521_connect_cylinder_out_join.png)
+
+The red edge in the result, the vertical one at (2, 0), is the input's own:
+it is closed on the cylinder it bounds, two pcurves, and the marks count such
+an edge both ways (upstream's unhollowed input carries the same mark).
+
+Over the corpus (1072 runs) 12 change: these 4 and the box's quarter 4 to
+valid, its mirror 4 invalid to invalid.
+
+Regression (`a697362c0f`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=530 at both fix levels, plain and frozen (526 + 4);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

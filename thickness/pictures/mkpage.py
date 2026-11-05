@@ -68,6 +68,7 @@ SUMMARY = {
     47: "The groove of two faces, as FreeCAD makes it, with the Intersection join: each quarter's loop with the side split where the quarters meet, its own piece crossed once and never trimmed, the other run on over the other quarter. The own piece is trimmed to the end they share and the other dropped; every volume made is the hand value.",
     48: "The slotted cylinder's left wall removed inward, the Intersection join: the side's offset came in two pieces, the second holding the lip's edges, and only the first took the lip's cuts -- refused, its mirror made. Every piece is rebuilt now; the volume is the hand value.",
     49: "The groove of two faces with both bottoms removed, the Intersection join: each bottom's section with the side's offset is the circle split at the side's seam, the halves on one curve, and the seam's vertex carried the first half's parameter, 2 pi -- the second half was trimmed the long way round, over the first. A parameter a period outside an edge's range is brought into it now; every volume is the hand value.",
+    50: "#521 with the cylinder removed, outward: the cylinder's edge at 2 pi, closed on it and the input's own, is used by it once, reaching one pcurve; taken for a seam of the lips, they came out inside out with both joins. An edge of the face itself that the face reaches by one pcurve only is no seam of it now; both joins give the hand value.",
 }
 
 # Pictures of a section made by make_fix_pictures.sh (a C++ driver of the fix,

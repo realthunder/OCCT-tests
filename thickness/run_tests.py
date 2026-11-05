@@ -1625,6 +1625,14 @@ thickness_case("issue521_connect_cylinder_in", issue521, 4, -0.5, "pass", 264.86
 thickness_case("issue521_connect_cylinder_in_1", issue521, 4, -1.0, "pass", 484.2380)
 thickness_case("issue521_connect_cylinder_in_join", issue521, 4, -0.5, "pass", 264.8641, True, 2)
 thickness_case("issue521_connect_cylinder_in_1_join", issue521, 4, -1.0, "pass", 484.2380, True, 2)
+# Outward (sec 50): the cylinder's edge at 2 pi, closed on it and the
+# input's own, is used by it once, reaching the pcurve at 2 pi only; taken for
+# a seam of the lips, they came out inside out (invalid, both joins). By hand:
+# the box grown with sharp or rounded edges, with the disc left in place.
+thickness_case("issue521_connect_cylinder_out", issue521, 4, +0.5, "pass", 310.0678)
+thickness_case("issue521_connect_cylinder_out_1", issue521, 4, +1.0, "pass", 664.0403)
+thickness_case("issue521_connect_cylinder_out_join", issue521, 4, +0.5, "pass", 315.9061, True, 2)
+thickness_case("issue521_connect_cylinder_out_1_join", issue521, 4, +1.0, "pass", 688.9322, True, 2)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset
