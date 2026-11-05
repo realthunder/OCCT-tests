@@ -1645,8 +1645,10 @@ def grooved_box(groove_r):
 
 
 def groove_quarters(shape):
-    """1-based indices of the groove's two quarter cylinders, x < 0 first"""
-    cyl = [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.TypeId == "Part::GeomCylinder"]
+    """1-based indices of the groove's two quarter cylinders (their axis along
+    y, not a grooved cylinder's side), x < 0 first"""
+    cyl = [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.TypeId == "Part::GeomCylinder"
+           and abs(abs(f.Surface.Axis.y) - 1) < 1e-9]
     return sorted(cyl, key=lambda i: shape.Faces[i - 1].CenterOfMass.x)
 
 
@@ -1671,6 +1673,30 @@ for _side, _f in (("left", _bg10_left), ("right", _bg10_right)):
                    False, 2)
     thickness_case("issue363_box_groove10_%s_out_half_join" % _side, _bg10, _f, +0.5, "pass",
                    3971.0866, False, 2)
+# The groove's quarter removed from the cylinder, the Intersection join (sec
+# 52): refused both ways. The strip's ends meet the side, a cylinder: their
+# lines have no pcurve on it and were given no type, and the strip was
+# intersected with the side by neither; then, typed, the strip grown across
+# the shape met the side's offset in one circle, all of it the one end's,
+# the other end's none. By hand, as on the box: the offset with the removed
+# quarter stepped at x = 0, plus outward the strip between the kept quarter's
+# tangent plane at the apex, offset, and the removed quarter, x in 0..t,
+# inside the side's offset, less inward the band between the removed quarter
+# and that plane; with the chamfer's offset r + z <= R + 14 + o sqrt 2.
+_g10_left, _g10_right = groove_quarters(_g10)
+for _side, _f in (("left", _g10_left), ("right", _g10_right)):
+    for _sfx, _o, _v in (("out", +1.0, 6335.8399), ("in", -1.0, 5589.2394),
+                         ("out_half", +0.5, 3058.4144), ("in_half", -0.5, 2872.1103)):
+        thickness_case("issue363_groove10_%s_%s_join" % (_side, _sfx), _g10, _f, _o, "pass", _v,
+                       False, 2)
+_g5_left = groove_quarters(_g5)[0]
+thickness_case("issue363_groove5_left_out_join", _g5, _g5_left, +1.0, "pass", 6702.6587, False, 2)
+thickness_case("issue363_groove5_left_in_join", _g5, _g5_left, -1.0, "pass", 5950.5199, False, 2)
+_g10c_left = groove_quarters(_g10c)[0]
+thickness_case("issue363_groove10_chamfer_left_out_join", _g10c, _g10c_left, +1.0, "pass",
+               6373.5557, False, 2)
+thickness_case("issue363_groove10_chamfer_left_in_join", _g10c, _g10c_left, -1.0, "pass",
+               5681.5203, False, 2)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset

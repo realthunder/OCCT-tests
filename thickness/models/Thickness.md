@@ -3136,6 +3136,47 @@ frozen; thickness PASS=538 at both fix levels, plain and frozen (530 + 8);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too.
 
+### Sec 52: the groove's quarter removed from the cylinder, the Intersection join
+
+**Three changes** (`BRepOffset_Analyse.cxx`, `BRepOffset_Inter3d.cxx`,
+`BRepOffset_MakeOffset.cxx`). #363's
+grooved cylinder with a quarter of its groove removed, the Intersection
+join, was refused both ways (24 runs: two grooves and the chamfered
+cylinder, both quarters, +-1 and +-0.5). The tangent caps' strip ends on
+the side, a cylinder, at both ends.
+
+- The strip's end edges, lines, have no pcurve on the side and got no
+  type: neither end was intersected with the side, and the wall kept its
+  grown plane (`WallOutOfBand`). They are typed now as the wall's end
+  edges on a sphere were, by where the strip runs against the face's
+  normal (`TreatTangentCaps`, one helper for both).
+- The strip grown across the shape then met the side's offset in one
+  circle, all of it the first end's. It is held in its band now
+  (`KeepStripInItsBand`): a polygon on its surface, a tenth of the band
+  wider each side, along the edge its length and a hundred bands -- grown
+  forty million, the polygon's edges lost the section.
+- Made, the right quarter outward edited its input: the side's edge with
+  the removed quarter, cut where the strip ends, left a piece (the curve
+  copied and trimmed) that `UpdateTolerance` measured again, a few 1e-8
+  wider than the whole edge, and grew the input's corner vertices to it.
+  A piece of a cap's edge is not measured again now, as the cap's own
+  edges are not (`BRepOffset_MakeOffset.cxx`).
+
+Made: every run the tangent caps' hand value (the step at x = 0, plus the
+strip outward, less the band inward; the chamfer's offset a cone), both
+quarters alike.
+
+![issue363_groove10_left_in_join](pictures/issue363_groove10_left_in_join.png)
+
+Over the corpus (1072 runs) 24 change, all these, refused to valid;
+nothing else moves. Open: a quarter outward with the Arc join, the side
+removed with the Intersection join.
+
+Regression (`55418a9ae2`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=550 at both fix levels, plain and frozen (538 + 12);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

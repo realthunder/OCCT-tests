@@ -1871,6 +1871,84 @@ frozen, the 8 cases above among them (PASS=530 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen; fillet PASS=815
 XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 
+## The groove's quarter removed from the cylinder, the Intersection join (2026-11-06, sec 52)
+
+**What was broken.** #363's cylinder with its groove of two quarter
+cylinders across the bottom, one quarter removed, the Intersection join:
+refused, inward and outward, at 0.5 and 1, either quarter, on the groove
+of radius 10 and of 5 and on the chamfered cylinder -- 24 runs. The box
+with the same groove was made in secs 50 and 51.
+
+The kept quarter meets the removed one tangentially at the groove's top,
+and the tangent caps close that edge (`BRepOffset_Analyse::TreatTangentCaps`,
+the design taken as the reference on 2026-11-05): a strip, the kept
+quarter's tangent plane there, carried a thickness into the removed
+quarter, and a wall across it down to the removed quarter. On the box the
+strip ends on the box's sides, planes; on the cylinder both its ends are
+on the side, a cylinder. Two things went wrong there, and a third once
+it was made.
+
+- The strip's end edges are lines and have no pcurve on the side: they
+  were given no type, and `BRepOffset_Inter3d` skips an edge that is neither
+  convex nor concave -- the strip was intersected with the side by neither
+  end, its wall's loop found nothing to close on and kept the grown plane
+  (`WallOutOfBand`). The wall's end edges had the same want on a sphere and
+  were typed by hand, by where the wall runs against the face's normal;
+  the strip's are now typed the same way.
+- Typed, the strip, a plane grown across the whole shape, met the side's
+  offset in one circle. Both its ends share the pair of faces and the pair
+  is intersected once: the whole circle went to the first end, the second
+  had none, and the result came out invalid or refused. The strip is held
+  in its band now (`KeepStripInItsBand`, as a sphere cap's wall is): a
+  polygon on its own surface, a tenth of the band wider each side, along
+  the edge its length and a hundred bands. The circle comes out in two
+  arcs, one at each end. (Grown as far as the plane was, forty million,
+  the polygon's edges lose the section altogether.)
+- Made, the right quarter outward came back right with its input edited:
+  the two vertices at the removed quarter's bottom corners, (10.06,
+  +-23.77, 0), grown from 3.760e-7 to 3.906e-7 (the suite's check of the
+  input). The side's edge with the removed quarter is cut at x = t, where
+  the strip ends; the piece from there to the corner is the edge's curve
+  copied and trimmed, and `UpdateTolerance` (`BRepOffset_MakeOffset`)
+  measured it again: over the shorter range its samples fall elsewhere and
+  find the gap a little wider than the whole edge's, and the piece's
+  vertices were grown to it -- the corner is the input's. The caps' own
+  edges are not measured again there (upstream's rule); a piece of one,
+  the same curve under the same parameters, is not either now, and keeps
+  the tolerance it was copied with. The left quarter's corners happen to
+  measure no wider.
+
+By hand, in the tangent caps' design: the offset with the removed quarter
+left in place, the quarters stepped at x = 0, then outward the strip
+between the kept quarter's tangent plane at the apex, offset, and the
+removed quarter's arc, x in 0..t, inside the side's offset, added; inward
+the band between the arc and that plane taken off; the chamfer's offset
+the half-space r + z <= R + 14 + o sqrt 2. Every run is the hand value,
+both quarters (the left 1e-4 off at two of them).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove10_left_out_join`, `_in_join`, `_out_half_join`, `_in_half_join` | the grooved cylinder, r 10, the left quarter removed, +-1 and +-0.5 | 6335.8399, 5589.2394, 3058.4144, 2872.1103; refused before |
+| `issue363_groove10_right_out_join` ... `_in_half_join` | the right quarter, the four the same | refused before |
+| `issue363_groove5_left_out_join`, `_in_join` | the groove of radius 5 | 6702.6587, 5950.5199; refused before |
+| `issue363_groove10_chamfer_left_out_join`, `_in_join` | the chamfered cylinder | 6373.5557, 5681.5203; refused before |
+
+![issue363_groove10_left_in_join](models/pictures/issue363_groove10_left_in_join.png)
+
+Over the corpus (1072 runs) 24 change: these, all the grooved cylinders'
+quarters with the Intersection join, refused to valid at the hand values.
+Not one other moves; the box's eight stay as they were. Still open there:
+a quarter removed outward with the Arc join (the side's loop cuts the edge
+it shares with the kept quarter's offset at a vertex not the edge's own,
+and the two hold the edge in two copies, each free), and the side removed
+with the Intersection join.
+
+**Regression** (`55418a9ae2`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=550 at fix levels 0 and 1, plain and
+frozen, the 12 cases above among them (PASS=538 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen; fillet PASS=815
+XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
