@@ -31,6 +31,19 @@ mkdir -p $W/home
 
 LIBS="-lTKOffset -lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase -lTKG3d -lTKG2d"
 LIBS="$LIBS -lTKMath -lTKernel"
+# On Linux the driver's rpath must be a RUNPATH, or LD_LIBRARY_PATH cannot put
+# the old library first (a DT_RPATH, which conda's linker writes, outranks it)
+# and "before" silently runs the install.
+if [ "$(uname)" = Darwin ]; then
+    CXX=${CXX:-clang++}
+    LIBS="$LIBS -Wl,-rpath,$PREFIX/lib"
+else
+    # the env's compiler, for the libstdc++ the install was built with
+    CXX=${CXX:-"$RUN x86_64-conda-linux-gnu-c++"}
+    LIBS="$LIBS -Wl,--enable-new-dtags -Wl,-rpath,$PREFIX/lib"
+    # ninja and the build's compilers are the env's
+    INENV=$RUN
+fi
 # fix <tag> <commit> <source> <driver> [args]: the driver built against the
 # install, run on the library <source> belongs to as it was before <commit>
 # (mkold.py) into $W/<tag>/before -- it fails there (exit 1): its results are
@@ -39,10 +52,10 @@ fix() {
     local tag=$1 commit=$2 src=$3 drv=$4
     shift 4
     mkdir -p $W/$tag/before $W/$tag/after
-    clang++ -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/$drv.cpp \
-        -L$PREFIX/lib -Wl,-rpath,$PREFIX/lib $LIBS -o $W/$tag/$drv
+    $CXX -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/$drv.cpp \
+        -L$PREFIX/lib $LIBS -o $W/$tag/$drv
     ls $W/$tag/old/lib* > /dev/null 2>&1 ||
-        python3 $HERE/mkold.py $BUILD $W/$tag/old "$commit^" $src > $W/$tag/mkold.log 2>&1
+        $INENV python3 $HERE/mkold.py $BUILD $W/$tag/old "$commit^" $src > $W/$tag/mkold.log 2>&1
     DYLD_LIBRARY_PATH=$W/$tag/old LD_LIBRARY_PATH=$W/$tag/old $W/$tag/$drv "$@" $W/$tag/before \
         > $W/$tag/before.txt || true
     $W/$tag/$drv "$@" $W/$tag/after > $W/$tag/after.txt ||
@@ -74,6 +87,14 @@ fix knots 66c168acc5 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.
 # the adaptive integrals refined across u, from the plain integral's breaks
 fix adapt 15ce0973f6 src/ModelingAlgorithms/TKTopAlgo/BRepGProp/BRepGProp_Gauss.cxx \
     adaptive_gprop $HERE/../models/issue617_prisms.brep --write
+# #617: the pad's bottom edge projected across the revolution's closed seam
+fix 617seam 3c35c64037 "src/ModelingData/TKGeomBase/ProjLib/ProjLib_CompProjectedCurve.cxx \
+    src/ModelingData/TKGeomBase/ProjLib/ProjLib_ProjectedCurve.cxx" issue617_seam_pcurve \
+    $HERE/../models/issue617_revolution.brep $HERE/../models/issue617_prisms.brep --write
+# #617: the Pad's fuse, a wall standing on the revolution along its bottom edge
+fix 617pad 11d03d433c "src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_5.cxx \
+    src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx" issue617_pad_fuse \
+    $HERE/../models/issue617_revolution.brep $HERE/../models/issue617_prisms.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

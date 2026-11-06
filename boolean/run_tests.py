@@ -194,6 +194,29 @@ def issue617_gprop():
 guarded(issue617_gprop)
 
 
+# #617: the pad's prisms and the revolution they stand on. The revolution's
+# profile is a closed B-spline, not periodic, and the prisms' bottom edges --
+# its cut by z = 0 -- start and end on its seam circle. Their pcurves on it
+# ran back across the whole v range on the last step (the trap guard's fresh
+# search took the bound the walk had not come to) and were approximated in 16
+# segments, too few for 29 spans: every general fuse of the two carried an
+# edge of tolerance 36 to 39, and the plain one took 184 s (README.md, "#617:
+# the pad's bottom edge projected across the revolution's seam").
+def issue617_seam_pcurve():
+    for fuzzy in (0.0, 1e-5):
+        rev = Part.Shape()
+        rev.importBrep(os.path.join(HERE, "models", "issue617_revolution.brep"))
+        prisms = Part.Shape()
+        prisms.importBrep(os.path.join(HERE, "models", "issue617_prisms.brep"))
+        res, _ = rev.generalFuse([prisms], fuzzy)
+        tol = max(e.Tolerance for e in res.Edges)
+        report("issue617_seam_pcurve_fuzzy%g" % fuzzy, tol <= 1e-3,
+               "largest edge tolerance %.3g (want <= 1e-3), %d edges" % (tol, len(res.Edges)))
+
+
+guarded(issue617_seam_pcurve)
+
+
 # A prism on an ellipse (height 8) offset by d with the Intersection join:
 # its wall the offset surface of the prism's, its caps planes. The volume
 # and area integrals of an offset took one rule of 18 points over the turn,

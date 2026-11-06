@@ -559,3 +559,128 @@ plain and frozen; boolean 65; the thickness sweep right in all 928 runs in
 the four modes; the draft and fillet sweeps -- every result, face count,
 volume and tolerance -- the same, as FreeCAD never calls the adaptive
 integrals.
+
+## #617: the pad's bottom edge projected across the revolution's seam (`3c35c64037`, `6abd543fc8`, 2026-11-06)
+
+**Where it was met.** #617's Pad again, the fuse of the revolution with the
+two prisms padded from its cut by z = 0 (`models/issue617_revolution.brep`,
+`models/issue617_prisms.brep`). Every general fuse of the two carried an edge
+of tolerance 36 to 39, plain or under a fuzzy value of 1e-6 to 1e-4, and the
+plain one took 184 s.
+
+**What was broken.** The revolution's profile is a closed B-spline, not
+periodic: the surface is closed in v, its two v bounds one circle (blue
+below). The prism's bottom edge is the revolution's cut and lies on it; it
+starts on that circle, runs once round the lobe and comes back to it from the
+other side. The pave filler builds the edge's pcurve on the revolution by
+projection (`ProjLib_ProjectedCurve`). Two faults:
+
+- The walk (`ProjLib_CompProjectedCurve`) came to v's upper bound at the end,
+  and the guard against traps on a revolution's v bounds
+  (`UpdateTripleByTrapCriteria`, OCCT bug 25892) searched that last point
+  afresh, found the lower bound -- the same circle -- and took it. The pcurve
+  ran back across the whole v range on its last step: 36.5 off. The guard put
+  the walk's side back across a period only.
+- The walk was approximated in at most 16 segments, which cannot follow a
+  degree 8 B-spline of 29 spans, its knots bunched where the cut turns: 0.80
+  off at any tolerance. More segments alone left the pcurve 37.9 off, the
+  seam alone 0.80.
+
+**The fix.** The guard keeps the walk's side across a closed, non-periodic
+direction's range too. Where the caller set no limit on the segments, the
+curve has more spans than the 16 segments allowed and the approximation
+misses its tolerance, the segments are doubled, up to 256, and the best result
+kept; one within its tolerance, or of a curve of fewer spans, is left as it
+was, to the bit.
+
+**The cases.** `models/issue617_seam_pcurve.cpp` and `run_tests.py`: the
+pcurve at the edge's tolerance (1e-7) and a fuzzy value's (1e-5), against the
+edge -- 3.51e-7 and 1.01e-6 off (the edge itself is 3.5e-7 off the
+revolution), ending at v's upper bound; before, 36.5 off at both, ending at
+the lower. The general fuse plain and at 1e-6, 1e-5 and 1e-4: done, its
+largest edge tolerance 1.0e-5 to 5e-6 (39.2, 35.9, 36.5, 36.5 before), in 0.7
+to 1.8 s (166 s, 3.2, 3.1, 2.9). The fuse itself stays wrong after this fix
+alone (the revolution only, 62081.90), the next section's.
+
+![#617: the pad's bottom edge projected across the revolution's seam: before and after](models/pictures/issue617_seam_pcurve.png)
+
+**What it moved.** The dome's thickness with the Intersection join
+(`../thickness/run_tests.py`, `dome_join_in`, `_in_2`, `_out`, `_out_2` and
+`_out_level0`), by the more segments: 10416.4066, 20254.6343, 11010.4747 and
+22629.4365 to 10416.1020, 20254.1121, 11010.2576 and 22628.9082. The shapes
+move at most 2.2e-4, 8.2e-4, 1.8e-4 and 8.4e-4 (points on every face, each
+way), where their edges have tolerances of 8.7e-4 to 2.8e-3: within them,
+so plain. The outward ones came toward sec 33's estimate (11010.25 and
+22628.7); the inward ones went from the booleans' 10416.5477 and 20254.4292,
+0.45 and 0.32 off (0.14 and 0.21 before), those booleans themselves made
+with 16 segments. Nothing else in the suites or the sweeps; over the
+thickness corpus (1072 runs) nothing changes. Validation: the next
+section's, made over both.
+
+## #617: a pad's wall standing on a revolution along its bottom edge (`11d03d433c`, 2026-11-06)
+
+**Where it was met.** The same fuse, `BRepAlgoAPI_Fuse` (what FreeCAD's
+Pad runs to add a pad to its body): invalid, 93428 in 69 s; under a fuzzy
+value of 1e-5 valid and wrong, 119660, a wall kept whole. The right volume is
+127114: the revolution's 62081.90 and the prisms' 71190.80, less their
+common part, 6164 by vertical rays through the prisms' base; the prisms 0.01
+above or below the cut fuse to 127121 and 127107.
+
+**What was broken.** Each prism's bottom edge lies on the revolution, and the
+prism's wall stands on the revolution along it -- tangent to it at the two
+points where the revolution turns vertical over the edge, (18.47, 46.91) and
+(50.34, 23.83). There a second branch of the wall's section leaves the edge,
+climbs to z 7.64 at the wall's seam and comes back: between it and the edge
+the wall is inside the revolution, and must be cut off. The pave filler
+found the edge on the revolution (an edge/face common block, all of it), and
+nothing at the two points: no edge/face intersection marks them, the edge
+being on the face all along. And the walking lines of the section lose
+their way a few 1e-3 off them, through the crossing of two branches: one
+stops 0.0015 short of the first point, one runs on past the second along the
+edge itself. Their ends had no vertex to come to, and the branch got no
+edge.
+
+**The fix.** In the edge/face pass, an edge found on a face is split where a
+face of its own is tangent to that face: where the sine between their
+normals about the edge, (N_F x N_G) . T, changes its sign clearly -- both
+normals lie in the plane square to the edge, the edge being on both. Faces
+that do not cross along the edge, and two planes, are left alone. In
+`MakeBlocks`, a section curve passing within d of such a vertex is given it,
+as the tangent end of the dome's section is (above): if the faces stay within
+the curve's tolerance of each other from the curve to the vertex (d times the
+sine between them there), d is under a tenth of the curve, and the faces are
+tangent at the vertex. Only the vertices the edge/face pass put there, and
+not for a curve running along edges the two faces share already, judged
+evenly along its length (a walking line's parameter is not: one ran along the
+edge for 99% of its range, then climbed the branch for half its length) --
+its pieces go to those edges, and a vertex grown to reach its end would stay
+grown.
+
+**The cases.** `models/issue617_pad_fuse.cpp`: the fuse plain and at 1e-6,
+1e-5 and 1e-4 -- valid, one solid, 127113.19, 127110.26, 127112.25 and
+127114.47, in about 1 s; the vertices at the two points to 0.0023 (0.0062 at
+1e-6), the curves' distance from them. Before (with the pcurve fixed): the
+revolution only, 62081.90, invalid plain and at 1e-5. The prisms shifted
+0.01, 0.001 or 1e-4 up or down fuse as before, to the bit. #617's model
+(`../occ-issues/models/issue617_intersection_pad.FCStd`, one lobe padded):
+the Pad valid, one solid, 94597.28 in 0.3 s, where the revolution's 62081.90
+and the pad's 35595.40 less their common part, 3079.8 by vertical rays, give
+94597.5; invalid before, 62081.89.
+
+![#617: a pad's wall standing on a revolution along its bottom edge: before and after](models/pictures/issue617_pad_fuse.png)
+
+**What it moved.** Nothing in the suites or the sweeps; over the thickness
+corpus (1072 runs) nothing changes.
+
+**Validation** (both fixes, against `975d306ac4`, on Linux): Part 390,
+PartDesign 486 and ShapeStorage 63 tests OK, plain and frozen; thickness
+PASS=570 at levels 0 and 1, plain and frozen; the thickness sweep 928 of 928
+in the four modes; the fillet suite PASS=815 XFAIL=1, plain and frozen;
+boolean 67 (65 + these 2). Draft 104 and 1 FAIL, plain and frozen, as on the
+fork before them: `new_roof_L_a-30` fails on Linux ("FaceVanishes"), 105 on
+macOS. Every case line the same but those named above. PartDesign crashed
+twice in 13 full runs, both in `TestFillet.TestFilletSlivers.
+testBaseOutsideTheBody`, FreeCAD's link check (`GeoFeatureGroupExtension::
+getGroupOfObject`) on a dangling object, with the box loaded by another
+build; none in 11 on the fork before them, the test logs otherwise alike --
+FreeCAD's, noted here.

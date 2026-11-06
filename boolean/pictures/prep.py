@@ -454,6 +454,91 @@ for title, note, lines, bad in (
     pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
 pictures.append(pic)
 
+# #617: the pad's bottom edge projected across the revolution's seam -- the
+# revolution see-through, its seam circle (the closed profile's two v bounds)
+# blue; the prism's bottom edge red, then its pcurve on the revolution drawn
+# on it as an edge, before and after (issue617_seam_pcurve.cpp --write).
+def seam_line(stage, what):
+    for line in open(os.path.join(W, "617seam", stage + ".txt")):
+        if line.startswith(what):
+            return line.split(":", 1)[1].strip()
+
+
+pic = dict(name="issue617_seam_pcurve",
+           title="#617: the pad's bottom edge projected across the revolution's seam",
+           caption="ProjLib_ProjectedCurve of the prism's bottom edge on the revolution (the pave "
+                   "filler's pcurve of an edge lying on a face). The profile is a closed B-spline, "
+                   "not periodic: the surface is closed in v, its two v bounds the blue circle, on "
+                   "which the edge starts and ends. The pcurve is drawn on the revolution as an "
+                   "edge.",
+           panels=[])
+rev = Part.read(os.path.join(MODELS, "issue617_revolution.brep"))
+seam = [e for e in rev.Edges if e.Curve.TypeId == "Part::GeomCircle"]
+seam_brep = os.path.join(W, "617seam_circle.brep")
+Part.makeCompound(seam).exportBrep(seam_brep)
+edge = os.path.join(W, "617seam", "after", "edge.brep")
+bb = rev.BoundBox
+for stage, title, note, curve, bad in (
+        ("after", "the input", "the prism's bottom edge (red): the cut of the revolution by z = 0, "
+         "from the seam circle and back to it", edge, False),
+        ("before", "before", "the pcurve runs back across the whole v range on its last step: "
+         + seam_line("before", "pcurve tol 1e-07").split("  ")[0],
+         os.path.join(W, "617seam", "before", "pcurve_1e-07.brep"), True),
+        ("after", "after", seam_line("after", "pcurve tol 1e-07").split("  ")[0],
+         os.path.join(W, "617seam", "after", "pcurve_1e-07.brep"), False)):
+    i = len(jobs)
+    out = os.path.join(W, "panel%d.brep" % i)
+    rev.exportBrep(out)
+    png = os.path.join(W, "panel%d.png" % i)
+    jobs.append(dict(brep=out, png=png, eye=[0.6, -1.0, 0.8],
+                     center=[bb.Center.x, bb.Center.y, bb.Center.z],
+                     height=1.1 * max(bb.XLength, bb.YLength, bb.ZLength), transparency=75,
+                     extras=[dict(brep=seam_brep, color=[0.15, 0.35, 0.9], linewidth=4),
+                             dict(brep=curve, color=[0.85, 0.1, 0.1], linewidth=5)]))
+    pic["panels"].append(dict(png=png, title=title, note=note, bad=bad))
+pictures.append(pic)
+
+# #617: the Pad's fuse -- the revolution and the prisms (orange) as given;
+# the fuse before and after, plain (no fuzzy value), seen the same way
+# (issue617_pad_fuse.cpp --write).
+def pad_line(stage):
+    for line in open(os.path.join(W, "617pad", stage + ".txt")):
+        if line.startswith("fuse, fuzzy 0:"):
+            w = line.split(":", 1)[1].split(",")
+            return w[0].strip(), float(w[2].split()[1])
+
+
+pic = dict(name="issue617_pad_fuse",
+           title="#617: the Pad's fuse, a wall standing on the revolution along its bottom edge",
+           caption="BRepAlgoAPI_Fuse of the revolution and the two prisms padded 100 from its cut "
+                   "by z = 0, no fuzzy value; the right volume is 127114. The prism's wall is "
+                   "tangent to the revolution at two points of its bottom edge, where a second "
+                   "branch of their section leaves the edge, climbs to z 7.64 and comes back.",
+           panels=[])
+rev = Part.read(os.path.join(MODELS, "issue617_revolution.brep"))
+prisms = Part.read(os.path.join(MODELS, "issue617_prisms.brep"))
+both = Part.makeCompound([rev, prisms])
+bb = both.BoundBox
+EYEPAD = [1.0, -0.35, 0.45]
+CPAD = [30, 0, 15]
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+both.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=EYEPAD, center=CPAD, height=130,
+                 facecolors={str(k): ORANGE for k in range(len(rev.Faces), len(both.Faces))}))
+pic["panels"].append(dict(png=png, title="the input", note="the revolution, 62081.90, and the "
+                          "prisms (orange), 71190.80, standing on its cut", bad=False))
+for stage, title in (("before", "before"), ("after", "after")):
+    valid, vol = pad_line(stage)
+    fuse = Part.read(os.path.join(W, "617pad", stage, "fuse_0.brep"))
+    note = "%s, %.2f" % (valid, vol)
+    if stage == "before":
+        note += ": the revolution only, the prisms lost"
+    panel(pic, fuse, title, note, EYEPAD, CPAD, 130, mark=True,
+          bad=not (valid == "valid" and abs(vol - 127114) <= 20))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")
