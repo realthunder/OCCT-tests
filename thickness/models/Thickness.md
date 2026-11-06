@@ -3177,6 +3177,41 @@ frozen; thickness PASS=550 at both fix levels, plain and frozen (538 + 12);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too.
 
+### Sec 53: the groove's quarter removed from the cylinder, outward, the Arc join
+
+**Two changes** (`BRepOffset_MakeOffset.cxx`, `BRepOffset_Inter3d.cxx`).
+#363's grooved cylinder with a quarter of its groove removed, outward, the
+Arc join, was refused (12 runs: two grooves and the chamfered cylinder,
+both quarters, 1 and 0.5). The crown, tangent, is closed by sec 6's tube
+with an eighth of a ball at each end, the design kept.
+
+- The side's offset, rebuilt by `ToContext` beside the removed quarter,
+  and the tube round its edge with the kept quarter, ending at a tangent
+  edge's vertex and not rebuilt, held their shared edge in two copies,
+  each free. A tube takes the face's pieces now, where they lie on the
+  edge's curve under its parameters, with the tube's pcurve.
+- The crown's tube has its edge on the cap square-ended at the crown's
+  ends; the side, round, bends the cap's edge with it in to cross the
+  tube's edge 0.019 short of its end, and the cap's loop had no vertex
+  there: it closed the opening over (invalid, 3137.0). The crossing is put
+  on the tube's section with the cap (`CutAtCapEdgeCrossings`), which cuts
+  the tube, the cap, and in the loop the cap's edge.
+
+Made: every run the boolean value of sec 6's design (the ball offset, the
+kept faces' offsets stretched to the removed quarter's cylinder, less the
+input and that side of the cylinder, plus the tube and its two eighths),
+nil difference both ways, both quarters alike.
+
+![issue363_groove10_left_out](pictures/issue363_groove10_left_out.png)
+
+Over the corpus (1072 runs) 12 change, all these, refused to valid;
+nothing else moves.
+
+Regression (`c722c6e42b`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=562 at both fix levels, plain and frozen (550 + 12);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

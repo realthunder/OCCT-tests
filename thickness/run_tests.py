@@ -1697,6 +1697,21 @@ thickness_case("issue363_groove10_chamfer_left_out_join", _g10c, _g10c_left, +1.
                6373.5557, False, 2)
 thickness_case("issue363_groove10_chamfer_left_in_join", _g10c, _g10c_left, -1.0, "pass",
                5681.5203, False, 2)
+# The groove's quarter removed from the cylinder outward, the Arc join (sec
+# 53): refused. The side's offset, rebuilt beside the removed quarter, and the
+# tube round its edge with the kept quarter held that edge in two copies; and
+# the tube round the crown has its edge on the removed quarter crossing the
+# quarter's edge with the side 0.019 short of its end, where the cap's loop
+# had no vertex. By booleans, in sec 6's design: the input offset by the ball,
+# the kept faces' offsets stretched to the removed quarter's cylinder, less
+# the input and the removed quarter's side of that cylinder, plus the tube
+# round the crown and an eighth of a ball at each of its ends.
+for _shape, _tag, _vols in ((_g10, "groove10", (6238.2052, 3034.5634)),
+                            (_g5, "groove5", (6605.4533, 3216.9085)),
+                            (_g10c, "groove10_chamfer", (6304.7451, 3067.6649))):
+    for _side, _f in zip(("left", "right"), groove_quarters(_shape)):
+        for _sfx, _o, _v in (("out", +1.0, _vols[0]), ("out_half", +0.5, _vols[1])):
+            thickness_case("issue363_%s_%s_%s" % (_tag, _side, _sfx), _shape, _f, _o, "pass", _v)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset

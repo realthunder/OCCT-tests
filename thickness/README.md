@@ -1949,6 +1949,74 @@ frozen, the 12 cases above among them (PASS=538 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen; fillet PASS=815
 XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 
+## The groove's quarter removed from the cylinder, outward, the Arc join (2026-11-06, sec 53)
+
+**What was broken.** #363's grooved cylinder with one quarter of its
+groove removed, outward, the Arc join: refused, at 0.5 and 1, either
+quarter, on the groove of radius 10 and of 5 and on the chamfered
+cylinder -- 12 runs. Inward they were made already; sec 52 made the
+Intersection join.
+
+The kept quarter meets the removed one tangentially along the groove's
+crown, and with the Arc join that edge is closed by a tube round it,
+turning into the removed quarter, with an eighth of a ball at each end
+where it meets the tube round the kept quarter's edge with the side (sec
+6). That design is kept here (chosen on 2026-11-06 over a ball rolled on
+along the side's edge, which would change sec 6's own results). On the box
+(sec 51) the side is a plane square to the crown; on the cylinder it is
+round. Two things went wrong.
+
+- `ToContext` rebuilds the side's offset beside the removed quarter, with a
+  new edge for its boundary with the tube round the kept quarter's edge
+  with the side. That tube ends at the crown's end, a tangent edge's
+  vertex, and is not rebuilt: `BuildOffsetByArc` gave it the edge whole
+  beside the face's new one, two copies, each free, every face hanging. A
+  tube now takes the pieces the face was cut into, where they run on the
+  edge's own curve under its parameters, given the tube's pcurve of the
+  edge.
+- The crown's tube has its edge on the removed quarter a thickness off the
+  crown, square-ended at the crown's ends. On the box the removed
+  quarter's edge with the side runs through that end; on the cylinder the
+  side bends in, and that edge crosses the tube's 0.019 short of its end
+  (y = -25.789 at x = -1, against -25.808). Nothing put a vertex there: the
+  cap's loop, its own edges taken whole, left them hanging and closed the
+  removed quarter over -- done, invalid, 3137.0, the opening's rim free. The
+  crossing goes on the tube's section with the cap now, as its ends do
+  (`CutAtCapEdgeCrossings`, `BRepOffset_Inter3d.cxx`): the tube and the cap
+  are cut there, and the cap's loop cuts its edge at the vertex as it does
+  where a section ends on it. The strip of the removed quarter under the
+  tube, the rim round the opening and the opening come out three faces.
+
+By booleans, in sec 6's design: the input offset by the ball (the Arc
+join, no face removed), with the kept faces' offsets beside the removed
+quarter stretched to its cylinder -- the side's ring, the bottom's slab and
+the round between them, as `ToContext` stretches them -- less the input and
+the removed quarter's side of its cylinder, plus the tube round the crown
+between the crown's ends and an eighth of a ball at each. (The ball offset
+alone leaves a notch along the removed quarter's edges with the side; with
+the top removed, whose plane the side already ends on, it is the result
+exactly, 4782.0194.) Every run is that solid: the boolean differences are
+nil both ways, the volumes within 3e-6, both quarters alike.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove10_left_out`, `_out_half` | the grooved cylinder, r 10, the left quarter removed, +1 and +0.5, the Arc join | 6238.2052, 3034.5634; refused before |
+| `issue363_groove10_right_out`, `_out_half` | the right quarter | the same; refused before |
+| `issue363_groove5_left_out` ... `_right_out_half` | the groove of radius 5 | 6605.4533, 3216.9085; refused before |
+| `issue363_groove10_chamfer_left_out` ... `_right_out_half` | the chamfered cylinder | 6304.7451, 3067.6649; refused before |
+
+![issue363_groove10_left_out](models/pictures/issue363_groove10_left_out.png)
+
+Over the corpus (1072 runs) 12 change: these, refused to valid at the
+boolean values. Nothing else moves; inward the same runs are as they were.
+Still open on these shapes: the side removed with the Intersection join.
+
+**Regression** (`c722c6e42b`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=562 at fix levels 0 and 1, plain and
+frozen, the 12 cases above among them (PASS=550 before); the thickness sweep
+right in all 928 runs at both levels, plain and frozen; fillet PASS=815
+XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
