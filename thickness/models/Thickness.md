@@ -3291,6 +3291,37 @@ and frozen; thickness PASS=586 at both fix levels, plain and frozen (570 +
 16); sweep 928 of 928; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL (Linux's
 standing `new_roof_L_a-30`), boolean 67, fillet and draft frozen too.
 
+### Sec 56: #346's shell with its cone removed, the Arc join
+
+**One change** (`BRepOffset_Tool.cxx`, `ExtentFace`). #346's Revolve, the
+cone removed, the Arc join: refused for the issue's dome and every peaked or
+dimpled one of the corpus, the sphere's dome valid and wrong (36 runs).
+
+- The dome's rim, a whole circle, takes the section of its offset with the
+  cone by orientation alone, and `Inter3D` orients a section as if the
+  removed face met the offset one at a convex edge: it came the wrong way
+  round, the rim ran as the apex's edge did, the face was unorientable, and
+  `ToContext` healed it into edges of tolerance 1.5e3. A closed edge's
+  section now runs as the edge it replaces (the curves' tangents where they
+  come nearest), as `ContextIntByInt` turns its sections.
+
+Made: every run valid; inwards the boolean value (the meridian and its
+mirror run on past the rim, offset in 2D, the band revolved inside the
+cone) within 6e-7. Outwards 2e-6 over it, as the Intersection join already
+was: the rim's corner on the cone 2e-4 to 9e-4 off (the dome's offset
+stretched past its rim), and at a dimple a sphere round the apex 0.033 below
+the band. Open: those two, the peaks inward with the Intersection join, and
+the dome removed.
+
+![issue346_revolve_thick_in](pictures/issue346_revolve_thick_in.png)
+
+Over the corpus (1072 runs) 36 change, all these; nothing else moves.
+
+Regression (`a8c10c303f`, Linux): Part, PartDesign, ShapeStorage OK, plain
+and frozen; thickness PASS=602 at both fix levels, plain and frozen (586 +
+16); sweep 928 of 928; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL, boolean 67,
+fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

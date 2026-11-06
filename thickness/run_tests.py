@@ -1900,6 +1900,23 @@ offset_case("issue346_dimple_solid_in_join", issue346_profile(1.05, True), -1.0,
             14455.0033, join=2, exact=False)
 thickness_case("issue346_dimple_solid_thick_out_join", issue346_profile(1.05, True), 3, 1.0,
                "pass", 5749.7112, False, 2)
+# Sec 56: thickened with the cone removed, the Arc join: refused, and the
+# sphere's dome valid and wrong (14436.7916 at 1). The dome's rim, a whole
+# circle, takes the section of its offset with the cone by orientation alone,
+# and Inter3D gave it the wrong way round: the rim ran the same way as the
+# apex's edge, the face was unorientable, and healed into one of tolerance
+# 1.5e3. By booleans: the meridian and its mirror run on past the rim, the
+# region toward the cone offset in 2D, the band revolved, inside the cone;
+# inwards to the digit, outwards the fork's 2e-6 over it (the rim's corner on
+# the cone 5e-4 off, both joins: the dome's offset stretched past its rim).
+for _tag, _shape, _vols in (
+        ("revolve", issue346, (3030.5493, 1498.3352, 2896.5118, 1464.8258)),
+        ("peak_shell", issue346_profile(-1.05), (3056.3047, 1511.2079, 2922.2257, 1477.6882)),
+        ("sphere_shell", issue346_profile(0.0), (3043.1491, 1504.6350, 2909.1096, 1471.1251)),
+        ("steep_peak_shell", issue346_profile(-3.0), (3082.1592, 1524.1143, 2947.9117,
+                                                      1490.5524))):
+    for _sfx, _o, _v in zip(("out", "out_half", "in", "in_half"), (1.0, 0.5, -1.0, -0.5), _vols):
+        thickness_case("issue346_%s_thick_%s" % (_tag, _sfx), _shape, 1, _o, "pass", _v)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

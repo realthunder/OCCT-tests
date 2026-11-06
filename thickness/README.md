@@ -2152,6 +2152,64 @@ fillet PASS=815 XFAIL=1, draft 104 + 1 FAIL (`new_roof_L_a-30`, Linux's
 standing one, sec 54's run there the same) and boolean 67, as before,
 fillet and draft frozen too. `corpus/baseline.txt` takes these 16 lines.
 
+## #346's shell with its cone removed, the Arc join (2026-11-06, sec 56)
+
+**What was broken.** #346's Revolve -- a shell of a cone and a dome whose
+top comes to a point on the axis -- with the cone removed and the Arc join:
+refused at +-1 and +-0.5 for the issue's dome (a dimple) and every peaked or
+dimpled one of the corpus, and the sphere's dome (the profile's centre on
+the axis) valid and wrong, 14436.7916 at 1. The Intersection join made
+them all but the peaks inward.
+
+`ToContext` stretches the dome's offset to the removed cone
+(`BRepOffset_Tool::ExtentFace`), and its rim, a whole circle, takes the
+section of the offset with the cone. A closed edge's section is laid on it
+by its orientation alone -- its one vertex says nothing of which way round
+it runs -- and `Inter3D` orients a section as if the removed face met the
+offset one at a convex edge. Here it came the wrong way round: the rim ran
+the same way as the apex's edge across the face, the face could not be
+oriented, and healed (`ShapeFix_Shape`) it had edges of tolerance 1.5e3,
+which the loops could not close; both faces were dropped as hanging. The
+section of a closed edge now runs as the edge it replaces, from the two
+curves' tangents where they come nearest, as `ContextIntByInt` turns its
+sections with the Intersection join.
+
+By booleans: the dome's meridian and its mirror, run on past the rim, the
+region toward the cone offset in 2D (`makeOffset2D`; both joins give the
+same, the apex is no convex corner of it), the band revolved, inside the
+cone's solid. Inwards every run is that solid, within 6e-7. Outwards the
+fork is 2e-6 over it, as the Intersection join already was: the rim's
+corner on the cone lies 2e-4 to 9e-4 off (the dome's offset stretched past
+its rim), and at a dimple a sphere round the apex reaches 0.033 below the
+band. Both are the Intersection join's too, and are left for their own
+section; the cases take the boolean values, within the suite's tolerance.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_revolve_thick_out`, `_out_half`, `_in`, `_in_half` | #346's Revolve, the cone removed, +1, +0.5, -1, -0.5, the Arc join | 3030.5493, 1498.3352, 2896.5118, 1464.8258; refused before |
+| `issue346_peak_shell_thick_*` | the profile's arc centred 1.05 off the axis the other way: a peak | 3056.3047, 1511.2079, 2922.2257, 1477.6882; refused before |
+| `issue346_steep_peak_shell_thick_*` | centred 3 off: a steeper peak | 3082.1592, 1524.1143, 2947.9117, 1490.5524; refused before |
+| `issue346_sphere_shell_thick_*` | centred on the axis: a sphere | 3043.1491, 1504.6350, 2909.1096, 1471.1251; valid and wrong before |
+
+![issue346_revolve_thick_in](models/pictures/issue346_revolve_thick_in.png)
+
+Over the corpus (1072 runs) 36 change: these and the other peaks and
+dimples of `breps/apex/`, with and without their sphere, refused or wrong
+to valid. Nothing else moves. (On Linux 40: the mirrored `rev3` runs it
+refused there, as the corpus README says, are made too.)
+
+**Regression** (`a8c10c303f`, on Linux): Part 390, PartDesign 486 and
+ShapeStorage 63 OK, plain and frozen; thickness PASS=602 at fix levels 0 and
+1, plain and frozen, the 16 cases above among them (PASS=586 before); the
+thickness sweep right in all 928 runs at both levels, plain and frozen;
+fillet PASS=815 XFAIL=1, draft 104 + 1 FAIL (Linux's standing
+`new_roof_L_a-30`) and boolean 67, as before, fillet and draft frozen too.
+
+Still open on this shell: the peaks inward with the Intersection join
+(refused: the dome's offset is left whole and dropped as hanging), the dome
+removed (refused, or inside out inward), and the two outward deviations
+above.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
