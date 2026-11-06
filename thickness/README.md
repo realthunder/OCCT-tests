@@ -2088,6 +2088,70 @@ before, fillet and draft frozen too.
 The corpus itself now lives here, in `corpus/` (its README says how to build
 its tools and run it); `corpus/baseline.txt` is the result with this fix.
 
+## The grooved cylinders' side removed, the Intersection join (2026-11-06, sec 55)
+
+**What was broken.** #363's grooved cylinders -- the groove of radius 10.06
+or 5 across the bottom, two quarter cylinders, and the one under a chamfered
+top -- and #363's Thickness001 base (its groove one half cylinder), their
+side removed, the Intersection join: refused, in and out, at 1 and 0.5 --
+16 runs. The Arc join made them.
+
+The groove's two quarters are one cylinder, so their offsets are one
+cylinder too: each quarter's offset, grown, is the other's surface. Its
+section with the side runs on over the other quarter, and comes split in
+two where the quarters meet: its own piece, crossed by the bottom's offset,
+and the piece beyond, over the other quarter, crossed by nothing and lying
+on the other's own piece. Two things went wrong.
+
+- On the side, removed, the corner of each quarter's section with the
+  bottom's was looked up on the side's enlarged copy, which holds none of
+  it (sec 54); a section in pieces is not looked up on the side itself
+  (sec 52's sections beyond a removed quarter's ends need that), and
+  `GetEdgesOrientedInFace`, ordering the empty set found, took the closed
+  set's way and looked up its first vertex, null: `Standard_NoSuchObject`.
+  None found returns none now, and the corner is left as the caller leaves
+  any it finds no section for.
+- Sec 47 trims such a pair -- the crossed piece to the end it shares with
+  the uncrossed one, which is dropped -- only for the section of an edge
+  between two kept faces: beside a removed face the section is a lip's,
+  and with the groove's two quarters removed the trim took the lips inside
+  out. Here the edge is beside the removed side, and nothing was trimmed:
+  the quarters' offsets came out unbounded along the groove (1e7 each way)
+  and every face was dropped as hanging. The trim is made now also for an
+  edge beside a removed face whose kept face runs on, tangent, into another
+  kept face at the edge's end (`TrimEdges`): there the piece beyond is the
+  other kept face's own.
+
+Thickness001's base needed only the first: its groove is one face, and its
+section with the side, split at the groove's own seam, has no piece run on.
+
+By booleans: the cross-section across the groove, widened past the side,
+its offset with sharp corners (`makeOffset2D`, the Intersection join), the
+band between extruded across, inside the side's cylinder; the top's (with
+the chamfer) the same, revolved. Every run is that solid: nil boolean
+difference both ways, the volumes to the digit. Two solids each: the top's
+plate (with the chamfer's ring) is apart from the rest.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue363_groove10_side_out_join`, `_out_half_join`, `_in_join`, `_in_half_join` | the groove of radius 10.06, its side removed, +1, +0.5, -1, -0.5 | 2674.0809 + 2092.4528, 1330.3737 + 1046.2264, 2626.3101 + 2092.4528, 1318.4968 + 1046.2264; refused before |
+| `issue363_groove5_side_*_join` | the groove of radius 5, the same | 2409.5300 + 2092.4528, 1197.4376 + 1046.2264, 2363.0471 + 2092.4528, 1186.0962 + 1046.2264; refused before |
+| `issue363_groove10_chamfer_side_*_join` | the 10.06 groove under a chamfered top, the same | 2674.0809 + 2144.8725, 1330.3737 + 1075.8071, 2626.3101 + 2171.6161, 1318.4968 + 1082.4930; refused before |
+| `issue363_thickness001_side_*_join` | #363's Thickness001 base (the groove one face), the same | as the chamfered one; refused before |
+
+![issue363_groove10_side_out_join](models/pictures/issue363_groove10_side_out_join.png)
+
+Over the corpus (1072 runs) 16 change: these, refused to valid at the
+boolean values. Nothing else moves.
+
+**Regression** (`6d01a232c8`, on Linux): Part 390, PartDesign 486 and
+ShapeStorage 63 OK, plain and frozen; thickness PASS=586 at fix levels 0 and
+1, plain and frozen, the 16 cases above among them (PASS=570 before); the
+thickness sweep right in all 928 runs at both levels, plain and frozen;
+fillet PASS=815 XFAIL=1, draft 104 + 1 FAIL (`new_roof_L_a-30`, Linux's
+standing one, sec 54's run there the same) and boolean 67, as before,
+fillet and draft frozen too. `corpus/baseline.txt` takes these 16 lines.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

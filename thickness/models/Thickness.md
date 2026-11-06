@@ -3250,6 +3250,47 @@ frozen; thickness PASS=570 at both fix levels, plain and frozen (562 + 8);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too. The corpus is in `../corpus/` from here on.
 
+### Sec 55: the grooved cylinders' side removed, the Intersection join
+
+**Two changes** (`BRepOffset_Inter2d.cxx`, `BRepOffset_MakeOffset.cxx`).
+#363's grooved cylinders (the groove two quarter cylinders, radius 10.06 or
+5, and the one under a chamfered top) and Thickness001's base (its groove
+one face), their side removed, the Intersection join: refused, in and out
+(16 runs). The groove's quarters are one cylinder, and so are their
+offsets: each quarter's section with the side runs on over the other
+quarter, split where the quarters meet.
+
+- On the side, removed, none of such a section was found on its enlarged
+  copy (a section in pieces is not looked up on the face, sec 54), and
+  `GetEdgesOrientedInFace`, ordering the empty set the closed set's way,
+  looked up a null first vertex: `Standard_NoSuchObject`, the whole
+  refused. None found returns none now; the corner is left as one with no
+  section is. Thickness001's base needed only this: its section is split
+  at the groove's own seam, with no piece run on.
+- Sec 47's trim of such a pair (the crossed piece to the end it shares
+  with the uncrossed one, which is dropped) was for an edge between two
+  kept faces only; beside the removed side nothing was trimmed, the
+  quarters' offsets came out unbounded along the groove (1e7 each way) and
+  every face was dropped as hanging. It is made now also where the edge's
+  kept face runs on, tangent, into another kept face at the edge's end
+  (`TrimEdges`): the piece beyond is that face's own. (With the groove's
+  quarters removed, the lips' case sec 47 kept out, no kept face runs on.)
+
+Made: every run the boolean value (the cross-section widened past the
+side, offset with sharp corners, the band extruded across inside the
+side's cylinder; the top's, with the chamfer, revolved), nil difference
+both ways, two solids each (the top's plate is apart).
+
+![issue363_groove10_side_out_join](pictures/issue363_groove10_side_out_join.png)
+
+Over the corpus (1072 runs) 16 change, all these, refused to valid;
+nothing else moves.
+
+Regression (`6d01a232c8`, Linux): Part, PartDesign, ShapeStorage OK, plain
+and frozen; thickness PASS=586 at both fix levels, plain and frozen (570 +
+16); sweep 928 of 928; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL (Linux's
+standing `new_roof_L_a-30`), boolean 67, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

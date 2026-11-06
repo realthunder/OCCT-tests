@@ -1735,6 +1735,32 @@ for _shape, _tag, _vols in ((_g10, "groove10", (6238.2052, 3034.5634)),
     for _side, _f in zip(("left", "right"), groove_quarters(_shape)):
         for _sfx, _o, _v in (("out", +1.0, _vols[0]), ("out_half", +0.5, _vols[1])):
             thickness_case("issue363_%s_%s_%s" % (_tag, _side, _sfx), _shape, _f, _o, "pass", _v)
+# The grooved cylinders' side removed, the Intersection join (sec 55):
+# refused. Each groove quarter's offset is the other's surface, and its
+# section with the side, split where the quarters meet, runs on over the
+# other's: never trimmed (sec 47's trim was for an edge between two kept
+# faces), and ordering the empty set of it found on the side's copy threw.
+# The volumes are exact and the solids too (nil boolean difference both
+# ways): the profile's offset with sharp corners, widened past the side,
+# extruded across, inside the side's cylinder; the top's (and chamfer's)
+# likewise revolved. Two solids each: the top's is apart from the rest.
+def side_face(shape):
+    return [i + 1 for i, f in enumerate(shape.Faces) if f.Surface.TypeId == "Part::GeomCylinder"
+            and abs(f.Surface.Radius - 25.807914) < 1e-6][0]
+
+
+for _shape, _tag, _vols in (
+        (_g10, "groove10", ((2674.0809, 2092.4528), (1330.3737, 1046.2264),
+                            (2626.3101, 2092.4528), (1318.4968, 1046.2264))),
+        (_g5, "groove5", ((2409.5300, 2092.4528), (1197.4376, 1046.2264),
+                          (2363.0471, 2092.4528), (1186.0962, 1046.2264))),
+        (_g10c, "groove10_chamfer", ((2674.0809, 2144.8725), (1330.3737, 1075.8071),
+                                     (2626.3101, 2171.6161), (1318.4968, 1082.4930))),
+        (issue363, "thickness001", ((2674.0809, 2144.8725), (1330.3738, 1075.8071),
+                                    (2626.3101, 2171.6161), (1318.4968, 1082.4930)))):
+    for _sfx, _o, _v in zip(("out", "out_half", "in", "in_half"), (1.0, 0.5, -1.0, -0.5), _vols):
+        pieces_case("issue363_%s_side_%s_join" % (_tag, _sfx), _shape, [side_face(_shape)], _o,
+                    list(_v), False, 2)
 # The step with its ceiling removed, the Arc join: refused inward, inside out
 # outward (-12745.7787). The ceiling's edge with the side, an arc of 137
 # degrees, was stretched into a whole circle, which cut the side's offset

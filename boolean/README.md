@@ -683,4 +683,7 @@ twice in 13 full runs, both in `TestFillet.TestFilletSlivers.
 testBaseOutsideTheBody`, FreeCAD's link check (`GeoFeatureGroupExtension::
 getGroupOfObject`) on a dangling object, with the box loaded by another
 build; none in 11 on the fork before them, the test logs otherwise alike --
-FreeCAD's, noted here.
+FreeCAD's, noted here. Found since: removing a fillet cleared its links one
+by one, and its `Corners` change linked its `Base` again after that link was
+cleared, so the deleted fillet stayed in the holder's InList; the crash comes
+whenever its memory has been reused (fcad `d1bb0beb38`, PartDesign).
