@@ -2017,6 +2017,77 @@ frozen, the 12 cases above among them (PASS=550 before); the thickness sweep
 right in all 928 runs at both levels, plain and frozen; fillet PASS=815
 XFAIL=1, draft 105 and boolean 65, as before, fillet and draft frozen too.
 
+## The side removed beside a step or a slot, the Intersection join (2026-11-06, sec 54)
+
+**What was broken.** #363's cylinder with a square step cut off its end
+(sec 37) or a square slot across it (sec 46), its side removed, the
+Intersection join: refused, in and out, at 1 and 0.5 -- 8 runs. The Arc
+join made them. (The grooved cylinders' side removed stays refused: the
+groove's two quarters' offsets, one cylinder, are not trimmed by the side.)
+
+The step's bottom meets the side's cylinder, offset, in a whole circle.
+The side's seam splits the bottom's edge with it into two arcs, and the
+circle is given to both as one compound (it is left whole: sec 37's step
+with its bottom removed needs it so); the wall's offset meets the side in
+a line, given to the side's two edges with the wall alike. Two things went
+wrong.
+
+- `ContextIntByInt` stores a removed face's sections on the face itself,
+  and `ConnexIntByInt` looked them up on the face's enlarged copy, which
+  holds none: a compound of one section edge was none of the copy's, and
+  its corner with the section beside it was never intersected. The bottom's
+  offset was left whole, its piece under the step taken for it and dropped
+  as off the face. Such a section, none of it found on the copy, is looked
+  up on the face (`GetEdgesOrientedInFace`). Sections in pieces are left as
+  they were: with a groove's quarter removed (sec 52) the side's sections
+  beyond the groove's ends are built without that corner, and intersected
+  they were refused. The corner such a section makes with one of the
+  face's own edges that is offset itself is taken as made but not
+  intersected: that edge's section bounds the face in its place, and where
+  the two cross is no vertex of it. #363's Thickness001 with both tops
+  removed inward (sec 46) is that case: the circle the inner wall makes
+  with a top crossed the trough's edge past its corner with the trough's
+  section, and the circle's piece, reaching there, left the result invalid.
+  The side's seam, not offset, still cuts the circle the bottom makes with
+  the side.
+- Outward, the circle starts at the seam, where the bottom's two arcs meet;
+  the wall's offset crosses it twice, and `TrimEdge` kept the span from the
+  lesser crossing to the greater -- the arc under the step, not the one
+  round the other way the arcs lie on. A closed section took the run of
+  spans its edges lie on only when a vertex lay at its start (#363's
+  Thickness001, sec 46); it does so now too when the span from the least to
+  the greatest holds none of them.
+
+By booleans: the profile across the step (or the slot), its offset with
+sharp corners (`makeOffset2D`, the Intersection join), extruded across,
+inside the side's cylinder, less the input outward or taken from it
+inward. Every run is that solid: nil boolean difference both ways, the
+volumes to the digit. Two solids each: the top's plate, the disk under it
+(pi r^2 times the thickness, 2092.4528 at 1), is apart from the rest.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `step_side_out_join`, `_out_half_join` | the step, its side removed, +1 and +0.5, the Intersection join | 2566.3058 + 2092.4528, 1284.2815 + 1046.2264; refused before |
+| `step_side_in_join`, `_in_half_join` | the same, -1 and -0.5 | 2574.8315 + 2092.4528, 1286.4121 + 1046.2264; refused before |
+| `slot_side_out_join`, `_out_half_join` | the slot, its side removed, +1 and +0.5 | 3057.2102 + 2092.4528, 1526.5977 + 1046.2264; refused before |
+| `slot_side_in_join`, `_in_half_join` | the same, -1 and -0.5 | 3040.1587 + 2092.4528, 1522.3365 + 1046.2264; refused before |
+
+![step_side_out_join](models/pictures/step_side_out_join.png)
+
+Over the corpus (1072 runs) 8 change: these, refused to valid at the
+boolean values. Nothing else moves. Still open: the grooved cylinders' side
+removed with the Intersection join.
+
+**Regression** (`5cf9b386ac`): Part 390, PartDesign 486 and ShapeStorage 63
+OK, plain and frozen; thickness PASS=570 at fix levels 0 and 1, plain and
+frozen, the 8 cases above among them (PASS=562 before; #363's Thickness001
+cases unchanged); the thickness sweep right in all 928 runs at both levels,
+plain and frozen; fillet PASS=815 XFAIL=1, draft 105 and boolean 65, as
+before, fillet and draft frozen too.
+
+The corpus itself now lives here, in `corpus/` (its README says how to build
+its tools and run it); `corpus/baseline.txt` is the result with this fix.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

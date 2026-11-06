@@ -1553,8 +1553,8 @@ thickness_case("step_bottom_out_join", _step, _step_bottom, +1.0, "pass", 4996.9
 # side's offset the whole circle, and the arc across the left bottom made a
 # face over it (inward valid and wrong, 9476.6104 at 1). The volumes by
 # hand: the offset with the removed face left in place, less the input or
-# taken from it. The side stays refused; the left wall removed inward, refused
-# here, is made in sec 48.
+# taken from it. The side, refused here, is made in sec 54; the left wall
+# removed inward, refused here, is made in sec 48.
 _slot = Part.makeCylinder(25.807914, 14.0).cut(
     Part.makeBox(2 * 10.062591, 120, 10.062591 + 1, App.Vector(-10.062591, -60, -1)))
 _slot_flat = [i + 1 for i, f in enumerate(_slot.Faces) if f.Surface.TypeId == "Part::GeomPlane"]
@@ -1584,6 +1584,29 @@ thickness_case("slot_left_wall_in_join", _slot, _slot_left_wall, -1.0, "pass", 6
                2)
 thickness_case("slot_left_wall_in_half_join", _slot, _slot_left_wall, -0.5, "pass", 3160.6653,
                False, 2)
+# The side removed, the Intersection join (sec 54): refused, in and out, the
+# step and the slot alike. The bottom's offset meets the side's cylinder in
+# a whole circle, which both of the bottom's arcs (the side's seam splits
+# them) were given as one compound: stored on the side, it was looked for on
+# the side's enlarged copy, and the corner of the circle with the wall's
+# section was not intersected. Outward the circle, starting at the seam, was
+# then trimmed to the arc under the step, between the wall's two crossings,
+# not the one round the other way. The volumes are exact and the solids too
+# (nil boolean difference both ways): the profile's offset with sharp
+# corners, extruded across, inside the side's cylinder, less the input or
+# taken from it. Two solids each: the top's is apart from the rest.
+_step_side = [i + 1 for i, f in enumerate(_step.Faces)
+              if f.Surface.TypeId == "Part::GeomCylinder"][0]
+_slot_side = [i + 1 for i, f in enumerate(_slot.Faces)
+              if f.Surface.TypeId == "Part::GeomCylinder"][0]
+# The top's plate is the disk under it, pi r^2 times the thickness.
+for _tag, _shape, _side, _vols in (("step", _step, _step_side,
+                                    (2566.3058, 1284.2815, 2574.8315, 1286.4121)),
+                                   ("slot", _slot, _slot_side,
+                                    (3057.2102, 1526.5977, 3040.1587, 1522.3365))):
+    for _sfx, _o, _v in zip(("out", "out_half", "in", "in_half"), (1.0, 0.5, -1.0, -0.5), _vols):
+        pieces_case("%s_side_%s_join" % (_tag, _sfx), _shape, [_side], _o,
+                    [_v, 2092.4528 * abs(_o)], False, 2)
 
 # #521: the issue's Connect -- a box 10 with a cylinder r 2 h 10 at its corner,
 # fused and refined (models/issue521_connect.brep): faces 1 x = 10, 2 y = 10,

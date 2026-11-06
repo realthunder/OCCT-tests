@@ -3212,6 +3212,44 @@ frozen; thickness PASS=562 at both fix levels, plain and frozen (550 + 12);
 sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
 draft frozen too.
 
+### Sec 54: the side removed beside a step or a slot, the Intersection join
+
+**Two changes** (`BRepOffset_Inter2d.cxx`, `BRepOffset_MakeOffset.cxx`).
+The step (and the slot) cut off the cylinder's end, its side removed, the
+Intersection join: refused, in and out (8 runs).
+
+- The bottom's offset meets the side in a whole circle, which the bottom's
+  two arcs (the seam splits them) are both given as one compound; the
+  wall's line likewise. `ContextIntByInt` stores the side's sections on the
+  side, `ConnexIntByInt` looked for them on its enlarged copy: none found,
+  the corner of the circle with the wall's line was not intersected and the
+  bottom's offset was dropped. A section of one edge not found on the copy
+  is looked up on the face now; sections in pieces (sec 52's) stay as they
+  were. Its corner with one of the face's own edges that is offset itself
+  is taken as made, not intersected: that edge's section bounds the face
+  instead. (Intersected, #363's Thickness001 with both tops removed inward
+  went invalid: the inner wall's circle crossed the trough's edge past its
+  corner with the trough's section.)
+- Outward the circle, starting at the seam, was trimmed between the wall's
+  crossings to the arc under the step. A closed section whose span from
+  the least crossing to the greatest holds none of its edges takes the run
+  of spans they lie on (`TrimEdge`), as one with a vertex at its start did.
+
+Made: every run the boolean value (the profile's sharp offset, extruded,
+inside the side's cylinder, less or within the input), nil difference both
+ways, two solids each (the top's plate is apart).
+
+![step_side_out_join](pictures/step_side_out_join.png)
+
+Over the corpus (1072 runs) 8 change, all these, refused to valid;
+nothing else moves. Open: the grooved cylinders' side removed with the
+Intersection join.
+
+Regression (`5cf9b386ac`): Part, PartDesign, ShapeStorage OK, plain and
+frozen; thickness PASS=570 at both fix levels, plain and frozen (562 + 8);
+sweep 928 of 928; fillet 815 + 1 XFAIL, draft 105, boolean 65, fillet and
+draft frozen too. The corpus is in `../corpus/` from here on.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
