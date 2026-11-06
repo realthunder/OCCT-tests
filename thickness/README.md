@@ -2210,6 +2210,64 @@ Still open on this shell: the peaks inward with the Intersection join
 removed (refused, or inside out inward), and the two outward deviations
 above.
 
+## A revolution stretched on its own meridian, from fix level 2 (2026-11-07, sec 57)
+
+**What was off.** #346's shell offset outward with the cone removed, either
+join: the rim's corner on the cone lay 5.4e-4 off its place along the cone,
+under a vertex tolerance of 2e-7 (Intersection join), the volume 3030.5581
+for 3030.5493. And the whole shell offset with the Intersection join: the
+sharp corner at the rim off with it, the area up to 0.63 off (5782.0139 for
+5782.6449 at -1). The offset faces are stretched past their outline before
+they are cut (`BRepOffset_Tool::EnLargeFace`), and a surface of revolution
+was stretched by `GeomLib::ExtendSurfByLength`, a B-spline continuation:
+its meridian, a circle here, left the circle past the rim.
+
+**The fix.** A revolution whose meridian is a trimmed piece of a conic or a
+line is trimmed wider on that same curve, by the same lengths. Not past a
+circle's origin: the revolution keeps a copy of its meridian, and the copy
+takes a range from below the origin into the next period, away from the
+face's own parameters -- those are stretched as before. (#346's file has its
+arc from 1.13 rad; the corpus's `rev*` and the profiles `run_tests.py`
+builds start theirs at the circle's origin, and do not change.)
+
+It moves shapes some input already had beyond their tolerance, so it is
+made from the fork's offset fix level 2 only (sec 31's rule): a document
+saved before recomputes as it did. FreeCAD gives new objects the level its
+`OCCTOffsetFixLevelLatest` names.
+
+By booleans and by hand: the thicknesses are sec 56's boolean values to the
+digit (3030.5493, 1498.3352, both joins), the corner within 1e-6 of where
+the grown arc crosses the cone's line; the whole offsets the meridian
+section offset in 2D as an open wire with sharp corners, revolved
+(5782.6449, 5648.3666, 5255.6121, 5384.8599), to the digit.
+
+| Case | What it covers |
+|------|----------------|
+| `issue346_revolve_rim_corner_out_level2`, `_out_join_level2`, `_out_half_level2` | the rim's corner, +1 both joins and +0.5, within 1e-6 at fix level 2 |
+| `issue346_revolve_rim_corner_out_level0` | the same at level 0, within 1e-3: as before |
+
+At level 2 six cases the suite had move, every one to its exact value and
+within the suite's tolerance of the value it holds (captured at level 0):
+`issue346_revolve_in_join` 6053.7243 to 6056.3025, `_in_0.5_join`
+5648.2105 to 5648.3666, `_out_join` 5002.0869 to 5002.0810,
+`issue346_revolve_thick_out_join` 6198.1628 to 6198.0920, and sec 56's
+`issue346_revolve_thick_out`, `_out_half` to 3030.5493, 1498.3352.
+
+![issue346_revolve_thick_out_join_level2](models/pictures/issue346_revolve_thick_out_join_level2.png)
+
+Over the corpus (1072 runs, the tools at level 0) nothing changes, and the
+baseline stands. Run at level 2 (tools that set it), 8 change: #346's file,
+the cone removed, +1 and +0.5, both joins, and its whole offset with the
+Intersection join, all four: each to the exact value.
+
+**Regression** (`f641986a36`, on Linux): Part 390, PartDesign 486 and
+ShapeStorage 63 OK, plain and frozen; thickness PASS=606 at fix levels 0, 1
+and 2, plain and frozen, the four cases above among them (602 before, levels
+0 and 1 otherwise line for line as they were); the thickness sweep right in
+all 928 runs at levels 0, 1 and 2, plain and frozen; fillet PASS=815 XFAIL=1,
+draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as
+before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

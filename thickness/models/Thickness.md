@@ -3322,6 +3322,39 @@ and frozen; thickness PASS=602 at both fix levels, plain and frozen (586 +
 16); sweep 928 of 928; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL, boolean 67,
 fillet and draft frozen too.
 
+### Sec 57: a revolution stretched on its own meridian, from fix level 2
+
+**One change, behind level 2** (`BRepOffset_Tool.cxx`, `EnlargeGeometry`).
+#346's shell outward, the cone removed, either join: the rim's corner on the
+cone 5.4e-4 along it from its place, under a tolerance of 2e-7 (3030.5581
+for 3030.5493); the whole shell offset with the Intersection join up to
+2.58 off in area (6053.7243 for 6056.3025 at -2).
+
+- `EnLargeFace` stretched a surface of revolution by
+  `GeomLib::ExtendSurfByLength`, a B-spline continuation: its meridian, a
+  circle, left the circle past the rim. A meridian that is a trimmed piece
+  of a conic or a line is trimmed wider on the same curve now -- not past a
+  periodic curve's origin, where the revolution's copy of its meridian would
+  take the range into the next period (the corpus's `rev*` and the suite's
+  profiles start there and stay as they were).
+- It moves shapes inputs already had beyond their tolerance: from the
+  fork's offset fix level 2 only, the first fix there. FreeCAD reaches it
+  for new objects once `OCCTOffsetFixLevelLatest` is 2.
+
+Made at level 2: every run it touches the exact value (sec 56's booleans;
+the meridian section offset in 2D with sharp corners, revolved), six cases
+the suite had among them; levels 0 and 1 unchanged.
+
+![issue346_revolve_thick_out_join_level2](pictures/issue346_revolve_thick_out_join_level2.png)
+
+Over the corpus (1072 runs, level 0) nothing changes; at level 2, 8, all
+#346's file, each to the exact value.
+
+Regression (`f641986a36`, Linux): Part, PartDesign, ShapeStorage OK, plain
+and frozen; thickness PASS=606 at fix levels 0, 1 and 2, plain and frozen
+(602 + 4); sweep 928 of 928 at all three; fillet 815 + 1 XFAIL, draft 104 +
+1 FAIL, boolean 67, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

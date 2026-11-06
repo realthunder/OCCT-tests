@@ -1918,6 +1918,50 @@ for _tag, _shape, _vols in (
     for _sfx, _o, _v in zip(("out", "out_half", "in", "in_half"), (1.0, 0.5, -1.0, -0.5), _vols):
         thickness_case("issue346_%s_thick_%s" % (_tag, _sfx), _shape, 1, _o, "pass", _v)
 
+
+def revolve_rim_corner_case(name, shape, value, join, fix_level, within):
+    """The cone of #346's shell removed, `value` outward: the dome's offset
+    meets the cone's surface on a circle, its corner in the meridian plane
+    z = 0 where the offset meridian (the dome's arc, its radius grown by
+    `value`) crosses the cone's line. Passes if a vertex of the result lies
+    within `within` of that point, at the fork's offset fix level
+    `fix_level`."""
+    previous = set_offset_fix_level(fix_level)
+    try:
+        cone, dome = shape.Faces[0].Surface, shape.Faces[1]
+        arc = [e.Curve for e in dome.Edges if not e.Degenerated and abs(e.Curve.Axis.z) > 0.9][0]
+        cx, cy, r = arc.Center.x, arc.Center.y, arc.Radius + value
+        k, y0 = math.tan(abs(cone.SemiAngle)), cone.Apex.y
+        f = lambda y: ((y - y0) * k - cx) ** 2 + (y - cy) ** 2 - r * r
+        lo, hi = 38.0, 46.0
+        for _ in range(200):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if (f(lo) > 0) == (f(mid) > 0) else (lo, mid)
+        corner = App.Vector((lo - y0) * k, lo, 0)
+        res = shape.makeThickness([shape.Faces[0]], value, 1e-7, False, False, 0, join)
+        d = min((v.Point - corner).Length for v in res.Vertexes)
+        ok = res.isValid() and d <= within
+        detail = "corner off %.2e" % d
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    finally:
+        set_offset_fix_level(previous)
+    report(name, ok, False, detail)
+
+
+# Sec 57: outwards the corner lay 5e-4 off along the cone, with both joins,
+# under a vertex tolerance of 2e-7: the dome's offset stretched past its rim
+# by GeomLib as a B-spline, its meridian off the circle. From the fork's
+# offset fix level 2 a revolution whose meridian is a piece of a conic or a
+# line is trimmed wider on that curve -- not past a circle's origin, where
+# the revolution's copy of its meridian would take the range into the next
+# period (the profiles built here start there, and stay as they were).
+revolve_rim_corner_case("issue346_revolve_rim_corner_out_level2", issue346, 1.0, 0, 2, 1e-6)
+revolve_rim_corner_case("issue346_revolve_rim_corner_out_join_level2", issue346, 1.0, 2, 2, 1e-6)
+revolve_rim_corner_case("issue346_revolve_rim_corner_out_half_level2", issue346, 0.5, 0, 2, 1e-6)
+revolve_rim_corner_case("issue346_revolve_rim_corner_out_level0", issue346, 1.0, 0, 0, 1e-3)
+
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets
 # meet in a mitre and both meet the dome tangentially, and their offsets'

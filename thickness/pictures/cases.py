@@ -72,6 +72,7 @@ STAGES = {
     "s54": ("4e2ce9cbbf", "54"),
     "s55": ("79041b6478", "55"),
     "s56": ("fa92a21610", "56"),
+    "s57": ("92c4617170", "57"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -603,6 +604,7 @@ CASES = {
     "step_side_out_join": ("s54", "step", 1, 1, False, 2, 4658.7586),
     "issue363_groove10_side_out_join": ("s55", "groove10", 1, 1, False, 2, 4766.5338),
     "issue346_revolve_thick_in": ("s56", "revolve346", 1, -1, False, 0, 2896.5118),
+    "issue346_revolve_thick_out_join_level2": ("s57", "revolve346", 1, 2, False, 2, 6198.0920),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
@@ -642,7 +644,9 @@ REFUSED = {
 # set): the fix comes at that level only, so that a document saved before
 # recomputes as it did (sec 31). Libraries without the level run them as
 # they are. None now: sec 31's fixes are made at every level (sec 32).
-FIX_LEVEL = {}
+FIX_LEVEL = {
+    "issue346_revolve_thick_out_join_level2": 2,
+}
 # The captured user models; upstream 8.0.1 passes them all, so not pictured.
 DOCS = {
     "issue1_ellipse_thickness": ("issue1_ellipse_thickness.FCStd", "Thickness", 3598.2930),
