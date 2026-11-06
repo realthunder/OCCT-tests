@@ -16,6 +16,26 @@ To test a change before installing it, build only `TKOffset`, copy its
 Every other library still comes from the install, so don't install while a corpus
 run is going.
 
+On Linux the tools are linked with `--enable-new-dtags`: their rpath is then a
+RUNPATH, which the library path outranks. conda's linker writes a DT_RPATH
+otherwise, which outranks the library path, and a staged library is silently
+not the one run. conda's env activation sets `CXX`, so give it inside the env:
+
+    run.sh bash -c "CXX=x86_64-conda-linux-gnu-c++ ./build.sh <prefix> bin"
+
+FreeCAD itself carries a DT_RPATH to the OCCT it was built with, so a staged
+library does not reach it: a FreeCAD-level test of a change needs it installed
+into a prefix of its own and a FreeCAD built against that.
+
+On Linux (2026-11-06, the fork at sec 54) 14 runs of `baseline.txt`, which
+macOS made, come out otherwise: #346's profile revolved about axes shifted by
++3 and -3 with f1 removed (`rev3`, `rev-3` and their `revs` twins). macOS makes
+`rev3`'s at +-1 and +-0.5 with the Arc join and refuses `rev-3`'s; Linux makes
+`rev-3`'s (at +1 and +0.5) and refuses `rev3`'s, and makes `rev-3` -1 with the
+Intersection join invalid. The two shapes mirror each other: the revolve
+family's outcome turns on a hair. Compare a run with one from the same
+platform.
+
 `baseline.txt` is the fork's current result (timings stripped). A fix changes it
 only in the runs it means to make. Note each change in the fix's README section
 (the "Over the corpus (1072 runs) N change" line), and commit the new baseline
