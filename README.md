@@ -40,6 +40,8 @@ its TKBRep (`Part.hasOCCTFunction("TKBRep", "SetFuncShowTopoShape")`).
   fix in its README.
 - `math/` -- checks of `TKMath` the work on the others led to: a C++
   driver each, built against an install.
+- `g3d/` -- checks of `TKG3d` (geometry evaluation), the same way: a
+  thread-safety fix to the offset surface.
 - `abi/` -- the fork against upstream's ABI: the symbols upstream exports
   and the layouts of the classes the fork changed, checked against an
   upstream build, and how to add to a class of upstream's without moving it.
