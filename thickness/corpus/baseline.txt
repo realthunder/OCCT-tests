@@ -638,13 +638,13 @@ rev-1.05 off 1 j1 | done valid 1 faces 2 area 5278.6022
 rev-1.05 thk f1 1 j1 | done valid 1 solids 1 vol 3056.3489
 rev-1.05 thk f2 1 j1 | not done
 rev-1.05 off -1 j1 | done valid 1 faces 2 area 5810.5123
-rev-1.05 thk f1 -1 j1 | not done
+rev-1.05 thk f1 -1 j1 | done valid 1 solids 1 vol 2922.2257
 rev-1.05 thk f2 -1 j1 | done valid 0 solids 1 vol -15382.5214
 rev-1.05 off 0.5 j1 | done valid 1 faces 2 area 5409.2199
 rev-1.05 thk f1 0.5 j1 | done valid 1 solids 1 vol 1511.2275
 rev-1.05 thk f2 0.5 j1 | not done
 rev-1.05 off -0.5 j1 | done valid 1 faces 2 area 5675.3259
-rev-1.05 thk f1 -0.5 j1 | not done
+rev-1.05 thk f1 -0.5 j1 | done valid 1 solids 1 vol 1477.6882
 rev-1.05 thk f2 -0.5 j1 | done valid 0 solids 1 vol -15382.5214
 rev-3 off 1 j0 | done valid 1 faces 3 area 5301.8746
 rev-3 thk f1 1 j0 | done valid 1 solids 1 vol 3082.1635
@@ -662,13 +662,13 @@ rev-3 off 1 j1 | done valid 1 faces 2 area 5301.8359
 rev-3 thk f1 1 j1 | done valid 1 solids 1 vol 3082.2014
 rev-3 thk f2 1 j1 | not done
 rev-3 off -1 j1 | done valid 1 faces 2 area 5838.8677
-rev-3 thk f1 -1 j1 | not done
+rev-3 thk f1 -1 j1 | done valid 1 solids 1 vol 2947.9117
 rev-3 thk f2 -1 j1 | done valid 0 solids 1 vol -14875.8266
 rev-3 off 0.5 j1 | done valid 1 faces 2 area 5433.7108
 rev-3 thk f1 0.5 j1 | done valid 1 solids 1 vol 1524.1335
 rev-3 thk f2 0.5 j1 | not done
 rev-3 off -0.5 j1 | done valid 1 faces 2 area 5702.3884
-rev-3 thk f1 -0.5 j1 | not done
+rev-3 thk f1 -0.5 j1 | done valid 1 solids 1 vol 1490.5524
 rev-3 thk f2 -0.5 j1 | done valid 0 solids 1 vol -14875.8266
 rev0 off 1 j0 | done valid 1 faces 2 area 5266.8614
 rev0 thk f1 1 j0 | done valid 1 solids 1 vol 3043.1491
@@ -758,13 +758,13 @@ revs-1.05 off 1 j1 | done valid 1 faces 2 area 5278.6022
 revs-1.05 thk f1 1 j1 | done valid 1 solids 1 vol 3056.3489
 revs-1.05 thk f2 1 j1 | not done
 revs-1.05 off -1 j1 | done valid 1 faces 2 area 5810.5123
-revs-1.05 thk f1 -1 j1 | not done
+revs-1.05 thk f1 -1 j1 | done valid 1 solids 1 vol 2922.2257
 revs-1.05 thk f2 -1 j1 | done valid 0 solids 1 vol -15382.5214
 revs-1.05 off 0.5 j1 | done valid 1 faces 2 area 5409.2199
 revs-1.05 thk f1 0.5 j1 | done valid 1 solids 1 vol 1511.2275
 revs-1.05 thk f2 0.5 j1 | not done
 revs-1.05 off -0.5 j1 | done valid 1 faces 2 area 5675.3259
-revs-1.05 thk f1 -0.5 j1 | not done
+revs-1.05 thk f1 -0.5 j1 | done valid 1 solids 1 vol 1477.6882
 revs-1.05 thk f2 -0.5 j1 | done valid 0 solids 1 vol -15382.5214
 revs-3 off 1 j0 | done valid 1 faces 3 area 5301.8746
 revs-3 thk f1 1 j0 | done valid 1 solids 1 vol 3082.1635
@@ -782,13 +782,13 @@ revs-3 off 1 j1 | done valid 1 faces 2 area 5301.8359
 revs-3 thk f1 1 j1 | done valid 1 solids 1 vol 3082.2014
 revs-3 thk f2 1 j1 | not done
 revs-3 off -1 j1 | done valid 1 faces 2 area 5838.8677
-revs-3 thk f1 -1 j1 | not done
+revs-3 thk f1 -1 j1 | done valid 1 solids 1 vol 2947.9117
 revs-3 thk f2 -1 j1 | done valid 0 solids 1 vol -14875.8266
 revs-3 off 0.5 j1 | done valid 1 faces 2 area 5433.7108
 revs-3 thk f1 0.5 j1 | done valid 1 solids 1 vol 1524.1335
 revs-3 thk f2 0.5 j1 | not done
 revs-3 off -0.5 j1 | done valid 1 faces 2 area 5702.3884
-revs-3 thk f1 -0.5 j1 | not done
+revs-3 thk f1 -0.5 j1 | done valid 1 solids 1 vol 1490.5524
 revs-3 thk f2 -0.5 j1 | done valid 0 solids 1 vol -14875.8266
 revs0 off 1 j0 | done valid 1 faces 2 area 5266.8614
 revs0 thk f1 1 j0 | done valid 1 solids 1 vol 3043.1491

@@ -34,9 +34,9 @@ macOS made, come out otherwise: #346's profile revolved about axes shifted by
 `rev-3`'s (at +1 and +0.5) and refuses `rev3`'s, and makes `rev-3` -1 with the
 Intersection join invalid. The two shapes mirror each other: the revolve
 family's outcome turns on a hair. Compare a run with one from the same
-platform. Since sec 56 the Arc join makes all of them on Linux; the two
-`rev-3` -1 runs with the Intersection join (invalid on Linux, refused on
-macOS) still differ.
+platform. Since sec 56 the Arc join makes all of them on Linux, and since
+sec 58 the two `rev-3` -1 runs with the Intersection join too (invalid on
+Linux, refused on macOS before).
 
 `baseline.txt` is the fork's current result (timings stripped). A fix changes it
 only in the runs it means to make. Note each change in the fix's README section

@@ -2268,6 +2268,48 @@ all 928 runs at levels 0, 1 and 2, plain and frozen; fillet PASS=815 XFAIL=1,
 draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as
 before, fillet and draft frozen too.
 
+## #346's peaked shells inward, the Intersection join (2026-11-07, sec 58)
+
+**What was broken.** #346's profile with its arc centred off the axis the
+other way -- the dome rising to a peak -- as a shell, the cone removed,
+inward with the Intersection join: refused, or valid 0 and 8525.0624 for
+2947.9117 (the steeper peak at -1). The Arc join made them (sec 56).
+
+Inward the dome's offset meridian crosses the axis before its end, and the
+face is cut there (sec 40), short of its basis's apex. Before the faces are
+cut each offset is stretched past its outline (`EnlargeGeometry`), and a
+revolution was kept from being stretched at an end only where the face's
+own iso there is a point: here the face stops at the crossing, a whole
+circle of the basis further on, and the basis was stretched past its apex.
+Its meridian turned back up across the axis, the dome's offset was never
+trimmed by the loops, and it was dropped as hanging. A revolution is not
+stretched past an end of the surface on its axis now.
+
+By booleans (sec 56's: the meridian and its mirror run on past the rim,
+offset in 2D, the band revolved inside the cone): every run within 6e-7,
+the Arc join's volumes.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_peak_shell_thick_in_join`, `_in_half_join` | the peak (arc centred 1.05 off), the cone removed, -1 and -0.5, the Intersection join | 2922.2257, 1477.6882; refused before |
+| `issue346_steep_peak_shell_thick_in_join`, `_in_half_join` | the steeper peak (3 off), the same | 2947.9117, 1490.5524; invalid (8525.0624) and refused before |
+
+![issue346_peak_shell_thick_in_join](models/pictures/issue346_peak_shell_thick_in_join.png)
+
+Over the corpus (1072 runs) 8 change, at fix levels 0 and 2 alike: these
+and their twins closed by a sphere (`breps/apex/rev-1.05`, `rev-3`,
+`revs-1.05`, `revs-3`, -1 and -0.5), refused or wrong to valid. Nothing
+else moves, so no level: the fix lands plainly. The last two of the Linux
+and macOS corpus differences (`rev-3` -1) go with it.
+
+**Regression** (`02fba5930a`, on Linux): Part 390, PartDesign 486 and
+ShapeStorage 63 OK, plain and frozen; thickness PASS=610 at fix levels 0, 1
+and 2, plain and frozen, the four cases above among them (606 before, the
+rest line for line as they were); the thickness sweep right in all 928 runs
+at all three levels, plain and frozen, unchanged; fillet PASS=815 XFAIL=1,
+draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as
+before, fillet and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

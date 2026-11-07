@@ -1961,6 +1961,15 @@ revolve_rim_corner_case("issue346_revolve_rim_corner_out_level2", issue346, 1.0,
 revolve_rim_corner_case("issue346_revolve_rim_corner_out_join_level2", issue346, 1.0, 2, 2, 1e-6)
 revolve_rim_corner_case("issue346_revolve_rim_corner_out_half_level2", issue346, 0.5, 0, 2, 1e-6)
 revolve_rim_corner_case("issue346_revolve_rim_corner_out_level0", issue346, 1.0, 0, 0, 1e-3)
+# Sec 58: the peaks inward with the Intersection join: refused, or valid
+# and wrong (8525.0624 for 2947.9117). The dome's offset is cut where its
+# meridian crosses the axis, short of its basis's apex, and was stretched
+# past the apex: the meridian turned back up across the axis and the face
+# was never trimmed. The Arc join's volumes, the boolean ones (sec 56).
+for _tag, _shape, _vols in (("peak_shell", issue346_profile(-1.05), (2922.2257, 1477.6882)),
+                            ("steep_peak_shell", issue346_profile(-3.0), (2947.9117, 1490.5524))):
+    for _sfx, _o, _v in zip(("in_join", "in_half_join"), (-1.0, -0.5), _vols):
+        thickness_case("issue346_%s_thick_%s" % (_tag, _sfx), _shape, 1, _o, "pass", _v, False, 2)
 
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets

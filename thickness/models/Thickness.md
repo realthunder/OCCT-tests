@@ -3355,6 +3355,31 @@ and frozen; thickness PASS=606 at fix levels 0, 1 and 2, plain and frozen
 (602 + 4); sweep 928 of 928 at all three; fillet 815 + 1 XFAIL, draft 104 +
 1 FAIL, boolean 67, fillet and draft frozen too.
 
+### Sec 58: #346's peaked shells inward, the Intersection join
+
+**One change** (`BRepOffset_Tool.cxx`, `EnlargeGeometry`). #346's profile
+as a shell with its dome rising to a peak, the cone removed, inward with
+the Intersection join: refused, or inside out (8 runs).
+
+- Inward the dome's offset is cut where its meridian crosses the axis,
+  short of its basis's apex. A revolution was kept from being stretched at
+  an end only where the face's own iso there is a point; here it is a
+  circle, and the basis was stretched past its apex, its meridian turned
+  back up across the axis, the face never trimmed and dropped. Not past an
+  end of the surface on its axis now.
+
+Made: every run the boolean value (sec 56's) within 6e-7, the Arc join's.
+No level: nothing else moves.
+
+![issue346_peak_shell_thick_in_join](pictures/issue346_peak_shell_thick_in_join.png)
+
+Over the corpus (1072 runs) 8 change, at levels 0 and 2, all these.
+
+Regression (`02fba5930a`, Linux): Part, PartDesign, ShapeStorage OK, plain
+and frozen; thickness PASS=610 at fix levels 0, 1 and 2, plain and frozen
+(606 + 4); sweep 928 of 928 at all three; fillet 815 + 1 XFAIL, draft 104 +
+1 FAIL, boolean 67, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

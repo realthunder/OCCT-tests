@@ -73,6 +73,7 @@ STAGES = {
     "s55": ("79041b6478", "55"),
     "s56": ("fa92a21610", "56"),
     "s57": ("92c4617170", "57"),
+    "s58": ("e1d0c13102", "58"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -271,6 +272,19 @@ def _issue346(cx):
     return Part.Face(w).revolve(V(), V(0, 1, 0), 360)
 
 
+def _issue346_shell(cx):
+    # The same profile not closed: the cone and the dome alone, a shell, as
+    # run_tests.py's issue346_profile(cx) makes it. Face1 is the cone.
+    cy = -20.083431642721106
+    a, b = V(37.713451316238469, 51.192533317427738, 0), V(30, 42, 0)
+    r = math.hypot(30 - cx, 42 - cy)
+    t = V(0, cy + math.sqrt(r * r - cx * cx), 0)
+    am = 0.5 * (math.atan2(42 - cy, 30 - cx) + math.atan2(t.y - cy, -cx))
+    m = V(cx + r * math.cos(am), cy + r * math.sin(am), 0)
+    w = Part.Wire([Part.LineSegment(a, b).toShape(), Part.Arc(b, m, t).toShape()])
+    return w.revolve(V(), V(0, 1, 0), 360)
+
+
 def _dome2(line=False):
     # A dome on the y axis, its rim in two arcs: fused with the vertex across
     # from its seam's end, or -- line -- with the line between them, which
@@ -358,6 +372,7 @@ SHAPES = {
     "issue521": lambda: _issue521(),
     "dimple346": lambda: _issue346(1.0500384390052573),
     "peak346": lambda: _issue346(-1.0500384390052573),
+    "peakshell346": lambda: _issue346_shell(-1.05),
     "issue613": lambda: _issue613(),
     "revolve346": lambda: _revolve346(),
 }
@@ -605,6 +620,7 @@ CASES = {
     "issue363_groove10_side_out_join": ("s55", "groove10", 1, 1, False, 2, 4766.5338),
     "issue346_revolve_thick_in": ("s56", "revolve346", 1, -1, False, 0, 2896.5118),
     "issue346_revolve_thick_out_join_level2": ("s57", "revolve346", 1, 2, False, 2, 6198.0920),
+    "issue346_peak_shell_thick_in_join": ("s58", "peakshell346", 1, -1, False, 2, 2922.2257),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
