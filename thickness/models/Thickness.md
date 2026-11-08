@@ -3380,6 +3380,37 @@ and frozen; thickness PASS=610 at fix levels 0, 1 and 2, plain and frozen
 (606 + 4); sweep 928 of 928 at all three; fillet 815 + 1 XFAIL, draft 104 +
 1 FAIL, boolean 67, fillet and draft frozen too.
 
+### Sec 59: #346's dome removed, and the apex outward, from fix level 3
+
+**Four changes** (`BRepOffset_MakeOffset.cxx`, `BRepOffset_Offset.cxx`,
+`BRepOffset_Tool.cxx`), the last three from fix level 3.
+
+- The dome removed inward came back as the shell itself (invalid): the
+  cone's offset hung and was dropped, the removed dome's image all that was
+  left. An offset of the removed faces' rims alone is refused now, as an
+  open shell whose free edge no removed face covers is anyway.
+- At a dimple outward the offset crosses the axis: it was cut short and
+  capped by a sphere, a face crossing itself (BOP's check refuses it; a
+  boolean on it gave 5519). Trimmed at the crossing now, either join.
+- Sec 57's stretch on the meridian stopped at a circle's origin; the range
+  is taken a period on there now, with the face's pcurves.
+- A peak outward with the Intersection join was carried to the axis by a
+  B-spline of the whole offset (9.1e-4 off); on the concentric circle now.
+
+Made: every run the boolean value to the digit.
+
+![issue346_dome_removed_in_refused](pictures/issue346_dome_removed_in_refused.png)
+
+![issue346_steep_dimple_shell_apex_thick_out_level3](pictures/issue346_steep_dimple_shell_apex_thick_out_level3.png)
+
+Over the corpus (1072 runs) 36 change at every level, the refusals; at
+level 3, 76 more, each to its boolean value.
+
+Regression (`6b8ecdcf9f`, Linux): Part, PartDesign, ShapeStorage OK, plain
+and frozen; thickness PASS=631 at fix levels 0 to 3, plain and frozen (610 +
+21); sweep 928 of 928 at all four; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL,
+boolean 67, fillet and draft frozen too.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

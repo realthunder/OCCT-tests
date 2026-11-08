@@ -2310,6 +2310,84 @@ at all three levels, plain and frozen, unchanged; fillet PASS=815 XFAIL=1,
 draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as
 before, fillet and draft frozen too.
 
+## #346's dome removed, and the apex outward, from fix level 3 (2026-11-09, sec 59)
+
+**What was broken.** Four things on #346's shell (a cone and a dome
+coming to a point on the axis) and the corpus's profiles like it:
+
+- **The dome removed, inward**: valid 0, -15929.7133 -- the shell itself.
+  The cone's offset never met the dome and was dropped as hanging; what was
+  left was the dome's own image, and the solid glued from it was the input.
+  Outward it was refused. With the dome gone the cone's top edge is free and
+  no removed face covers it, a cup with its bottom removed, which the fork
+  refuses (an open box the same): refused now inward too. An offset of the
+  removed faces' rims alone is no thick solid.
+- **A dimple outward**: its offset's meridians cross the axis before their
+  end. The Arc join never looked at the apex outward, and the Intersection
+  join left the crossing open since sec 43; the face ran on past the axis to
+  a circle 0.015 across and a sphere round the apex closed it -- a face
+  crossing itself. BRepCheck passes it; BOP's argument check does not, and a
+  cut of the boolean reference from it gave 5519 (the reference is 3030).
+  The steeper dimple (the arc centred 3 off the axis) was 3.9e-3 off. Now
+  the offset is trimmed where it crosses, with either join: both give the
+  crossing, a concave corner, and a sharp one.
+- **Sec 57's origin**: the stretch of a revolution on its own meridian
+  stopped at a circle's origin, where a copy of the meridian takes its
+  range a period on. The corpus's profiles and the suite's start there, and
+  their rims stayed 6.6e-4 off. Such a range is taken a period on now, and
+  the face's pcurves with it (`EnLargeFace`, and `ExtentFace`'s own copy):
+  the same points, kept through a copy and a BRep write and read. The face's
+  own offset surface is no longer changed in place for it: a trimmed surface
+  round it keeps its bounds.
+- **A peak outward, the Intersection join**: its offset falls short of the
+  axis and is extended there, by GeomLib as a B-spline of the whole offset,
+  9.1e-4 off at the tip, the thickness 0.042 over. A revolution of a circle
+  is carried to the axis on the concentric circle now.
+
+The first moves only results that were not answers, so it lands at every
+level. The other three move shapes some input already had beyond their
+tolerance, so they come from the fork's offset fix level 3 (sec 31's
+rule); FreeCAD's `OCCTOffsetFixLevelLatest` names it for new objects.
+
+By booleans, sec 56's for the thicknesses (the band of the meridian section
+offset in 2D, revolved, inside the cone) and sec 57's for the whole offsets
+(the section offset as an open wire, revolved): every run below to the
+digit, every face within 6.3e-7.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue346_dome_removed_in_refused`, `_in_half_`, `_in_join_`, `_in_half_join_` | #346's Revolve, the dome (face 2) removed, -1 and -0.5, both joins | refused; the shell itself before |
+| `issue346_revolve_apex_thick_out_level3`, `_out_join_`, `_out_half_` | the Revolve, the cone removed, +1 both joins, +0.5 | 3030.5493, 1498.3352, no sphere, the axis reached by the dome and its offset alone |
+| `issue346_steep_dimple_shell_apex_thick_out*_level3` | the arc centred 3 off the axis, a steeper dimple, +1 and +0.5, both joins | 3008.6805, 1487.3880; 3008.6925 and 1487.3895 before |
+| `issue346_peak_shell_apex_thick_out*_join_level3`, `issue346_steep_peak_shell_...` | the peaks, +1 and +0.5, the Intersection join | 3056.3047, 1511.2079; 3082.1592, 1524.1143; 0.04 over before |
+| `issue346_*_apex_out*_level3` | the whole offsets: the Revolve +1, the steeper dimple +1 and -1 with the Intersection join, the peaks +1 with it | 5255.6121, 5236.1734, 5758.1468, 5278.6402, 5301.8746 |
+| `issue346_revolve_apex_out_level0` | the Revolve at level 0 | as before: the sphere, and the offset across the axis under it |
+
+![issue346_dome_removed_in_refused](models/pictures/issue346_dome_removed_in_refused.png)
+
+![issue346_steep_dimple_shell_apex_thick_out_level3](models/pictures/issue346_steep_dimple_shell_apex_thick_out_level3.png)
+
+Over the corpus (1072 runs) 36 change at levels 0 and 2: these refusals,
+on #346's file and every profile of `breps/apex/`, invalid to refused.
+Nothing else moves, and the baseline takes them. At level 3, 76 more
+(against level 2), all on the apex corpus and #346's file, each to its
+boolean value: the dimples' thicknesses and offsets outward, the peaks'
+with the Intersection join, and the profiles that start at their circle's
+origin, sec 57's stretch now reaching them.
+
+Found on the way, left: the rim's section of the cone and the dome's
+offset, a B-spline, lies 1.27e-7 from its pcurves under a tolerance of
+1.02e-7 (BOP's argument check calls it `InvalidCurveOnSurface`; BRepCheck
+passes it), at every level.
+
+**Regression** (`6b8ecdcf9f`, on Linux): Part 390, PartDesign 486 and
+ShapeStorage 63 OK, plain and frozen; thickness PASS=631 at fix levels 0, 1,
+2 and 3, plain and frozen, the 21 cases above among them (610 before, the rest
+line for line as they were); the thickness sweep right in all 928 runs at
+all four levels, plain and frozen; fillet PASS=815 XFAIL=1, draft 104 + 1
+FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as before, fillet
+and draft frozen too.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

@@ -1971,6 +1971,86 @@ for _tag, _shape, _vols in (("peak_shell", issue346_profile(-1.05), (2922.2257, 
     for _sfx, _o, _v in zip(("in_join", "in_half_join"), (-1.0, -0.5), _vols):
         thickness_case("issue346_%s_thick_%s" % (_tag, _sfx), _shape, 1, _o, "pass", _v, False, 2)
 
+
+# Sec 59: #346's shell with its dome removed, inward: the cone's offset never
+# met the dome and was dropped as hanging, the dome's own image all that was
+# left, and the solid glued from it was the shell itself (invalid,
+# -15929.7133). Outward it was refused. With the dome gone the cone's top
+# edge is free and no removed face covers it -- a cup with its bottom
+# removed, refused as ever: refused now inward too.
+for _sfx, _o, _j in (("in", -1.0, 0), ("in_half", -0.5, 0), ("in_join", -1.0, 2),
+                     ("in_half_join", -0.5, 2)):
+    refused_case("issue346_dome_removed_%s_refused" % _sfx, issue346, [2], _o, False, _j)
+
+
+def apex_case(name, shape, value, join, fix_level, ref, thick=True, sphere=False, crossings=None):
+    """#346's shell, its cone removed (thick) or offset whole, `value`, at the
+    fork's offset fix level `fix_level`: a valid result, its volume (area)
+    `ref` to 2e-4, a sphere round the apex if `sphere`, none if not, and the
+    axis reached by the dome (thick) and its offset, or by `crossings` faces:
+    an offset taken past the axis and a sphere over its end reach it both."""
+    previous = set_offset_fix_level(fix_level)
+    try:
+        if thick:
+            r = shape.makeThickness([shape.Faces[0]], value, 1e-7, False, False, 0, join)
+        else:
+            r = shape.makeOffsetShape(value, 1e-7, False, False, 0, join)
+        got = r.Volume if thick else r.Area
+        spheres = len([f for f in r.Faces if f.Surface.TypeId == "Part::GeomSphere"])
+        axis = Part.LineSegment(App.Vector(0, 30, 0), App.Vector(0, 60, 0)).toShape()
+        hits = len([f for f in r.Faces if f.distToShape(axis)[0] < 1e-6])
+        problems = []
+        if not r.isValid():
+            problems.append("invalid")
+        if abs(got - ref) > 2e-4:
+            problems.append("%s %.4f != %.4f" % ("volume" if thick else "area", got, ref))
+        if bool(spheres) != sphere:
+            problems.append("%d sphere(s)" % spheres)
+        if hits != (crossings if crossings is not None else 2 if thick else 1):
+            problems.append("%d faces on the axis" % hits)
+        ok = not problems
+        detail = "; ".join(problems) if problems else "%s=%.4f" % ("vol" if thick else "area", got)
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    finally:
+        set_offset_fix_level(previous)
+    report(name, ok, False, detail)
+
+
+# Sec 59: outward, a dimple's offset crosses the axis before its end -- with
+# the Arc join it was cut 0.015 from the axis and closed by a sphere round the
+# apex, its face crossing itself (BRepCheck passes it, BOP's argument check
+# does not: a cut of the boolean reference from it gave 5519); the steeper
+# dimple 3.9e-3 off. From fix level 3 the crossing is trimmed, with either
+# join. The level's stretch of sec 57 reaches below a circle's origin too (the
+# profiles built here start there: the rim's corner 6.6e-4 off before), and a
+# peak's offset is carried to the axis on its own circle with the Intersection
+# join (GeomLib's B-spline ended 9.1e-4 off, the thickness 0.042 over). Every
+# value the boolean one (sec 56's for the thicknesses, sec 57's revolved
+# section for the offsets), to the digit.
+# At level 0 as before: the sphere, and the offset across the axis under it.
+apex_case("issue346_revolve_apex_out_level0", issue346, 1.0, 0, 0, 3030.5581, sphere=True,
+          crossings=3)
+for _tag, _shape, _vals in (
+        ("revolve", issue346, ((1.0, 0, 3030.5493), (1.0, 2, 3030.5493), (0.5, 0, 1498.3352))),
+        ("steep_dimple_shell", issue346_profile(3.0),
+         ((1.0, 0, 3008.6805), (1.0, 2, 3008.6805), (0.5, 0, 1487.3880), (0.5, 2, 1487.3880))),
+        ("peak_shell", issue346_profile(-1.05), ((1.0, 2, 3056.3047), (0.5, 2, 1511.2079))),
+        ("steep_peak_shell", issue346_profile(-3.0), ((1.0, 2, 3082.1592), (0.5, 2, 1524.1143)))):
+    for _o, _j, _v in _vals:
+        apex_case("issue346_%s_apex_thick_out%s%s_level3" % (
+            _tag, "_half" if _o == 0.5 else "", "_join" if _j else ""), _shape, _o, _j, 3, _v)
+apex_case("issue346_revolve_apex_out_level3", issue346, 1.0, 0, 3, 5255.6121, thick=False)
+apex_case("issue346_steep_dimple_shell_apex_out_level3", issue346_profile(3.0), 1.0, 0, 3,
+          5236.1734, thick=False)
+apex_case("issue346_steep_dimple_shell_apex_in_join_level3", issue346_profile(3.0), -1.0, 2, 3,
+          5758.1468, thick=False, sphere=True)
+apex_case("issue346_peak_shell_apex_out_join_level3", issue346_profile(-1.05), 1.0, 2, 3,
+          5278.6402, thick=False)
+apex_case("issue346_steep_peak_shell_apex_out_join_level3", issue346_profile(-3.0), 1.0, 2, 3,
+          5301.8746, thick=False)
+
 # A box under a B-spline dome, the dome's four edges filleted (r 3), the
 # bottom (face 4) removed, 2 inward: at each corner of the dome two fillets
 # meet in a mitre and both meet the dome tangentially, and their offsets'

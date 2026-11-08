@@ -67,7 +67,8 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "peak346": "#346's profile, its arc to the other side, a solid: the dome's top a peak",
          "issue613": "#613's part: a cylinder under a cone with a filleted ridge across its top",
          "revolve346": "#346's Revolve, a shell: a cone, and a dome whose top is a dimple",
-         "peakshell346": "#346's profile as a shell, its arc centred the other way: a cone, and a dome rising to a peak"}
+         "peakshell346": "#346's profile as a shell, its arc centred the other way: a cone, and a dome rising to a peak",
+         "steepdimpleshell346": "#346's profile as a shell, its arc centred 3 off the axis: a cone, and a dome whose top is a steeper dimple"}
 JOIN = {0: "Arc join", 2: "Intersection join"}
 def status(d):
     if d["ok"] and d.get("refused"):
