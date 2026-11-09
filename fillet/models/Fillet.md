@@ -2277,6 +2277,23 @@ picture is FreeCAD's feature, the input on the left.
 
 ![fcad_full_round_ribs](pictures/fcad_full_round_ribs.png)
 
+### A chamfer's guide bent at its other end (`1420e35a51`, #631's arm)
+
+A chamfer puts its two lines the chamfer's distance from a point of its
+guide, the elspine -- a fillet only takes its section planes from it. On
+#631's arm the guide of the ellipse under the arm was bent 0.53 off the
+edge at its start: its other end, moved to meet the next edge's tangent
+(0.17 deg off), was moved by a deformation of the whole curve, the
+straight extension past the start included, which pulled the start 11
+toward the spine carried on straight. The chamfer of 0.3 ran onto the edge
+and its corner found no cap: refused, upstream's 8.0.1 too; at 0.8 it was
+made, its width 0.52 to 1.37. Each end is now moved on its own last
+quarter, an extended one not at all: the chamfer is 0.3 wide along the
+edge, here past the vertex (the corner OnSame carries it on down the
+cylinder), valid and clean by BOP's check.
+
+![issue631_fillet002_chamfer_e12_0.3](pictures/issue631_fillet002_chamfer_e12_0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

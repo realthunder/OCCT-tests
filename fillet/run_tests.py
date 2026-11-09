@@ -1557,6 +1557,74 @@ e631 = edge_between(p631, (-7.5, -14.823467, 15.553928), (-7.5, -15.0, 11.398326
 for r, vol in ((0.8, 41530.1861), (2.0, 41484.0873)):
     fillet_case("issue631_fillet002_r%g" % r, p631, e631, r, "pass", vol)
 
+
+def chamfer_width_case(name, shape, edge_index, size, span=(0.05, 0.75), tol=2e-5):
+    """makeChamfer(size, [Edge<edge_index>]); along that edge, over `span` (the
+    fractions of it), the chamfer's section by the plane normal to the edge ends `size`
+    from the edge's point on both faces, within `tol`."""
+    try:
+        e = shape.Edges[edge_index - 1]
+        r = shape.makeChamfer(size, [e])
+        olds = [f.Area for f in shape.Faces]
+        new = Part.Compound([f for f in r.Faces if not any(abs(f.Area - a) < 1e-6 for a in olds)
+                             and isinstance(f.Surface, Part.BSplineSurface)])
+        a, b = e.FirstParameter, e.LastParameter
+        worst, where = 0.0, None
+        for k in range(21):
+            t = span[0] + (span[1] - span[0]) * k / 20
+            u = a + (b - a) * t
+            p, d = e.valueAt(u), e.tangentAt(u)
+            pl = Part.makePlane(4 * size + 1, 4 * size + 1, p, d)
+            pl.translate(p - pl.CenterOfMass)
+            ends = {}
+            for ed in new.section(pl).Edges:
+                for v in (ed.Vertexes[0], ed.Vertexes[-1]):
+                    key = tuple(round(c, 7) for c in v.Point)
+                    ends[key] = ends.get(key, 0) + 1
+            free = [App.Vector(*q) for q, n in ends.items() if n == 1]
+            if len(free) != 2:
+                worst, where = float("inf"), "%d section ends at %.2f of the edge" % (len(free), t)
+                break
+            for q in free:
+                dev = abs(q.distanceToPoint(p) - size)
+                if dev > worst:
+                    worst, where = dev, "%.2f of the edge" % t
+        ok = worst <= tol
+        detail = ("width within %.1g" % worst if ok
+                  else "width off by %.2g at %s" % (worst, where))
+    except Exception as ex:
+        ok, detail = False, "EXCEPTION " + str(ex).strip().splitlines()[-1]
+    report(name, ok, False, detail)
+
+
+# The same input's edges a chamfer of 0.3 was refused on ("OneCorner: cap not
+# written") where the fillet is made, upstream's 8.0.1 as well (README.md, "A
+# chamfer's guide bent at its other end"): the ellipses where the arm's
+# underside cuts the cylinder of radius 49 (y +18, y -11) and the B-spline
+# between the arm's two cylinders (y -15). The volumes are the results'
+# own; what is checked against the shape is the width: the chamfer's points
+# lie `size` from its guide's, and the guide was 0.53 off the ellipse at the
+# vertex the chain is extended past. The width is now the chamfer's size to
+# 2e-5 along the edge, but where a guide's end meets its neighbour's: within
+# a quarter of the edge of that end it takes up the turn between the two
+# (to 7e-4 at the ellipse's far end; E14, inside a chain of six, at both).
+for a, b, vol, span in (
+        ((7.5, 17.852122, 30), (17.981017, 24.951673, 43.127739), 41535.183701, (0.05, 0.75)),
+        ((7.5, -11.331862, 30), (18.609908, -2.655657, 43.915441), 41535.127459, (0.05, 0.75)),
+        ((-7.5, -14.823467, 15.553928), (1.730509, -4.962423, 41.112457), 41533.770346,
+         (0.3, 0.65))):
+    ec = edge_between(p631, a, b)
+    tag = "y%+d" % round(a[1])
+    fillet_case("issue631_fillet002_chamfer_%s_0.3" % tag, p631, ec, 0.3, "pass", vol, 2e-4,
+                chamfer=True, vol_tol=1e-5, bop=True)
+    chamfer_width_case("issue631_fillet002_chamfer_%s_0.3_width" % tag, p631, ec, 0.3, span)
+# E12 at 0.8 was made before, valid, and wrong: its width ran from 0.52 to
+# 1.37 along the edge (0.82 at the vertex past which the guide was bent).
+e12 = edge_between(p631, (7.5, 17.852122, 30), (17.981017, 24.951673, 43.127739))
+fillet_case("issue631_fillet002_chamfer_y+18_0.8", p631, e12, 0.8, "pass", 41511.95461, 2e-4,
+            chamfer=True, vol_tol=1e-5, bop=True)
+chamfer_width_case("issue631_fillet002_chamfer_y+18_0.8_width", p631, e12, 0.8, (0.15, 0.75))
+
 # FreeCAD's PartDesign case 5829: a box with a wedge on its back, filleted
 # all round at 8 (models/case5829_box.brep, the Box feature's solid, and the
 # twelve edges its Fillet takes). Its corner plates, held tangent, miss their

@@ -6010,6 +6010,93 @@ the copy's volume.
 `BRepLib.cxx`/`.hxx`. `36a9e0d3aa`: `BRep_Builder.cxx`. `24fe55c705`:
 `ChFi3d_Builder.cxx` (`ChFi3d_SpreadThawed`).
 
+## A chamfer's guide bent at its other end (`1420e35a51`, realthunder/FreeCAD#631, 2026-11-09)
+
+The edge sweep run as a chamfer (`OP=chamfer`, sizes 0.3, 0.8, 2) next to the
+fillet's: 273 edges where the fillet of radius r is made and the chamfer of
+distance r is refused. A chamfer of distance r needs no more room than a
+fillet of radius r, so those were looked at first. On #631's Fillet002 input
+the ellipse E12, where the S-bent arm's underside (a plane, F11) cuts the
+pad's cylinder of radius 49 (F2), is refused at 0.3, 0.2, 0.1 and 0.05 --
+no matter of size -- with "OneCorner : bouchon non ecrit" (cap not
+written), and so is upstream's 8.0.1 TKFillet built against the fork.
+
+The chain is E12 and the line E31 beyond it (F10 and F11), the two tangent
+to 0.17 deg at their common vertex. Its start V1, (7.5, 17.85, 30), is a
+corner OnSame -- two convex edges and a concave one, E29 between the end
+face x = 7.5 and F11 -- and the spine is extended past it by half the
+chain, 45. The chamfer's first section, though, lay 3.84 into the edge, its
+point on the cylinder on E12 itself and the other 0.63 from it on F11; the
+walk had run onto the edge, and the corner found nothing to cut.
+
+A fillet's section only takes its plane from the spine; a chamfer's points
+lie the chamfer's distance from the guide's point (`BlendFunc_Corde`), and
+the guide, the elspine, was 0.67 off E12 at V1, 0.35 at 4 along it, 0.003
+at the far end. `ChFi3d_PerformElSpine` builds it exact -- 2e-14 off the
+edge through every step -- up to its last one: the end at the junction with
+E31 is 2.9e-4 and 0.17 deg off the next elspine's start, so the curve is
+adjusted (`GeomLib::AdjustExtremity`) to meet it. That moves both ends,
+the other held to the elspine's first point and tangent, which are the
+spine carried on straight: the curve's own extension (`ExtendCurveToPoint`,
+C3, round the ellipse's curvature) ends 11 away from it, and the one cubic
+deformation over the whole curve, extension included, bent the edge's own
+part 0.53 out.
+
+Two changes, in `ChFi3d_PerformElSpine`:
+
+- an end that was extended (or needs nothing) keeps its own point and
+  tangent -- what the check above the adjustment, "if there was no
+  extension", meant for it. Alone, the guide is 0.025 off at V1: the
+  other end's correction, spread over the 59 of the curve, 41 of them the
+  extension;
+- an end that needs it is moved by a deformation of its own (the static
+  `AdjustEndLocally`): nought, with its first two derivatives, a quarter of
+  the edges' part back from that end and on the far side of it, a Bezier
+  span of the curve's degree past it, the end's point and tangent met
+  exactly, rational curves too (the end poles' weights taken into the
+  tangent). The guide is off E12 by 8e-4 at most now, in its last quarter,
+  where the 0.17 deg turn into E31 is taken up. `AdjustExtremity` is kept
+  for a curve under degree 5 or too short.
+
+The chamfer of 0.3 on E12 is made, valid, clean by BOP's check, and its
+width -- its section by the plane normal to the edge, each end's distance
+from the edge's point -- is 0.30000 along the edge to 5% of its end, 0.3007
+at most in the last quarter. The same on the other ellipse of the arm (E21,
+y -11) and on the B-spline between the arm's two cylinders (E14).
+
+Against the fork before (`46934730d6`), every sweep's result. The chamfer:
+edge 37 refused -> made (2396 -> 2433 of 3921), vertex 143 (8638 -> 8781 of
+12242), none lost; 71 and 305 valid ones moved, all on #631's three shapes
+(`Fillet001`, `Fillet002`, `Fillet003`) -- and those were wrong: E12 at 0.8,
+made before, ran 0.52 to 1.37 wide along the edge, and is 0.8000 now from a
+tenth of it to the last quarter; E21 at 2 ran 1.20 to 1.99 and is 2.0000
+from 15% of it to three quarters.
+The fillet: no status moves (edge 2666 and 1255, vertex 9712 and 2530), and
+93 and 362 valid ones move by 0.008 at most, all on the same three shapes,
+none of their faces; three tolerances rise to 1.03e-3 and three fall. No
+`BAD`, `LOOSE`, timeout or crash in any. The suite PASS=823 XFAIL=1, plain
+and frozen: the 815 as before, and the cases below.
+
+| Case | What |
+|------|------|
+| `issue631_fillet002_chamfer_y{+18,-11,-15}_0.3` | #631's Fillet002 input, E12, E21 and E14 chamfered at 0.3: valid, clean by BOP's check (refused before, and upstream) -- the volumes the results' own |
+| `issue631_fillet002_chamfer_y{+18,-11,-15}_0.3_width` | the same chamfers' width along the edge, the chamfer's size to 2e-5 (5% to 75% of the ellipses, 30% to 65% of E14, inside a chain at both ends) |
+| `issue631_fillet002_chamfer_y+18_0.8`, `..._width` | E12 at 0.8: made before too, 0.52 to 1.37 wide; 0.8 to 2e-5 from 15% to 75% of the edge now |
+
+Found on the way, not changed: the fork refuses 8 chamfers that upstream's
+8.0.1 makes (#474's `Fillet` and `Fillet001` E12, E28, E37, E45 at 0.3);
+upstream's is valid by BRepCheck but not by BOP's check, an edge at a
+tolerance of 0.131. And #273's chamfer crash (`IntersectMoreCorner`, its
+reporter's arc of the cup's top beside the handle, across the cylinder's
+seam) is fixed in the fork: the arc and its tangent neighbour chamfer valid
+at 0.5, 1 and 2 on the Pocket and the Fillet, in Part and through
+PartDesign's Chamfer, BOP's check clean, nothing taken out of the chamfer's
+ring outside it. Upstream's FreeCAD 1.1.4 (OCCT 7.8.1) still crashes there,
+the reporter's stack; upstream's 8.0.1 TKFillet refuses the chamfer at all
+three sizes.
+
+`models/pictures/issue631_fillet002_chamfer_e12_0.3.png`.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
