@@ -1,17 +1,18 @@
-# The fork's offset fix level (BRepOffset_SetFixLevel, BRepOffset.hxx) for a
-# suite run by FreeCADCmd: env THICK_FIX_LEVEL=<n> sets it on the calling
-# thread, which is the one the suite's offsets run on. Found through ctypes in
-# the TKOffset FreeCAD has loaded, so a FreeCAD that knows nothing of the
-# level runs the suite at any level.
+# The fork's offset fix level (BRepOffset_SetFixLevel, BRepOffset.hxx) and
+# fillet fix level (ChFi3d_SetFixLevel, ChFi3d_Builder.hxx) for a suite run by
+# FreeCADCmd: env THICK_FIX_LEVEL=<n> and FILLET_FIX_LEVEL=<n> set them on the
+# calling thread, which is the one the suite's offsets and fillets run on.
+# Found through ctypes in the TKOffset and TKFillet FreeCAD has loaded, so a
+# FreeCAD that knows nothing of the levels runs the suites at any level.
 import ctypes
 import os
 
 
-def _tkoffset():
+def _toolkit(toolkit="TKOffset", symbol="BRepOffset_SetFixLevel"):
     try:
         with open("/proc/self/maps") as f:
             for line in f:
-                if "libTKOffset" in line:
+                if "lib%s" % toolkit in line:
                     return ctypes.CDLL(line.split()[-1])
     except OSError:
         pass
@@ -23,13 +24,13 @@ def _tkoffset():
         dyld._dyld_get_image_name.restype = ctypes.c_char_p
         for i in range(dyld._dyld_image_count()):
             path = dyld._dyld_get_image_name(i).decode()
-            if "libTKOffset" in path:
+            if "lib%s" % toolkit in path:
                 lib = ctypes.CDLL(path)
-                if hasattr(lib, "BRepOffset_SetFixLevel"):
+                if hasattr(lib, symbol):
                     return lib
     except (OSError, AttributeError):
         pass
-    for name in ("libTKOffset.dylib", "TKOffset.dll", "libTKOffset.so"):
+    for name in ("lib%s.dylib" % toolkit, "%s.dll" % toolkit, "lib%s.so" % toolkit):
         try:
             return ctypes.CDLL(name)
         except OSError:
@@ -39,10 +40,18 @@ def _tkoffset():
 
 def set_offset_fix_level(level):
     """Sets the level, returns the one before; None where the libraries lack it."""
-    lib = _tkoffset()
+    lib = _toolkit()
     if lib is None or not hasattr(lib, "BRepOffset_SetFixLevel"):
         return None
     return lib.BRepOffset_SetFixLevel(ctypes.c_int(level))
+
+
+def set_fillet_fix_level(level):
+    """The same for the fillet's level; None where the libraries lack it."""
+    lib = _toolkit("TKFillet", "ChFi3d_SetFixLevel")
+    if lib is None or not hasattr(lib, "ChFi3d_SetFixLevel"):
+        return None
+    return lib.ChFi3d_SetFixLevel(ctypes.c_int(level))
 
 
 def from_env():
@@ -52,4 +61,14 @@ def from_env():
         return None
     if set_offset_fix_level(int(level)) is None:
         raise RuntimeError("THICK_FIX_LEVEL set, but TKOffset has no BRepOffset_SetFixLevel")
+    return int(level)
+
+
+def fillet_from_env():
+    """FILLET_FIX_LEVEL, if set: sets it and returns it, else None."""
+    level = os.environ.get("FILLET_FIX_LEVEL")
+    if level is None:
+        return None
+    if set_fillet_fix_level(int(level)) is None:
+        raise RuntimeError("FILLET_FIX_LEVEL set, but TKFillet has no ChFi3d_SetFixLevel")
     return int(level)

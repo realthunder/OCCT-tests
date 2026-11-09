@@ -2,7 +2,9 @@
 # env: SHAPE (a brep), MODE (edge | vertex), START (the first case to run),
 #      RADII (default "0.3 0.8 2" for edge, "0.3 1" for vertex),
 #      OP (fillet, the default, or chamfer: makeChamfer at the same sizes),
-#      FLAT (1: the flat end at a vertex, ../../flat_end.py).
+#      FLAT (1: the flat end at a vertex, ../../flat_end.py),
+#      FILLET_FIX_LEVEL (the fork's fillet fix level, ../../fix_level.py; 0
+#      unset).
 # edge:   every edge between two faces, alone, at each radius.
 # vertex: at every vertex of 3+ such edges, all of them, every pair and each
 #         alone, at each radius.
@@ -24,6 +26,9 @@ import Part
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 from loose_ends import loose, widest  # noqa: E402
 from flat_end import set_flat_end  # noqa: E402
+from fix_level import fillet_from_env  # noqa: E402
+
+fillet_from_env()
 
 if os.environ.get("FLAT", "0") != "0":
     set_flat_end(True)

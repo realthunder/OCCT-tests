@@ -51,6 +51,27 @@ if hasattr(Part, "hasOCCTFunction") and not Part.hasOCCTFunction("TKBRep", "SetF
 from freeze import frozen_copy, set_for_run  # noqa: E402
 set_for_run(os.environ.get("FILLET_FREEZE", "0") != "0")
 
+# FILLET_FIX_LEVEL=<n> runs the suite at the fork's fillet fix level n
+# (ChFi3d_SetFixLevel); unset, at the library's default, 0. A case that pins
+# a correction of a level gives its own (fix_level=n), and one that pins what
+# was made before it, 0.
+from fix_level import fillet_from_env, set_fillet_fix_level  # noqa: E402
+FIX_LEVEL = fillet_from_env() or 0
+
+
+class FixLevel:
+    """The fillet fix level `level` while in scope, none given the suite's."""
+
+    def __init__(self, level):
+        self.level = level
+
+    def __enter__(self):
+        self.previous = None if self.level is None else set_fillet_fix_level(self.level)
+
+    def __exit__(self, *exc):
+        if self.previous is not None:
+            set_fillet_fix_level(self.previous)
+
 
 def signature(shape):
     """What a fillet must leave of its input: the shape valid, the volume."""
@@ -134,10 +155,12 @@ def document_case(name, filename, volumes=None):
 # ---------------------------------------------------------------------------
 
 def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_tol=None,
-                chamfer=False, vol_tol=None, bop=False, flat=False, within=False):
+                chamfer=False, vol_tol=None, bop=False, flat=False, within=False,
+                fix_level=None):
     """makeFillet(radius, [Edge<edge_index>]); edge_index may be a list;
     makeChamfer(radius, ...) with chamfer=True, radius a pair for two
     distances. flat=True: with the flat end at a vertex (../flat_end.py).
+    At the fillet fix level `fix_level` if given, else at the suite's.
 
     expect='pass':  a valid solid, one closed shell, the input left as it was,
                     ref_volume when given (within vol_tol when given, else
@@ -157,6 +180,13 @@ def fillet_case(name, shape, edge_index, radius, expect, ref_volume=None, max_to
     more than the input's own gap, and than max_tol when given, the
     looseness the case accepts.
     """
+    with FixLevel(fix_level):
+        _fillet_case(name, shape, edge_index, radius, expect, ref_volume, max_tol, chamfer,
+                     vol_tol, bop, flat, within)
+
+
+def _fillet_case(name, shape, edge_index, radius, expect, ref_volume, max_tol, chamfer, vol_tol,
+                 bop, flat, within):
     try:
         # copied before the fillet below, which may raise the input's
         # tolerances in place
@@ -1558,13 +1588,16 @@ for r, vol in ((0.8, 41530.1861), (2.0, 41484.0873)):
     fillet_case("issue631_fillet002_r%g" % r, p631, e631, r, "pass", vol)
 
 
-def chamfer_width_case(name, shape, edge_index, size, span=(0.05, 0.75), tol=2e-5):
+def chamfer_width_case(name, shape, edge_index, size, span=(0.05, 0.75), tol=2e-5,
+                       fix_level=None):
     """makeChamfer(size, [Edge<edge_index>]); along that edge, over `span` (the
     fractions of it), the chamfer's section by the plane normal to the edge ends `size`
-    from the edge's point on both faces, within `tol`."""
+    from the edge's point on both faces, within `tol`. At the fillet fix level
+    `fix_level` if given, else at the suite's."""
     try:
         e = shape.Edges[edge_index - 1]
-        r = shape.makeChamfer(size, [e])
+        with FixLevel(fix_level):
+            r = shape.makeChamfer(size, [e])
         olds = [f.Area for f in shape.Faces]
         new = Part.Compound([f for f in r.Faces if not any(abs(f.Area - a) < 1e-6 for a in olds)
                              and isinstance(f.Surface, Part.BSplineSurface)])
@@ -1620,10 +1653,16 @@ for a, b, vol, span in (
     chamfer_width_case("issue631_fillet002_chamfer_%s_0.3_width" % tag, p631, ec, 0.3, span)
 # E12 at 0.8 was made before, valid, and wrong: its width ran from 0.52 to
 # 1.37 along the edge (0.82 at the vertex past which the guide was bent).
+# The correction is the fillet fix level 1's (ChFi3d_SetFixLevel); at 0 the
+# chamfer is the one made before, for a document that has it. The three
+# above, refused at 0, are tried again at the latest level and made at both.
 e12 = edge_between(p631, (7.5, 17.852122, 30), (17.981017, 24.951673, 43.127739))
 fillet_case("issue631_fillet002_chamfer_y+18_0.8", p631, e12, 0.8, "pass", 41511.95461, 2e-4,
-            chamfer=True, vol_tol=1e-5, bop=True)
-chamfer_width_case("issue631_fillet002_chamfer_y+18_0.8_width", p631, e12, 0.8, (0.15, 0.75))
+            chamfer=True, vol_tol=1e-5, bop=True, fix_level=1)
+chamfer_width_case("issue631_fillet002_chamfer_y+18_0.8_width", p631, e12, 0.8, (0.15, 0.75),
+                   fix_level=1)
+fillet_case("issue631_fillet002_chamfer_y+18_0.8_level0", p631, e12, 0.8, "pass", 41511.45232,
+            2e-4, chamfer=True, vol_tol=1e-5, fix_level=0)
 
 # FreeCAD's PartDesign case 5829: a box with a wedge on its back, filleted
 # all round at 8 (models/case5829_box.brep, the Box feature's solid, and the

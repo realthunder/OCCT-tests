@@ -6097,6 +6097,60 @@ three sizes.
 
 `models/pictures/issue631_fillet002_chamfer_e12_0.3.png`.
 
+A chamfer made before and moved by this fix is made as before at the fillet
+fix level 0, the next section's: the changes are its level 1.
+
+## The fillet fix level (2026-11-09)
+
+The chamfer guide's fix above moves results the fork made before, valid:
+#631's E12 at 0.8, 0.52 to 1.37 wide, is 0.8 now, and a document that has
+that chamfer would open to another shape. The rule (the user's,
+2026-11-09): a fix that makes a fillet or chamfer the fork made before,
+valid, differently by more than its tolerance is made only where the caller
+asks for it; one that makes what was refused or invalid before needs no
+level. The offset's (`BRepOffset_SetFixLevel`, ../thickness) for the
+fillet: `ChFi3d_SetFixLevel(n)`, a C function beside `ChFi3d_Builder`
+(`ChFi3d_Builder.hxx`), sets for the calling thread which of such fixes are
+made; 0, the default on every thread, makes none, and each level adds its
+own to those below. `ChFi3d_FixLevel()` reads it.
+
+Level 1 is the chamfer guide's two changes in `ChFi3d_PerformElSpine`.
+Below it the guide is adjusted as before, `GeomLib::AdjustExtremity` over
+the whole curve, the ends held to the elspine's points and tangents.
+
+What was refused needs no level, so a computation below the latest level
+that makes nothing -- it failed, or its result was refused as invalid --
+where it passed over a correction above the level, is computed once more
+at the latest (`ChFi3d_Builder::Compute`, `ChFi3d_FixPassedOver`): the
+guide adjusted where level 1 would have adjusted it differently. The
+input's tolerances are put back for it, as for the fallbacks. A failure
+where nothing above the level was passed over is not computed again.
+
+FreeCAD gives each fillet and chamfer feature a hidden `_FilletFixLevel`
+-- Part's `Fillet` and `Chamfer` (on `FilletBase`), PartDesign's `Fillet`
+and `Chamfer` -- the latest for an object made now, 0 for one a file from
+before brings, and holds it on the thread while the feature recomputes
+(`Part::OCCTFilletFixLevel`, `OCCTFork.h`). The suite takes
+`FILLET_FIX_LEVEL=<n>` (`../fix_level.py`), unset 0, and a case its own
+(`fillet_case(..., fix_level=n)`); the sweep's `fsw.py` the same variable.
+
+The sweeps at level 0, against the fork before the guide's fix
+(`46934730d6`): every valid result the same, to the digit, fillet and
+chamfer, edge and vertex (2666, 9712, 2396 and 8638 of them), and nothing
+refused before made differently from level 1 -- the chamfers refused before
+(37 edges, 143 vertices) made, as at level 1. At level 1 the sweeps are the
+section above's. The suite PASS=824 XFAIL=1 at fix levels 0 and 1, plain
+and frozen: the 823, and one case more at level 0.
+
+| Case | What |
+|------|------|
+| `issue631_fillet002_chamfer_y+18_0.8`, `..._width` | at level 1 now (`fix_level=1`): the exact chamfer |
+| `issue631_fillet002_chamfer_y+18_0.8_level0` | E12 at 0.8 at level 0: the chamfer made before, 41511.45232, `46934730d6`'s to the last digit |
+
+The three chamfers at 0.3 of the section above were refused before; at
+level 0 they are computed again at the latest and made, so they pass at
+every level and keep none.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
