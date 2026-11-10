@@ -3411,6 +3411,43 @@ and frozen; thickness PASS=631 at fix levels 0 to 3, plain and frozen (610 +
 21); sweep 928 of 928 at all four; fillet 815 + 1 XFAIL, draft 104 + 1 FAIL,
 boolean 67, fillet and draft frozen too.
 
+### Sec 60: #360's plate, and walls thinner than twice the thickness
+
+**A second way to the loops' wires** (`BRepAlgo_Loop.cxx`
+`FindRegionWires`, `BRepOffset_MakeOffset::MakeThickSolid`), asked only
+where the first has no valid answer.
+
+- #360's Thickness -- a plate with square holes 4.3 apart and 2.5 from its
+  outline, the top removed 4 inward -- was refused, and with it every plate
+  whose holes are nearer each other, or the outline, than twice the
+  thickness. Upstream makes them. It goes back to the chain's first commit.
+- Where a wall is thinner than twice the thickness the offsets of its two
+  sides pass each other; the strip between them is no pocket, and two of
+  the edges round it say so by their orientation. The loop keeps every
+  piece and never read the orientations.
+- A thick solid refused or invalid is made once more with the wires of
+  planar faces taken by the way their edges run: a region of an offset face
+  where every edge has it on its face's side; a region of a removed face
+  where it lies within the face as it was and is no pocket's opening.
+- The second answer is taken only where it is valid and crosses itself
+  nowhere. No fix level: nothing that was made is made otherwise.
+
+Made: #360's plate 38747.1395 (as the document stored it) from its top and
+its bottom, 24071.6589 at 1 inward; eight plates with two or three holes or
+one near the outline, each to the volume a polygon's erosion gives, one
+that upstream refuses among them.
+
+![issue360_plate_top_in4_inter](pictures/issue360_plate_top_in4_inter.png)
+
+![plate_staggered_top_in4_inter](pictures/plate_staggered_top_in4_inter.png)
+
+Still refused: four holes in a square, #360's plate 2 inward; two round
+holes are invalid. Over the corpus (1072 runs) none changes.
+
+Regression (`75bce7e802`, Linux): thickness PASS=642 XFAIL=3 at fix levels
+0 and 3, frozen at 3 (631 + 11); sweep 928 of 928; fillet 824 + 1 XFAIL,
+boolean 67, draft 104 + 1 FAIL.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
