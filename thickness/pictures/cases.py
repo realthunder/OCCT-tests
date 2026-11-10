@@ -75,6 +75,7 @@ STAGES = {
     "s57": ("92c4617170", "57"),
     "s58": ("e1d0c13102", "58"),
     "s59": ("ede496a1f2", "59"),
+    "s60": ("10a2414c33", "60"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -247,6 +248,24 @@ def _issue613():
     return s
 
 
+def _issue360():
+    # #360's plate, the base of its Thickness: 10 thick, square holes 4.3
+    # apart and 2.5 from the outline. Face5 is the top, Face4 the bottom.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue360_plate.brep"))
+    return s
+
+
+def _holed_plate(holes):
+    # run_tests.py's _holed_plate: 80 x 30 x 10 with square holes through
+    # it, the top Face3.
+    s = Part.makeBox(80, 30, 10)
+    for x0, y0 in holes:
+        s = s.cut(Part.makeBox(12.4, 12.4, 12, V(x0, y0, -1)))
+    return s.removeSplitter()
+
+
 def _revolve346():
     # #346's Revolve as the issue has it, a shell: Face1 the cone, Face2 the
     # dome, its top a dimple.
@@ -377,6 +396,10 @@ SHAPES = {
     "steepdimpleshell346": lambda: _issue346_shell(3.0),
     "issue613": lambda: _issue613(),
     "revolve346": lambda: _revolve346(),
+    "issue360": lambda: _issue360(),
+    "platerow2": lambda: _holed_plate([(10, 8.8), (26.7, 8.8)]),
+    "platestaggered": lambda: _holed_plate([(10, 6), (26.7, 10)]),
+    "plateedge6": lambda: _holed_plate([(10, 6)]),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -626,6 +649,10 @@ CASES = {
     "issue346_dome_removed_in_refused": ("s59", "revolve346", 2, -1, False, 0, None),
     "issue346_steep_dimple_shell_apex_thick_out_level3": ("s59", "steepdimpleshell346", 1, 1, False,
                                                           0, 3008.6805),
+    "issue360_plate_top_in4_inter": ("s60", "issue360", 5, -4, True, 0, 38747.1395),
+    "plate_row2_top_in4_inter": ("s60", "platerow2", 3, -4, True, 0, 15869.0119),
+    "plate_staggered_top_in4_inter": ("s60", "platestaggered", 3, -4, True, 0, 15683.8564),
+    "plate_edge6_top_in4_inter": ("s60", "plateedge6", 3, -4, True, 0, 15165.1911),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

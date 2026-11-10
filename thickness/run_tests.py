@@ -2177,6 +2177,72 @@ _bottom = [i + 1 for i, f in enumerate(_roundtop.Faces) if abs(f.BoundBox.ZMax) 
 thickness_case("roundtop_join_in", _roundtop, _bottom, -1.0, "pass", 217.7906, False, 2)
 thickness_case("roundtop_join_out", _roundtop, _bottom, +1.0, "pass", 313.2065, False, 2)
 
+# Sec 60. A plate with holes, its top removed inward by more than half the
+# wall between two holes or between a hole and the outline: the offsets of the
+# two walls pass each other, and between them lies a strip that is no pocket.
+# The loops keep every piece of an edge and choose among the regions the
+# pieces bound by what they share, which cannot tell that strip from a
+# pocket: every such plate was refused or came out invalid -- #360's
+# (models/issue360_plate.brep, the base of its Thickness: 10 thick, Face5 its
+# top and Face4 its bottom, square holes 4.3 apart and 2.5 from the outline)
+# after a search that ran out of memory before it was given a limit. A thick
+# solid with no valid answer is made once more with the loops' wires taken by
+# the way their edges run (BRepAlgo_LoopByOrientation), and that answer kept
+# where it is valid and crosses itself nowhere. A plate is a prism: its skin
+# is the plate less the top eroded by the thickness, as deep as the plate
+# less the thickness -- 10 x 30 x 80 less the holes, less 6 times the eroded
+# area, the erosion worked as a polygon's (to 1e-3 of each volume here).
+def _holed_plate(holes, lx=80.0, ly=30.0, h=10.0):
+    plate = Part.makeBox(lx, ly, h)
+    for x0, y0, dx, dy in holes:
+        plate = plate.cut(Part.makeBox(dx, dy, h + 2, App.Vector(x0, y0, -1)))
+    plate = plate.removeSplitter()
+    top = max((i + 1 for i, f in enumerate(plate.Faces)
+               if abs(f.CenterOfMass.z - h) < 1e-9), key=lambda i: plate.Faces[i - 1].Area)
+    return plate, top
+
+
+for _tag, _holes, _ref in (
+        # two holes 4.3 apart, and three
+        ("row2", [(10, 8.8, 12.4, 12.4), (26.7, 8.8, 12.4, 12.4)], 15869.0119),
+        ("row3", [(10, 8.8, 12.4, 12.4), (26.7, 8.8, 12.4, 12.4), (43.4, 8.8, 12.4, 12.4)],
+         16365.0709),
+        # 6 apart and 7.9, a hair under twice the thickness
+        ("two6", [(10, 8.8, 12.4, 12.4), (28.4, 8.8, 12.4, 12.4)], 16057.5879),
+        ("two7.9", [(10, 8.8, 12.4, 12.4), (30.3, 8.8, 12.4, 12.4)], 16241.9608),
+        # 4.3 apart and not in line (upstream refuses this one)
+        ("staggered", [(10, 6, 12.4, 12.4), (26.7, 10, 12.4, 12.4)], 15683.8564),
+        # one hole 6 from the outline, and 3
+        ("edge6", [(10, 6, 12.4, 12.4)], 15165.1911),
+        ("edge3", [(10, 3, 12.4, 12.4)], 14802.1564)):
+    _s, _top = _holed_plate(_holes)
+    thickness_case("plate_%s_top_in4_inter" % _tag, _s, _top, -4.0, "pass", _ref, True)
+_s, _top = _holed_plate([(10, 3, 12.4, 12.4)])
+thickness_case("plate_edge3_top_in4", _s, _top, -4.0, "pass", 14802.1564)
+# Four holes in a square, 4.3 apart both ways: still refused (21014.47 by the
+# erosion, and upstream's). Two round holes 4.3 apart: invalid (15826.15).
+_s, _top = _holed_plate([(10, 10, 12.4, 12.4), (26.7, 10, 12.4, 12.4),
+                         (10, 30, 12.4, 12.4), (26.7, 30, 12.4, 12.4)], 60.0, 55.0)
+thickness_case("plate_grid_top_in4_inter", _s, _top, -4.0, "xfail", 21014.4693, True)
+_s = Part.makeBox(80, 30, 10)
+for _x in (16.2, 32.9):
+    _s = _s.cut(Part.makeCylinder(6.2, 12, App.Vector(_x, 15, -1)))
+_s = _s.removeSplitter()
+_top = max((i + 1 for i, f in enumerate(_s.Faces) if abs(f.CenterOfMass.z - 10) < 1e-9),
+           key=lambda i: _s.Faces[i - 1].Area)
+thickness_case("plate_round2_top_in4_inter", _s, _top, -4.0, "xfail", 15826.1480, True)
+
+issue360 = Part.Shape()
+issue360.importBrep(os.path.join(MODELS, "issue360_plate.brep"))
+# The document's Thickness: Face5, 4 inward, the Arc join, Intersection on.
+# Four pockets in the corners, 544.26 in all and 6 deep; the same from below.
+thickness_case("issue360_plate_top_in4_inter", issue360, 5, -4.0, "pass", 38747.1395, True)
+thickness_case("issue360_plate_bottom_in4_inter", issue360, 4, -4.0, "pass", 38747.1395, True)
+# 1 inward: one pocket round the whole plate, 1993.45 and 9 deep.
+thickness_case("issue360_plate_top_in1_inter", issue360, 5, -1.0, "pass", 24071.6589, True)
+# 2 inward (twelve pockets, 33212.8 by the erosion): refused both ways.
+thickness_case("issue360_plate_top_in2_inter", issue360, 5, -2.0, "xfail", 33212.8, True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

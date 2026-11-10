@@ -2388,6 +2388,115 @@ all four levels, plain and frozen; fillet PASS=815 XFAIL=1, draft 104 + 1
 FAIL (Linux's standing `new_roof_L_a-30`) and boolean 67, as before, fillet
 and draft frozen too.
 
+## #360: walls thinner than twice the thickness, a second way to the loops' wires (2026-11-10, sec 60)
+
+**What was broken.** #360's Thickness -- a plate 10 thick with square
+holes 4.3 apart and 2.5 from its outline, the top removed, 4 inward, the Arc
+join, Intersection on -- was refused; upstream makes it, 38747.1395, and so
+did the build the document was saved by. Bisected over the chain's 125
+commits to its first, `dfce6bbb3b` (2024, "keep every piece of a cut
+edge"): at that one it throws, the commits after it search for the wires
+until memory is gone (62 GB, twice, with the machine), and since the search
+has a limit it gives up and the thickness is refused.
+
+It is not this plate alone. Two holes nearer each other than twice the
+thickness, or one hole nearer the outline, a face removed inward: the fork
+refused every one of them or gave an invalid solid, and upstream makes them
+(with Intersection on).
+
+Inward, the offset of a wall moves into the material. Where the wall
+between two holes is thinner than twice the thickness the two offsets pass
+each other, and between them lies a strip (two square holes) or a lens (the
+rounded corners of the Arc join) that is no pocket: it is material. An edge
+has what is left of its face on one side, the side its orientation gives,
+and round that strip two edges say one thing and two the other. Upstream
+cuts each edge by the orientation of the vertices on it and never makes the
+strip's pieces. The fork keeps every piece (the fix for #1's concave
+removed face, where that orientation is wrong) and chooses among the
+regions the pieces bound by what they share with each other, the edges'
+orientations unread: the strip is a region like any other. On the offset
+bottom it became a pocket's floor; on the removed face, whose own edges the
+fork stretches far past their ends, the stretched sides of the holes cut
+the rim into dozens of pieces -- 2406 pieces of edges on #360's top, 1200
+of them lying on another (the sides of a row of holes are one line, a notch
+and its mirror image another) -- and what stood out among the regions was
+the openings of the holes.
+
+**The fix.** Nothing is changed in what was made: a thick solid is made as
+before, and where that gives no valid answer -- refused, or invalid -- it
+is made once more with the loops' wires on planar faces taken by the way
+their edges run (`BRepAlgo_LoopByOrientation`, `BRepAlgo_Loop.cxx`
+`FindRegionWires`). The regions come from the walk as before, the pieces of
+stretched edges lying on another left out but one. Then:
+
+- on an offset face, a region is of the face where every edge round it has
+  it on its face's side: the strip, two for and two against, is not;
+- on a removed face, a region is of the face where it lies within the face
+  as it was (a point of it, classified) and is not an opening -- every edge
+  round it, and round the regions it runs on into across stretched pieces,
+  against. The strip stays, and the walls that stood round it, their tops
+  now inside the face, hang and are dropped;
+- the wires are those of the edges between a region of the face and one
+  that is not, walked again; a part of the network inside a region of
+  another (a hole no side of which is stretched through the rest) counts
+  from that region.
+
+The second answer is taken only where it is valid and passes through
+itself nowhere (BOP's self-intersection check; BRepCheck alone passed #360's
+plate 2 inward as the whole plate with eight closed boxes in it). A
+removed face whose own edges say the offset is outward is left as it was:
+no such case came here.
+
+Since what was refused or invalid needs no level (sec 31's rule), there is
+none. `BRepExtrema_DistanceSS` no longer throws on a vertex with no
+parameter on the edge it is asked about (`isOnBoundary`: #360's loop gave
+such vertices to edges not yet cut).
+
+A plate is a prism, so its skin is the plate less the top eroded by the
+thickness, as deep as the plate less the thickness; the erosion worked as a
+polygon's gives every volume below to 1e-3, upstream's where it has one to
+the digit.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue360_plate_top_in4_inter`, `_bottom_` | #360's plate (`models/issue360_plate.brep`), Face5 or Face4 removed, -4 | 38747.1395: four pockets in the corners; refused before |
+| `issue360_plate_top_in1_inter` | the same, -1 | 24071.6589: one pocket round the plate; refused before |
+| `plate_row2_top_in4_inter`, `plate_row3_` | 80 x 30 x 10, two and three square holes 4.3 apart, the top removed, -4 | 15869.0119, 16365.0709; refused before |
+| `plate_two6_`, `plate_two7.9_` | two holes 6 and 7.9 apart | 16057.5879, 16241.9608; refused before |
+| `plate_staggered_top_in4_inter` | two holes 4.3 apart, not in line | 15683.8564; invalid before, and upstream refuses it |
+| `plate_edge6_`, `plate_edge3_`, `plate_edge3_top_in4` | one hole 6 and 3 from the outline; the last with Intersection off | 15165.1911, 14802.1564; invalid and refused before (upstream, Intersection off: 22462.4, valid and wrong) |
+
+![issue360_plate_top_in4_inter](models/pictures/issue360_plate_top_in4_inter.png)
+
+![plate_row2_top_in4_inter](models/pictures/plate_row2_top_in4_inter.png)
+
+![plate_staggered_top_in4_inter](models/pictures/plate_staggered_top_in4_inter.png)
+
+![plate_edge6_top_in4_inter](models/pictures/plate_edge6_top_in4_inter.png)
+
+**Still broken** (`XFAIL`): four holes in a square, 4.3 apart both ways
+(`plate_grid_top_in4_inter`, 21014.47), refused; two round holes 4.3 apart
+(`plate_round2_top_in4_inter`, 15826.15), invalid -- the walls are
+cylinders, and the second way reads planar faces only; #360's plate 2
+inward (`issue360_plate_top_in2_inter`, twelve pockets, 33212.8), refused.
+Without Intersection the rows of holes are refused as upstream refuses
+them. #360's plate with the Intersection join is refused at -4 (upstream
+gives the plate back, unhollowed) and at -2 (upstream's is invalid).
+
+#360's plate takes 70 s where a second is its due: the first way's search
+runs to its limit before the second is asked.
+
+Over the corpus (1072 runs) none changes, and the sweep is right in 928 of
+928: nothing they refuse has an answer the second way either.
+
+**Regression** (`75bce7e802`, on Linux): thickness PASS=642 XFAIL=3 at fix
+levels 0 and 3, and frozen at 3, the 11 cases above among them (631 before,
+line for line as they were, at 0 and 3); the thickness sweep right in all
+928 runs (level 0, plain); the corpus's 1072 runs as before; fillet
+PASS=824 XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
+`new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
+tests, levels 1 and 2, the sweep frozen and placed.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
