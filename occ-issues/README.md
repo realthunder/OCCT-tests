@@ -72,7 +72,7 @@ the table above come first:
 | 631 | `issue631_fillet_loft_joint*.FCStd` | Fillet at a loft edge joint gives a wrong **but valid** shape (radius > 3 mm); needs a geometric assertion (volume/area), not validity |
 | 652 | `issue652_pad_top_uncovered.FCStd` | Pad on a face whose sketch arc coincides with an existing arc: top surface not covered — tolerance-coincidence case; may need the exact re-pad step **Rescan 2026-11-09** (fork `b85c0a751e`, Linux): does not reproduce. Recomputed, Pad001 is one closed shell, valid and clean by BOP's check, 2750.8513 -- the two pads' 733.2830 and 2017.5683, which only touch -- and every one of its 18 faces meshes to its area (`BRepMesh_IncrementalMesh`, 0.1), the top split by the second pad's arc among them. The same with the stored Pad and Pad001's tool fused in OCCT alone, plain and with a fuzzy value of 1e-5 (20 faces, unrefined). The report was on 7.6.3; nothing left on the kernel side |
 | 662 | `issue662_thickness_pads_holes.FCStd` | Thickness produced an invalid shape making later pads become holes (validate-shape option added in FreeCAD because of this one); stored doc now recomputes clean **Rescan 2026-10-31**: the file was saved with the Thickness inside out (-2825.5674, invalid) and everything after it so; recomputed on the fork the Thickness is valid (1908.1731) and so is every feature up to the Pad (14180.0845). Sketch006 stays Invalid ("No planar face"): it is attached to the Pad's Face48 by a hashed name (`#945;:M;FUS`) recorded on the broken model, which now resolves to a cylinder (Face53). Attached to the face it was on -- the Pad's top at z = 5, Face14 now, 1322.46 against the stored 1322.59 -- the Body is valid, 14434.3704. Nothing left on the kernel side; the document needs its sketch attached again |
-| 672 | `issue672_recompute_ghost.FCStd` | "Ghost" state: adding a circle to Sketch007 corrupts geometry unless `Support Ring` is recomputed first — recompute-order dependence, possibly not OCC **Rescan 2026-11-10** (fork `10a2414c33`, Linux): the kernel's part is gone. The file's stored `Pad001` (Support Rings) fails BOP's check -- one vertex, at (40, 35, 16), has a tolerance of 139.2 -- and so does every feature after it: the shape the ghost was built on. Made again on the fork, by the plate fused with the ring prism in OCCT alone (plain and fuzzy 1e-5) and by PartDesign's UpToFace Pad on the stored plate and ring sketch, it is 278880.0000, 22 faces, tolerances 1.5e-7, valid and clean by BOP's check. The document itself does not recompute now, for a FreeCAD reason: opening it asks for a recompute on the element map's version change (1.15.70200 -> 1.15.80001), and the recompute moves every reference into `Pad` to another element although the remade `Pad` numbers its faces and edges exactly as the stored one (Sketch001's support Face4 -> Face3, its external Edge13 -> Edge10, Pad001's UpToFace Face2 -> Face1), so Sketch001 fails, "Sketch with malformed constraints". Not the kernel's |
+| 672 | `issue672_recompute_ghost.FCStd` | "Ghost" state: adding a circle to Sketch007 corrupts geometry unless `Support Ring` is recomputed first — recompute-order dependence, possibly not OCC **Rescan 2026-11-10** (fork `10a2414c33`, Linux): the kernel's part is gone. The file's stored `Pad001` (Support Rings) fails BOP's check -- one vertex, at (40, 35, 16), has a tolerance of 139.2 -- and so does every feature after it: the shape the ghost was built on. Made again on the fork, by the plate fused with the ring prism in OCCT alone (plain and fuzzy 1e-5) and by PartDesign's UpToFace Pad on the stored plate and ring sketch, it is 278880.0000, 22 faces, tolerances 1.5e-7, valid and clean by BOP's check. The document itself does not recompute now, for a FreeCAD reason: opening it asks for a recompute on the element map's version change (1.15.70200 -> 1.15.80001), and the recompute moves every reference into `Pad` to another element although the remade `Pad` numbers its faces and edges exactly as the stored one (Sketch001's support Face4 -> Face3, its external Edge13 -> Edge10, Pad001's UpToFace Face2 -> Face1), so Sketch001 fails, "Sketch with malformed constraints". Not the kernel's **2026-11-11**: the remap was FreeCAD moving a reference kept in two properties twice (below, "References moved twice on open"); fixed, and the document recomputes whole, its ten solids as stored |
 | 985 | `issue985_uptoface.FCStd` | Extruding circles "up to face" fails (`Bnd_Box is void`); needs the up-to-face pad edit scripted **Rescan 2026-11-09** (fork `b85c0a751e`, Linux): does not reproduce; the GitHub issue is closed. The file's Pocket002 is the failing step itself (Type UpToFace, Pocket001's Face7, a plane 1588.55 in area) and recomputes valid, clean by BOP's check, 27991.8187: both circles of Sketch003 (r 5.415) cut, each tool prism 893.136 (pi r^2 by the 9.695 the hole's centre line runs inside the base, which is empty in the result), the result the base less both to the digit |
 
 ## Found in FreeCAD work (no tracker issue)
@@ -93,6 +93,34 @@ Named `localNN_*`.
 | # | Problem |
 |---|---------|
 | 937 | Fillet crash: `BRep_Tool::CurveOnSurface` null deref under `ChFi3d_Builder::StartSol` (OCC 7.7.2). Stack trace only, reporter never posted the file |
+
+## References moved twice on open (2026-11-11, FreeCAD `eb1a503501`)
+
+Every model here was written with another element map version, so opening
+one has each reference found again by the geometry of its old element.
+`Support` and `AttachmentSupport`, `UpToFace` and `UpToShape` hold one
+reference twice, and where the target's faces come out numbered otherwise
+(#672's first pad: its sketch's wire starts an edge later now) the
+reference was moved twice -- Face4 to Face3, the same face, then Face3 to
+Face2 -- the sketch on it failed with malformed constraints, and the
+recompute stopped there. That is the "references lost" and "malformed
+constraints after an element remap" of the rescans above; it was FreeCAD's
+(`App/PropertyLinks.cpp`), not the kernel's, and is fixed there. All 27
+models but #360 and #474 (too long to run here) opened and recomputed,
+before and after:
+
+| # | Objects left not up to date, before -> after | Solids that differ from the stored ones, after |
+|---|---|---|
+| 273 (both files) | 4 -> 0, 5 -> 0 | 0 of 8, 3 of 9 |
+| 333 | 18 -> 6 | 0 of 16 |
+| 334 | 25 -> 13 | 0 of 21 |
+| 662 | 4 -> 0 | 8 of 10 |
+| 672 | 16 -> 0 | 0 of 10 |
+| 962 | 14 -> 0 | 4 of 12 |
+
+The other 20 are as they were, none with more left. A solid "differs" by
+its volume, its number of faces or its validity: each is a recompute that
+did not run before, to be looked at as the kernel's.
 
 ## Themes
 
