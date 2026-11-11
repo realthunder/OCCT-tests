@@ -2358,6 +2358,45 @@ for _angle in (90, 180, 270):
     thickness_case("groove_tool_turned%d_wall_out_half" % _angle, _turned, groove_wall(_turned),
                    +0.5, "pass", 1840.6349)
 
+
+# The second way keeps every piece of an edge, and an edge crossed by the
+# offset of a wall that is itself thrown away stayed in the pieces the
+# crossing cut it in: #360's plate came out with 642 edges and 496 vertices
+# at 4 inward, 204 of the vertices between two pieces of one edge, where the
+# first way (and upstream, and the issue's file) have 438 and 292 for the
+# same faces and volume. A sketch of the file that held one of those edges,
+# 17.5 long, found three. The pieces are joined once the solid is made
+# (BRepOffset_MakeOffset::JoinEdgePieces).
+def whole_edges_case(name, shape, face_index, value, edges, inter=False, join=0):
+    """the thickness is a valid solid of `edges` edges, no vertex of it
+    between just two edges"""
+    detail = ""
+    try:
+        before = signature(shape)
+        r = shape.makeThickness([shape.Faces[face_index - 1]], value, 1e-7, inter, False, 0, join)
+        problems = input_problems(shape, before)
+        if r.ShapeType != "Solid" or not r.isValid():
+            problems.append("type=%s valid=%s" % (r.ShapeType, r.isValid()))
+        between = sum(1 for v in r.Vertexes if len(r.ancestorsOfType(v, Part.Edge)) == 2)
+        if len(r.Edges) != edges:
+            problems.append("edges=%d (want %d)" % (len(r.Edges), edges))
+        if between:
+            problems.append("%d vertices between two edges" % between)
+        ok = not problems
+        detail = "edges=%d vertices=%d" % (len(r.Edges), len(r.Vertexes))
+        if problems:
+            detail += " " + "; ".join(problems)
+    except Exception as e:
+        ok = False
+        detail = "raised: %s" % str(e).splitlines()[0][:150]
+    report(name, ok, False, detail)
+
+
+whole_edges_case("issue360_plate_top_in4_inter_edges", issue360, 5, -4.0, 438, True)
+whole_edges_case("issue360_plate_top_in3_inter_edges", issue360, 5, -3.0, 438, True)
+whole_edges_case("issue360_plate_top_in5_inter_edges", issue360, 5, -5.0, 438, True)
+whole_edges_case("issue360_plate_top_in2_inter_edges", issue360, 5, -2.0, 606, True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

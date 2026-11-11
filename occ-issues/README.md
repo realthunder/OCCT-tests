@@ -184,7 +184,7 @@ no invalid shape. The six that do not:
 |-------|--------------|-------|
 | #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
 | #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
-| #360 | Sketch004, an external reference | not looked into yet |
+| #360 | Hole001, "Adding the thread failed" | the kernel's: `Sketch004`'s lost edge was -- the plate's thickness left its edges in pieces, joined now (OCCT `ac01b0d63e`, `../thickness/` sec 67) -- and the recompute now reaches a threaded hole whose thread does not fuse with its hole; not looked into yet |
 | #474 | three datum lines and Fillet002 on B-spline edges of a helix, Fillet003 | the helix made again is the same curve to 4e-7, not to the 1e-7 a reference is searched at (its row) |
 | #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
 | #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |

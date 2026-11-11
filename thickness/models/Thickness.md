@@ -3633,6 +3633,22 @@ suite 4360 OK.
 ![issue363_cut_remade_wall_out1_join](pictures/issue363_cut_remade_wall_out1_join.png)
 ![groove_tool_turned90_wall_out](pictures/groove_tool_turned90_wall_out.png)
 
+### Sec 67: an edge left in the pieces a discarded wall cut it in
+
+**The topology of what the second way makes**
+(`BRepOffset_MakeOffset.cxx` `JoinEdgePieces`). No volume changes.
+
+- #360's plate was right in volume but had 642 edges and 496 vertices
+  where the issue's file and upstream have 438 and 292: 204 vertices each
+  between two pieces of one edge.
+- The offset of a hole's wall cuts the edges it crosses, and is then
+  thrown away where it has passed its neighbour's; the edges stayed cut.
+- A sketch of the issue's file that held one such edge found three
+  pieces, and the recompute stopped there.
+- The pieces are joined once the solid is made, and the history follows.
+
+![issue360_plate_edge_pieces](pictures/issue360_plate_edge_pieces.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

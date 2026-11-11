@@ -2898,6 +2898,57 @@ as its baseline; fillet 824 + 1 XFAIL, boolean 67, draft 105; FreeCAD's
 Python suite 4360 OK. Pictured: `issue363_cut_remade_wall_out1`,
 `issue363_cut_remade_wall_out1_join`, `groove_tool_turned90_wall_out`.
 
+## An edge left in the pieces a discarded wall cut it in (2026-11-11, sec 67)
+
+**#360's plate again**: the thickness is right (38747.1395 at 4 inward,
+sec 60) but came out of the second way with **642 edges and 496 vertices**
+where the issue's file, the first way wherever it can make the plate, and
+upstream all have **438 and 292** for the same 152 faces. 204 of the
+vertices lay between two edges of one curve and nothing else.
+
+The second way keeps every piece of an edge and chooses among them by the
+way they run (sec 60). The offset of a hole's wall crosses the edges of
+the walls it passes, and cuts them there; that offset is then thrown away,
+having passed its neighbour's, and the edges it cut stay in two, three or
+four pieces with a vertex at each crossing. The solid is valid and its
+volume right, but it is not the solid a document was saved with: in the
+issue's file `Sketch004` holds an edge of the plate 17.5 long as external
+geometry, found three pieces of it (1.0, 10.8 and 5.7), and stopped the
+recompute there ("Missing external geometry reference").
+
+`BRepOffset_MakeOffset::JoinEdgePieces` (`ac01b0d63e`) joins them once the second
+way has its solid: where a vertex has just two edges, they lie on the same curve
+(by its handle) and, in each of their faces, on the same pcurve (the same
+object, or one that is the other over its range -- a piece may carry a
+copy on one face), and their ranges meet at the vertex. A run of pieces
+becomes one edge on that curve, with a pcurve defined over all of it on
+each face. Not at a vertex of the input, nor round a closed run, nor
+where an edge is closed on a face. The faces are made again with the edge
+whole (`BRepTools_ReShape`), the result is taken only if it is valid with
+the faces it had, and the images follow, so that `Generated` and
+`Modified` answer with the joined edges and the faces made again.
+
+| Case | Before | Now | Upstream |
+|------|--------|-----|----------|
+| `issue360_plate_top_in4_inter_edges` | 642 edges, 496 vertices, 204 between two edges | 438, 292, none | 438, 292 |
+| `issue360_plate_top_in3_inter_edges` | 630, 484, 192 | 438, 292, none | 438, 292 |
+| `issue360_plate_top_in5_inter_edges` | 740, 594, 302 | 438, 292, none | 438, 292 |
+| `issue360_plate_top_in2_inter_edges` | 668, 466, 62 | 606, 404, none | invalid |
+
+Volumes as before (38747.1395, 36527.3399, 40288.2902, 33213.1056).
+`pictures/edge_pieces.py` draws the figure,
+`models/pictures/issue360_plate_edge_pieces.png`: the result's edges from
+above, the vertices between two pieces marked.
+
+In the issue's file every feature from the Thickness on (`Pocket002`,
+`LinearPattern`, `Mirrored002`) now has the stored shape's faces, edges
+and vertices to the count, and `Sketch004` finds its edge.
+
+Regression (`ac01b0d63e`, Linux): thickness PASS=683 (4 new) at level 0, and 679
+at fix levels 0 to 3 and frozen before the 4 were added; sweep 928 of 928,
+the same line for line; the corpus as its baseline; fillet 824 + 1 XFAIL,
+boolean 67, draft 105; FreeCAD's Python suite 4361 OK.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
