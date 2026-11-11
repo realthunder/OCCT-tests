@@ -79,6 +79,7 @@ STAGES = {
     "s61": ("03d799f0c5", "61"),
     "s62": ("d82a097786", "62"),
     "s63": ("5110153daf", "63"),
+    "s66": ("097cdf483c", "66"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -251,6 +252,25 @@ def _issue613():
     return s
 
 
+def _cut363remade():
+    # #363's Cut as FreeCAD makes it again (the base of Thickness002): the
+    # groove's wall is Face4, a half cylinder, its edge at x = 8 on the
+    # cylinder's seam with both of a seam's pcurves.
+    s = Part.Shape()
+    s.importBrep(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                              "issue363_cut_remade.brep"))
+    return s
+
+
+def _grooveturned(angle):
+    # A cylinder cut by one half buried in its bottom, the tool turned about
+    # its axis: at 90 its seam lies in the bottom's plane (run_tests.py's
+    # cylinder_grooved_by_turned_tool). The groove's wall is Face3.
+    tool = Part.makeCylinder(8.0, 60.0, V(0, -30, 0), V(0, 1, 0))
+    tool.rotate(V(0, 0, 0), V(0, 1, 0), angle)
+    return Part.makeCylinder(20.0, 15.0).cut(tool)
+
+
 def _issue360():
     # #360's plate, the base of its Thickness: 10 thick, square holes 4.3
     # apart and 2.5 from the outline. Face5 is the top, Face4 the bottom.
@@ -409,6 +429,8 @@ SHAPES = {
     "issue613": lambda: _issue613(),
     "revolve346": lambda: _revolve346(),
     "issue360": lambda: _issue360(),
+    "cut363remade": lambda: _cut363remade(),
+    "grooveturned90": lambda: _grooveturned(90),
     "platerow2": lambda: _holed_plate([(10, 8.8), (26.7, 8.8)]),
     "platestaggered": lambda: _holed_plate([(10, 6), (26.7, 10)]),
     "plateedge6": lambda: _holed_plate([(10, 6)]),
@@ -674,6 +696,9 @@ CASES = {
     "plate_roundedge3_top_in4_inter": ("s62", "plateroundedge3", 3, -4, True, 0, 14876.6460),
     "issue360_plate_top_in5_inter": ("s63", "issue360", 5, -5, True, 0, 40288.2902),
     "slot_ceiling_out_arc": ("s63", "slot", 4, 1, False, 0, 6362.5515),
+    "issue363_cut_remade_wall_out1": ("s66", "cut363remade", 4, 1, False, 0, 3678.0197),
+    "issue363_cut_remade_wall_out1_join": ("s66", "cut363remade", 4, 1, False, 2, 3704.4064),
+    "groove_tool_turned90_wall_out": ("s66", "grooveturned90", 3, 1, False, 0, 3795.0668),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

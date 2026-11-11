@@ -2835,6 +2835,69 @@ among them, its error falling at every doubling as before: 0.021, 0.012,
 **Open**: the top piece itself. Its offset comes apart (every face of it
 hangs and is dropped), inward and outward; no reference worked for it yet.
 
+## A rim round a wall whose edge lies on the seam (2026-11-11, sec 66)
+
+**#363's `Thickness002`**: the Cut's groove wall removed, 1 outward. Once
+FreeCAD finds the wall again (FreeCAD `f3f19634fb`, `../occ-issues/`) the
+thickness runs, and gave an invalid solid, 2098.8735, where the Cut as the
+file stores it gives 3678.0197. Upstream throws with the Arc join and
+gives the input back with Intersection, on either.
+
+The two Cuts are one solid written two ways. The wall is half of the
+cutting cylinder, and its straight edges lie in the bottom's plane, where
+the cylinder's seam is. Made again, the Cut keeps the edge on the seam
+with both of a seam's pcurves, at u = 0 and at 2 pi; the wall runs from 0
+to pi and uses the first. (The stored Cut has that edge with one pcurve.)
+
+Outward, the rim of a removed face is a ring on the face's own surface:
+the new edges outside -- here from -0.125 to pi + 0.125 -- and the face's
+outline its hole. The hole runs the outline the other way round, and an
+edge with two pcurves the other way round is its other pcurve: the edge
+came into the ring at 2 pi, a period away from everything else in it.
+`BRepAlgo_FaceRestrictor` made of the two wires a face running round the
+cylinder, or two faces, the hole's the one running round; either is dropped
+(`goesRound`, sec 51), the wall is left with no image, and
+`BRepOffset_MakeLoops::BuildFaces` builds it again from the new edges
+alone: the whole wall's surface back in the offset, a second shell.
+
+No face on that surface holds the ring as it is: the strip of it beyond
+the seam is on the other side of the edge from the wall, and on that side
+the edge is its second pcurve, at 2 pi, whatever the face. So the ring is
+made in two (`BRepAlgo_Loop.cxx`, `SplitRingAtOwnClosedEdge`, `b62de1a33a`):
+the seam's
+line crosses it beyond each end of the edge, and where it meets the outer
+wire at vertices two new edges are laid on it there, each with a seam's
+two pcurves. The part on the wall's side keeps its place, with the hole's
+other edges; the strip beyond is moved a period on, to where the edge's
+second pcurve is. Its outer edges are the offset's own, not the input's:
+the input is left as it was, text for text. Where the line does not meet
+the outer wire at vertices, nothing is done and the ring is dropped as
+before.
+
+| Case | Before | Now |
+|------|--------|-----|
+| `issue363_cut_remade_wall_out{1,0.5,2}` | invalid (2098.8735, 214.1733, 6221.9936) | 3678.0197, 1783.0366, 7821.7054 |
+| `issue363_cut_remade_wall_out{1,0.5,2}_join` | refused | 3704.4064, 1789.4711, 7932.6620 |
+| `issue363_cut_stored_wall_out{1,0.5,2}`, `..._join` | the same six volumes | the same |
+| `groove_tool_turned{90,270}_wall_out`, `..._join`, `..._half` | invalid, or refused (270, Intersection) | 3795.0668, 3844.0843, 1840.6349 |
+| `groove_tool_turned180_wall_out`, `..._join`, `..._half` | the same three volumes | the same |
+
+The volumes are checked three ways. The stored Cut, which never had the
+fault, gives the remade one's to the digit. The built cylinder gives one
+volume with the tool's seam in the bottom's plane on either side (90,
+270) and away from it (180). And by booleans -- the solid's offset, less
+the solid and the groove's column -- the Arc join's 1 is 3677.8013, wholly
+inside the result; what the result has over it, 0.2183, is two slivers
+along the rim, where the reference's own pipes are approximated to 1e-3.
+The result does not cross itself (`BOPAlgo_ArgumentAnalyzer`), mirrored and
+reversed copies give the same, and inward (3223.6398) is as it was.
+
+Regression (`b62de1a33a`, Linux): thickness PASS=679 (21 new) at fix levels
+0 to 3, frozen at 3; sweep 928 of 928, the same line for line; the corpus
+as its baseline; fillet 824 + 1 XFAIL, boolean 67, draft 105; FreeCAD's
+Python suite 4360 OK. Pictured: `issue363_cut_remade_wall_out1`,
+`issue363_cut_remade_wall_out1_join`, `groove_tool_turned90_wall_out`.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

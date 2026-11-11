@@ -68,6 +68,8 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "issue613": "#613's part: a cylinder under a cone with a filleted ridge across its top",
          "revolve346": "#346's Revolve, a shell: a cone, and a dome whose top is a dimple",
          "issue360": "#360's plate: 10 thick, square holes 4.3 apart and 2.5 from the outline",
+         "cut363remade": "#363's Cut made again: a groove across the bottom, an edge of its wall on the seam",
+         "grooveturned90": "cylinder grooved by a cylinder, the tool's seam in the bottom's plane",
          "platerow2": "plate 80 x 30 x 10 with two square holes 4.3 apart",
          "platestaggered": "plate 80 x 30 x 10 with two square holes 4.3 apart, not in line",
          "plateedge6": "plate 80 x 30 x 10 with a square hole 6 from its outline",

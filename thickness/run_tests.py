@@ -2300,6 +2300,64 @@ thickness_case("issue360_plate_top_in5_inter", issue360, 5, -5.0, "pass", 40288.
 thickness_case("slot_ceiling_out_arc", _slot, _slot_ceiling, +1.0, "pass", 6362.5515)
 thickness_case("slot_ceiling_out_half_arc", _slot, _slot_ceiling, +0.5, "pass", 3085.7956)
 
+
+# #363's Thickness002: the Cut's groove wall removed, outward. The wall is a
+# half cylinder, and as FreeCAD makes the Cut again one of its straight edges
+# lies on the cylinder's seam with both of a seam's pcurves (the file's own
+# Cut has that edge with one). The rim round the wall needs the edge the
+# other way round, which is its other pcurve, a period away from the rest of
+# the rim: the ring was taken for a face running round the cylinder and
+# dropped, the wall's surface stayed in the offset whole, and the solid was
+# invalid (2098.8735 at 1; upstream throws with the Arc join and gives the
+# input back with Intersection). The ring is cut in two along the seam's
+# line (BRepAlgo_Loop, SplitRingAtOwnClosedEdge). The volumes are the
+# stored Cut's, right before and after: one solid written two ways. By
+# booleans -- the solid's offset, less the solid and the groove's column --
+# 3677.8013 at 1 with the Arc join, wholly inside the result; the rest is
+# two slivers along the rim, where the reference's pipes are approximated.
+def issue363_cut(name):
+    cut = Part.Shape()
+    cut.importBrep(os.path.join(MODELS, "issue363_cut_%s.brep" % name))
+    return cut
+
+
+def groove_wall(shape):
+    """1-based index of the groove's wall, the cylinder of radius 8"""
+    return [i + 1 for i, f in enumerate(shape.Faces)
+            if f.Surface.TypeId == "Part::GeomCylinder" and abs(f.Surface.Radius - 8.0) < 1e-6][0]
+
+
+_cut_remade = issue363_cut("remade")
+_cut_stored = issue363_cut("stored")
+for _value, _arc, _inter in ((1.0, 3678.0197, 3704.4064), (0.5, 1783.0366, 1789.4711),
+                             (2.0, 7821.7054, 7932.6620)):
+    for _name, _cut in (("remade", _cut_remade), ("stored", _cut_stored)):
+        thickness_case("issue363_cut_%s_wall_out%g" % (_name, _value), _cut, groove_wall(_cut),
+                       _value, "pass", _arc)
+        thickness_case("issue363_cut_%s_wall_out%g_join" % (_name, _value), _cut,
+                       groove_wall(_cut), _value, "pass", _inter, False, 2)
+
+
+# The same built: a cylinder cut by one half buried in its bottom, the tool
+# turned about its axis so that its seam lies in the bottom's plane on one
+# side of the groove (90), away from it (180) or on the other side (270).
+# One solid, one thickness: at 90 and 270 it was invalid or refused.
+def cylinder_grooved_by_turned_tool(angle):
+    axis = App.Vector(0, 1, 0)
+    tool = Part.makeCylinder(8.0, 60.0, App.Vector(0, -30, 0), axis)
+    tool.rotate(App.Vector(0, 0, 0), axis, angle)
+    return Part.makeCylinder(20.0, 15.0).cut(tool)
+
+
+for _angle in (90, 180, 270):
+    _turned = cylinder_grooved_by_turned_tool(_angle)
+    thickness_case("groove_tool_turned%d_wall_out" % _angle, _turned, groove_wall(_turned), +1.0,
+                   "pass", 3795.0668)
+    thickness_case("groove_tool_turned%d_wall_out_join" % _angle, _turned, groove_wall(_turned),
+                   +1.0, "pass", 3844.0843, False, 2)
+    thickness_case("groove_tool_turned%d_wall_out_half" % _angle, _turned, groove_wall(_turned),
+                   +0.5, "pass", 1840.6349)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

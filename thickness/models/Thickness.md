@@ -3603,6 +3603,36 @@ levels 0 to 3, frozen at 3; sweep 928 of 928, the same line for line; the
 corpus as its baseline; fillet 824 + 1 XFAIL, boolean 67, draft 105;
 FreeCAD's Python suite 4360 OK.
 
+### Sec 66: a rim round a wall whose edge lies on the seam
+
+**A removed face with an edge on its surface's seam, outward**
+(`BRepAlgo_Loop.cxx` `SplitRingAtOwnClosedEdge`).
+
+- #363's `Thickness002` removes the wall of a groove a cylinder cut in
+  the bottom of another. The wall is half the cutting cylinder, and one
+  of its straight edges lies on that cylinder's seam, kept with both of a
+  seam's pcurves.
+- The rim outward is a ring round the wall, the wall's outline its hole.
+  The hole runs that edge the other way round, which is its other pcurve,
+  a period away from the rest of the ring: the ring was taken for a face
+  running round the cylinder and dropped, and the whole wall's surface
+  stayed in the offset. Invalid, 2098.8735.
+- The ring is cut in two along the seam's line, by two new edges with a
+  seam's pcurves, and the strip beyond the line moved a period on. The
+  input is not touched.
+
+Now 3678.0197, the volume the file's stored Cut gives (the same solid,
+that edge with one pcurve), and what booleans give to 0.006%.
+
+Regression (`b62de1a33a`, Linux): thickness PASS=679 at fix levels 0 to 3,
+frozen at 3; sweep 928 of 928, the same line for line; the corpus as its
+baseline; fillet 824 + 1 XFAIL, boolean 67, draft 105; FreeCAD's Python
+suite 4360 OK.
+
+![issue363_cut_remade_wall_out1](pictures/issue363_cut_remade_wall_out1.png)
+![issue363_cut_remade_wall_out1_join](pictures/issue363_cut_remade_wall_out1_join.png)
+![groove_tool_turned90_wall_out](pictures/groove_tool_turned90_wall_out.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
