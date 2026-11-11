@@ -3577,6 +3577,32 @@ frozen at 3; sweep 928 of 928, the same line for line; the corpus as its
 baseline; fillet 824 + 1 XFAIL, boolean 67, draft 104 + 1 FAIL; FreeCAD's
 Python suite 4359 OK.
 
+### Sec 65: a refusal that took 80 s
+
+**The time of a thickness that is refused** (`BRepOffset_MakeOffset.cxx`
+`WallsCrossAtRemovedFace`; `ProjLib_CompProjectedCurve.cxx`,
+`ProjLib_ProjectedCurve.cxx`). No result changes.
+
+- #613's model with its side removed is refused, as upstream refuses it,
+  but took 20 to 80 s to be.
+- The check of the walls beside a removed face measured every pair of
+  their offsets, a second a pair; pairs whose boxes are far apart are not
+  measured.
+- A projection sought the start of its curve's part before the curve's
+  own start, on the B-spline carried on past its end, and the pcurve
+  fitted to that was then fitted again in up to 256 segments to no gain.
+  The start is sought within the curve, and two doublings that gain
+  nothing end the fitting.
+
+The eight runs now take 0.4 to 6.6 s.
+
+![issue613_side_refusal_time](pictures/issue613_side_refusal_time.png)
+
+Regression (`2b06c6870f` and `d75d827fba`, Linux): thickness PASS=658 at fix
+levels 0 to 3, frozen at 3; sweep 928 of 928, the same line for line; the
+corpus as its baseline; fillet 824 + 1 XFAIL, boolean 67, draft 105;
+FreeCAD's Python suite 4360 OK.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

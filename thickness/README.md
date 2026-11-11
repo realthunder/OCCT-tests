@@ -2768,6 +2768,73 @@ boolean 67 and draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`).
 FreeCAD on it: its Python suite 4359 OK, and of its C++ tests Part 117,
 PartDesign 20 and TopoShapeEx 90. Not run: the sweep frozen and placed.
 
+## A refusal that took 80 s (2026-11-11, sec 65)
+
+No result changes; the time of a refusal does. **#613's model with its
+side removed** (corpus `t613 thk f1`, eight runs) is refused by upstream at
+once -- the faces that stay fall in two pieces, a shell not connected -- and
+by the fork too, which makes each piece on its own (sec 11) and cannot
+make the first: the model's top, two slopes and a ridge with B-spline
+fillets against the removed side. But the fork took 20 to 80 s to say so,
+both ways each time. Three causes, none in the loops:
+
+- **The walls' check measured faces far apart**
+  (`BRepOffset_MakeOffset.cxx`, `WallsCrossAtRemovedFace`, sec 10). It asks
+  whether the inward offsets of two faces beside a removed one meet, by
+  `BRepExtrema_DistShapeShape`, 0.3 to 1.4 s a pair of offsets of
+  B-splines; the side has sixteen neighbours, 53 pairs, and 31 of them are
+  17 and more apart. Pairs whose boxes are farther apart than the
+  tolerance are not measured: 9 s of each attempt to 1.6 s.
+
+- **A projection searched for its start before the curve's own**
+  (`ProjLib_CompProjectedCurve.cxx`, upstream's). Where a curve does not
+  project at its first parameter, the projector steps on, takes a point
+  from the curve-surface extrema within the step, and seeks the exact
+  bound between that point and one a step back from it -- which can be
+  before the curve's start. A B-spline there is its end span carried on:
+  the edge's curve projected on the offset of a corner fillet was given a
+  part from -0.0193 where the curve starts at -0.0097, 0.38 off the
+  surface at that end. The bound is now sought no further back than the
+  curve's start. The pcurve that came of it missed its tolerance by
+  0.012; it is 4e-9 off now.
+
+- **The segments were doubled to no gain** (`ProjLib_ProjectedCurve.cxx`,
+  the fork's own, `3c35c64037`). A pcurve of a curve of more spans than
+  16 that misses its tolerance is approximated again in 32, 64, 128 and
+  256 segments, the best kept. On the part above nothing could follow
+  the jump at its start: the error stayed the same to six digits at every
+  count, each point of it found by a search of the whole surface, 43000 of
+  them, 28 s. The error does fall in steps -- the suite has curves that
+  gain nothing at 32 and reach 1.4e-9 at 64 -- so two doublings in a row
+  that gain nothing end it. With the bound mended this projection needs
+  one doubling.
+
+| run (`thk breps/t613.brep <offset> <join> 0 1`) | before | after |
+|---|---|---|
+| 1 outward, Arc | 0.4 s | 0.4 s |
+| 1 inward, Arc | 20.3 s | 3.4 s |
+| 0.5 outward, Arc | 0.5 s | 0.5 s |
+| 0.5 inward, Arc | 24.2 s | 3.4 s |
+| 1 outward, Intersection | 60.6 s | 4.0 s |
+| 1 inward, Intersection | 80.6 s | 5.4 s |
+| 0.5 outward, Intersection | 3.4 s | 3.9 s |
+| 0.5 inward, Intersection | 27.2 s | 6.6 s |
+
+Each run alone, Linux; all eight "not done" before and after, as upstream
+(0.01 s). `pictures/refusal_time.py` draws the figure,
+`models/pictures/issue613_side_refusal_time.png`.
+
+The projection's two changes (`d75d827fba`; the walls' is `2b06c6870f`) are
+in TKGeomBase, under every pcurve made by projection, so the whole set was
+run: thickness PASS=658 at fix levels 0
+to 3 and frozen at 3; the sweep 928 of 928, the same line for line; the
+corpus as its baseline; fillet 824 + 1 XFAIL, boolean 67 (#617's pcurve
+among them, its error falling at every doubling as before: 0.021, 0.012,
+2e-5, 6e-10), draft 105; FreeCAD's Python suite 4360 OK, its C++ tests as before.
+
+**Open**: the top piece itself. Its offset comes apart (every face of it
+hangs and is dropped), inward and outward; no reference worked for it yet.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
