@@ -3507,8 +3507,9 @@ the digit.
 
 ![plate_roundedge3_top_in4_inter](pictures/plate_roundedge3_top_in4_inter.png)
 
-Over the corpus (1072 runs) four change, refused to made, upstream's to
-the digit: #363's Thickness001 base, Face2 removed, the Intersection join.
+Over the corpus (1072 runs) four change, refused to made: #363's
+Thickness001 base, Face2 removed, the Intersection join -- each what the
+same solid in two quarter cylinders gave already. Upstream refuses them.
 
 Regression (`d468af23e2`, Linux): thickness PASS=655, none known broken,
 at fix levels 0 to 3, frozen at 3 (645 + 1); sweep 928 of 928; fillet
@@ -3528,7 +3529,8 @@ at fix levels 0 to 3, frozen at 3 (645 + 1); sweep 928 of 928; fillet
   edge whole.
 - Mended, that let through a result it had held back by accident: the
   cylinder with a slot, the slot's ceiling removed outward with the Arc
-  join, a closed shell of a volume of -819.3205, upstream's too. A thick
+  join, a closed shell of a volume of -819.3205 (upstream gives the input
+  back, invalid). A thick
   solid of a volume below nothing, a face removed, is refused, and the
   second way makes the right one.
 
@@ -3543,7 +3545,7 @@ slot's ceiling outward, 6362.5515 and 3085.7956 at 0.5 (6363.8420 and
 
 Over the corpus (1072 runs) six change, refused to made: the slot's
 ceiling at +1 and +0.5, and #613's model with a flat side of its ridge removed,
-the Arc join, at +1 and +0.5 (upstream's to the digit).
+the Arc join, at +1 and +0.5 (upstream gives the input back, invalid).
 
 Regression (`7abaafc952`, Linux): thickness PASS=658, none known broken, at
 fix levels 0 to 3, frozen at 3 (655); sweep 928 of 928; fillet 824 + 1

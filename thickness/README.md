@@ -2613,11 +2613,16 @@ circles are polygons).
 
 **Still broken then**, not in the suite (sec 63's): #360's plate 5 inward.
 
-Over the corpus (1072 runs) four change, all from refused to made, each
-upstream's to the digit: #363's Thickness001 base (`t001`) with its Face2
-removed, the Intersection join, at +1, -1, +0.5 and -0.5 (6627.9587,
-6357.2578, 3288.2522, 3240.4163; `corpus/baseline.txt` has them). The
-sweep is right in 928 of 928.
+Over the corpus (1072 runs) four change, all from refused to made:
+#363's Thickness001 base (`t001`) with its Face2 removed, the
+Intersection join, at +1, -1, +0.5 and -0.5 (6627.9587, 6357.2578,
+3288.2522, 3240.4163; `corpus/baseline.txt` has them). Each is what the
+same solid with its groove in two quarter cylinders (`chg10`, f2) gave
+already, to 1e-4. Upstream refuses all four. (This said "each upstream's
+to the digit" until 2026-11-11: the corpus tool had been run with
+upstream's libraries named by `LD_LIBRARY_PATH` in a directory without
+the names the loader asks for, and had loaded the fork's. Corrected in sec
+63, where the same was found.) The sweep is right in 928 of 928.
 
 **Regression** (`d468af23e2`, on Linux): thickness PASS=655, nothing
 marked known broken, at fix levels 0, 1, 2 and 3, and frozen at 3 (645 + 1
@@ -2646,8 +2651,8 @@ dropped as hanging but the removed top's rim.
   now take the place of the edge whole (`AddCutImage`).
 - That is the first way's fault as much as the second's, and mended it
   let through what it had held back by accident: #363's cylinder with a
-  slot, the slot's ceiling removed outward with the Arc join, came out as
-  upstream's does -- a closed shell of one side's offsets and half the
+  slot, the slot's ceiling removed outward with the Arc join, came out of
+  the first way a closed shell of one side's offsets and half the
   cylinder's, valid to `BRepCheck`, of a volume of -819.3205. A thick
   solid of a volume below nothing is no answer (`IsInsideOut`, beside
   `IsRunaway`), and the second way then makes it. With a face removed
@@ -2658,7 +2663,7 @@ dropped as hanging but the removed top's rim.
 | Case | Model | What it covers |
 |------|-------|----------------|
 | `issue360_plate_top_in5_inter` | #360's plate, Face5 removed, -5 | 40288.2902: four pockets (40288.27 by the erosion), upstream's to the digit; refused before |
-| `slot_ceiling_out_arc`, `slot_ceiling_out_half_arc` | the cylinder with a slot, the slot's ceiling removed, +1 and +0.5, the Arc join | 6362.5515, 3085.7956; refused before, and upstream's are -819.3205 and -3193.7441 from the kernel (the input back, invalid, through FreeCAD) |
+| `slot_ceiling_out_arc`, `slot_ceiling_out_half_arc` | the cylinder with a slot, the slot's ceiling removed, +1 and +0.5, the Arc join | 6362.5515, 3085.7956; refused before; upstream gives the input back, invalid |
 
 The slot's are checked by booleans: the cylinder's offset less the
 cylinder, less what of it lies under the ceiling between the walls'
@@ -2672,9 +2677,22 @@ it by four corners of 0.3226 t^3 where the rim closes the opening.
 Over the corpus (1072 runs) six change, all from refused to made: the
 slot's ceiling (`cslot`, f4) at +1 and +0.5 with the Arc join, as above,
 and #613's model (`t613`) with either flat side of its ridge removed (f18,
-f19), the Arc join, at +1 and +0.5 (7338.5623, 3587.9401: upstream's to
-the digit, and the input and the skin fused weigh what the two do apart).
+f19), the Arc join, at +1 and +0.5 (7338.5623, 3587.9401). Upstream gives
+the input back, invalid, for all six. #613's are checked less closely
+than the slot's: valid, clean by BOP's check, the input and the skin
+fused weigh what the two do apart, and the model's offset less the model
+less a prism over the face is 7333.94 and 3586.74 -- the result differs
+from that by a strip along each long edge of the face (29.70 and 34.29;
+7.56 and 8.74 at 0.5, a quarter), where the rim closes the opening and
+the fillet's offset below passes before the face.
 `corpus/baseline.txt` has them. No run has a volume below nothing.
+
+An earlier text of this section said the slot's -819.3205 was upstream's
+too, and #613's four upstream's to the digit. Neither was so: the corpus
+tool had loaded the fork's libraries, not upstream's (`LD_LIBRARY_PATH`
+at a directory holding `libTKOffset.so.8.0.1` but no `libTKOffset.so.8.0`).
+Upstream's results here are from `LD_PRELOAD`, checked with `ldd`; the
+plate's is from the pictures, which preload too.
 
 #360's plate takes 160 s at 5 inward on this box, run alone: the first
 way's search runs to its limit before the second is asked (sec 61).

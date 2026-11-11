@@ -2292,7 +2292,7 @@ thickness_case("issue360_plate_top_in3_inter", issue360, 5, -3.0, "pass", 36527.
 thickness_case("issue360_plate_top_in5_inter", issue360, 5, -5.0, "pass", 40288.2902, True)
 # With the arc's image mended, #363's cylinder with a slot, the slot's ceiling
 # removed outward with the Arc join -- refused till then, by that fault --
-# came out as upstream's: a closed shell of one side's offsets and half the
+# came out of the first way a closed shell of one side's offsets and half the
 # cylinder's, "valid", -819.3205 (-3193.7441 at 0.5). A thick solid of a
 # volume below nothing is no answer (IsInsideOut), and the second way makes
 # it: the skin less the opening by booleans is 6363.8420 and 3085.9608, the
