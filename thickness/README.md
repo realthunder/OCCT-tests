@@ -2733,22 +2733,34 @@ made between the starts, and take part in which edges are started along.)
 
 | #360's plate, top removed | before | after | memory before | after | upstream |
 |---|---|---|---|---|---|
-| 1 inward | 16.0 s | 3.8 s | 0.5 GB | 46 MB | 0.8 s |
-| 2 inward | 43.6 s | 5.9 s | 2.4 GB | 42 MB | 0.8 s, invalid |
-| 3 inward | 20.3 s | 6.7 s | 1.7 GB | 42 MB | 0.7 s |
-| 4 inward | 23.0 s | 6.1 s | 1.8 GB | 43 MB | 0.7 s |
-| 5 inward | 145.9 s | 7.5 s | 5.2 GB | 45 MB | 0.7 s |
+| 1 inward | 16.0 s | 2.0 s | 0.5 GB | 46 MB | 0.8 s |
+| 2 inward | 43.6 s | 2.4 s | 2.4 GB | 42 MB | 0.8 s, invalid |
+| 3 inward | 20.3 s | 3.6 s | 1.7 GB | 42 MB | 0.7 s |
+| 4 inward | 23.0 s | 3.6 s | 1.8 GB | 43 MB | 0.7 s |
+| 5 inward | 145.9 s | 5.1 s | 5.2 GB | 45 MB | 0.7 s |
 
 Each run alone on the dev box, `corpus/tools/thk` (Arc join, intersection
 on); "before" is the libraries of `5110153daf` preloaded for 1 to 4 and
 the fork at `7b20287a74` for 5, upstream its libraries preloaded and
 checked with `ldd`. `pictures/search_time.py` draws the figure.
 
-What is left of the time is the first way run to its end (the walk by
-angle's own failures, 3 s of loops) and the second way after it; upstream
-is still eight times faster on this plate.
+The search alone brought these to 3.8, 5.9, 6.7, 6.1 and 7.5 s
+(`0beda9ad94`). The rest is a second change (`f35d92d6ef`): two passes of
+`BRepAlgo_Loop::Perform` take every edge of the face against every other
+(`BRepExtrema_DistShapeShape`, for crossings with no vertex) and every
+vertex against every edge (a projection) -- tens of thousands of each on
+the plate's top, nearly all between things nowhere near each other. A
+piece of a line or of a circle has an exact box: two such edges whose
+boxes, their vertices in them, are farther apart than the tolerance, and
+a vertex farther from an edge's box than its own tolerance, are not
+measured. Other curves are, as before.
 
-**Regression** (`0beda9ad94`, on Linux): thickness PASS=658, nothing marked
+What is left is the first way run to its end, its walk by angle failing
+on the pieces that lie over each other, and the second way after it;
+upstream is still three to seven times faster on this plate.
+
+**Regression** (`0beda9ad94` and `f35d92d6ef`, each, on Linux): thickness
+PASS=658, nothing marked
 known broken, at fix levels 0, 1, 2 and 3, and frozen at 3, every line as
 before; the thickness sweep right in all 928 runs and the same line for
 line; the corpus (1072 runs) as its baseline; fillet PASS=824 XFAIL=1,

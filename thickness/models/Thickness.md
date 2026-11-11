@@ -3563,11 +3563,16 @@ XFAIL, boolean 67, draft 104 + 1 FAIL.
 - The same paths are walked first by number, counting the same steps and
   making no wire; a search that will run out is not begun.
 
-The plate now takes 4 to 8 s at 1 to 5 inward, and 45 MB.
+- Two passes that measure every edge against every other, and every
+  vertex against every edge, skip those whose exact boxes (lines and arcs)
+  are farther apart than the tolerance.
+
+The plate now takes 2 to 5 s at 1 to 5 inward, and 45 MB.
 
 ![issue360_plate_search_time](pictures/issue360_plate_search_time.png)
 
-Regression (`0beda9ad94`, Linux): thickness PASS=658 at fix levels 0 to 3,
+Regression (`0beda9ad94` and `f35d92d6ef`, Linux): thickness PASS=658 at fix
+levels 0 to 3,
 frozen at 3; sweep 928 of 928, the same line for line; the corpus as its
 baseline; fillet 824 + 1 XFAIL, boolean 67, draft 104 + 1 FAIL; FreeCAD's
 Python suite 4359 OK.

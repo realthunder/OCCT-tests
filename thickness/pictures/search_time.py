@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 DEPTHS = ["1", "2", "3", "4", "5"]
 UPSTREAM = [0.8, 0.8, 0.7, 0.7, 0.7]
 BEFORE = [16.0, 43.6, 20.3, 23.0, 145.9]
-AFTER = [3.8, 5.9, 6.7, 6.1, 7.5]
+AFTER = [2.0, 2.4, 3.6, 3.6, 5.1]
 
 fig, ax = plt.subplots(figsize=(9.6, 4.6), dpi=150)
 width = 0.26
 xs = range(len(DEPTHS))
 series = (("upstream OCCT 8.0.1 (invalid at 2)", UPSTREAM, "#9aa6b6"),
-          ("fork before (7b20287a74)", BEFORE, "#c0504d"),
+          ("fork before sec 64", BEFORE, "#c0504d"),
           ("fork after", AFTER, "#4f81bd"))
 for k, (label, values, color) in enumerate(series):
     bars = ax.bar([x + (k - 1) * width for x in xs], values, width, label=label, color=color)
