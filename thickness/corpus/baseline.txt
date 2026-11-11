@@ -74,7 +74,7 @@ cslot off 1 j0 | done valid 1 faces 23 area 7625.4858
 cslot thk f1 1 j0 | done valid 1 solids 2 vol 5128.9938
 cslot thk f2 1 j0 | done valid 1 solids 1 vol 6681.6776
 cslot thk f3 1 j0 | done valid 1 solids 1 vol 6825.6080
-cslot thk f4 1 j0 | not done
+cslot thk f4 1 j0 | done valid 1 solids 1 vol 6362.5515
 cslot thk f5 1 j0 | done valid 1 solids 1 vol 6825.6080
 cslot thk f6 1 j0 | done valid 1 solids 1 vol 6681.6776
 cslot thk f7 1 j0 | done valid 1 solids 1 vol 5086.9550
@@ -90,7 +90,7 @@ cslot off 0.5 j0 | done valid 1 faces 23 area 7308.0186
 cslot thk f1 0.5 j0 | done valid 1 solids 2 vol 2567.6896
 cslot thk f2 0.5 j0 | done valid 1 solids 1 vol 3284.0812
 cslot thk f3 0.5 j0 | done valid 1 solids 1 vol 3335.2596
-cslot thk f4 0.5 j0 | not done
+cslot thk f4 0.5 j0 | done valid 1 solids 1 vol 3085.7956
 cslot thk f5 0.5 j0 | done valid 1 solids 1 vol 3335.2596
 cslot thk f6 0.5 j0 | done valid 1 solids 1 vol 3284.0812
 cslot thk f7 0.5 j0 | done valid 1 solids 1 vol 2497.3662
@@ -912,8 +912,8 @@ t613 thk f14 1 j0 | not done
 t613 thk f15 1 j0 | not done
 t613 thk f16 1 j0 | done valid 1 solids 1 vol 5749.5228
 t613 thk f17 1 j0 | not done
-t613 thk f18 1 j0 | not done
-t613 thk f19 1 j0 | not done
+t613 thk f18 1 j0 | done valid 1 solids 1 vol 7338.5623
+t613 thk f19 1 j0 | done valid 1 solids 1 vol 7338.5623
 t613 thk f20 1 j0 | not done
 t613 thk f21 1 j0 | done valid 1 solids 1 vol 6773.6496
 t613 off -1 j0 | done valid 1 faces 21 area 6449.6072
@@ -956,8 +956,8 @@ t613 thk f14 0.5 j0 | not done
 t613 thk f15 0.5 j0 | not done
 t613 thk f16 0.5 j0 | done valid 1 solids 1 vol 2823.0748
 t613 thk f17 0.5 j0 | done valid 1 solids 1 vol 3629.8323
-t613 thk f18 0.5 j0 | not done
-t613 thk f19 0.5 j0 | not done
+t613 thk f18 0.5 j0 | done valid 1 solids 1 vol 3587.9401
+t613 thk f19 0.5 j0 | done valid 1 solids 1 vol 3587.9401
 t613 thk f20 0.5 j0 | not done
 t613 thk f21 0.5 j0 | not done
 t613 off -0.5 j0 | done valid 1 faces 21 area 6801.2855

@@ -2284,6 +2284,21 @@ thickness_case("issue360_plate_top_in1_inter", issue360, 5, -1.0, "pass", 24071.
 # of the opening's rounded corner.
 thickness_case("issue360_plate_top_in2_inter", issue360, 5, -2.0, "pass", 33213.1056, True)
 thickness_case("issue360_plate_top_in3_inter", issue360, 5, -3.0, "pass", 36527.3399, True)
+# 5 inward, half the plate (four pockets, 40288.27 by the erosion): refused.
+# The arc a hole corner's offset leaves on the removed top was taken whole by
+# the corner's own face and cut in two by the rim, where the stretched side of
+# a hole crosses it; the arc's image held the arc and both pieces, the corner
+# took all three, and its top edge hung free (BRepOffset_MakeLoops).
+thickness_case("issue360_plate_top_in5_inter", issue360, 5, -5.0, "pass", 40288.2902, True)
+# With the arc's image mended, #363's cylinder with a slot, the slot's ceiling
+# removed outward with the Arc join -- refused till then, by that fault --
+# came out as upstream's: a closed shell of one side's offsets and half the
+# cylinder's, "valid", -819.3205 (-3193.7441 at 0.5). A thick solid of a
+# volume below nothing is no answer (IsInsideOut), and the second way makes
+# it: the skin less the opening by booleans is 6363.8420 and 3085.9608, the
+# difference four corners of 0.3226 t^3 where the rim closes the opening.
+thickness_case("slot_ceiling_out_arc", _slot, _slot_ceiling, +1.0, "pass", 6362.5515)
+thickness_case("slot_ceiling_out_half_arc", _slot, _slot_ceiling, +0.5, "pass", 3085.7956)
 
 counts = {}
 for _, verdict, _ in results:

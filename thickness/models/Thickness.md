@@ -3514,6 +3514,41 @@ Regression (`d468af23e2`, Linux): thickness PASS=655, none known broken,
 at fix levels 0 to 3, frozen at 3 (645 + 1); sweep 928 of 928; fillet
 824 + 1 XFAIL, boolean 67, draft 104 + 1 FAIL.
 
+### Sec 63: #360's plate 5 inward
+
+**An edge taken whole by one face and cut by another**
+(`BRepOffset_MakeLoops.cxx` `AddCutImage`; `BRepOffset_MakeOffset.cxx`
+`IsInsideOut`).
+
+- #360's plate 5 inward, half its thickness: refused. The arc a hole
+  corner's offset leaves on the removed top was taken whole by the
+  corner's face and cut in two by the top's rim; the arc's image held the
+  arc and both pieces, the corner took all three, and with its top edge
+  twice over the whole offset came apart. The pieces take the place of the
+  edge whole.
+- Mended, that let through a result it had held back by accident: the
+  cylinder with a slot, the slot's ceiling removed outward with the Arc
+  join, a closed shell of a volume of -819.3205, upstream's too. A thick
+  solid of a volume below nothing, a face removed, is refused, and the
+  second way makes the right one.
+
+Made: #360's plate 5 inward, 40288.2902 (40288.27 by the erosion, and
+upstream's to the digit); the
+slot's ceiling outward, 6362.5515 and 3085.7956 at 0.5 (6363.8420 and
+3085.9608 by booleans, less four corners where the rim closes).
+
+![issue360_plate_top_in5_inter](pictures/issue360_plate_top_in5_inter.png)
+
+![slot_ceiling_out_arc](pictures/slot_ceiling_out_arc.png)
+
+Over the corpus (1072 runs) six change, refused to made: the slot's
+ceiling at +1 and +0.5, and #613's model with a flat side of its ridge removed,
+the Arc join, at +1 and +0.5 (upstream's to the digit).
+
+Regression (`7abaafc952`, Linux): thickness PASS=658, none known broken, at
+fix levels 0 to 3, frozen at 3 (655); sweep 928 of 928; fillet 824 + 1
+XFAIL, boolean 67, draft 104 + 1 FAIL.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

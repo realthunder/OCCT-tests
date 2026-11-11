@@ -78,6 +78,7 @@ STAGES = {
     "s60": ("10a2414c33", "60"),
     "s61": ("03d799f0c5", "61"),
     "s62": ("d82a097786", "62"),
+    "s63": ("5110153daf", "63"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -671,6 +672,8 @@ CASES = {
     "issue360_plate_top_in2_inter": ("s61", "issue360", 5, -2, True, 0, 33213.1056),
     "plate_round2_top_in4_inter": ("s62", "plateround2", 3, -4, True, 0, 15826.1480),
     "plate_roundedge3_top_in4_inter": ("s62", "plateroundedge3", 3, -4, True, 0, 14876.6460),
+    "issue360_plate_top_in5_inter": ("s63", "issue360", 5, -5, True, 0, 40288.2902),
+    "slot_ceiling_out_arc": ("s63", "slot", 4, 1, False, 0, 6362.5515),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

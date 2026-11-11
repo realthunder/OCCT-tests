@@ -2611,7 +2611,7 @@ circles are polygons).
 
 ![plate_roundedge3_top_in4_inter](models/pictures/plate_roundedge3_top_in4_inter.png)
 
-**Still broken**, not in the suite: #360's plate 5 inward (sec 61).
+**Still broken then**, not in the suite (sec 63's): #360's plate 5 inward.
 
 Over the corpus (1072 runs) four change, all from refused to made, each
 upstream's to the digit: #363's Thickness001 base (`t001`) with its Face2
@@ -2626,6 +2626,67 @@ thickness sweep right in all 928 runs (level 0, plain); fillet PASS=824
 XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
 `new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
 tests, the sweep frozen and placed.
+
+## #360's plate 5 inward: an edge taken whole, then cut (2026-11-11, sec 63)
+
+The last of #360's open cases: **the plate 5 inward, half its thickness**,
+refused both ways (four pockets, 40288.27 by the erosion), where upstream
+makes it. The second way
+had every face's wires right; the offset then came apart, every face of it
+dropped as hanging but the removed top's rim.
+
+- Where a hole corner's offset -- a quarter cylinder -- meets the removed
+  top it leaves an arc. The corner's own loop takes the arc whole, and it
+  is its own image. The top's rim, built after, cuts the arc in two, at
+  the point where the stretched side of a hole crosses it.
+  `BRepOffset_MakeLoops` added the two pieces to the arc's image beside
+  the arc, and `MakeFaces`, which hands a face built earlier the pieces of
+  an edge cut since, gave the corner all three: the arc twice over in its
+  wire, one of them free, and with it everything hanging went. The pieces
+  now take the place of the edge whole (`AddCutImage`).
+- That is the first way's fault as much as the second's, and mended it
+  let through what it had held back by accident: #363's cylinder with a
+  slot, the slot's ceiling removed outward with the Arc join, came out as
+  upstream's does -- a closed shell of one side's offsets and half the
+  cylinder's, valid to `BRepCheck`, of a volume of -819.3205. A thick
+  solid of a volume below nothing is no answer (`IsInsideOut`, beside
+  `IsRunaway`), and the second way then makes it. With a face removed
+  only: with none the solid shrunk is the void of a hollow, asked for as
+  such (FreeCAD's thickness to both sides with no opening, which its
+  `testNoOpeningIsACentredHollow` holds).
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `issue360_plate_top_in5_inter` | #360's plate, Face5 removed, -5 | 40288.2902: four pockets (40288.27 by the erosion), upstream's to the digit; refused before |
+| `slot_ceiling_out_arc`, `slot_ceiling_out_half_arc` | the cylinder with a slot, the slot's ceiling removed, +1 and +0.5, the Arc join | 6362.5515, 3085.7956; refused before, and upstream's are -819.3205 and -3193.7441 from the kernel (the input back, invalid, through FreeCAD) |
+
+The slot's are checked by booleans: the cylinder's offset less the
+cylinder, less what of it lies under the ceiling between the walls'
+offsets, is 6363.8420 and 3085.9608; the result lies within it, short of
+it by four corners of 0.3226 t^3 where the rim closes the opening.
+
+![issue360_plate_top_in5_inter](models/pictures/issue360_plate_top_in5_inter.png)
+
+![slot_ceiling_out_arc](models/pictures/slot_ceiling_out_arc.png)
+
+Over the corpus (1072 runs) six change, all from refused to made: the
+slot's ceiling (`cslot`, f4) at +1 and +0.5 with the Arc join, as above,
+and #613's model (`t613`) with either flat side of its ridge removed (f18,
+f19), the Arc join, at +1 and +0.5 (7338.5623, 3587.9401: upstream's to
+the digit, and the input and the skin fused weigh what the two do apart).
+`corpus/baseline.txt` has them. No run has a volume below nothing.
+
+#360's plate takes 160 s at 5 inward on this box, run alone: the first
+way's search runs to its limit before the second is asked (sec 61).
+
+**Regression** (`7abaafc952`, on Linux): thickness PASS=658, nothing marked
+known broken, at fix levels 0, 1, 2 and 3, and frozen at 3 (655 before,
+the same lines but for the three added); the thickness sweep right in all
+928 runs (level 0, plain); fillet PASS=824 XFAIL=1, boolean 67 and draft
+104 + 1 FAIL (Linux's standing `new_roof_L_a-30`), as before. FreeCAD on
+it: its Python suite 4359 OK, and of its C++ tests Tests 656, Part 117,
+PartDesign 20, Sketcher 148 and TopoShapeEx 90. Not run: the sweep frozen
+and placed.
 
 ## Determinism cases (intersection mode, Arc join)
 
