@@ -3441,11 +3441,43 @@ that upstream refuses among them.
 
 ![plate_staggered_top_in4_inter](pictures/plate_staggered_top_in4_inter.png)
 
-Still refused: four holes in a square, #360's plate 2 inward; two round
-holes are invalid. Over the corpus (1072 runs) none changes.
+Still refused then: four holes in a square, #360's plate 2 inward (both
+sec 61's); two round holes are invalid. Over the corpus (1072 runs) none
+changes.
 
 Regression (`75bce7e802`, Linux): thickness PASS=642 XFAIL=3 at fix levels
 0 and 3, frozen at 3 (631 + 11); sweep 928 of 928; fillet 824 + 1 XFAIL,
+boolean 67, draft 104 + 1 FAIL.
+
+### Sec 61: four holes in a square, and #360's plate 2 inward
+
+**Two faults in sec 60's second way** (`BRepAlgo_Loop.cxx`
+`FindRegionWires`, `IsRegionSurface`).
+
+- Four holes in a square, the walls between them thinner than twice the
+  thickness both ways: refused. The rounded corners of the Arc join are
+  cylinders, which the second way left to the search; four of them kept,
+  of the edge each shares with a wall, the piece below the floor, and the
+  wall was handed that piece for its own. A cylinder taken less than a
+  turn round is read by regions too.
+- #360's plate 2 and 3 inward: refused. The point that tells whether a
+  region lies within the removed face was taken off a chord of the
+  region's polygon; off a chord of the opening's rounded corner it fell
+  in the opening, and the rim was read as outside the face. It is taken
+  off the edge itself.
+
+Made: the four holes 21014.4693 (the erosion's, and upstream's); #360's
+plate 33213.1056 at 2 inward, twelve pockets, and 36527.3399 at 3, four.
+
+![plate_grid_top_in4_inter](pictures/plate_grid_top_in4_inter.png)
+
+![issue360_plate_top_in2_inter](pictures/issue360_plate_top_in2_inter.png)
+
+Still invalid: two round holes nearer than twice the thickness (whole
+cylinders, with their seams). Over the corpus (1072 runs) none changes.
+
+Regression (`3e7a7cfd5e`, Linux): thickness PASS=645 XFAIL=1 at fix levels
+0 to 3, frozen at 3 (642 + 3); sweep 928 of 928; fillet 824 + 1 XFAIL,
 boolean 67, draft 104 + 1 FAIL.
 
 ## Where the chase stands (2026-10-04)

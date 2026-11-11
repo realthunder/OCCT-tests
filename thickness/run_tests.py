@@ -2219,11 +2219,15 @@ for _tag, _holes, _ref in (
     thickness_case("plate_%s_top_in4_inter" % _tag, _s, _top, -4.0, "pass", _ref, True)
 _s, _top = _holed_plate([(10, 3, 12.4, 12.4)])
 thickness_case("plate_edge3_top_in4", _s, _top, -4.0, "pass", 14802.1564)
-# Four holes in a square, 4.3 apart both ways: still refused (21014.47 by the
-# erosion, and upstream's). Two round holes 4.3 apart: invalid (15826.15).
+# Sec 61. Four holes in a square, 4.3 apart one way and 7.6 the other: the
+# walls between them pass each other both ways, and in the middle is left a
+# pocket between four rounded corners, 0.69 in area (21014.47 by the erosion,
+# and upstream's). The corners are cylinders, and are read by regions too.
 _s, _top = _holed_plate([(10, 10, 12.4, 12.4), (26.7, 10, 12.4, 12.4),
                          (10, 30, 12.4, 12.4), (26.7, 30, 12.4, 12.4)], 60.0, 55.0)
-thickness_case("plate_grid_top_in4_inter", _s, _top, -4.0, "xfail", 21014.4693, True)
+thickness_case("plate_grid_top_in4_inter", _s, _top, -4.0, "pass", 21014.4693, True)
+# Two round holes 4.3 apart: invalid (15826.15). Their walls are whole
+# cylinders, seam and all, which the second way does not read.
 _s = Part.makeBox(80, 30, 10)
 for _x in (16.2, 32.9):
     _s = _s.cut(Part.makeCylinder(6.2, 12, App.Vector(_x, 15, -1)))
@@ -2240,8 +2244,11 @@ thickness_case("issue360_plate_top_in4_inter", issue360, 5, -4.0, "pass", 38747.
 thickness_case("issue360_plate_bottom_in4_inter", issue360, 4, -4.0, "pass", 38747.1395, True)
 # 1 inward: one pocket round the whole plate, 1993.45 and 9 deep.
 thickness_case("issue360_plate_top_in1_inter", issue360, 5, -1.0, "pass", 24071.6589, True)
-# 2 inward (twelve pockets, 33212.8 by the erosion): refused both ways.
-thickness_case("issue360_plate_top_in2_inter", issue360, 5, -2.0, "xfail", 33212.8, True)
+# Sec 61. 2 inward, twelve pockets, and 3, four (33213.03 and 36527.29 by
+# the erosion): the rim was read as the opening, a region sampled off a chord
+# of the opening's rounded corner.
+thickness_case("issue360_plate_top_in2_inter", issue360, 5, -2.0, "pass", 33213.1056, True)
+thickness_case("issue360_plate_top_in3_inter", issue360, 5, -3.0, "pass", 36527.3399, True)
 
 counts = {}
 for _, verdict, _ in results:

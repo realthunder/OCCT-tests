@@ -76,6 +76,7 @@ STAGES = {
     "s58": ("e1d0c13102", "58"),
     "s59": ("ede496a1f2", "59"),
     "s60": ("10a2414c33", "60"),
+    "s61": ("03d799f0c5", "61"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -257,10 +258,10 @@ def _issue360():
     return s
 
 
-def _holed_plate(holes):
-    # run_tests.py's _holed_plate: 80 x 30 x 10 with square holes through
-    # it, the top Face3.
-    s = Part.makeBox(80, 30, 10)
+def _holed_plate(holes, lx=80, ly=30):
+    # run_tests.py's _holed_plate: 80 x 30 x 10 (or as given) with square
+    # holes through it, the top Face3.
+    s = Part.makeBox(lx, ly, 10)
     for x0, y0 in holes:
         s = s.cut(Part.makeBox(12.4, 12.4, 12, V(x0, y0, -1)))
     return s.removeSplitter()
@@ -400,6 +401,7 @@ SHAPES = {
     "platerow2": lambda: _holed_plate([(10, 8.8), (26.7, 8.8)]),
     "platestaggered": lambda: _holed_plate([(10, 6), (26.7, 10)]),
     "plateedge6": lambda: _holed_plate([(10, 6)]),
+    "plategrid": lambda: _holed_plate([(10, 10), (26.7, 10), (10, 30), (26.7, 30)], 60, 55),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -653,6 +655,8 @@ CASES = {
     "plate_row2_top_in4_inter": ("s60", "platerow2", 3, -4, True, 0, 15869.0119),
     "plate_staggered_top_in4_inter": ("s60", "platestaggered", 3, -4, True, 0, 15683.8564),
     "plate_edge6_top_in4_inter": ("s60", "plateedge6", 3, -4, True, 0, 15165.1911),
+    "plate_grid_top_in4_inter": ("s61", "plategrid", 3, -4, True, 0, 21014.4693),
+    "issue360_plate_top_in2_inter": ("s61", "issue360", 5, -2, True, 0, 33213.1056),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

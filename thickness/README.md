@@ -2474,7 +2474,8 @@ the digit.
 
 ![plate_edge6_top_in4_inter](models/pictures/plate_edge6_top_in4_inter.png)
 
-**Still broken** (`XFAIL`): four holes in a square, 4.3 apart both ways
+**Still broken then** (the first and the last of these are sec 61's): four
+holes in a square, 4.3 apart both ways
 (`plate_grid_top_in4_inter`, 21014.47), refused; two round holes 4.3 apart
 (`plate_round2_top_in4_inter`, 15826.15), invalid -- the walls are
 cylinders, and the second way reads planar faces only; #360's plate 2
@@ -2496,6 +2497,68 @@ line for line as they were, at 0 and 3); the thickness sweep right in all
 PASS=824 XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
 `new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
 tests, levels 1 and 2, the sweep frozen and placed.
+
+## Four holes in a square, and #360's plate 2 inward: regions on cylinders, sampled off the edge (2026-11-11, sec 61)
+
+Two of sec 60's three open cases, two faults in its second way.
+
+**Four holes in a square**, 4.3 apart one way and 7.6 the other, the top
+removed 4 inward: refused. The walls between the holes pass each other
+both ways; what is left in the middle is a pocket between the four rounded
+corners, 0.69 in area. The removed top came out right the second way --
+eight wires, as the erosion has it -- and so did the floor and twelve of
+the sixteen walls. The other four had no outline: of the edge each shares
+with the rounded corner at its far end it was handed, as an edge already
+cut, the piece below the floor only. The corner had been cut first, and
+the corner is a cylinder: the second way read planar faces only, the
+search had the corner, and the search kept that piece. A cylinder taken
+less than a turn round is read by regions now, as a plane is
+(`IsRegionSurface`).
+
+**#360's plate 2 inward** (twelve pockets), and 3: refused. On the removed
+top a region is of the face where it lies within the face as it was, told
+by a point just inside the region -- a hundredth of a side off the middle
+of a chord of the region's polygon. The plate's opening has rounded
+corners, and between a chord and its arc lies a sliver of the other side:
+the rim's point fell in the opening, the rim was read as outside the face,
+55 of its edges then said the offset was outward, and the face was left to
+the search. The point is taken off the middle of the edge itself now,
+along its normal there.
+
+Nothing that was made changes: the second way is still asked only where
+the first has no valid answer, and what it answers is still kept only
+where it is valid and crosses itself nowhere.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `plate_grid_top_in4_inter` | 60 x 55 x 10, four square holes in a square, 4.3 and 7.6 apart, the top removed, -4 | 21014.4693, the erosion's and upstream's; refused before |
+| `issue360_plate_top_in2_inter` | #360's plate, Face5 removed, -2 | 33213.1056: twelve pockets (33213.03 by the erosion); refused before, and upstream's is invalid (21741.36) |
+| `issue360_plate_top_in3_inter` | the same, -3 | 36527.3399: four pockets (36527.29 by the erosion); refused before |
+
+![plate_grid_top_in4_inter](models/pictures/plate_grid_top_in4_inter.png)
+
+![issue360_plate_top_in2_inter](models/pictures/issue360_plate_top_in2_inter.png)
+
+**Still broken** (`XFAIL`): two round holes 4.3 apart
+(`plate_round2_top_in4_inter`, 15826.15), invalid -- their walls are whole
+cylinders, seam and all, and the second way reads a cylinder only where
+it is taken less than a turn round. Not in the suite: #360's plate 5
+inward (four pockets, 40288.27 by the erosion) is refused both ways, the
+removed top right and something after it not.
+
+#360's plate takes 22 s at 4 inward and 42 s at 2 on this box, run alone:
+the first way's search still runs to its limit before the second is asked.
+
+Over the corpus (1072 runs) none changes, and the sweep is right in 928 of
+928.
+
+**Regression** (`3e7a7cfd5e`, on Linux): thickness PASS=645 XFAIL=1 at fix
+levels 0, 1, 2 and 3, and frozen at 3 (642 + 3 before, the same lines but
+for the two cases made and the one added); the thickness sweep right in
+all 928 runs (level 0, plain); the corpus's 1072 runs as before; fillet
+PASS=824 XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
+`new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
+tests, the sweep frozen and placed.
 
 ## Determinism cases (intersection mode, Arc join)
 
