@@ -3551,6 +3551,27 @@ Regression (`7abaafc952`, Linux): thickness PASS=658, none known broken, at
 fix levels 0 to 3, frozen at 3 (655); sweep 928 of 928; fillet 824 + 1
 XFAIL, boolean 67, draft 104 + 1 FAIL.
 
+### Sec 64: a search that will give up is not begun
+
+**The time of a thickness the first way cannot make** (`BRepAlgo_Loop.cxx`
+`IsLoopSearchOutOfSteps`). No result changes.
+
+- #360's plate took 146 s at 5 inward and 23 s at 4, where upstream takes
+  under a second. The search of every path through a face's edges, which
+  has a million steps to spend, made a wire of every loop it found before
+  it gave up and threw them away: 122 s and 5 GB on the plate's top.
+- The same paths are walked first by number, counting the same steps and
+  making no wire; a search that will run out is not begun.
+
+The plate now takes 4 to 8 s at 1 to 5 inward, and 45 MB.
+
+![issue360_plate_search_time](pictures/issue360_plate_search_time.png)
+
+Regression (`0beda9ad94`, Linux): thickness PASS=658 at fix levels 0 to 3,
+frozen at 3; sweep 928 of 928, the same line for line; the corpus as its
+baseline; fillet 824 + 1 XFAIL, boolean 67, draft 104 + 1 FAIL; FreeCAD's
+Python suite 4359 OK.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

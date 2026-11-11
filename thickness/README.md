@@ -2696,6 +2696,7 @@ plate's is from the pictures, which preload too.
 
 #360's plate takes 160 s at 5 inward on this box, run alone: the first
 way's search runs to its limit before the second is asked (sec 61).
+Sec 64 brings it to 8 s.
 
 **Regression** (`7abaafc952`, on Linux): thickness PASS=658, nothing marked
 known broken, at fix levels 0, 1, 2 and 3, and frozen at 3 (655 before,
@@ -2705,6 +2706,55 @@ the same lines but for the three added); the thickness sweep right in all
 it: its Python suite 4359 OK, and of its C++ tests Tests 656, Part 117,
 PartDesign 20, Sketcher 148 and TopoShapeEx 90. Not run: the sweep frozen
 and placed.
+
+## A search that will give up is not begun (2026-11-11, sec 64)
+
+No result changes; the time does. **#360's plate took 146 s at 5 inward**
+(sec 63), 23 s at 4, 44 s at 2, where upstream takes under a second
+(invalid at 2) -- almost all of it in one function, giving up.
+
+The first way's loops are found by a walk by angle and, where the walk
+cannot describe the network, by `FindAllLoops`: every path through the
+face's edges, with a million steps to spend (`378f5f83cd`, 2026-10-02). A search that
+spends them all has no answer, and what it found is thrown away. But it
+made a wire of every loop it found on the way, and on a face with enough
+pieces those are long and many: the plate's removed top, 5 inward (1040
+vertices), took 122 s and 5 GB to give up, and a wall after it 23 s; then
+the second way made the solid in 3 s.
+
+On a face that is not periodic the same paths are now walked first with
+numbers for the vertices and edges, counting the same steps and making no
+wire (`IsLoopSearchOutOfSteps`, a tenth of a second). Out of steps there,
+the search is given up as it would have been; otherwise it runs as
+before. (A periodic face's search is left as it is: its seam wires are
+made between the starts, and take part in which edges are started along.)
+
+![issue360_plate_search_time](models/pictures/issue360_plate_search_time.png)
+
+| #360's plate, top removed | before | after | memory before | after | upstream |
+|---|---|---|---|---|---|
+| 1 inward | 16.0 s | 3.8 s | 0.5 GB | 46 MB | 0.8 s |
+| 2 inward | 43.6 s | 5.9 s | 2.4 GB | 42 MB | 0.8 s, invalid |
+| 3 inward | 20.3 s | 6.7 s | 1.7 GB | 42 MB | 0.7 s |
+| 4 inward | 23.0 s | 6.1 s | 1.8 GB | 43 MB | 0.7 s |
+| 5 inward | 145.9 s | 7.5 s | 5.2 GB | 45 MB | 0.7 s |
+
+Each run alone on the dev box, `corpus/tools/thk` (Arc join, intersection
+on); "before" is the libraries of `5110153daf` preloaded for 1 to 4 and
+the fork at `7b20287a74` for 5, upstream its libraries preloaded and
+checked with `ldd`. `pictures/search_time.py` draws the figure.
+
+What is left of the time is the first way run to its end (the walk by
+angle's own failures, 3 s of loops) and the second way after it; upstream
+is still eight times faster on this plate.
+
+**Regression** (`0beda9ad94`, on Linux): thickness PASS=658, nothing marked
+known broken, at fix levels 0, 1, 2 and 3, and frozen at 3, every line as
+before; the thickness sweep right in all 928 runs and the same line for
+line; the corpus (1072 runs) as its baseline; fillet PASS=824 XFAIL=1,
+boolean 67 and draft 104 + 1 FAIL (Linux's standing `new_roof_L_a-30`).
+FreeCAD on it: its Python suite 4359 OK, and of its C++ tests Part 117,
+PartDesign 20 and TopoShapeEx 90. Not run: the sweep frozen and placed.
 
 ## Determinism cases (intersection mode, Arc join)
 
