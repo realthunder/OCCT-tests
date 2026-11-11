@@ -230,6 +230,37 @@ come out valid, each at a closed-form volume:
 | `new_chain_pocket_break_a{5,10,20}` | a pocket with rounded corners 2 behind a block's front, its walls drafted outward all round: through the front wall from 7.3 deg (the classic draft refuses); the block less a ruled loft of the floor's and the top's outlines |
 | `new_chain_pocket_apex_a15`, `new_chain_pocket_sharp_a15` | the pocket's walls drafted inward at 15 deg: its concave corners close 7.46 over the floor and the walls meet past it; and with its corner at (10, 2) sharp |
 
+## Two events at one level (FreeCAD `f2d9db811e`, 2026-11-11)
+
+`new_roof_L_a-30` failed on Linux since it was written, and passed on
+macOS: the standing "draft 104 + 1 FAIL" of every regression line here. An
+L with its six vertical edges filleted 1, drafted inward at 30 deg about
+its bottom, is refused either way; the case names the reason, and Linux
+gave another -- `FaceVanishes`, "a face of the tangent chain narrows to
+nothing beside a fillet that has not shrunk to a point", for "the tangent
+chain closes over along part of its outline only".
+
+The roof of a tangent chain is built event by event, the next one the
+nearest in level. The arms of the L are 10 wide and close over at 8.66,
+and at that level the wall at the inner corner narrows to nothing beside
+the concave fillet too. The two were ordered by the last bit of their
+levels (both print as -10.000000000000 in the roof's units), which is the
+processor's answer and not the shape's: Linux took the corner's first,
+macOS the arms'. Events within the level tolerance of each other are now
+taken by kind -- an apex, two planes meeting, a plane narrowing beside a
+fillet -- and then in the order of the chain. No kernel change.
+
+![new_roof_L_a-30](models/pictures/new_roof_L_a-30.png)
+
+(`pictures/roof_tie.py` draws it.)
+
+**Regression** (FreeCAD `f2d9db811e` on OCCT `fa0f8b5e47`, Linux): draft
+PASS=105, every other line as before; thickness 658, fillet 824 + 1
+XFAIL, boolean 67; FreeCAD's Python suite 4359 OK with
+`PartDesignTests.TestDraft.testDraftNewEventsAtOneLevel` added (17 draft
+tests), its C++ tests unchanged. Not run on macOS, where the case passed
+before: the order there is now set too.
+
 ## Known open
 
 | Case | Symptom |
