@@ -56,7 +56,7 @@ the table above come first:
 | 333 | no crash; Sketch006 "No planar face in AttachEngine3D" (its support remapped to a curved face) |
 | 334 | no crash; Draft003 invalid, Body invalid. Draft001 and Draft003, recomputed alone, are **refused now** (`ca766a8a92`): a drafted ledge whose corner a bevel touches needs a new edge, which a draft cannot make, and it gave an invalid shape; see `../draft/` |
 | 360 | not finished: the recompute ran 25 min and the scan was stopped for memory on the 8 GB box. **Fillet008's spike fixed** (2026-10-23 check): made since `fb9200b0fd`, upstream 8.0.1 still makes it; the stored `Pad016` has a vertex at tolerance 37.2 (old build), recomputed now 1e-7. `../fillet/`, "#360" **Rescan 2026-11-10**: the document's `Thickness` (the plate `Mirrored`, 10 thick with square holes 4.3 apart and 2.5 from the outline, Face5 removed, 4 inward, the Arc join, Intersection on) was refused by the fork; the stored shape and upstream's 8.0.1 are 38747.1395. The chain's first commit breaks it (bisected), and with it every plate whose holes are nearer each other, or the outline, than twice the thickness. **Fixed**: made once more with the loops' wires taken by the way their edges run where the first way has no valid answer -- 38747.1395, as stored (`../thickness/`, sec 60). **2026-11-11**: the same plate is made 2, 3 and 5 inward too (33213.1056, 36527.3399, 40288.2902; sec 61 and 63), and in 4 to 8 s where it took 20 to 146 (sec 64; upstream takes under a second, and is invalid at 2) |
-| 474 | no crash; Fillet003 and four sketches in error **Rescan 2026-10-25** (`d602360242`): Fillet, Fillet001, Fillet002 valid; Fillet003 errs because its edge reference is lost (`?Edge41`), Sketch017's attachment failing upstream ("No planar face") -- a document error, not the fillet's; on its stored base it is a suite case (`../fillet/`). |
+| 474 | no crash; Fillet003 and four sketches in error **Rescan 2026-10-25** (`d602360242`): Fillet, Fillet001, Fillet002 valid; Fillet003 errs because its edge reference is lost (`?Edge41`), Sketch017's attachment failing upstream ("No planar face") -- a document error, not the fillet's; on its stored base it is a suite case (`../fillet/`). **Rescan 2026-11-11**: the four sketches' attachment was three faults of FreeCAD's, not the document's, all fixed. (1) Each helix was made wrong on its first recompute: a helix of this fork's earlier files is stored with its sketch's placement, the path was still moved by it and the profile no longer, and the helix came out wound about the sketch's normal, 129.01 where the file has 1783.37 (FreeCAD `930694f3ef`); it is 1783.37 now. (2) The end face the sketches sit on, Face1 in the file and Face17 made again, was not found by geometry: three of its edges were lines and come back straight B-splines of degree 1 (`adf249b4ad`). (3) And was not looked for where it should be: the shape, set a second time while its placement was written, was kept as the one the references had been written against, so each stayed on its number (`ff12ade957`). The sketches attach. What is left is lost for a reason: three datum lines on a helix edge and Fillet002's edge are B-splines of the sweep, and the helix made again is the same curve to 4e-7, not to the 1e-7 a reference is searched at (the earlier build's approximation and this one's); Fillet003 as before |
 | 523 | Fillet invalid -- **fixed**, `../fillet/` |
 | 631 | valid (10005.3404, alt 42806.4887): wrong-but-valid needs a geometric check. **Fixed** (2026-10-24, `2bde18d4b5`): the Fillet (15, the loft-pad joint, `Edge18` of the loft) bulged out of the pad's side -- its end on the loft's side, a plane made a B-spline, lay past the B-spline's bounds and went to a plate; now 9919.5607, the volume of the loft with plane faces. The alt document (four fillets, r 39 to 49, on an S-bent bar's bends) is unchanged, 42806.4889, and renders clean. `../fillet/`, "A face's B-spline bounds" **2026-11-09**: chamfers on the arm (Fillet002's input) refused at every size where the fillet was made, and wrong where made (0.52 to 1.37 wide at 0.8): the chamfer's guide was bent off the edge by the adjustment of its other end (`1420e35a51`). `../fillet/`, "A chamfer's guide bent at its other end" |
 | 876 | valid by `isValid()` and the BOP check through Fillet001; the Pocket result is the 3-face 475.17 solid, still wrong. Its first fillets moved by 0.0173 with the #523 fix (right period, closer to tangent) **Rescan 2026-10-25** (`d602360242`): the whole document recomputes clean; the Pocket cuts, 8558.5252, 69 faces, valid. |
@@ -173,6 +173,21 @@ its axis. Test: `TopoShapeExpansionTest.searchSubShapeCylinderWrittenAnotherWay`
 The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
+
+## Where the models stand (2026-11-11, OCCT `b62de1a33a`, FreeCAD `ff12ade957`)
+
+Every model opened and every object made again (each touched, then one
+recompute), on Linux. 23 of the 29 recompute with no object in error and
+no invalid shape. The six that do not:
+
+| Model | What is left | Whose |
+|-------|--------------|-------|
+| #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
+| #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
+| #360 | Sketch004, an external reference | not looked into yet |
+| #474 | three datum lines and Fillet002 on B-spline edges of a helix, Fillet003 | the helix made again is the same curve to 4e-7, not to the 1e-7 a reference is searched at (its row) |
+| #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
+| #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |
 
 ## Themes
 
