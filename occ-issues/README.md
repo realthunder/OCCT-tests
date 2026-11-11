@@ -20,8 +20,8 @@ those need a scripted repro before they can join the suite.
 | 172 | `issue172_sketch_unclosed.FCStd` | Edges imported into sketch as external geometry become unconnected: curve `First/LastParameter` evaluation is ~0.003 mm off the end vertices | errors: Pad006, Pad008; invalid: Sketch008 **Rescan 2026-11-03**: does not reproduce. Sketch008's external edges (Pad005's line and two arcs) end on their vertices to 1e-11, stored and recomputed, and the sketch's two wires are closed; the GitHub issue is closed. Pad006 is made now. What fails is Sketch009 and Sketch010 ("Missing external geometry reference", so Pad008): their references into Import004, a SubShapeBinder of Pad006, all resolve on the shape the file was saved with (160 edges); the remade Pad006 has 156, and 5 of each sketch's references are gone -- a document matter, not the kernel's. |
 | 273 | `issue273_heater_handle*.FCStd` | Fillet whose surface touches a **seam edge** destroys the shape; chamfer on the same edge segfaults (upstream bug 28354; `ShapeUpgrade_ShapeDivideClosed` suggested as seam removal) | invalid: Pad (both variants; crash itself needs the interactive chamfer) |
 | 280 | `issue280_pocket_sphere_seam.FCStd` | Pocket through a mirrored sphere fails ("resulting shape is not a solid") once wide enough — cutting with **overlapping seam edges**; tolerance workaround exists | error: Sketch002 **Rescan 2026-10-28**: made. The file's Pocket is the failing case of the report (120 mm, through all, its sketch's edge on the mirror's seam) and recomputes valid, 71245.4350: what it removes is exactly the common of its tool with the part (31428.3242), BOP's check clean. |
-| 333 | `issue333_draft_pad_crooked.FCStd` | Draft feature produces a broken model; Pad on top comes out crooked past depth 44 | **crash on recompute** |
-| 334 | `issue334_draft_artifact.FCStd` | Same model family: artifact after Draft003; RT: side face broken from Draft001 on | **crash on recompute** **Rescan 2026-10-28**: the recompute stops at Sketch006 ("No planar face in AttachEngine3D": its support remapped to a curved face, a document matter), so Draft003's invalid shape is the stored one; recomputed alone it is refused (2026-10-02, below). |
+| 333 | `issue333_draft_pad_crooked.FCStd` | Draft feature produces a broken model; Pad on top comes out crooked past depth 44 | **crash on recompute** **Rescan 2026-11-11** (FreeCAD `8e4ef3ccaa`): the document recomputes whole, 38 objects, the Body valid and clean by BOP's check, 51308.7537. Draft001 (the ledge 6 by 2.1 at the top, 85.5 deg) takes off its wedge and nothing else: 168.1031 = 6 x 2.1 x (2.1 / tan 4.5 deg) / 2, where the file's took 895.28 with a side face running out of the model. See "A face not found again for its arc" below |
+| 334 | `issue334_draft_artifact.FCStd` | Same model family: artifact after Draft003; RT: side face broken from Draft001 on | **crash on recompute** **Rescan 2026-10-28**: the recompute stops at Sketch006 ("No planar face in AttachEngine3D": its support remapped to a curved face, a document matter), so Draft003's invalid shape is the stored one; recomputed alone it is refused (2026-10-02, below). **Rescan 2026-11-11** (FreeCAD `8e4ef3ccaa`): the document recomputes whole, 45 objects, the Body valid and clean by BOP's check, 48550.1365 (the file's: 47381.9336, invalid). Draft001 as in #333; Draft002 (72 deg, reversed) adds 1106.8212, the file's own figure; Draft003 (the ledge 6 by 2.2, 85.5 deg) takes off 184.4941 = 6 x 2.2 x (2.2 / tan 4.5 deg) / 2. Picture and cause: "A face not found again for its arc" below |
 | 346 | `issue346_offset_one_side.FCStd` | Part Offset works from one side, throws "Unknown OCC exception" from the other | error: Offset **Fixed 2026-10-31** (`../thickness/`, sec 40): the Revolve's dome comes down to its axis, a dimple; inward the offset fell short of the axis where a crossing was looked for (`BRepOffset_Offset`), and the sphere closing the gap took a negative radius. The Offset is valid, every face 2 from the input's. With the Intersection join -2 is still refused, +2 valid and wrong, as before |
 | 360 | `issue360_fillet_spike.FCStd` | Fillet produces a spike in the model (7 MB model) | **crash on recompute** (closed as OCC bug, still crashes) |
 | 363 | `issue363_thickness_multi.FCStd` | "Unexpected result with thickness and other issues" — richest thickness repro in the corpus | errors: Chamfer, Thickness, Thickness001, Thickness002; invalid: Body, Thickness001 **Rescan 2026-10-29**: Thickness001 (both bottoms of a chamfered cylinder with a groove across its bottom removed, -1) was invalid, and so was the top removed; upstream 7.6 the same: two fixes in `BRepOffset_Inter3d` (`5525e72804`, two offset faces sharing two edges apart intersected at each; `0c1693fb61`, arcs of one circle on removed faces share it). Now valid, 5496.0504, the volume booleans give, and the Body with it. The rest stop in FreeCAD: the Part Chamfer finds no edges after the geometry version change, Thickness002 sits on it, and Thickness has an invalid face reference; run on their stored bases both are valid (3678.0536, 2158.7040). `../thickness/`, #363 |
@@ -121,6 +121,51 @@ before and after:
 The other 20 are as they were, none with more left. A solid "differs" by
 its volume, its number of faces or its validity: each is a recompute that
 did not run before, to be looked at as the kernel's.
+
+Looked at (2026-11-11), none is the kernel's -- in each the file's solid
+is the poor one:
+
+| # | The file's | Recomputed |
+|---|---|---|
+| 273, fillet file | `Fillet` 8535.1327 and `Fillet001` 8525.6842, valid with a largest tolerance of 0.71; the rim's fillet ends on the handle's feet with corner patches at one side only | 8535.0646 and 8525.6889, valid and clean by BOP's check, largest tolerance 0.0026; a corner patch (0.514 in area) at each of the four feet, the two sides mirror images |
+| 662 | everything from the `Thickness` on inside out and invalid (the reporter's) | all valid; the Body 14434.3701 (14434.3704 at the 2026-10-31 rescan, its sketch attached by hand). BOP's check names only the C0 faces the model had from the start |
+| 962 | `Fillet`, `Fillet003`, `Fillet004` invalid (the reporter's) | valid and clean by BOP's check: 11552.7810, 11540.4575, 11532.3379 |
+
+## A face not found again for its arc (2026-11-11, FreeCAD `8e4ef3ccaa`)
+
+![#334's body as the file holds it and as it recomputes](issue334_arc_reference.png)
+
+With the references moved once, #333 and #334 still stopped, 6 and 13
+objects short, at `Pocket005`: "Up to face: Failed to extract face". Its
+`UpToFace` is `Fillet001`'s Face147, the plane at the top; the Fillet
+recomputes to the same solid, to the digit, and Face147 is there, the same
+11 edges on the same 11 vertices -- and the search by geometry did not
+find it. One of its arcs (r 6, a quarter turn) is the same circle written
+another way: the file's runs from 3 pi / 2 to 2 pi, the recomputed one
+from pi to 3 pi / 2, its X direction a quarter turn on. FreeCAD's
+`Geometry::isSame` compared an arc by the parameters it runs between and
+its circle by its X and Y directions, which say where the angle is counted
+from and which way round, nothing of the points.
+
+Fixed in FreeCAD (`Part/App/Geometry.cpp`): a circle is the same by its
+centre, its radius and the line of its axis; two arcs of one circle are
+the same when their ends, in either order, and their middles agree. What
+compared the same before still does. Test:
+`TopoShapeExpansionTest.searchSubShapeArcWrittenAnotherWay` (a face
+bounded by a quarter arc, found again with the arc's circle turned and
+with its axis reversed; the arc's complement, with the same ends, is not
+the same).
+
+Both documents now recompute whole, valid and clean by BOP's check, and
+the drafts the issues are about come out right -- each ledge drafted at
+85.5 deg loses its wedge and nothing else (#333's and #334's `Draft001`
+168.1031, #334's `Draft003` 184.4941, both to the digit of width x depth
+x height / 2), where the file's `Draft001` took 895.28 and left a side
+face running out of the model. The other 25 models recompute as before.
+
+The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
+shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
+panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
 ## Themes
 
