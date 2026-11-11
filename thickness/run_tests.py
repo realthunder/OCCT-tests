@@ -2226,15 +2226,50 @@ thickness_case("plate_edge3_top_in4", _s, _top, -4.0, "pass", 14802.1564)
 _s, _top = _holed_plate([(10, 10, 12.4, 12.4), (26.7, 10, 12.4, 12.4),
                          (10, 30, 12.4, 12.4), (26.7, 30, 12.4, 12.4)], 60.0, 55.0)
 thickness_case("plate_grid_top_in4_inter", _s, _top, -4.0, "pass", 21014.4693, True)
-# Two round holes 4.3 apart: invalid (15826.15). Their walls are whole
-# cylinders, seam and all, which the second way does not read.
+# Sec 62. Round holes: their walls are whole cylinders, seam and all, read
+# by regions too -- across the seam a region runs on, and where the face
+# lies along the seam it is parted there. Every volume is upstream's to the
+# digit (and the erosion's to 1.2, its circles being polygons).
 _s = Part.makeBox(80, 30, 10)
 for _x in (16.2, 32.9):
     _s = _s.cut(Part.makeCylinder(6.2, 12, App.Vector(_x, 15, -1)))
 _s = _s.removeSplitter()
 _top = max((i + 1 for i, f in enumerate(_s.Faces) if abs(f.CenterOfMass.z - 10) < 1e-9),
            key=lambda i: _s.Faces[i - 1].Area)
-thickness_case("plate_round2_top_in4_inter", _s, _top, -4.0, "xfail", 15826.1480, True)
+thickness_case("plate_round2_top_in4_inter", _s, _top, -4.0, "pass", 15826.1480, True)
+
+
+def _round_plate(holes, lx=80.0, ly=30.0, h=10.0, squares=()):
+    plate = Part.makeBox(lx, ly, h)
+    for x, y, r in holes:
+        plate = plate.cut(Part.makeCylinder(r, h + 2, App.Vector(x, y, -1)))
+    for x0, y0, d in squares:
+        plate = plate.cut(Part.makeBox(d, d, h + 2, App.Vector(x0, y0, -1)))
+    plate = plate.removeSplitter()
+    top = max((i + 1 for i, f in enumerate(plate.Faces)
+               if abs(f.CenterOfMass.z - h) < 1e-9), key=lambda i: plate.Faces[i - 1].Area)
+    return plate, top
+
+
+for _tag, _args, _value, _ref in (
+        # three in a row, two not in line, two 7.9 apart
+        ("round3", ([(16.2, 15, 6.2), (32.9, 15, 6.2), (49.6, 15, 6.2)],), -4.0, 16402.8165),
+        ("round2stag", ([(16.2, 13, 6.2), (32.9, 17, 6.2)],), -4.0, 15765.0693),
+        ("round2far", ([(16.2, 15, 6.2), (36.5, 15, 6.2)],), -4.0, 16002.1518),
+        # four in a square, 4.3 and 7.6 apart
+        ("round2x2", ([(16.2, 16.2, 6.2), (32.9, 16.2, 6.2), (16.2, 36.2, 6.2),
+                       (32.9, 36.2, 6.2)], 60.0, 55.0), -4.0, 20983.4068),
+        # a round hole beside a square one
+        ("roundsq", ([(16.2, 15, 6.2)], 80.0, 30.0, 10.0, [(26.7, 8.8, 12.4)]), -4.0, 15885.6196),
+        # one hole 6 from the outline; and 3, its wall's offset leaving the plate
+        ("roundedge6", ([(16.2, 12.2, 6.2)],), -4.0, 15150.3404),
+        ("roundedge3", ([(16.2, 9.2, 6.2)],), -4.0, 14876.6460),
+        # thinner, and small holes
+        ("round2", ([(16.2, 15, 6.2), (32.9, 15, 6.2)],), -2.5, 11071.8809),
+        ("round2small", ([(16.2, 15, 2.0), (24.2, 15, 2.0)],), -3.0, 12359.0046)):
+    _s, _top = _round_plate(*_args)
+    thickness_case("plate_%s_top_in%g_inter" % (_tag, -_value), _s, _top, _value, "pass", _ref,
+                   True)
 
 issue360 = Part.Shape()
 issue360.importBrep(os.path.join(MODELS, "issue360_plate.brep"))

@@ -77,6 +77,7 @@ STAGES = {
     "s59": ("ede496a1f2", "59"),
     "s60": ("10a2414c33", "60"),
     "s61": ("03d799f0c5", "61"),
+    "s62": ("d82a097786", "62"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -267,6 +268,15 @@ def _holed_plate(holes, lx=80, ly=30):
     return s.removeSplitter()
 
 
+def _round_plate(holes):
+    # run_tests.py's _round_plate: 80 x 30 x 10 with round holes through it,
+    # the top Face3.
+    s = Part.makeBox(80, 30, 10)
+    for x, y, r in holes:
+        s = s.cut(Part.makeCylinder(r, 12, V(x, y, -1)))
+    return s.removeSplitter()
+
+
 def _revolve346():
     # #346's Revolve as the issue has it, a shell: Face1 the cone, Face2 the
     # dome, its top a dimple.
@@ -402,6 +412,8 @@ SHAPES = {
     "platestaggered": lambda: _holed_plate([(10, 6), (26.7, 10)]),
     "plateedge6": lambda: _holed_plate([(10, 6)]),
     "plategrid": lambda: _holed_plate([(10, 10), (26.7, 10), (10, 30), (26.7, 30)], 60, 55),
+    "plateround2": lambda: _round_plate([(16.2, 15, 6.2), (32.9, 15, 6.2)]),
+    "plateroundedge3": lambda: _round_plate([(16.2, 9.2, 6.2)]),
 }
 # name: (stage, shape, face or list of faces removed, value, inter, join, reference volume)
 CASES = {
@@ -657,6 +669,8 @@ CASES = {
     "plate_edge6_top_in4_inter": ("s60", "plateedge6", 3, -4, True, 0, 15165.1911),
     "plate_grid_top_in4_inter": ("s61", "plategrid", 3, -4, True, 0, 21014.4693),
     "issue360_plate_top_in2_inter": ("s61", "issue360", 5, -2, True, 0, 33213.1056),
+    "plate_round2_top_in4_inter": ("s62", "plateround2", 3, -4, True, 0, 15826.1480),
+    "plate_roundedge3_top_in4_inter": ("s62", "plateroundedge3", 3, -4, True, 0, 14876.6460),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

@@ -2539,7 +2539,7 @@ where it is valid and crosses itself nowhere.
 
 ![issue360_plate_top_in2_inter](models/pictures/issue360_plate_top_in2_inter.png)
 
-**Still broken** (`XFAIL`): two round holes 4.3 apart
+**Still broken then** (the first is sec 62's): two round holes 4.3 apart
 (`plate_round2_top_in4_inter`, 15826.15), invalid -- their walls are whole
 cylinders, seam and all, and the second way reads a cylinder only where
 it is taken less than a turn round. Not in the suite: #360's plate 5
@@ -2557,6 +2557,73 @@ levels 0, 1, 2 and 3, and frozen at 3 (642 + 3 before, the same lines but
 for the two cases made and the one added); the thickness sweep right in
 all 928 runs (level 0, plain); the corpus's 1072 runs as before; fillet
 PASS=824 XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
+`new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
+tests, the sweep frozen and placed.
+
+## Round holes: regions on a cylinder with its seam (2026-11-11, sec 62)
+
+The last of sec 60's open cases, and the commonest: **two round holes
+nearer each other than twice the thickness**, a face removed inward, came
+out an invalid solid (14518.74 for 15826.15), and upstream makes it. A
+round hole's wall is a whole cylinder with its seam; its offset is one
+too, and sec 61 read a cylinder by regions only where it is taken less
+than a turn round. Three things:
+
+- `FindRegionWires` works on the pieces either walk took: the walk by
+  angle's edges, or the (u, v) walk's (`FindLoopsInUV`), where a seam is
+  two pieces a period apart with the face between them. On an offset face
+  with its seam a region runs on across the seam into the region within
+  the seam's other piece, and the seam says nothing of the face's side.
+  Where the face lies along the seam it is parted there, the seam in the
+  wire of each part: the second hole's wall, whose seam lies away from the
+  first hole, is two faces.
+- Those wires are made on the face taken forward, and `WiresToFaces`
+  reverses the wires of a reversed face, as made on the face as it is
+  oriented: the seam took its other pcurve there, and one of the two parts
+  came out as what its wire leaves free of the turn. A wire through the
+  seam is handed over reversed.
+- A round hole nearer the outline than the thickness (3 from it, 4
+  inward): the wall's offset leaves the plate, and its section with the
+  floor is two arcs of one circle, from the seam to the outline and from
+  the outline back to the seam. The vertex the first starts at has its
+  parameter on that circle from the first, 0; the second ends there at
+  2 pi, and cut at 0 it had a piece from 0 to its own start, the long way
+  round and over the first. `CutEdge` brings a vertex given a whole turn
+  off the edge's range onto the edge -- with the wires by orientation
+  only, so that what was made without them is made as it was.
+
+A removed face with a seam is still left to the search: what lies within
+it is told on a face taken once round.
+
+| Case | Model | What it covers |
+|------|-------|----------------|
+| `plate_round2_top_in4_inter` | 80 x 30 x 10, two round holes r 6.2, 4.3 apart, the top removed, -4 | 15826.1480; invalid before |
+| `plate_round3_`, `plate_round2stag_`, `plate_round2far_` | three in a row; two not in line; two 7.9 apart | 16402.8165, 15765.0693, 16002.1518 |
+| `plate_round2x2_top_in4_inter` | 60 x 55 x 10, four round holes in a square, 4.3 and 7.6 apart | 20983.4068 |
+| `plate_roundsq_top_in4_inter` | a round hole 4.3 from a square one | 15885.6196 |
+| `plate_roundedge6_`, `plate_roundedge3_` | one round hole 6 and 3 from the outline | 15150.3404, 14876.6460 |
+| `plate_round2_top_in2.5_inter`, `plate_round2small_top_in3_inter` | the two holes, -2.5; two holes r 2, 4 apart, -3 | 11071.8809, 12359.0046 |
+
+Every volume is upstream's to the digit, and the erosion's to 1.2 (its
+circles are polygons).
+
+![plate_round2_top_in4_inter](models/pictures/plate_round2_top_in4_inter.png)
+
+![plate_roundedge3_top_in4_inter](models/pictures/plate_roundedge3_top_in4_inter.png)
+
+**Still broken**, not in the suite: #360's plate 5 inward (sec 61).
+
+Over the corpus (1072 runs) four change, all from refused to made, each
+upstream's to the digit: #363's Thickness001 base (`t001`) with its Face2
+removed, the Intersection join, at +1, -1, +0.5 and -0.5 (6627.9587,
+6357.2578, 3288.2522, 3240.4163; `corpus/baseline.txt` has them). The
+sweep is right in 928 of 928.
+
+**Regression** (`d468af23e2`, on Linux): thickness PASS=655, nothing
+marked known broken, at fix levels 0, 1, 2 and 3, and frozen at 3 (645 + 1
+before, the same lines but for the one case made and the nine added); the
+thickness sweep right in all 928 runs (level 0, plain); fillet PASS=824
+XFAIL=1, boolean 67 and draft 104 + 1 FAIL (Linux's standing
 `new_roof_L_a-30`), as before. Not run: FreeCAD's own Part and PartDesign
 tests, the sweep frozen and placed.
 

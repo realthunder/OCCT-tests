@@ -72,6 +72,8 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "platestaggered": "plate 80 x 30 x 10 with two square holes 4.3 apart, not in line",
          "plateedge6": "plate 80 x 30 x 10 with a square hole 6 from its outline",
          "plategrid": "plate 60 x 55 x 10 with four square holes in a square, 4.3 and 7.6 apart",
+         "plateround2": "plate 80 x 30 x 10 with two round holes 4.3 apart",
+         "plateroundedge3": "plate 80 x 30 x 10 with a round hole 3 from its outline",
          "peakshell346": "#346's profile as a shell, its arc centred the other way: a cone, and a dome rising to a peak",
          "steepdimpleshell346": "#346's profile as a shell, its arc centred 3 off the axis: a cone, and a dome whose top is a steeper dimple"}
 JOIN = {0: "Arc join", 2: "Intersection join"}

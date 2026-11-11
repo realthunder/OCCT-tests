@@ -3473,12 +3473,46 @@ plate 33213.1056 at 2 inward, twelve pockets, and 36527.3399 at 3, four.
 
 ![issue360_plate_top_in2_inter](pictures/issue360_plate_top_in2_inter.png)
 
-Still invalid: two round holes nearer than twice the thickness (whole
-cylinders, with their seams). Over the corpus (1072 runs) none changes.
+Still invalid then: two round holes nearer than twice the thickness (whole
+cylinders, with their seams; sec 62). Over the corpus (1072 runs) none
+changes.
 
 Regression (`3e7a7cfd5e`, Linux): thickness PASS=645 XFAIL=1 at fix levels
 0 to 3, frozen at 3 (642 + 3); sweep 928 of 928; fillet 824 + 1 XFAIL,
 boolean 67, draft 104 + 1 FAIL.
+
+### Sec 62: round holes
+
+**Regions on a cylinder with its seam** (`BRepAlgo_Loop.cxx`
+`FindRegionWires`, `FindLoopsInUV`, `CutEdge`).
+
+- Two round holes nearer each other than twice the thickness, a face
+  removed inward: invalid, where upstream is right. A round hole's wall
+  is a whole cylinder with its seam, and sec 61 read a cylinder by regions
+  only where it is taken less than a turn round.
+- The regions come from the (u, v) walk there, the seam two pieces a
+  period apart: a region runs on across the seam, and where the face lies
+  along the seam it is parted there, the seam in each part's wire -- handed
+  over the way round that a reversed face needs.
+- A round hole nearer the outline than the thickness: the floor's section
+  with its wall is two arcs of one circle, and a vertex with its parameter
+  from the one, a whole turn off the other's range, cut the other the long
+  way round. It is brought onto the edge (the second way only).
+
+Made: ten plates with round holes -- two, three, four in a square, beside
+a square hole, 6 and 3 from the outline -- each to upstream's volume to
+the digit.
+
+![plate_round2_top_in4_inter](pictures/plate_round2_top_in4_inter.png)
+
+![plate_roundedge3_top_in4_inter](pictures/plate_roundedge3_top_in4_inter.png)
+
+Over the corpus (1072 runs) four change, refused to made, upstream's to
+the digit: #363's Thickness001 base, Face2 removed, the Intersection join.
+
+Regression (`d468af23e2`, Linux): thickness PASS=655, none known broken,
+at fix levels 0 to 3, frozen at 3 (645 + 1); sweep 928 of 928; fillet
+824 + 1 XFAIL, boolean 67, draft 104 + 1 FAIL.
 
 ## Where the chase stands (2026-10-04)
 
