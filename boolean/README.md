@@ -687,3 +687,75 @@ FreeCAD's, noted here. Found since: removing a fillet cleared its links one
 by one, and its `Corners` change linked its `Base` again after that link was
 cleared, so the deleted fillet stayed in the holder's InList; the crash comes
 whenever its memory has been reused (fcad `d1bb0beb38`, PartDesign).
+
+## #280: a section that stops short of the corner it runs into (`c861b8b553`, 2026-11-12)
+
+**Where it was met.** `../occ-issues/models/issue280_pocket_sphere_seam.FCStd`,
+"Pocket through a mirrored sphere fails once wide enough". Made again, the
+Pocket was in no error, its shape valid -- and it removed nothing: 98639.0377,
+the volume of the part under it. Not found by an error or by a check: by
+reading the volumes of every model made again, with and without a FreeCAD
+change. `models/issue280_part.brep` and `issue280_tool.brep` are the part
+(`Mirrored001`, 98639.04) and the pocket's tool (85699.11), both valid; they
+overlap -- (15, 0, -10) is inside both -- and `BRepAlgoAPI_Cut` gave the part
+unchanged with 29 faces for its 24, `BRepAlgoAPI_Common` and
+`BRepAlgoAPI_Fuse` nothing at all, with no error and no warning. With the
+tool moved 0.001 up or down along z the three are right and add up: cut
+70552.57 and 70556.68, common 28086.46 and 28082.36. Halved: 70554.63,
+28084.41, and 156253.74 for the fuse.
+
+**What was broken.** The part is a slab with a rounded edge, extruded 80
+along y, its ends revolved a quarter turn about x, and the whole mirrored
+about z = 0: each revolved end meets the mirror plane in an arc (in z = 0,
+centre (10, +-45), radius 15). The tool is a prism along y under z = 0, its
+profile a quarter disc, so its cylinder (axis along y through (25, -20),
+radius 20) has its rim in z = 0, on the line x = 25. For |y| <= 45 the rim
+lies along the part's edge there. At (25, +-45, 0) the part's boundary turns
+away into the arc, tangent to the rim. The section of the cylinder with the
+revolved end starts at that corner and runs along both: the arc is s^2/30
+from the rim s past the corner, and s^4/36000 from the cylinder -- within
+1e-7 of it for 0.25. In there the walking line can stop anywhere, and
+stopped 0.0051 short of the corner. Its end is on both faces, so it took a
+vertex of its own (`PutBoundPaveOnCurve`), 0.0051 from the corner's. The rim
+and the arc were both split there, and their pieces from that vertex to the
+corner, 2e-7 apart at the middle, were not found the same edge: a face of no
+area between them, the cylinder's piece inside the part and the revolved
+end's pieces bounded by edges no second face shares, and the solid builder
+dropped them. No solid was split. The cut of two unsplit solids is the first
+one; a common has no piece, and neither had the fuse.
+
+**The fix.** In `MakeBlocks`, before an end with no vertex is given one of
+its own, it takes a vertex the two faces share if the section goes on to it
+(`continuedEndVertex`): the vertex lies ahead of the end the way the curve
+runs (within 26 deg of its tangent), the points from the end to it are on
+both surfaces within the curve's tolerance, and it is near, under a tenth of
+the curve. The vertex's tolerance grows to the distance, as for the tangent
+end of the dome's section and the branch of #617's above
+(`PutPaveOnCurve`). An end within tolerance of a vertex is its already, and
+is left to the passes before.
+
+**The cases.** `models/issue280_pocket_cut.cpp` and `run_tests.py`: the cut,
+the common and the fuse of the two models -- valid, one solid each, 70554.51
+(21 faces), 28084.40 and 156253.59, within 1e-5 of the volumes above. The
+three are short of them by 0.12, 0.02 and 0.15: the section's curve still
+ends 0.0051 from the corner's vertex, which closes the gap by its tolerance,
+and the two pieces of each revolved end read 538.453 together for the
+face's 538.484.
+The vertex at each corner has a tolerance of 0.205, before the fix as after
+(0.200 then, on the vertex the end had taken): the two edges of the thin
+piece of the revolved end between the section and the arc stay within
+tolerance of each other that far, which `CorrectWires` gives to the vertex
+they leave. #280's model: the Pocket valid, one solid, 70554.51.
+
+![#280: the Pocket's cut, a section that stops short of the corner it runs into: before and after](models/pictures/issue280_pocket_cut.png)
+
+**What it moved.** Nothing in the suites, the thickness corpus (1072 runs) or the
+thickness sweep, not a line; of the 29 issue models made again, each
+feature's volume and counts read, this model's Pocket and nothing else.
+
+**Validation** (against `643d40b26f`, on Linux): boolean 70 (67 + these
+3), draft 105, thickness PASS=683 at level 0 and at level 3 frozen, the
+fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928. FreeCAD (`319e756a1d`):
+the Python suite 4376 OK; C++ Part 117, PartDesign 20, Sketcher 148,
+TopoShapeEx 94. Not run: macOS, thickness levels 1 and 2.

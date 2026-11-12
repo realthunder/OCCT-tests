@@ -539,6 +539,47 @@ for stage, title in (("before", "before"), ("after", "after")):
           bad=not (valid == "valid" and abs(vol - 127114) <= 20))
 pictures.append(pic)
 
+# #280: the Pocket's cut -- the part and the tool (orange), and the cut
+# before and after, seen from under the mirror plane on the tool's side
+# (issue280_pocket_cut.cpp --write).
+def pocket_line(stage):
+    for line in open(os.path.join(W, "280", stage + ".txt")):
+        if line.startswith("cut:"):
+            w = line.split(":", 1)[1].split(",")
+            return w[0].strip(), int(w[2].split()[0]), float(w[3].split()[1])
+
+
+pic = dict(name="issue280_pocket_cut",
+           title="#280: the Pocket's cut, a section that stops short of the corner it runs into",
+           caption="BRepAlgoAPI_Cut of the part by the pocket's tool; the right volume is "
+                   "70554.63. The tool's cylinder has its rim in the plane the part is mirrored "
+                   "about, tangent at (25, +-45, 0) to the arc a revolved end of the part meets "
+                   "that plane in; the section of the cylinder with that end stopped 0.0051 "
+                   "short of the corner.",
+           panels=[])
+part = Part.read(os.path.join(MODELS, "issue280_part.brep"))
+tool = Part.read(os.path.join(MODELS, "issue280_tool.brep"))
+both = Part.makeCompound([part, tool])
+EYEPOCKET = [0.45, -1.0, -0.3]
+CPOCKET = [18, 0, -3]
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+both.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=EYEPOCKET, center=CPOCKET, height=150,
+                 facecolors={str(k): ORANGE for k in range(len(part.Faces), len(both.Faces))}))
+pic["panels"].append(dict(png=png, title="the input", note="the part, 98639.04, and the "
+                          "pocket's tool (orange), 85699.11", bad=False))
+for stage, title in (("before", "before"), ("after", "after")):
+    valid, faces, vol = pocket_line(stage)
+    cut = Part.read(os.path.join(W, "280", stage, "cut.brep"))
+    note = "%s, %d faces, %.2f" % (valid, faces, vol)
+    if stage == "before":
+        note += ": the part unchanged, with no error"
+    panel(pic, cut, title, note, EYEPOCKET, CPOCKET, 150, mark=True,
+          bad=not (valid == "valid" and abs(vol - 70554.63) <= 0.71))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

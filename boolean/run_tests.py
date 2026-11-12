@@ -342,6 +342,30 @@ def bspline_knots_gprop():
 
 guarded(bspline_knots_gprop)
 
+
+# #280: the Pocket's cut. The tool's cylinder has its rim in the plane the
+# part is mirrored about; the section of the cylinder with a revolved end of
+# the part runs into the corner where the rim leaves the part, tangent there
+# to the arc that end meets the plane in, and stopped 0.0051 short of it. No
+# solid was split: the cut was the part unchanged, the common and the fuse
+# empty, with no error. The volumes wanted are those of the tool moved 0.001
+# up and down, halved (README.md, "#280: a section that stops short of the
+# corner it runs into").
+def issue280():
+    part = Part.read(os.path.join(HERE, "models", "issue280_part.brep"))
+    tool = Part.read(os.path.join(HERE, "models", "issue280_tool.brep"))
+    for name, want in (("cut", 70554.63), ("common", 28084.41), ("fuse", 156253.74)):
+        res = getattr(part, name)(tool)
+        solids = len(res.Solids)
+        vol = res.Volume if solids else 0.0
+        ok = res.isValid() and solids == 1 and abs(vol - want) <= 1e-5 * want
+        report("issue280_pocket_%s" % name, ok,
+               "%s, %d solid(s), volume %.4f (want %.2f)"
+               % ("valid" if res.isValid() else "invalid", solids, vol, want))
+
+
+guarded(issue280)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

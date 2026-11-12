@@ -19,7 +19,7 @@ those need a scripted repro before they can join the suite.
 | 64 | `issue064_boolean_split_seam.FCStd` | Part Split through a cylinder **seam edge** produces a wrong boolean; RT: split incorrect near seam, workaround = split at a different angle | invalid: Body, Split, Split_i0, Boolean, Reference **Rescan 2026-10-28**: the seam split is made at every Tolerance up to 2.5 (the pieces the same with the seam turned away); the file's own Tolerance of 3 mm puts the cut on the seam edge for 24 mm (within 2.83 of it), invalid -- left so. Found on the way and fixed: a plane/cylinder section lost under a fuzzy value (`IntAna_QuadQuadGeo`), `../boolean/` |
 | 172 | `issue172_sketch_unclosed.FCStd` | Edges imported into sketch as external geometry become unconnected: curve `First/LastParameter` evaluation is ~0.003 mm off the end vertices | errors: Pad006, Pad008; invalid: Sketch008 **Rescan 2026-11-03**: does not reproduce. Sketch008's external edges (Pad005's line and two arcs) end on their vertices to 1e-11, stored and recomputed, and the sketch's two wires are closed; the GitHub issue is closed. Pad006 is made now. What fails is Sketch009 and Sketch010 ("Missing external geometry reference", so Pad008): their references into Import004, a SubShapeBinder of Pad006, all resolve on the shape the file was saved with (160 edges); the remade Pad006 has 156, and 5 of each sketch's references are gone -- a document matter, not the kernel's. |
 | 273 | `issue273_heater_handle*.FCStd` | Fillet whose surface touches a **seam edge** destroys the shape; chamfer on the same edge segfaults (upstream bug 28354; `ShapeUpgrade_ShapeDivideClosed` suggested as seam removal) | invalid: Pad (both variants; crash itself needs the interactive chamfer) |
-| 280 | `issue280_pocket_sphere_seam.FCStd` | Pocket through a mirrored sphere fails ("resulting shape is not a solid") once wide enough — cutting with **overlapping seam edges**; tolerance workaround exists | error: Sketch002 **Rescan 2026-10-28**: made. The file's Pocket is the failing case of the report (120 mm, through all, its sketch's edge on the mirror's seam) and recomputes valid, 71245.4350: what it removes is exactly the common of its tool with the part (31428.3242), BOP's check clean. |
+| 280 | `issue280_pocket_sphere_seam.FCStd` | Pocket through a mirrored sphere fails ("resulting shape is not a solid") once wide enough — cutting with **overlapping seam edges**; tolerance workaround exists | error: Sketch002 **Rescan 2026-10-28**: made. The file's Pocket is the failing case of the report (120 mm, through all, its sketch's edge on the mirror's seam) and recomputes valid, 71245.4350: what it removes is exactly the common of its tool with the part (31428.3242), BOP's check clean. **Rescan 2026-11-12** (fork `c861b8b553`, Linux): that was on another `Mirrored001` (102673.76). On the file's (98639.0377) the Pocket removed nothing, with no error -- the cut the part unchanged, the common and the fuse empty: a section that stops 0.0051 short of the corner it runs into (`../boolean/`, "#280"). Fixed: valid, one solid, 70554.51 (70554.63 by the tool moved 0.001 either way). |
 | 333 | `issue333_draft_pad_crooked.FCStd` | Draft feature produces a broken model; Pad on top comes out crooked past depth 44 | **crash on recompute** **Rescan 2026-11-11** (FreeCAD `8e4ef3ccaa`): the document recomputes whole, 38 objects, the Body valid and clean by BOP's check, 51308.7537. Draft001 (the ledge 6 by 2.1 at the top, 85.5 deg) takes off its wedge and nothing else: 168.1031 = 6 x 2.1 x (2.1 / tan 4.5 deg) / 2, where the file's took 895.28 with a side face running out of the model. See "A face not found again for its arc" below |
 | 334 | `issue334_draft_artifact.FCStd` | Same model family: artifact after Draft003; RT: side face broken from Draft001 on | **crash on recompute** **Rescan 2026-10-28**: the recompute stops at Sketch006 ("No planar face in AttachEngine3D": its support remapped to a curved face, a document matter), so Draft003's invalid shape is the stored one; recomputed alone it is refused (2026-10-02, below). **Rescan 2026-11-11** (FreeCAD `8e4ef3ccaa`): the document recomputes whole, 45 objects, the Body valid and clean by BOP's check, 48550.1365 (the file's: 47381.9336, invalid). Draft001 as in #333; Draft002 (72 deg, reversed) adds 1106.8212, the file's own figure; Draft003 (the ledge 6 by 2.2, 85.5 deg) takes off 184.4941 = 6 x 2.2 x (2.2 / tan 4.5 deg) / 2. Picture and cause: "A face not found again for its arc" below |
 | 346 | `issue346_offset_one_side.FCStd` | Part Offset works from one side, throws "Unknown OCC exception" from the other | error: Offset **Fixed 2026-10-31** (`../thickness/`, sec 40): the Revolve's dome comes down to its axis, a dimple; inward the offset fell short of the axis where a crossing was looked for (`BRepOffset_Offset`), and the sphere closing the gap took a negative radius. The Offset is valid, every face 2 from the input's. With the Intersection join -2 is still refused, +2 valid and wrong, as before |
@@ -174,19 +174,17 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `319e756a1d`)
+## Where the models stand (2026-11-12, OCCT `c861b8b553`, FreeCAD `319e756a1d`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
-no invalid shape -- one of them, #280, wrong all the same. The five that
-do not, and that one:
+no invalid shape. The five that do not:
 
 | Model | What is left | Whose |
 |-------|--------------|-------|
 | #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
 | #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
 | #474 | Fillet003, as the file has it: its edge is `?Edge41` in the file as saved, and that edge of the stored `Pad011` is 9e-7 mm long | the file's. `Pad011` is made since FreeCAD `319e756a1d` (1988.87278 mm3 to the stored 1988.87285, without that edge). It failed with "FaceMaker: result shape is null": `Sketch018` lies on a side face of `Pad010` and landed turned a quarter in its plane, its constraints folding it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it was identity. Four sketches of the file turned so, three by a half turn which their constraints brought back to the same wire. The owner's ruling (option A of three put): a feature the file holds with a Placement keeps taking one. All 99 placed shapes of the file keep theirs and of its 178 shapes only `Pad011` differs from the stored |
-| #280 | no error, and wrong: `Pocket` removes nothing (98639.0377, the volume of `Mirrored001` under it; the file has 98638.9078) | the kernel's, open: the pocket's tool (85699.1118, valid) and the part (valid) overlap -- points lie inside both -- and their cut is the part unchanged with 29 faces, their common 0 and their fuse 0, all "valid". With the tool moved 0.001 along z either way the cut is 70552.57 and 70556.68. The tool's top face lies in the plane z = 0 the part is mirrored about, where its revolved faces have their seams: the report's own case. The row above reads this model as made on 2026-10-28; `Mirrored001` was then another shape (102673.76), and is the file's again |
 | #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
 | #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |
 
@@ -227,6 +225,18 @@ What went since the table of 2026-11-11, none of it the kernel's:
   4e-7 off; Fillet002's has 5e-6 and lies 2.4e-7 off. With the datum
   lines found, what follows them is made for the first time, which is
   where `Sketch018` shows.
+
+- **#280's Pocket** recomputed with no error and removed nothing
+  (98639.0377, the volume of `Mirrored001` under it; the file has
+  98638.9078, the report's own failure). The pocket's tool and the part,
+  both valid, overlap, and their cut was the part unchanged, their common
+  and their fuse nothing. The kernel's: a section that stops 0.0051 short
+  of the corner it runs into (OCCT `c861b8b553`, `../boolean/`, "#280").
+  The Pocket is valid, one solid, 70554.51. The row above read this model
+  as made on 2026-10-28; `Mirrored001` was then another shape (102673.76)
+  and is the file's again. Found by reading every feature's volume with
+  and without the FreeCAD change for #474, not by an error: an error and
+  a validity check see none of this.
 
 The stored shapes #360 still differs from are the issue itself (the
 fillet's spike, which is gone) and two faces fewer from `Mirrored006` on,

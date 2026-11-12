@@ -95,6 +95,10 @@ fix 617seam 3c35c64037 "src/ModelingData/TKGeomBase/ProjLib/ProjLib_CompProjecte
 fix 617pad 11d03d433c "src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_5.cxx \
     src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx" issue617_pad_fuse \
     $HERE/../models/issue617_revolution.brep $HERE/../models/issue617_prisms.brep --write
+# #280: the Pocket's cut, a section that stops short of the corner it runs into
+fix 280 c861b8b553 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    issue280_pocket_cut $HERE/../models/issue280_part.brep $HERE/../models/issue280_tool.brep \
+    --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
