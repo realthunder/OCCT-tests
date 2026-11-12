@@ -174,17 +174,19 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `728cfabf72`)
+## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `319e756a1d`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
-no invalid shape. The five that do not:
+no invalid shape -- one of them, #280, wrong all the same. The five that
+do not, and that one:
 
 | Model | What is left | Whose |
 |-------|--------------|-------|
 | #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
 | #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
-| #474 | Pad011 ("FaceMaker: result shape is null"); Fillet003 is not the recompute's: its edge is `?Edge41` in the file as saved | FreeCAD's, and the owner's to rule on: `Sketch018` lies on a side face of `Pad010` and lands turned a quarter in its plane, so its constraints fold it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it is identity. Four sketches of the file turn so: three by a half turn, which their constraints bring back to the same wire, and this one by a quarter. With the quarter turn put back by hand (AttachmentOffset) Pad011 is made, 1988.87278 mm3 to the stored 1988.87285 |
+| #474 | Fillet003, as the file has it: its edge is `?Edge41` in the file as saved, and that edge of the stored `Pad011` is 9e-7 mm long | the file's. `Pad011` is made since FreeCAD `319e756a1d` (1988.87278 mm3 to the stored 1988.87285, without that edge). It failed with "FaceMaker: result shape is null": `Sketch018` lies on a side face of `Pad010` and landed turned a quarter in its plane, its constraints folding it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it was identity. Four sketches of the file turned so, three by a half turn which their constraints brought back to the same wire. The owner's ruling (option A of three put): a feature the file holds with a Placement keeps taking one. All 99 placed shapes of the file keep theirs and of its 178 shapes only `Pad011` differs from the stored |
+| #280 | no error, and wrong: `Pocket` removes nothing (98639.0377, the volume of `Mirrored001` under it; the file has 98638.9078) | the kernel's, open: the pocket's tool (85699.1118, valid) and the part (valid) overlap -- points lie inside both -- and their cut is the part unchanged with 29 faces, their common 0 and their fuse 0, all "valid". With the tool moved 0.001 along z either way the cut is 70552.57 and 70556.68. The tool's top face lies in the plane z = 0 the part is mirrored about, where its revolved faces have their seams: the report's own case. The row above reads this model as made on 2026-10-28; `Mirrored001` was then another shape (102673.76), and is the file's again |
 | #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
 | #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |
 
