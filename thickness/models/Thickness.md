@@ -3649,6 +3649,21 @@ suite 4360 OK.
 
 ![issue360_plate_edge_pieces](pictures/issue360_plate_edge_pieces.png)
 
+### Sec 68: a mended face that comes back in several
+
+**An exception where a refusal was due** (`BRepOffset_MakeOffset.cxx`
+`ToContext`; `BRepAlgo_Loop.cxx` `SplitWires`). No result changes.
+
+- #613's model with face 6 or 12 removed, 1 mm either way with arcs,
+  threw `TopoDS::Face` out of the whole offset instead of answering "not
+  done"; so did its top piece with the side removed.
+- Two places mend an invalid face with `ShapeFix_Shape` and cast what
+  comes back to a face. Where the face's bounds cross, the fix hands back
+  several faces, and the cast threw. The face is now kept as it was unless
+  the fix hands back a face, and what cannot be made is refused.
+- Upstream returns an invalid solid outward and throws inward. Making
+  these is still open.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

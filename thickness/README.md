@@ -2949,6 +2949,43 @@ at fix levels 0 to 3 and frozen before the 4 were added; sweep 928 of 928,
 the same line for line; the corpus as its baseline; fillet 824 + 1 XFAIL,
 boolean 67, draft 105; FreeCAD's Python suite 4361 OK.
 
+## A mended face that comes back in several (2026-11-12, sec 68)
+
+**An exception where a refusal was due.** #613's model with face 6 or
+face 12 removed, 1 mm either way with arcs, did not answer "not done": it
+threw `Standard_TypeMismatch` ("TopoDS::Face") out of the whole offset,
+past the second way (sec 60) and past the caller's `IsDone()`. So did the
+model's top piece with its side removed (sec 65), which is what the
+piecewise thickness (sec 11) hands on there.
+
+Two places of the chain mend an invalid face with `ShapeFix_Shape` and
+cast the result back to a face: the extended face in
+`BRepOffset_MakeOffset::ToContext`, and the test face a loop is classified
+against in `BRepAlgo_Loop`'s `SplitWires`. Where the face's bounds cross
+-- on the top piece two corner blends' offsets meet on the extended top
+face; in `SplitWires` the loop crosses itself -- the fix hands back the
+face cut in several, a compound, and the cast throws.
+
+The face is now kept as it was made unless the fix hands back a face
+(`ff1dfd11f2`). It is as invalid as it was, and what follows refuses it
+as it refuses everything else it cannot make.
+
+| Run (`corpus/`, `t613`) | Before | Now | Upstream |
+|-------------------------|--------|-----|----------|
+| face 6 removed, 1 out, arcs | threw | not done | done, invalid |
+| face 12 removed, 1 out, arcs | threw | not done | done, invalid |
+| face 6 removed, 1 in, arcs | threw | not done | throws |
+| face 12 removed, 1 in, arcs | threw | not done | throws |
+
+No result changes and nothing new is made, so there is no figure: the
+four lines of `corpus/baseline.txt` are the record. Making these four is
+still open -- upstream does not make them either.
+
+Regression (`ff1dfd11f2`, Linux): thickness PASS=683 at level 0, and at
+level 3 frozen; sweep 928 of 928, the same line for line; the corpus as
+its baseline but for these four lines; fillet 824 + 1 XFAIL, boolean 67,
+draft 105.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

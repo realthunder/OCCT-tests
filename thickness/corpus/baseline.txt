@@ -900,13 +900,13 @@ t613 thk f2 1 j0 | not done
 t613 thk f3 1 j0 | not done
 t613 thk f4 1 j0 | not done
 t613 thk f5 1 j0 | not done
-t613 thk f6 1 j0 | threw TopoDS::Face
+t613 thk f6 1 j0 | not done
 t613 thk f7 1 j0 | done valid 1 solids 1 vol 7195.9901
 t613 thk f8 1 j0 | not done
 t613 thk f9 1 j0 | not done
 t613 thk f10 1 j0 | not done
 t613 thk f11 1 j0 | not done
-t613 thk f12 1 j0 | threw TopoDS::Face
+t613 thk f12 1 j0 | not done
 t613 thk f13 1 j0 | not done
 t613 thk f14 1 j0 | not done
 t613 thk f15 1 j0 | not done
@@ -922,13 +922,13 @@ t613 thk f2 -1 j0 | not done
 t613 thk f3 -1 j0 | not done
 t613 thk f4 -1 j0 | not done
 t613 thk f5 -1 j0 | not done
-t613 thk f6 -1 j0 | threw TopoDS::Face
+t613 thk f6 -1 j0 | not done
 t613 thk f7 -1 j0 | done valid 1 solids 1 vol 6681.4497
 t613 thk f8 -1 j0 | not done
 t613 thk f9 -1 j0 | not done
 t613 thk f10 -1 j0 | not done
 t613 thk f11 -1 j0 | not done
-t613 thk f12 -1 j0 | threw TopoDS::Face
+t613 thk f12 -1 j0 | not done
 t613 thk f13 -1 j0 | not done
 t613 thk f14 -1 j0 | not done
 t613 thk f15 -1 j0 | not done

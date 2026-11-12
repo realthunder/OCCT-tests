@@ -174,20 +174,55 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-11, OCCT `b62de1a33a`, FreeCAD `ff12ade957`)
+## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `6681f43f36`)
 
 Every model opened and every object made again (each touched, then one
-recompute), on Linux. 23 of the 29 recompute with no object in error and
-no invalid shape. The six that do not:
+recompute), on Linux. 24 of the 29 recompute with no object in error and
+no invalid shape. The five that do not:
 
 | Model | What is left | Whose |
 |-------|--------------|-------|
 | #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
 | #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
-| #360 | Hole001, "Adding the thread failed" | the kernel's: `Sketch004`'s lost edge was -- the plate's thickness left its edges in pieces, joined now (OCCT `ac01b0d63e`, `../thickness/` sec 67) -- and the recompute now reaches a threaded hole whose thread does not fuse with its hole. That is the file against today's Hole, not the kernel: the file (an earlier build of this fork) stores `Diameter` 2.52 for an M2.5 modelled thread, the major diameter and its clearance, and its stored shape has the bore there with the grooves cut outward; today's Hole bores at the stored 2.52 and builds the thread from the size's table with its crest at 2.52, so the crest's helical B-spline lies on the bore's cylinder and the fuse of the two fails (`BOPAlgo_AlertTooSmallEdge`, `AcquiredSelfIntersection`; upstream's boolean chain the same; with a fuzzy value of 1e-5 it is made, the thread wholly inside the bore). The same hole made new derives 2.07 and is made. Which the old file should become is the owner's to say |
-| #474 | three datum lines and Fillet002 on B-spline edges of a helix, Fillet003 | the helix made again is the same curve to 4e-7, not to the 1e-7 a reference is searched at (its row) |
+| #474 | Pad011 ("FaceMaker: result shape is null"), Fillet003 after it | FreeCAD's, and the owner's to rule on: `Sketch018` lies on a side face of `Pad010` and lands turned a quarter in its plane, so its constraints fold it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it is identity |
 | #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
 | #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |
+
+What went since the table of 2026-11-11, none of it the kernel's:
+
+- **#360 is clean.** `Hole001` ("Adding the thread failed") was a file read
+  wrongly, not a thread the kernel cannot fuse, and not the bore of another
+  convention as first written here: a hole's thread size is saved as its
+  place in its table, and as the file was read the size was looked for
+  again by diameter. The file has no ThreadDiameter, so the bore stood in:
+  an M3 with its 2.52 mm bore came back as an M2.5 with the M3's bore,
+  the crest of whose thread lies on the bore. A file's size is now kept
+  (FreeCAD `38645e5008`; the same fault put a fine thread of today's own
+  files back at the first pitch of its diameter, 109 of the 171 sizes).
+  The hole is made, to the stored volume and the stored 212 faces, with
+  the thread profile it was made with -- an earlier hole keeps that by the
+  version on the object.
+- **#360's patterns** recomputed without error and wrong: `Mirrored004`,
+  the mirror of a mirrored pocket offset by 1.4 mm, took 42 mm3 more than
+  the file has, and `Mirrored010` filled the two fillets on its original
+  back in. Since 2024-09 a pattern made its first instance, which is the
+  original, on top of a support that already holds it. It is left out
+  again (FreeCAD `6681f43f36`); the patterns made in between keep what
+  they have, by their version. Found by comparing each feature made again
+  with its stored shape, not by an error.
+- **#474's three datum lines and Fillet002** find their edges: a reference
+  not found to 1e-7 is looked for once more at 1e-5 and taken where it is
+  the one element there (the owner's ruling), and two B-splines are the
+  same curve whatever their poles and whichever way they run -- the helix
+  edge is written with 21 poles of degree 11 in the file and 34 of degree
+  9 made again, and the edge where a pad meets the helix comes back
+  reversed (FreeCAD `13266c5b84`). With the datum lines found, what
+  follows them is made for the first time, which is where `Sketch018`
+  shows.
+
+The stored shapes #360 still differs from are the issue itself (the
+fillet's spike, which is gone) and two faces fewer from `Mirrored006` on,
+0.0007 mm3.
 
 ## Themes
 
