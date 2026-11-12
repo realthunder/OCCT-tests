@@ -3664,6 +3664,43 @@ suite 4360 OK.
 - Upstream returns an invalid solid outward and throws inward. Making
   these is still open.
 
+### Sec 69: a wall made again says what it was
+
+**What a thick solid tells of the faces that stay**
+(`BRepOffset_MakeOffset.cxx` `Modified`,
+`BRepOffsetAPI_MakeThickSolid.cxx` `Modified`). No result changes.
+
+- A wall that shares an edge with the removed face is made again where
+  that edge is cut (`MakeFaces`), on its own surface. The images hold
+  what it became and the solid is glued from them, but `Generated`
+  answered with a face's offset and `Modified` with a removed face's rim,
+  and of the wall nothing was said.
+- #360's plate, 4 inward: 78 of the 152 faces of the result, and 78 of
+  its edges, each on the surface or the curve of an input element that
+  was gone, with no element of the input answering for them.
+- FreeCAD names a result by its history, and named these from their
+  neighbours: 117 references of its name corpus then found another
+  element after a change of the thickness (FreeCAD
+  `docs/TopoNamingEnhance.md` sec 9).
+- `Modified` now answers for a face or an edge of the shape that is not
+  in the result and has an image there; `IsDeleted` follows it.
+
+| #360's plate, inward | faces the input's own | faces untold | edges untold | now |
+|----------------------|-----------------------|--------------|--------------|-----|
+| 2 | 95 | 22 | 22 | 0, 0 |
+| 3 | 61 | 56 | 56 | 0, 0 |
+| 4 | 39 | 78 | 78 | 0, 0 |
+| 5 | 7 | 110 | 110 | 0, 0 |
+
+Still so: the same wall is the input's own face at one thickness and a
+face made again at another, though what is made is the same face.
+
+Regression (`3bae7e462a`, Linux): thickness PASS=683 at fix levels 0 and 3,
+frozen at 3; sweep 928 of 928; the corpus as its baseline; fillet 824 + 1
+XFAIL, boolean 70, draft 104 + 1 FAIL (FreeCAD's SheetMetal branch, before
+its `f2d9db811e`); FreeCAD's Python suite 5302 OK, and its
+`ThickSolidHistory` check, which fails without this.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

@@ -2986,6 +2986,63 @@ level 3 frozen; sweep 928 of 928, the same line for line; the corpus as
 its baseline but for these four lines; fillet 824 + 1 XFAIL, boolean 67,
 draft 105.
 
+## A wall made again says what it was (2026-11-12, sec 69)
+
+**What a thick solid tells of the faces that stay in it.** No shape
+changes; this is the history a caller asks for afterwards (`Modified`,
+`Generated`, `IsDeleted`), which FreeCAD names the result's elements by.
+
+A wall that shares an edge with the removed face is made again wherever
+that edge is cut: `BRepOffset_MakeOffset::MakeFaces` rebuilds every face
+that holds an edge the removed face's rim took in pieces, on the wall's own
+surface, and records what it became in the images (`myImageOffset`), from
+which the solid is glued. But `Generated` answers with a face's offset,
+and `Modified` answered with a removed face's rim and nothing else. The
+wall as it was is not in the result, the wall made again is, and no
+element of the input answered for it. The same holds for the edge the wall
+shares with the removed face, in its pieces or joined again (sec 67).
+
+On #360's plate, the top removed 4 inward (sec 60), that was 78 of the
+result's 152 faces and 78 of its 438 edges, each lying on the surface or
+the curve of an input element that was gone. FreeCAD, with no history for
+them, named those faces from their own edges and the edges from one face
+and a number: in its name stability corpus 117 of the 191 references that
+silently found another element after a change were on this plate (FreeCAD
+`docs/TopoNamingEnhance.md` sec 9).
+
+`BRepOffset_MakeOffset::Modified` now answers for a face or an edge of the
+shape that is not a removed face, is not in the result, and has an image
+there: its last image, of its own kind, where that is in the result.
+`BRepOffsetAPI_MakeThickSolid::Modified` asks it for every face but a
+removed one, and `IsDeleted` follows.
+
+| #360's plate, inward | faces of the result that are the input's own | faces no input element answered for | edges on an input curve, the same | now |
+|------|------|------|------|------|
+| 2 | 95 of 216 | 22 | 22 | none, none |
+| 3 | 61 of 152 | 56 | 56 | none, none |
+| 4 | 39 of 152 | 78 | 78 | none, none |
+| 5 | 7 of 152 | 110 | 110 | none, none |
+
+The edges that are still told of by nothing (64 at 3, 4 and 5 inward) lie
+on no input curve: they are where two offsets, or an offset and the rim,
+meet.
+
+What this does not change: the same wall is the input's own face at one
+thickness and a face made again at another (61, 39 and 7 stay at 3, 4 and
+5 inward), though the face made is the wall as it was. A caller sees
+"unchanged" in one run and "modified" in the next.
+
+The check is in FreeCAD's C++ tests, since no history is seen from Python:
+`tests/src/Mod/Part/App/ThickSolidHistory.cpp`, a plate with two square
+holes 2.5 from its outline, the top removed 4 inward, where one wall is
+made again. There is no figure: nothing new is made.
+
+Regression (`3bae7e462a`, Linux): thickness PASS=683 at fix levels 0 and 3,
+frozen at 3; sweep 928 of 928; the corpus as its baseline; fillet 824 + 1
+XFAIL, boolean 70, draft 104 + 1 FAIL (FreeCAD's SheetMetal branch, before
+its `f2d9db811e`); FreeCAD's Python suite 5302 OK, and its
+`ThickSolidHistory` check, which fails without this.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
