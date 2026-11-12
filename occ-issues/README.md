@@ -174,7 +174,7 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-12, OCCT `066e82ba7d`, FreeCAD `230d1778eb`)
+## Where the models stand (2026-11-12, OCCT `3e81901253`, FreeCAD `230d1778eb`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
@@ -235,12 +235,16 @@ What went since the table of 2026-11-11, none of it the kernel's:
   the 29 models; patterns and dress-ups not yet). It is the kernel's and
   FreeCAD's both, and fixed (its row). The other features answer right, but
   for one point of #474's `Pad006`, which is the next item below.
-- **A point said inside a solid it is 3.96 outside of** (open, the
-  kernel's): `BRepClass3d_SolidClassifier` on #474's `Helix002`, the base of
-  `Pad006` (one solid, valid, 1850.69), says IN for (10.875, -12.661,
-  17.151), which no ray from it to anywhere meets the solid on and which
-  lies outside the cylinder the helix is in; of 3000 points in the corners
-  of its box, beyond that cylinder, 6 are said inside. Not chased yet.
+- **A point said inside a solid it is 3.96 outside of** (the kernel's,
+  fixed): `BRepClass3d_SolidClassifier` on #474's `Helix002`, the base of
+  `Pad006` (one solid, valid, 1850.69), said IN for (10.875, -12.661,
+  17.151), which lies outside the cylinder the helix is in; of 20000 points
+  in the corners of its box, beyond that cylinder, 28 were said inside, and
+  the common of a line through the solid with it kept the part outside. A
+  line crossing a flank of the thread just inside its rim was lost by the
+  line/face intersector, whose polyhedron of the flank allowed too little
+  for its border (occt `3e81901253`; `../boolean/README.md`, "#474: a point
+  outside a helix said inside it"). None of the models changes by it.
 - **#280's Pocket** recomputed with no error and removed nothing
   (98639.0377, the volume of `Mirrored001` under it; the file has
   98638.9078, the report's own failure). The pocket's tool and the part,

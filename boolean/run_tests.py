@@ -433,6 +433,29 @@ def issue617_pad_fuse():
 
 guarded(issue617_pad_fuse)
 
+# #474's Helix002, a helical thread: points outside it that
+# BRepClass3d_SolidClassifier said inside (a line crossing a B-spline flank
+# just inside its rim was lost by IntCurvesFace_Intersector, whose polyhedron
+# of the flank measured how far its border chords are from the rim on even
+# steps it does not have), and the common of a line through the solid with it,
+# which kept the part outside (README.md, "#474: a point outside a helix said
+# inside it").
+def issue474_helix_classify():
+    helix = Part.read(os.path.join(HERE, "models", "issue474_helix.brep"))
+    points = [(10.875, -12.661, 17.151), (12.7236, -7.6476, 12.1118), (12.5155, -12.1097, 29.2421),
+              (13.2945, -8.6270, 28.0298), (12.7915, -7.0546, 25.2969), (12.5694, 7.2925, 24.5869),
+              (13.1348, -10.5992, 29.5003)]
+    said = [q for q in points if helix.isInside(V(*q), 1e-7, True)]
+    report("issue474_helix_points", not said,
+           "%d of %d points outside the solid said inside (want 0)" % (len(said), len(points)))
+    p, d = V(10.875, -12.661, 17.151), V(-0.047987, 0.971357, -0.232727)
+    com = helix.common(Part.makeLine(p - d * 0.001, p + d * 60))
+    report("issue474_helix_line_common", len(com.Edges) == 1 and abs(com.Length - 6.7904) <= 1e-3,
+           "%d edge(s), length %.4f (want 1, 6.7904)" % (len(com.Edges), com.Length))
+
+
+guarded(issue474_helix_classify)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

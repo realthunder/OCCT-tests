@@ -618,6 +618,32 @@ for stage, title in (("before", "before"), ("after", "after")):
           bad=not (valid == "valid" and solids == 1 and abs(vol - 122396.04) <= 1.23))
 pictures.append(pic)
 
+# #474: the helix and the sampled points outside it that were said inside,
+# a ball at each (issue474_helix_classify.cpp --write).
+def helix_line(stage):
+    for line in open(os.path.join(W, "474helix", stage + ".txt")):
+        if line.startswith("sample:"):
+            w = line.split(":", 1)[1].split()
+            return int(w[0]), int(w[2])
+
+
+pic = dict(name="issue474_helix_classify",
+           title="#474: a point outside a helix said inside it",
+           caption="BRepClass3d_SolidClassifier on 6000 points in the corners of the solid's box, "
+                   "beyond the cylinder the helix is in: a ball at each one said inside. A line "
+                   "that crosses a flank just inside its rim was lost, and the crossing after "
+                   "it, out of the solid, taken for the first.",
+           panels=[])
+EYEHELIX = [0.6, -1.0, 0.55]
+CHELIX = [0, 0, 20]
+for stage, title in (("before", "before"), ("after", "after")):
+    said, of = helix_line(stage)
+    shape = Part.read(os.path.join(W, "474helix", stage, "said_in.brep"))
+    nfaces = len(shape.Solids[0].Faces)
+    panel(pic, shape, title, "%d of %d points said inside" % (said, of), EYEHELIX, CHELIX, 38,
+          colors={str(k): ORANGE for k in range(nfaces, len(shape.Faces))}, bad=said != 0)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

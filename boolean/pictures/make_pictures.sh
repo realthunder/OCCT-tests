@@ -103,6 +103,10 @@ fix 280 c861b8b553 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx 
 fix 617torus 066e82ba7d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
     issue617_torus_pad $HERE/../models/issue617_torus.brep \
     $HERE/../models/issue617_torus_pad_edge.brep --write
+# #474: points outside a helix said inside it
+fix 474helix 3e81901253 \
+    src/ModelingAlgorithms/TKGeomAlgo/IntCurveSurface/IntCurveSurface_ThePolyhedronOfHInter.cxx \
+    issue474_helix_classify $HERE/../models/issue474_helix.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

@@ -873,3 +873,69 @@ level 3 frozen, the fillet suite PASS=824 XFAIL=1, every case line the
 same; the thickness corpus as its baseline; the thickness sweep 928 of 928.
 FreeCAD (`230d1778eb`): the Python suite 4380 OK; C++ Part 117, PartDesign
 20, Sketcher 148, TopoShapeEx 94. Not run: macOS, thickness levels 1 and 2.
+
+## #474: a point outside a helix said inside it (`3e81901253`, 2026-11-12)
+
+**Where it was met.** `../occ-issues/models/issue474_fillet_edit_crash.FCStd`,
+by the points taken at random in each feature's box (above, #617): one of
+1500 for `Pad006` was inside the pad's base, `Helix002`, and not inside the
+pad. The pad was right. The base is a helical thread, 2.6 turns of a square
+profile between the radii 9.28 and 13 (`models/issue474_helix.brep`: one
+solid, valid, 1850.69), and `BRepClass3d_SolidClassifier` said IN for
+(10.875, -12.661, 17.151), which is 3.96 from it and outside the cylinder
+it is in: of 20000 points sampled in the corners of the solid's box, beyond
+that cylinder, 28 were said inside. `BOPAlgo` classifies with the same
+classifier: the common of the line from that point along
+(-0.047987, 0.971357, -0.232727) with the solid was 12.1082 long in two
+edges, the part from the point to the solid kept, for 6.7904 in one.
+
+**What was broken.** The classifier casts a line from the point to a point
+of a face and takes the first crossing. That line crosses the solid's skin
+at 5.3168, on a flank of the thread, and at 12.1072, and only the second
+was found: going out, so the point was inside. The flank is a B-spline face
+(degree 1 across, 9 along, four C2 intervals along), and the crossing is
+0.0008 inside its rim. `IntCurvesFace_Intersector` looks for crossings on a
+polyhedron of the face, then exactly, and the rim bulges out of the
+polyhedron's border chords: where a line meets the surface out there,
+`Intf_InterferencePolygonPolyhedron` takes the point if it is within the
+polyhedron's border deflection of a border edge. Three things kept that from
+working:
+
+- a face of several C2 intervals gets its polyhedron on parameters that are
+  denser in one interval than in another (steps of 0.262 and 0.315 along
+  this rim), and the border deflection was measured on as many even steps:
+  0.121 for the 0.160 of the longest chords. The line passed the border
+  triangle 0.144 out;
+- the border triangles' boxes were enlarged by the triangles' own deflection
+  only (0.0026 here, across the surface), so a line in the band beyond the
+  border could pass a border triangle's box by, and the triangle was never
+  tried against it;
+- measured exactly, the border deflection is how far the border is from the
+  middle of its longest chord, and a line meeting the surface right there
+  meets the plane of the border triangle a little further out: 0.1605 for
+  0.16005, refused by a hair.
+
+**The fix.** In `IntCurveSurface_ThePolyhedronOfHInter`: the border
+deflection of a polyhedron built on given parameters is measured on the
+chords it has; the boxes of the triangles on the border, and the box of the
+whole (to which the intersector clips the line), reach the border; and the
+border deflection is over-estimated as the triangles' is, 1.2 times and the
+triangles' added. What is taken by it goes to the exact solver, which is
+bounded by the surface.
+
+**The cases.** `models/issue474_helix_classify.cpp`: the seven points found
+are outside (all seven said inside before); of 6000 points sampled beyond
+the cylinder none is inside (9 before); the line's common is 6.7904 in one
+edge. `run_tests.py` has the seven points and the line.
+
+![#474: a point outside a helix said inside it: before and after](models/pictures/issue474_helix_classify.png)
+
+**What it moved.** Nothing in the suites, the thickness corpus (1072 runs)
+or the thickness sweep, not a line.
+
+**Validation** (against `06cbc35303`, on Linux): boolean 79 (77 + these
+2), draft 105, thickness PASS=683 at level 0 and at level 3 frozen, the
+fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928. FreeCAD (`230d1778eb`):
+the Python suite 4380 OK. Not run: macOS,
+thickness levels 1 and 2.
