@@ -174,7 +174,7 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `6681f43f36`)
+## Where the models stand (2026-11-12, OCCT `ac01b0d63e`, FreeCAD `728cfabf72`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
@@ -184,7 +184,7 @@ no invalid shape. The five that do not:
 |-------|--------------|-------|
 | #64 | five shapes invalid | the file's own Tolerance of 3 mm, which puts the cut on the seam; left so (its row) |
 | #172 | Sketch009, Sketch010 (external references), Pad008 after them | the sketch: a chord and an arc that cross twice, 0.008 apart; the pad made again differs there from the stored one (its row) |
-| #474 | Pad011 ("FaceMaker: result shape is null"), Fillet003 after it | FreeCAD's, and the owner's to rule on: `Sketch018` lies on a side face of `Pad010` and lands turned a quarter in its plane, so its constraints fold it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it is identity |
+| #474 | Pad011 ("FaceMaker: result shape is null"); Fillet003 is not the recompute's: its edge is `?Edge41` in the file as saved | FreeCAD's, and the owner's to rule on: `Sketch018` lies on a side face of `Pad010` and lands turned a quarter in its plane, so its constraints fold it flat. A sketch on a flat face takes its axes from the Placement of the feature the face belongs to; in the file that is the first sketch's (roll 90), as features were placed until 2022-09 (`c1616d2349`), and made again it is identity. Four sketches of the file turn so: three by a half turn, which their constraints bring back to the same wire, and this one by a quarter. With the quarter turn put back by hand (AttachmentOffset) Pad011 is made, 1988.87278 mm3 to the stored 1988.87285 |
 | #580 | Chamfer on three edges, the Body after it | the two-distance chamfer's first face changed with the rebuild (its row) |
 | #613 | Fillet, and the stored Thickness after it | a sketch constraint on the start of a projected line that now runs the other way (its row) |
 
@@ -211,14 +211,20 @@ What went since the table of 2026-11-11, none of it the kernel's:
   they have, by their version. Found by comparing each feature made again
   with its stored shape, not by an error.
 - **#474's three datum lines and Fillet002** find their edges: a reference
-  not found to 1e-7 is looked for once more at 1e-5 and taken where it is
-  the one element there (the owner's ruling), and two B-splines are the
-  same curve whatever their poles and whichever way they run -- the helix
-  edge is written with 21 poles of degree 11 in the file and 34 of degree
-  9 made again, and the edge where a pad meets the helix comes back
-  reversed (FreeCAD `13266c5b84`). With the datum lines found, what
-  follows them is made for the first time, which is where `Sketch018`
-  shows.
+  not found to 1e-7 is looked for once more and taken where it is the one
+  element there (the owner's ruling), and two B-splines are the same
+  curve whatever their poles and whichever way they run -- the helix edge
+  is written with 21 poles of degree 11 in the file and 34 of degree 9
+  made again, and the edge where a pad meets the helix comes back
+  reversed (FreeCAD `13266c5b84`). How far off the second look goes is a
+  setting, as the owner asked, and goes by the shapes: the Part
+  preference `ReferenceSearchTolerance` (10 unless set, 0 for no second
+  look) times the larger of the tolerance the element had and that of
+  the element found (FreeCAD `728cfabf72`; it was a fixed 1e-5). The
+  datum lines' edges have 1.3e-7 in the file and 2e-7 made again and lie
+  4e-7 off; Fillet002's has 5e-6 and lies 2.4e-7 off. With the datum
+  lines found, what follows them is made for the first time, which is
+  where `Sketch018` shows.
 
 The stored shapes #360 still differs from are the issue itself (the
 fillet's spike, which is gone) and two faces fewer from `Mirrored006` on,
