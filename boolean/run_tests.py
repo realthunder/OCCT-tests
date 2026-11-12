@@ -366,6 +366,73 @@ def issue280():
 
 guarded(issue280)
 
+# #617's Pad on a torus (the model's _simple variant): the torus and the pad's
+# prism, which stands on it along its own profile -- the torus' cut by
+# x = 0 as the sketch keeps it, 6.1e-5 off the torus and saying so (7.3e-5):
+# the profile's edge and the vertices alone ("edge"), or the wall as well, as
+# FreeCAD makes the pad ("wall"). The wall is tangent to the torus at two
+# points of that edge, where the second branch of their section leaves it,
+# and the walking lines lose their way there. "edge" came back unfused: two
+# solids, the common nothing, the cut the torus, with no error; "wall" one
+# solid with a vertex of 0.041, an edge going nowhere and the fuse 3.4 short.
+# The volumes wanted are those of the prism moved 0.01 along x either way,
+# halved; no vertex may be looser than the profile says, and no edge has a
+# face missing (README.md, "#617: a pad standing on a torus along its own
+# cut").
+def issue617_torus_pad():
+    torus = Part.read(os.path.join(HERE, "models", "issue617_torus.brep"))
+    for kind, model in (("edge", "issue617_torus_pad_edge.brep"),
+                        ("wall", "issue617_torus_pad.brep")):
+        pad = Part.read(os.path.join(HERE, "models", model))
+        issue617_torus_pad_runs(torus, pad, kind)
+
+
+def issue617_torus_pad_runs(torus, pad, kind):
+    for name, want in (("cut", 70020.56), ("common", 7959.79), ("fuse", 122396.04)):
+        res = getattr(torus, name)(pad)
+        solids = len(res.Solids)
+        vol = res.Volume if solids else 0.0
+        tol = max(v.Tolerance for v in res.Vertexes) if solids else 0.0
+        loose = 0
+        for e in res.Edges:
+            faces = res.ancestorsOfType(e, Part.Face)
+            # a seam is on its one face twice; in the cut the profile is on
+            # four, where the hole reaches the torus' skin along it
+            if (not e.Degenerated and len(faces) % 2
+                    and not (len(faces) == 1 and e.isSeam(faces[0]))):
+                loose += 1
+        ok = (res.isValid() and solids == 1 and abs(vol - want) <= 1e-5 * want
+              and tol <= 1e-4 and loose == 0)
+        report("issue617_torus_pad_%s_%s" % (kind, name), ok,
+               "%s, %d solid(s), volume %.4f (want %.2f), largest vertex tolerance %.2g "
+               "(want <= 1e-4), %d edge(s) with a face missing"
+               % ("valid" if res.isValid() else "invalid", solids, vol, want, tol, loose))
+
+
+guarded(issue617_torus_pad)
+
+
+# #617's Pad itself: the revolution fused with the two prisms padded from its
+# cut by z = 0 (README.md, "#617: a pad's wall standing on a revolution along
+# its bottom edge"). The right volume is 127114 (the prisms 0.01 above or
+# below the cut give 127121 and 127107). The tangent points are no longer
+# reached by growing their vertices to the walking lines (0.0023): a curve is
+# made from each line to its point.
+def issue617_pad_fuse():
+    rev = Part.read(os.path.join(HERE, "models", "issue617_revolution.brep"))
+    prisms = Part.read(os.path.join(HERE, "models", "issue617_prisms.brep"))
+    res = rev.fuse(prisms)
+    solids = len(res.Solids)
+    vol = res.Volume if solids else 0.0
+    tol = max(v.Tolerance for v in res.Vertexes) if solids else 0.0
+    ok = res.isValid() and solids == 1 and abs(vol - 127114) <= 20 and tol <= 1e-4
+    report("issue617_pad_fuse", ok,
+           "%s, %d solid(s), volume %.4f (want 127114 +- 20), largest vertex tolerance %.2g "
+           "(want <= 1e-4)" % ("valid" if res.isValid() else "invalid", solids, vol, tol))
+
+
+guarded(issue617_pad_fuse)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

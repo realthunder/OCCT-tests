@@ -99,6 +99,10 @@ fix 617pad 11d03d433c "src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_5.
 fix 280 c861b8b553 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
     issue280_pocket_cut $HERE/../models/issue280_part.brep $HERE/../models/issue280_tool.brep \
     --write
+# #617: the Pad on a torus, standing on it along its own cut
+fix 617torus 066e82ba7d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    issue617_torus_pad $HERE/../models/issue617_torus.brep \
+    $HERE/../models/issue617_torus_pad_edge.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

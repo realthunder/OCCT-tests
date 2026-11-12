@@ -759,3 +759,117 @@ fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928. FreeCAD (`319e756a1d`):
 the Python suite 4376 OK; C++ Part 117, PartDesign 20, Sketcher 148,
 TopoShapeEx 94. Not run: macOS, thickness levels 1 and 2.
+
+## #617: a pad standing on a torus along its own cut (`066e82ba7d`, 2026-11-12)
+
+**Where it was met.** `../occ-issues/models/issue617_intersection_pad_simple.FCStd`,
+the variant of #617's model that was counted clean on 2026-10-28: its Pad
+in no error, its shape valid. It added nothing -- 77980.3452, the volume of
+the torus under it. Found by asking, of every feature of the 29 issue models
+made again, whether points taken at random are inside the result where they
+are inside what it was made of (`../occ-issues/README.md`); neither an error
+nor a validity check sees a boolean that does nothing.
+`models/issue617_torus.brep` is the torus (R 27.58, r 11.97, 77980.35) and
+`issue617_torus_pad.brep` the pad's prism (52375.48): its profile is one of
+the two closed curves the plane x = 0 cuts the torus in, and it runs from
+there to x = -100. With the prism moved 0.01 along x either way the fuse,
+the cut and the common are right and add up -- 122390.80 and 122401.28,
+70015.32 and 70025.79, 7965.03 and 7954.55; halved: 122396.04, 70020.56,
+7959.79.
+
+**What was broken, first: the profile.** The profile is not the cut. The
+sketch simplifies a reference curve of a degree over 5 (to within 1e-4),
+and what it keeps is a B-spline of degree 5 that is 6.1e-5 off the torus
+and crosses it 44 times -- as an edge at the default tolerance of 1e-7,
+which is on neither side of the torus by its own account. Of that no result
+is to be asked: the pave filler split the edge 44 times against the torus,
+and the fuse came back the torus alone. This part is FreeCAD's (fcad
+`230d1778eb`): the simpler curve now carries how far it is from the one it
+stands for, and the edge takes it as its tolerance, 7.3e-5 here.
+
+**What was broken, then: the tangent points.** With the profile saying what
+it is the fuse was still not right. Told by the profile's edge and its
+vertices alone (`issue617_torus_pad_edge.brep`): two solids, unfused, the
+common nothing and the cut the torus, with no error. Told by the prism's wall
+as well, which is how FreeCAD makes the pad (`issue617_torus_pad.brep`): one
+solid, 122392.63, with a vertex of 0.041 and an edge going nowhere, its own
+cut and common adding up to 8.5 more.
+The prism's wall stands on the torus along the profile, as in "#617: a pad's
+wall standing on a revolution along its bottom edge" above, and is tangent
+to it at two points of that edge, (0, 29.2128, -28.3025) and
+(0, 6.3525, -21.1993); there the second branch of their section leaves the
+edge, runs to the wall's seam at x = -26.01 and comes back. The edge/face
+pass puts a vertex at each (`11d03d433c`), and `MakeBlocks` put it on a
+walking line that passes near, growing the vertex to the line. Here the
+lines pass further off and worse. One turns 0.07 short of its point, runs on
+beside the edge, 0.005 to 0.03 off it, and stops 0.17 past the point on
+nothing; the nearest it comes is 0.04. The other comes along the edge 1e-3
+off it, crosses it 0.007 the wrong side of the point, hooks back over it
+0.12 further on and leaves on the other branch. The angle between the
+faces at the line's nearest point, times the distance, said the vertex was
+not the line's (5.9e-5 for a tolerance of 1.7e-5), though the faces are
+2.9e-5 apart on the way; and where the vertex was taken it grew to 0.04 and
+0.0075, the hook stayed an edge and the run past the point an edge of its
+own. Faces whose wires close only within 0.04 read their areas wrong by
+that much times their size.
+
+**The fix.** In `MakeBlocks`, a walking line passing near a tangent vertex
+is cut where it is still sound and the rest is made (`bridgeToVertex`): the
+points between the cut and the vertex along the line in the first face's
+parameters, every one within tolerance of the second face, and a curve
+through them with its own curves on the two faces. The cut is the first
+point past the line's last sharp turn (20 deg in a step, the steps under
+half the nearest distance, looked for within 64 times it) from which the
+faces stay together to the vertex. One side of the line from its nearest
+point must be lost -- nothing put on it, its end near, its points on the
+vertex or on an edge both faces share as far as the faces tell -- or be
+nothing, the line ending there. What is left of the line is measured again
+for its tolerance, which may have been the lost part's (0.0036 here, 1.2e-5
+after). Where none of that holds the vertex is put on the line as before.
+With it:
+
+- the faces' distance from a line to a tangent vertex is measured along the
+  way (`facesTogether`) where the angle times the distance says too far, and
+  against the vertex's own tolerance too -- the edge it is on is known no
+  better (`tangentVerticesNearCurve`);
+- a section curve with nothing put on it that lies beside the shared edges
+  all along takes no vertex (`lostAlongEdges`): a stray piece 0.31 long,
+  0.002 off the edge, stayed in its face;
+- a curve along the shared edges ends at the last vertex put on it where its
+  own end is on one of them (`trimEndsOnEdges`): the grown vertex used to
+  take such an end in, 5e-4 off it on #617's pad, and the piece from it
+  became an edge beside the one already there.
+
+**The cases.** `models/issue617_torus_pad.cpp` (either model) and
+`run_tests.py` (both): the cut, the common and the fuse -- valid, one solid
+each, 70020.5551, 7959.7901 and 122396.0385, the three adding up to 1e-4;
+no vertex looser than the profile's 7.3e-5; no edge with a face missing
+(in the cut the profile is on four faces, where the hole reaches the torus'
+skin along it). `run_tests.py` also holds #617's Pad itself now
+(`issue617_pad_fuse`: the revolution and the two prisms): valid, one solid,
+127113.94, its largest vertex 5e-6 where it was 0.0023. #617's `_simple`
+model: the Pad valid, one solid, 122396.04; the full model's 94597.92 for
+94597.28, its vertices no longer grown.
+
+![#617: a pad standing on a torus along its own cut: before and after](models/pictures/issue617_torus_pad.png)
+
+**What is left.** How the tolerance is told matters still: told as 2e-4 and
+more, or on every face and too small (2e-5), a tangent vertex is reached
+the old way (valid, one solid, a vertex of 0.0075 to 0.04, the fuse up to 7
+off). And the same pad on a torus cut through its plane of symmetry
+(R 30, r 12 about y, the plane x = 10) is not made right by this: towards
+-x with the edges alone told it is (109149.49 for 109149.01, where it was
+nothing at all), but towards +x with the profile cut in two by FreeCAD's
+default face maker the fuse is invalid, a vertex of 11.5, before this as
+after -- the walking lines there are several on top of each other.
+
+**What it moved.** Nothing in the suites, the thickness corpus (1072 runs)
+or the thickness sweep, not a line; of the 29 issue models made again,
+#617's two Pads and nothing else.
+
+**Validation** (against `cc62eca817`, on Linux): boolean 77 (70 + 6 of
+these and #617's Pad), draft 105, thickness PASS=683 at level 0 and at
+level 3 frozen, the fillet suite PASS=824 XFAIL=1, every case line the
+same; the thickness corpus as its baseline; the thickness sweep 928 of 928.
+FreeCAD (`230d1778eb`): the Python suite 4380 OK; C++ Part 117, PartDesign
+20, Sketcher 148, TopoShapeEx 94. Not run: macOS, thickness levels 1 and 2.

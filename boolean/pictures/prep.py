@@ -580,6 +580,44 @@ for stage, title in (("before", "before"), ("after", "after")):
           bad=not (valid == "valid" and abs(vol - 70554.63) <= 0.71))
 pictures.append(pic)
 
+# #617: the Pad on a torus -- the input, and the fuse before and after, seen
+# from the side the pad leaves the torus on (issue617_torus_pad.cpp --write).
+def torus_line(stage):
+    for line in open(os.path.join(W, "617torus", stage + ".txt")):
+        if line.startswith("fuse:"):
+            w = line.split(":", 1)[1].split(",")
+            return w[0].strip(), int(w[1].split()[0]), int(w[2].split()[0]), float(w[3].split()[1])
+
+
+pic = dict(name="issue617_torus_pad",
+           title="#617: a pad standing on a torus along its own cut",
+           caption="BRepAlgoAPI_Fuse of the torus with the pad's prism; the right volume is "
+                   "122396.04. The prism's profile is the torus' cut by x = 0 as the sketch "
+                   "keeps it, 6.1e-5 off the torus (its edge says 7.3e-5); its wall is tangent "
+                   "to the torus at two points of that edge, where the walking lines of their "
+                   "section lose their way.",
+           panels=[])
+torus = Part.read(os.path.join(MODELS, "issue617_torus.brep"))
+tpad = Part.read(os.path.join(MODELS, "issue617_torus_pad_edge.brep"))
+both = Part.makeCompound([torus, tpad])
+EYETORUS = [-0.55, 0.45, -1.0]
+CTORUS = [-10, 17, -12]
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+both.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=EYETORUS, center=CTORUS, height=130,
+                 facecolors={str(k): ORANGE for k in range(len(torus.Faces), len(both.Faces))}))
+pic["panels"].append(dict(png=png, title="the input", note="the torus, 77980.35, and the "
+                          "pad's prism (orange), 52375.48", bad=False))
+for stage, title in (("before", "before"), ("after", "after")):
+    valid, solids, faces, vol = torus_line(stage)
+    fuse = Part.read(os.path.join(W, "617torus", stage, "fuse.brep"))
+    note = "%s, %d solid%s, %d faces, %.2f" % (valid, solids, "" if solids == 1 else "s", faces, vol)
+    panel(pic, fuse, title, note, EYETORUS, CTORUS, 130, mark=True,
+          bad=not (valid == "valid" and solids == 1 and abs(vol - 122396.04) <= 1.23))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")
