@@ -104,6 +104,7 @@ STAGES = {
     "srimseam": ("4b3d5c45b3", "42014a78e1"),
     "schamflush": ("6adfe9a2c8", "51e4faf111"),
     "sguide": ("46934730d6", "1420e35a51"),
+    "s580": ("bf3ca2e833", "17ddf3b4a8"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -495,6 +496,18 @@ def _chamfer_corner(box=False):
     return b.makeFillet(2, [edge_between(b, a, c) for a, c in ends])
 
 
+def _pad580():
+    """run_tests.py's issue580_pad: #580's Pad001 as FreeCAD makes it again
+    (its planes hold no curves of their edges), put together again with its
+    side faces listed before its base, which makeChamfer() then measures the
+    first size on."""
+    s = Part.Shape()
+    s.read(os.path.join(MODELS, "issue580_pad001.brep"))
+    faces = s.Faces
+    order = [8, 7, 9] + [i for i in range(len(faces)) if i not in (7, 8, 9)]
+    return Part.Solid(Part.Shell([faces[i] for i in order]))
+
+
 def _roof_block(sx=1.204, sy=1.127):
     # run_tests.py's roof_block: #631's V11 in miniature, a block standing on
     # a hip roof with its corner on the ridge
@@ -560,6 +573,7 @@ SHAPES = {
     "bossseam": _boss_seam,
     "chfcorner": _chamfer_corner,
     "chfcornerbox": lambda: _chamfer_corner(box=True),
+    "p580": _pad580,
 }
 
 
@@ -708,6 +722,8 @@ UVFACE = {
     # the back face, both fillets flush with it at the corner, whose corner the cut takes off
     "chfcorner": _plane_at("y", 30),
     "chfcornerbox": _plane_at("y", 30),
+    # the chamfer on the quarter circle
+    "p580": lambda f: f.Surface.__class__.__name__ == "Cone",
 }
 # case -> a third-row face other than its shape's
 UVFACE_CASE = {
@@ -920,6 +936,8 @@ NAMES = {
                  "on (0,30,0)-(0,0,0)",
     "chfcornerbox": "a 40x30x10 block (makeBox), fillet 2 on its edges at y=30 and on "
                     "(0,30,0)-(0,0,0)",
+    "p580": "#580's Pad001 as FreeCAD makes it again: a D-shaped pad 6 high whose base is a "
+            "band 2 wide, its planes holding no curves of their edges",
 }
 # shape -> the whole shape's view: (center, height)
 VIEW = {
@@ -971,6 +989,7 @@ VIEW = {
     "bossseam": ((15, 10, 5), 24.0),
     "chfcorner": ((20, 15, 5), 40.0),
     "chfcornerbox": ((20, 15, 5), 40.0),
+    "p580": ((4.4, 4.4, 3.5), 28.0),
 }
 # shape -> (what the third row's face is, whether to draw u gridlines at pi/2)
 UVLABEL = {
@@ -1021,6 +1040,7 @@ UVLABEL = {
     "bossseam": ("the plate's side", False),
     "chfcorner": ("the back face y=30", False),
     "chfcornerbox": ("the back face y=30", False),
+    "p580": ("the chamfer's cone", False),
 }
 # case -> the same, when its face is not the shape's (UVFACE_CASE)
 UVLABEL_CASE = {
@@ -1451,6 +1471,13 @@ CASES = {
                                            ((7.5, 17.852122, 30), (17.981017, 24.951673,
                                                                    43.127739)),
                                            0.3, 41535.1837, (8.7, 18.6, 31.6), (0.5, 0.6, -0.65)),
+    # #580's pad, its rim chamfered 5 up the side and 2 on the base, a band 2
+    # wide: the chamfer's line on the base is the band's inner edge, and the
+    # walk's end on it was taken for one on a cutting edge -- the plane holds
+    # no curve of that edge, and the one made for it is new each time it is
+    # asked for -- and the point asked for a vector it has not
+    "issue580_pad_rim_chamfer_5_2": ("s580", "p580", ((12, 0, 0), (0, 12, 0)), 5.0, 476.2935,
+                                     (8.5, 8.5, 1.5), (0.7, 0.7, -0.5)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1561,6 +1588,7 @@ CHAMFER = {
     "boss_drafted_chamfer_r1": (1.0,),
     "boss_flush_chamfer_r1": (1.0,),
     "issue631_fillet002_chamfer_e12_0.3": (0.3,),
+    "issue580_pad_rim_chamfer_5_2": (5.0, 2.0),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1617,6 +1645,7 @@ ZOOMLABEL = {
     "chamfer_fillet_corner_poly_1_1.5": ("the chamfer's end", (110, 110, 110)),
     "boss_drafted_chamfer_r1": ("the chamfer's end", (110, 110, 110)),
     "issue631_fillet002_chamfer_e12_0.3": ("the chamfer's end at the vertex", (110, 110, 110)),
+    "issue580_pad_rim_chamfer_5_2": ("the chamfer's end, at the line's far end", (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1715,6 +1744,7 @@ EDGES = {
     "issue474_f003_run_on_e2_r0.3": "the step's edge along the top, (-13,0,13)-(-9,0,13)",
     "issue631_fillet002_chamfer_e12_0.3": "the ellipse under the arm, (7.5,17.85,30)-"
                                           "(17.98,24.95,43.13)",
+    "issue580_pad_rim_chamfer_5_2": "the base's rim, its quarter circle (12,0,0)-(0,12,0)",
 }
 
 

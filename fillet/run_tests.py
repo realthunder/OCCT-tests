@@ -3271,6 +3271,37 @@ refused_case("issue962_v5_e5_e6_e10_r0.3_refused", sweep_shape("issue962_Fillet"
 refused_case("issue474_f003_v24_e40_e42_r1_refused", sweep_shape("issue474_Fillet003"), [40, 42],
              1.0)
 
+
+# #580: a chamfer of two sizes that takes a face's whole width. The pad as
+# FreeCAD makes it again (models/issue580_pad001.brep: its planes hold no
+# curves of their edges, as a prism leaves them), its rim -- a quarter circle
+# of radius 12 and a line of 3.2 at each end, on the base -- chamfered 5 up
+# the side and 2 on the base, which is a band 2 wide: the chamfer's line on
+# the base is the band's inner edge. Refused: an edge of a plane with no
+# curve stored was taken for a cutting edge, and a point with no vector asked
+# for one. The size on the side is the one makeChamfer() measures first only
+# with the side faces listed before the base, so the shell is put together
+# again that way (the faces themselves untouched). 1 and 2, which fit either
+# way, were made before as well as now.
+def issue580_pad():
+    pad = Part.read(os.path.join(MODELS, "issue580_pad001.brep"))
+    faces = pad.Faces
+    order = [8, 7, 9] + [i for i in range(len(faces)) if i not in (7, 8, 9)]
+    solid = Part.Solid(Part.Shell([faces[i] for i in order]))
+    rim = [i + 1 for i, e in enumerate(solid.Edges)
+           if isinstance(e.Curve, Part.Circle) and abs(e.Curve.Radius - 12) < 1e-9
+           and abs(e.Vertexes[0].Z) < 1e-9][0]
+    return solid, rim
+
+
+_p580, _r580 = issue580_pad()
+fillet_case("issue580_pad_rim_chamfer_5_2", _p580, _r580, (5.0, 2.0), "pass", 476.2935,
+            chamfer=True, vol_tol=1e-3, bop=True)
+fillet_case("issue580_pad_rim_chamfer_1_2", _p580, _r580, (1.0, 2.0), "pass", 573.1029,
+            chamfer=True, vol_tol=1e-3, bop=True)
+fillet_case("issue580_pad_rim_chamfer_2_1", _p580, _r580, (2.0, 1.0), "pass", 572.5793,
+            chamfer=True, vol_tol=1e-3, bop=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

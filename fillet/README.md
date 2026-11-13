@@ -6151,6 +6151,77 @@ The three chamfers at 0.3 of the section above were refused before; at
 level 0 they are computed again at the latest and made, so they pass at
 every level and keep none.
 
+## #580: a chamfer that takes a face's whole width (`17ddf3b4a8`, realthunder/FreeCAD#580, 2026-11-13)
+
+`../occ-issues/models/issue580_mirror_crash.FCStd` stopped at its first
+chamfer when it was made again: two sizes, 5 and 2, on the rim of `Pad001`
+-- a quarter circle of radius 12 and a line of 3.2 at each end -- with the
+5 up the pad's side and the 2 on its base, which is a band 2 wide between
+that rim and an inner one. The chamfer's line on the base is the band's
+inner edge; the file has it, 476.2935, and the mirror after it, the
+issue's own, was never reached.
+
+Two things were in the way, one FreeCAD's and one the kernel's.
+
+FreeCAD's: a chamfer of two sizes measures the first on the edge's first
+face, and which face comes first is the order the kernel lists the shape's
+faces in. 8.0.1 lists the pad's faces in another order than 7.x did, so
+the 5 went on the base, where it does not fit. FreeCAD keeps the face by
+name now (FreeCAD `b4ff77d741`, `_FirstFaces`).
+
+The kernel's: with the sizes on the right faces the chamfer was still
+refused on the pad as FreeCAD makes it again, and made on the pad as the
+file has it and on a copy of either. Where a chamfer's line on a face ends
+on one of the face's edges and the next piece's does not, the transition
+at that point is turned (`ChangeTransition`, `ChFi3d_Builder_2.cxx`)
+unless the edge is a cutting edge, one the face has twice; and a cutting
+edge was told by asking for the edge's curve on the face as it is and
+reversed, the two not being one curve. An edge of a plane that has no curve
+stored on it is given one made on the spot each time it is asked for
+(`BRep_Tool::CurveOnSurface`), never the same twice: every such edge was a
+cutting edge. The test made of a cutting edge asks the point for its
+vector, and this point has none: `ChFiDS_CommonPoint::Vector()` threw, and
+the chamfer was not done. A pad made by a prism has planes with no curves
+of their edges; a file's shape and a copy have them stored, which is all
+that made the three differ.
+
+**The fix.** Such an edge -- not twice on the face -- is not a cutting
+edge where the point has no vector to test it with: what threw. One whose
+point has a vector is tested as it was, so nothing made before is made
+differently and no fix level is taken (the rule of "The fillet fix level":
+what was refused needs none).
+
+| Case | What |
+|------|------|
+| `issue580_pad_rim_chamfer_5_2` | the pad as FreeCAD makes it again (`models/issue580_pad001.brep`), its side faces listed before its base so that `makeChamfer()` measures the first size on the side: 5 and 2, 476.2935, the file's (refused before) |
+| `issue580_pad_rim_chamfer_1_2`, `..._2_1` | 1 and 2 either way, which fit: 573.1029 and 572.5793, made before too |
+
+`models/pictures/issue580_pad_rim_chamfer_5_2.png`.
+
+With both, #580 recomputes with no feature in error: the two chamfers
+476.2935 and 463.9305 as the file has them, and the mirror
+(`MultiTransform`) valid, one solid, 1205.7309 -- right by 1500 points at
+random (`../occ-issues/audit/patterns.py`), where the file has the broken
+one of the report, 700.93.
+
+**What is left.** The same chamfer told from the base -- 2 and 5 with the
+base named, as `makeChamfer(2, 5, ...)` gives it on the pad as it comes --
+is refused on that pad and made on the file's, whose faces come in the
+other order: the walk onto the base's inner edge again ("PerformSurf Not
+Implemented", a chamfer's line running along an edge). With 1 instead of
+5 the same. Not looked into further.
+
+**Validation** (against `bf3ca2e833`, on Linux): the fillet sweeps -- every edge (3921) and
+every vertex (12242) of the issues' shapes, filleted and chamfered -- with
+the fork's TKFillet before this and after: not a status, not a volume
+(2666 and 9712 fillets, 2433 and 8781 chamfers made, no `BAD`, timeout or
+crash). The suite PASS=827 XFAIL=1 at fix levels 0 and 1: the 824, and the
+three above. Boolean 94, draft 105, thickness PASS=683 at level 0 and at
+level 3 frozen, every case line the same; the thickness corpus as its
+baseline; the thickness sweep 928 of 928; of the 29 issue models made
+again, #580 alone. FreeCAD (`b4ff77d741`): the Python suite 4388 OK, C++
+PartDesign 20. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

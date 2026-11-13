@@ -2294,6 +2294,21 @@ cylinder), valid and clean by BOP's check.
 
 ![issue631_fillet002_chamfer_e12_0.3](pictures/issue631_fillet002_chamfer_e12_0.3.png)
 
+### A chamfer that takes a face's whole width (`17ddf3b4a8`, #580's pad)
+
+#580's first chamfer, 5 up the pad's side and 2 on its base, where the
+base is a band 2 wide: the chamfer's line on the base is the band's inner
+edge. Where a line ends on an edge of its face the builder asks whether
+that is a cutting edge, one the face has twice, by asking for the edge's
+curve on the face two ways and comparing the two -- and a plane that holds
+no curve of the edge makes a new one each time it is asked. The edge was
+taken for a cutting edge, the point asked for a vector it has not, and the
+chamfer was refused, upstream's 8.0.1 too; on the same pad copied, the
+curves stored by the copy, it was made. A pad made by a prism has such
+planes. The chamfer is the file's, 476.2935.
+
+![issue580_pad_rim_chamfer_5_2](pictures/issue580_pad_rim_chamfer_5_2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
