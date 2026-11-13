@@ -2309,6 +2309,21 @@ planes. The chamfer is the file's, 476.2935.
 
 ![issue580_pad_rim_chamfer_5_2](pictures/issue580_pad_rim_chamfer_5_2.png)
 
+### The same chamfer told from the base (`7615df6b50`, #580's pad)
+
+The chamfer above with the base named first: 2 on the base, 5 up the side.
+Each edge's chamfer is made analytically and its two lines are cut by the
+edges of their faces; the line on the base lies along the band's inner
+edge, and a line that lies on an edge is cut to a point at one end. The
+piece's range on the spine was read off the first face's line -- that
+point, with the base first -- so the piece had no length and was dropped,
+the edge was left to the walk, and the walk ends on the inner edge again,
+which a chamfer does not make: refused, where the same chamfer told from
+the side was made. The line that has a length is read now. 476.2935, as
+from the side.
+
+![issue580_pad_rim_chamfer_base_2_5](pictures/issue580_pad_rim_chamfer_base_2_5.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -6204,12 +6204,12 @@ With both, #580 recomputes with no feature in error: the two chamfers
 random (`../occ-issues/audit/patterns.py`), where the file has the broken
 one of the report, 700.93.
 
-**What is left.** The same chamfer told from the base -- 2 and 5 with the
+**What was left.** The same chamfer told from the base -- 2 and 5 with the
 base named, as `makeChamfer(2, 5, ...)` gives it on the pad as it comes --
-is refused on that pad and made on the file's, whose faces come in the
-other order: the walk onto the base's inner edge again ("PerformSurf Not
-Implemented", a chamfer's line running along an edge). With 1 instead of
-5 the same. Not looked into further.
+was refused on that pad and made on the file's, whose faces come in the
+other order ("PerformSurf Not Implemented", a chamfer's line running along
+an edge); with 1 instead of 5 the same. Made since `7615df6b50`: "#580
+told from the base", below.
 
 **Validation** (against `bf3ca2e833`, on Linux): the fillet sweeps -- every edge (3921) and
 every vertex (12242) of the issues' shapes, filleted and chamfered -- with
@@ -6221,6 +6221,50 @@ level 3 frozen, every case line the same; the thickness corpus as its
 baseline; the thickness sweep 928 of 928; of the 29 issue models made
 again, #580 alone. FreeCAD (`b4ff77d741`): the Python suite 4388 OK, C++
 PartDesign 20. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## #580 told from the base: a line the hatching cut to a point (`7615df6b50`, 2026-11-14)
+
+The chamfer of the section above with its sizes the other way round and
+the base named -- 2 on the base, 5 up the side, which is what
+`makeChamfer(2, 5, ...)` asks for on the pad as it comes, its base listed
+before its sides -- was refused where the same chamfer told from the side
+was made.
+
+Both orders make the chamfer of each of the rim's three edges analytically
+(`ChFiKPart_ComputeData`), then cut its two lines by the edges of their
+faces (`SplitKPart`, the hatching) and give the piece its range on the
+spine, read off the line on the first face unless a corner OnSame chooses
+the other. The line on the base lies along the band's inner edge, and the
+hatching cuts a line that lies on an edge to a point at one end: 3.2 to
+3.2 on the first straight edge, 0 to 0 on the last, where the line up the
+side has 0 to 3.2. With the base first the range was read off that point:
+the piece had no length on the spine and was dropped, the edge was left to
+the walk, and the walk ends on the inner edge again, which a chamfer does
+not make ("PerformSurf Not Implemented"). With the side first the side's
+line was read and all was well; which face comes first should not matter.
+Upstream's 8.0.1 refuses it the same way.
+
+**The fix.** Where the chosen line has no length and the other has, the
+other is read (one piece, no corner OnSame choosing). No fix level: what
+was refused needs none.
+
+| Case | What |
+|------|------|
+| `issue580_pad_rim_chamfer_base_2_5` | the pad as it comes, 2 on the base and 5 up the side: 476.2935, the chamfer of `issue580_pad_rim_chamfer_5_2` (refused before) |
+| `issue580_pad_rim_chamfer_base_2_1` | 2 on the base and 1 up the side: 573.1029, the chamfer of `issue580_pad_rim_chamfer_1_2` (refused before) |
+
+`models/pictures/issue580_pad_rim_chamfer_base_2_5.png`.
+
+**Validation** (`7615df6b50` against `110e649512`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered -- before this and after: not a status, not a
+volume (2666 and 9712 fillets, 2433 and 8781 chamfers made, no `BAD`,
+timeout or crash). The suite PASS=829 XFAIL=1 at fix levels 0 and 1: the 827, the same line for
+line, and the two above. Boolean 103, draft 105, thickness PASS=691 at
+level 0 and at level 3 frozen, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
+(`b4ff77d741`): the Python suite 4388 OK. Not run: macOS, the frozen suite,
+thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

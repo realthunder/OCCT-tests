@@ -3302,6 +3302,28 @@ fillet_case("issue580_pad_rim_chamfer_1_2", _p580, _r580, (1.0, 2.0), "pass", 57
 fillet_case("issue580_pad_rim_chamfer_2_1", _p580, _r580, (2.0, 1.0), "pass", 572.5793,
             chamfer=True, vol_tol=1e-3, bop=True)
 
+
+# The same chamfers told from the base: the pad as it comes, its base listed
+# before its sides, so that makeChamfer() measures the first size on the
+# base -- 2 there and 5 up the side is the chamfer above, 2 and 1 the one of
+# 1 and 2. Refused: the chamfer's line on the base lies along the band's
+# inner edge, the hatching cut it to a point, and the spine's range of the
+# surface was read off that line, the first face's (SplitKPart): no range,
+# the surface dropped, the edge left to a walk that ends on that same edge.
+def issue580_pad_as_it_comes():
+    pad = Part.read(os.path.join(MODELS, "issue580_pad001.brep"))
+    rim = [i + 1 for i, e in enumerate(pad.Edges)
+           if isinstance(e.Curve, Part.Circle) and abs(e.Curve.Radius - 12) < 1e-9
+           and abs(e.Vertexes[0].Z) < 1e-9][0]
+    return pad, rim
+
+
+_q580, _s580 = issue580_pad_as_it_comes()
+fillet_case("issue580_pad_rim_chamfer_base_2_5", _q580, _s580, (2.0, 5.0), "pass", 476.2935,
+            chamfer=True, vol_tol=1e-3, bop=True)
+fillet_case("issue580_pad_rim_chamfer_base_2_1", _q580, _s580, (2.0, 1.0), "pass", 573.1029,
+            chamfer=True, vol_tol=1e-3, bop=True)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1
