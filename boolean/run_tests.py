@@ -473,6 +473,39 @@ def issue617_symtorus_pad():
 guarded(issue617_symtorus_pad)
 
 
+# The prism of cut curves moved into the symmetric torus, 0.003, 0.01 and
+# 0.05 along -x. Its bottom edge crosses the torus at a grazing angle near
+# each tangent point; the vertex made there had its tolerance stretched to
+# 0.3, the length the edge lies on the torus each way, and was put on a
+# section line that only passes it, 0.046 off. Five edges in one vertex
+# 0.046 wide, a face of the torus not made: the common nothing, the cut the
+# torus less 31 and the fuse 38 short, valid and with no error. The volumes
+# wanted are the prism of whole curves' own at the same places, which was
+# right (README.md, "A vertex stretched onto a line that passes it").
+def issue617_symtorus_sunk():
+    torus = Part.read(os.path.join(HERE, "models", "issue617_symtorus.brep"))
+    split = Part.read(os.path.join(HERE, "models", "issue617_symtorus_pad_split.brep"))
+    for depth, wants in ((0.003, (68641.43, 16631.95, 126820.33)),
+                         (0.01, (68634.65, 16638.73, 126813.55)),
+                         (0.05, (68595.89, 16677.49, 126774.79))):
+        pad = split.copy()
+        pad.translate(App.Vector(-depth, 0, 0))
+        for name, want, nsolids in zip(("cut", "common", "fuse"), wants, (2, 2, 1)):
+            res = getattr(torus, name)(pad)
+            solids = len(res.Solids)
+            vol = res.Volume if solids else 0.0
+            tol = max(v.Tolerance for v in res.Vertexes) if solids else 0.0
+            ok = (res.isValid() and solids == nsolids and abs(vol - want) <= 1e-5 * want
+                  and tol <= 1e-4)
+            report("issue617_symtorus_sunk_%g_%s" % (depth, name), ok,
+                   "%s, %d solid(s) (want %d), volume %.4f (want %.2f), largest vertex "
+                   "tolerance %.2g (want <= 1e-4)"
+                   % ("valid" if res.isValid() else "invalid", solids, nsolids, vol, want, tol))
+
+
+guarded(issue617_symtorus_sunk)
+
+
 # #617's Pad itself: the revolution fused with the two prisms padded from its
 # cut by z = 0 (README.md, "#617: a pad's wall standing on a revolution along
 # its bottom edge"). The right volume is 127114 (the prisms 0.01 above or

@@ -45,18 +45,28 @@
 // 16040.78, 125066.03 towards -x, where a vertex may be 1e-3 (that line is
 // given as 5.4e-4 once cut).
 //
+// And the prism of cut curves moved 0.01 into the symmetric torus ("sunk",
+// with issue617_symtorus_pad_split.brep; the move is made here). Its bottom
+// edge crosses the torus at a grazing angle near each tangent point, and the
+// vertex made there had its tolerance stretched to 0.3 and was put on a
+// section line that only passes it, 0.046 off: five edges in one vertex of
+// 0.046, a face of the torus not made, the common nothing and the cut the
+// torus less 31, valid and with no error. Wanted, the prism of whole curves'
+// own at that place: cut 68634.65, common 16638.73, fuse 126813.55.
+//
 // Build (OCCT install prefix O; on Linux add -Wl,--enable-new-dtags so that
 // LD_LIBRARY_PATH can put another library first):
 //   c++ -std=c++17 -w -I$O/include/opencascade issue617_symtorus_pad.cpp \
 //     -L$O/lib -Wl,-rpath,$O/lib -lTKBO -lTKTopAlgo -lTKBRep -lTKGeomAlgo \
 //     -lTKGeomBase -lTKG3d -lTKG2d -lTKMath -lTKernel -o issue617_symtorus_pad
-// Run: ./issue617_symtorus_pad <torus.brep> <pad.brep> forward|back|split|tilt|tiltback
+// Run: ./issue617_symtorus_pad <torus.brep> <pad.brep> forward|back|split|tilt|tiltback|sunk
 //        [--write <dir>]
 //   (exit 0 when every run passes)
 //   --write: each result, <dir>/cut.brep, common.brep, fuse.brep
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepTools.hxx>
@@ -176,7 +186,8 @@ int main(int argc, char** argv)
     {"back", {50970.12, 34303.27, 109149.01}, {4, 2, 1}, 1.e-4},
     {"split", {68644.34, 16629.04, 126823.24}, {2, 2, 1}, 3.e-4},
     {"tilt", {46379.70, 32890.45, 108216.35}, {2, 2, 1}, 1.e-4},
-    {"tiltback", {63229.37, 16040.78, 125066.03}, {2, 2, 1}, 1.e-3}};
+    {"tiltback", {63229.37, 16040.78, 125066.03}, {2, 2, 1}, 1.e-3},
+    {"sunk", {68634.65, 16638.73, 126813.55}, {2, 2, 1}, 1.e-4}};
   const Kind* aKind = nullptr;
   for (const Kind& aK : aKinds)
   {
@@ -188,7 +199,7 @@ int main(int argc, char** argv)
   if (!aKind)
   {
     fprintf(stderr,
-            "usage: %s torus.brep pad.brep forward|back|split|tilt|tiltback [--write dir]\n",
+            "usage: %s torus.brep pad.brep forward|back|split|tilt|tiltback|sunk [--write dir]\n",
             argv[0]);
     return 2;
   }
@@ -199,6 +210,12 @@ int main(int argc, char** argv)
   {
     fprintf(stderr, "cannot read the models\n");
     return 2;
+  }
+  if (!strcmp(aKind->Name, "sunk"))
+  {
+    gp_Trsf aMove;
+    aMove.SetTranslation(gp_Vec(-0.01, 0., 0.));
+    aTool = BRepBuilderAPI_Transform(aTool, aMove, true).Shape();
   }
   bool bOK = run<BRepAlgoAPI_Cut>("cut", aPart, aTool, aKind->Vol[0], aKind->Solids[0],
                                   aKind->Tol, aDir);

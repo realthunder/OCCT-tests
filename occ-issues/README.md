@@ -265,6 +265,15 @@ rest none of it the kernel's):
   `PartDesignTests.TestIntersectionProfile` on both curves of its tilted
   torus (4.6 mm3 short before, a vertex of 0.0135). None of the 29 models
   changes.
+- **The same pad standing a little inside the torus** (the kernel's, fixed
+  2026-11-14, occt `3141bc4389`; `../boolean/README.md`, "A vertex
+  stretched onto a line that passes it"): the prism of cut curves moved
+  0.001 to 0.05 into the torus gave a common of nothing and a fuse 38 mm3
+  short, valid and with no error -- upstream's fault, there before the
+  fork's own changes. A vertex made where the prism's edge grazes the
+  torus was put on a section line that only passes it, 0.046 off. Right to
+  1e-8 now from 0.003 in; within 0.0007 of the torus either way both
+  prisms are still wrong or invalid. None of the 29 models changes.
 - **The patterns, by points at random** (2026-11-13): the reading that
   found #617's `_simple` Pad left patterns out. Of the 26 in the models, 24
   answer right: 1500 points in the pattern's box, each inside the result

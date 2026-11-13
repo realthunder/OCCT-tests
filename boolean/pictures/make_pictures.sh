@@ -111,6 +111,10 @@ fix 474helix 3e81901253 \
 fix 617sym dec6b59a04 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
     issue617_symtorus_pad $HERE/../models/issue617_symtorus.brep \
     $HERE/../models/issue617_symtorus_pad_split.brep split --write
+# the prism of cut curves 0.01 inside the torus: a vertex stretched onto a line that passes it
+fix 617sunk 3141bc4389 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    issue617_symtorus_pad $HERE/../models/issue617_symtorus.brep \
+    $HERE/../models/issue617_symtorus_pad_split.brep sunk --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

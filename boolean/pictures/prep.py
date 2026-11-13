@@ -683,6 +683,45 @@ for stage, title in (("before", "the common, before"), ("after", "the common, af
           bad=not (valid == "valid" and solids == 2 and abs(vol - 16629.04) <= 0.17))
 pictures.append(pic)
 
+# The prism of cut curves 0.01 inside the symmetric torus -- the input, and
+# the cut before and after (issue617_symtorus_pad.cpp sunk --write).
+def sunk_line(stage):
+    for line in open(os.path.join(W, "617sunk", stage + ".txt")):
+        if line.startswith("cut:"):
+            w = line.split(":", 1)[1].split(",")
+            return w[0].strip(), int(w[1].split()[0]), float(w[3].split()[1])
+
+
+pic = dict(name="issue617_symtorus_sunk",
+           title="A vertex stretched onto a line that passes it",
+           caption="BRepAlgoAPI_Cut of a torus by a prism standing 0.01 inside it on the torus' "
+                   "own cut; the right volume is 68634.65. The prism's bottom edge crosses the "
+                   "torus at a grazing angle, and the vertex made there was put on a section "
+                   "line that only passes it, 0.046 off: the prism's part of the torus was not "
+                   "cut out, with no error.",
+           panels=[])
+ktorus = Part.read(os.path.join(MODELS, "issue617_symtorus.brep"))
+kpad = Part.read(os.path.join(MODELS, "issue617_symtorus_pad_split.brep"))
+kpad.translate(V(-0.01, 0, 0))
+both = Part.makeCompound([ktorus, kpad])
+EYESUNK = [1.0, 0.7, 0.45]
+CSUNK = [20, 0, 0]
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+both.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=EYESUNK, center=CSUNK, height=120,
+                 facecolors={str(k): ORANGE for k in range(len(ktorus.Faces), len(both.Faces))}))
+pic["panels"].append(dict(png=png, title="the input", note="the torus, 85273.38, and the "
+                          "prism (orange) 0.01 inside it", bad=False))
+for stage, title in (("before", "the cut, before"), ("after", "the cut, after")):
+    valid, solids, vol = sunk_line(stage)
+    cut = Part.read(os.path.join(W, "617sunk", stage, "cut.brep"))
+    note = "%s, %d solid%s, %.2f" % (valid, solids, "" if solids == 1 else "s", vol)
+    panel(pic, cut, title, note, EYESUNK, CSUNK, 120,
+          bad=not (valid == "valid" and solids == 2 and abs(vol - 68634.65) <= 0.69))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

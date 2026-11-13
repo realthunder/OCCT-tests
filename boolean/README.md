@@ -1080,7 +1080,8 @@ there, at which five edges of the wall end, two pairs of them parallel and
 0.01 apart; two of the wall's four pieces come out with their wires wrong
 (areas of -0.31 and -0.26). The tilted torus' prisms moved 0.01 into it
 come out invalid, their volumes as wanted, before this as after. Not
-looked into further. And a boolean on the symmetric torus takes 3 to 5 s
+looked into further. (The prism moved into the torus: the next section,
+`3141bc4389`.) And a boolean on the symmetric torus takes 3 to 5 s
 where one on the tilted takes 0.4: the intersector walks a line of 170000
 points there and approximates it.
 
@@ -1095,4 +1096,79 @@ issue models made again, nothing.
 fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
 (`fa38ec098d`): the Python suite 4386 OK. Not run: macOS, thickness levels
+1 and 2.
+
+## A vertex stretched onto a line that passes it (`3141bc4389`, 2026-11-14)
+
+**Where it was met.** Taking the volumes wanted for the section above: the
+prism moved 0.01 along x either way, halved. Moved into the torus, the
+prism of cut curves (`models/issue617_symtorus_pad_split.brep`) gave a
+common of nothing, a cut of 85242.05 (the torus less 31) and a fuse of
+126775.89, 38 short -- valid, one or two solids, no error. So at every
+depth from 0.001 to 0.05. The prism of whole curves was right at the same
+places. Upstream's 8.0.1 the same (the fork's pave filler as it was before
+its own changes to the tangent points, `11d03d433c^`).
+
+**What was broken.** With the prism 0.01 inside, its bottom edge crosses
+the torus near each point where the wall is tangent to the torus -- on the
+branch of the wall's section that leaves the profile there -- at a grazing
+angle: it lies on the torus within tolerance for 0.3 each way. A vertex
+made where an edge meets a face has its tolerance stretched, for the
+section curves of that face, to the ends of that part
+(`BOPAlgo_PaveFiller::ExtendedTolerance()`), and a curve within that
+distance takes the vertex, which grows to reach it (`PutPaveOnCurve()`).
+One section of the wall with the torus ends on the vertex, as it should.
+Another -- the profile's own line, 0.01 from the edge all along, which
+turns away onto the branch 0.046 from the vertex -- took the vertex too and
+grew it to 0.046. `FilterPavesOnCurves()` takes a stretched vertex off a
+curve where another curve has it nearer, but not where the vertex is
+square to the curve, which is the curve passing by. Five edges then ended
+in one vertex 0.046 wide; a face of the torus was not made
+(`BOPAlgo_AlertFaceBuilderUnusedEdges`, a warning), and the solids came
+out with the lobes inside the torus' greater part and beside it both.
+
+The prism of whole curves has the same edge, the same crossing and the
+same two lines, and was right because the part of its edge on the torus
+came out 0.001 long, not 0.3: the vertex was never stretched to the line.
+
+**The fix.** `dropStretchedPaves()` in `BOPAlgo_PaveFiller_6.cxx`, after
+the filter. Where another curve of the pair has the vertex within its own
+tolerance, a curve gives the vertex up if it has it further off than its
+tolerance, runs on both ways beyond that distance, and nowhere on the way
+comes to the part of the edge the tolerance was stretched along
+(`stretchedPart()`, `curveMeetsEdgePart()`). The vertex's tolerance goes
+back to what the curves that keep it need. A curve that ends there, or
+one no other curve has the vertex for, takes it as before -- the same
+prism 0.001 *above* the torus is right only by that, a first version that
+asked the curve to come to the edge in every case lost it.
+
+**The cases.** `run_tests.py`, `issue617_symtorus_sunk_<depth>_<op>`: the
+prism of cut curves 0.003, 0.01 and 0.05 inside the torus, its cut, common
+and fuse -- valid, the solids counted, the volumes the whole-curve prism's
+at the same place to 1e-5 (they are within 1e-8), no vertex over 1e-4.
+`models/issue617_symtorus_pad.cpp ... sunk` is the one at 0.01.
+
+![A vertex stretched onto a line that passes it: before and after](models/pictures/issue617_symtorus_sunk.png)
+
+Both prisms at 25 places from 0.05 inside to 0.05 outside, cut, common and
+fuse against the volumes a straight line through the two ends gives: of the
+75 results of the prism of cut curves 49 are right where 28 were; of the
+whole-curve prism's, 57 as before; none that was right is lost.
+
+**What is left.** Between 0.0001 and 0.0007 either way -- one to nine
+times the profile's tolerance, where the bottom edge is neither on the
+torus nor off it -- the results are wrong or invalid for both prisms,
+before this as after: all 26 results of the prism of cut curves that are
+not right, and all 18 of the whole-curve prism's, are there. At 0.001 and
+0.002 either way the results are right with a vertex of 1e-3 to 3.
+
+**What it moved.** Nothing: not a case line in the suites, not a line of
+the thickness corpus (1072 runs) or the thickness sweep; of the 29 issue
+models made again, nothing (163 lines the same).
+
+**Validation** (against `99e38f9702`, on Linux): boolean 103 (94 + these
+9), draft 105, thickness PASS=683 at level 0 and at level 3 frozen, the
+fillet suite PASS=827 XFAIL=1, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
+(`b4ff77d741`): the Python suite 4388 OK. Not run: macOS, thickness levels
 1 and 2.
