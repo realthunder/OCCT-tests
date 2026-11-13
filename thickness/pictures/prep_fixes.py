@@ -244,6 +244,54 @@ panel(pic, cut, "the dimple, a solid, 1 inward", "the disc removed: valid, volum
       % thick.Volume, [0.3, -0.6, 1.4], CENTER346, 85)
 pictures.append(pic)
 
+# #613's part, a flat of its roof removed (sec 70). Face 15: its blend to
+# the cone is in two halves, and the tubes round the flat's two edges along
+# it (orange) end in one quarter circle where the halves meet. Face 21, the
+# mirror image with the blend in one, inward and cut open.
+part613 = Part.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models",
+                                 "issue613_fillet.brep"))
+
+
+def flat_colors(res, cap, t):
+    colors = {}
+    for i, f in enumerate(res.Faces):
+        u0, u1, v0, v1 = f.ParameterRange
+        v = Part.Vertex(f.valueAt((u0 + u1) / 2, (v0 + v1) / 2))
+        if v.distToShape(cap)[0] < 1e-4:
+            colors[str(i)] = MAGENTA
+        elif abs(v.distToShape(cap.OuterWire)[0] - abs(t)) < 2e-3:
+            colors[str(i)] = ORANGE
+    return colors
+
+
+out1 = Part.read(os.path.join(W, "613flat15", "after", "f15_out1.brep"))
+in1 = Part.read(os.path.join(W, "613flat21", "after", "f21_in1.brep"))
+before15 = os.path.exists(os.path.join(W, "613flat15", "before", "f15_out1.brep"))
+before21 = os.path.exists(os.path.join(W, "613flat21", "before", "f21_in1.brep"))
+pic = dict(name="issue613_roof_flat",
+           title="#613's part, a flat of its roof removed, 1 outward and 1 inward",
+           caption="BRepOffsetAPI_MakeThickSolid::MakeThickSolidByJoin, the Arc join. Every edge of "
+                   "a flat is tangent to the blend beside it; a tube (orange) round each closes the "
+                   "wall, down to the rim left of the flat, a strip of it under the tube. The blend "
+                   "below the right flat is in two halves, and the two tubes along it end in one "
+                   "quarter circle where the halves meet: each had its own, and the thickness "
+                   "was %s. The left flat's, the blend in one, was %s at 1 inward: the section "
+                   "of its two tubes had a tangent at its very end 48 deg off the curve."
+                   % ("made" if before15 else "refused", "made" if before21 else "refused"),
+           panels=[])
+EYE613 = [1.3, -0.7, 1.0]
+panel(pic, part613, "the input", "the right flat (magenta) removed, 1 outward", EYE613,
+      [0, 0, 20], 62, {"14": MAGENTA})
+c15 = flat_colors(out1, part613.Faces[14], 1.0)
+panel(pic, out1, "after, the right flat", "valid, %.4f; the tubes orange"
+      % out1.Volume, EYE613, [0, 0, 20], 64, c15)
+panel(pic, out1, "after, where the halves meet", "the two tubes along the blend share the "
+      "quarter circle between them", [1.3, -0.5, 1.0], [21.6, 0, 17.3], 7, c15, mark=True)
+cut = in1.common(Part.makeBox(60, 30, 50, V(-30, 0, -5)))
+panel(pic, cut, "after, the left flat, 1 inward", "valid, %.4f; cut open at y = 0: the wall 1 "
+      "thick, rounded into the rim" % in1.Volume, [-0.9, -1.3, 0.8], [0, 10, 20], 62)
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

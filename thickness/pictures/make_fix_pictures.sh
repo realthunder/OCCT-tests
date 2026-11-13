@@ -33,6 +33,19 @@ mkdir -p $W/home
 
 LIBS="-lTKOffset -lTKFillet -lTKBO -lTKPrim -lTKTopAlgo -lTKBRep -lTKGeomAlgo -lTKGeomBase"
 LIBS="$LIBS -lTKG3d -lTKG2d -lTKMath -lTKernel"
+# On Linux the driver's rpath must be a RUNPATH, or LD_LIBRARY_PATH cannot put
+# the old library first (a DT_RPATH, which conda's linker writes, outranks it)
+# and "before" silently runs the install.
+if [ "$(uname)" = Darwin ]; then
+    CXX=${CXX:-clang++}
+    LIBS="$LIBS -Wl,-rpath,$PREFIX/lib"
+else
+    # the env's compiler, for the libstdc++ the install was built with
+    CXX=${CXX:-"$RUN x86_64-conda-linux-gnu-c++"}
+    LIBS="$LIBS -Wl,--enable-new-dtags -Wl,-rpath,$PREFIX/lib"
+    # ninja and the build's compilers are the env's
+    INENV=$RUN
+fi
 # fix <tag> <commit> <sources> <driver> [args]: the driver built against the
 # install, run on the library <sources> (one word, or several in one quoted
 # argument) belong to, as they were before <commit>,
@@ -42,13 +55,19 @@ fix() {
     local tag=$1 commit=$2 src=$3 drv=$4
     shift 4
     mkdir -p $W/$tag/before $W/$tag/after
-    clang++ -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/$drv.cpp \
-        -L$PREFIX/lib -Wl,-rpath,$PREFIX/lib $LIBS -o $W/$tag/$drv
+    $CXX -std=c++17 -w -I$PREFIX/include/opencascade $HERE/../models/$drv.cpp \
+        -L$PREFIX/lib $LIBS -o $W/$tag/$drv
     ls $W/$tag/old/lib* > /dev/null 2>&1 ||
-        python3 $HERE/../../boolean/pictures/mkold.py $BUILD $W/$tag/old "$commit^" $src \
+        $INENV python3 $HERE/../../boolean/pictures/mkold.py $BUILD $W/$tag/old "$commit^" $src \
             > $W/$tag/mkold.log 2>&1
-    DYLD_LIBRARY_PATH=$W/$tag/old LD_LIBRARY_PATH=$W/$tag/old $W/$tag/$drv "$@" $W/$tag/before \
-        > $W/$tag/before.txt 2>&1 || true
+    # On Linux the old library is preloaded as well: one the driver reaches
+    # through another (TKBool, through TKOffset) is looked for by that one's
+    # DT_RPATH, its own directory, before LD_LIBRARY_PATH -- and "before" ran
+    # the install.
+    local pre=""
+    [ "$(uname)" = Linux ] && pre=$(ls $W/$tag/old/lib*.so.8.0 | head -1)
+    DYLD_LIBRARY_PATH=$W/$tag/old LD_LIBRARY_PATH=$W/$tag/old LD_PRELOAD=$pre \
+        $W/$tag/$drv "$@" $W/$tag/before > $W/$tag/before.txt 2>&1 || true
     $W/$tag/$drv "$@" $W/$tag/after > $W/$tag/after.txt 2>&1 ||
         { echo "$drv fails after the fix, see $W/$tag/after.txt"; exit 1; }
 }
@@ -81,6 +100,14 @@ fix domecapout b16d138042 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset
 fix 346 e306bb1ae4 "src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_Offset.cxx
     src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx" \
     issue346_offset $HERE/../models/issue346_revolve.brep --write
+
+# #613's part, a flat of its roof removed: two tubes going on from each other
+# share their end (40ddbee82b, TKOffset), and an edge's direction at a vertex is
+# the chord's where the pcurve's end tangent strays (575b0f6c53, TKBool)
+fix 613flat15 40ddbee82b src/ModelingAlgorithms/TKOffset/BRepOffset/BRepOffset_MakeOffset.cxx \
+    issue613_roof_flat $HERE/../models/issue613_fillet.brep 15 --write
+fix 613flat21 575b0f6c53 src/ModelingAlgorithms/TKBool/BRepAlgo/BRepAlgo_Loop.cxx \
+    issue613_roof_flat $HERE/../models/issue613_fillet.brep 21 --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep_fixes.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

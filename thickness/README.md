@@ -3043,6 +3043,129 @@ XFAIL, boolean 70, draft 104 + 1 FAIL (FreeCAD's SheetMetal branch, before
 its `f2d9db811e`); FreeCAD's Python suite 5302 OK, and its
 `ThickSolidHistory` check, which fails without this.
 
+## #613: a flat of the roof removed (2026-11-14, sec 70)
+
+**Where it was met.** The corpus (`corpus/`): #613's part with each of its
+21 faces removed in turn, 1 and 0.5 either way, both joins -- 168 runs, of
+which 133 were refused and 8 threw. Two faces are a pair: the flats of the
+roof, face 15 and face 21, mirror images of each other but for the blend
+below them, which is one face under 21 (face 12) and two under 15 (faces 2
+and 6). With the Arc join face 21 was made at 1 outward and refused at the
+other three; face 15 was refused at all four. (At 0.25 to 2 either way,
+`models/issue613_roof_flat.cpp`: face 21 made at 1 and 2 outward and at 2
+inward, refused at the other five; face 15 refused at all eight.)
+
+Every edge of a flat is tangent to the face beside it -- the blend down to
+the cone, a B-spline, and the blend up to the ridge, a cylinder -- so
+nothing of a neighbour's offset reaches the flat, and the wall is closed by
+a tube round each edge: a quarter turn from the neighbour's offset edge
+down to the flat, where the rim starts (`BRepOffset_MakeOffset::ToContext`,
+the filleted dome of sec 34 and 35).
+
+**What was broken, face 15.** Its edge along the blend is two edges, one
+going on from the other in the same direction where the blend's halves
+meet. A tube is made round each, and each ends there in the same quarter
+circle -- its own edge, with its own vertex on the flat. Two tubes that
+meet at a corner of the flat cut each other; these two are tangent, nothing
+cuts one by the other, and nothing made the two arcs one. The shell stayed
+open along them, every face of the offset hung from there and was dropped
+in turn, and what was left was the rim alone: refused (`OffsetRimOnly`), at
+any value, either way.
+
+**The fix** (`40ddbee82b`). `ShareTubeEnds()` in `BRepOffset_MakeOffset.cxx`:
+before a tube is made, the tubes already made for the same removed face are
+asked for an end arc that starts at the vertex this tube's upper edge ends
+in and ends, within the tolerance, where its edge on the flat does. The
+edge on the flat then takes that arc's vertex for its own, and the tube is
+made with the arc for its end (`BRepOffset_Offset::Init` with a first or a
+last edge, as the tubes of convex edges are given the arcs of the spheres
+at their ends).
+
+**What was broken, face 21.** At each corner of the flat its two tubes
+touch -- they start from one vertex, with one normal -- and their section
+runs from there down to where their edges on the flat cross. On the spline
+tube that section's pcurve runs straight to its end: its direction is the
+same to 5e-4 over the last hundredth of it. Its derivative at the end
+parameter itself is another: (0.167, 0.748) for (-0.931, 1.260), 48 deg
+off, and on the other side of the tube's own upper edge. The loop sorts
+the edges at a vertex by the direction each leaves it in
+(`FindLoopsByAngle()` in `BRepAlgo_Loop.cxx`), took the section for an edge
+leaving outside the tube, and of the three regions of the tube -- the
+strip and its two ends beyond the sections -- found one, an end. The strip
+was not made, the edge on the flat lost the piece under it, and the rim
+came out as the flat less a corner. Outward at 1 the same derivative is
+(-0.298, 0.016), as far off but to the right side, which is why that
+value was made. A guard for end tangents that stray was there already
+(sec 35): it sends two directions closer than 0.2 rad to their chords,
+and these two were 0.22 apart.
+
+**The fix** (`575b0f6c53`). `DartAngle()`: the direction an edge leaves a
+vertex in is the pcurve's derivative there, unless the chord to a point a
+thousandth of the way along it differs from that by more than 0.05 rad;
+then it is the chord. A curve that turns that much in a thousandth of its
+length turns eight times round in all.
+
+**The results.** `models/issue613_roof_flat.cpp` (16 runs) and
+`run_tests.py`, `issue613_flat_split_blend_*` (face 15) and
+`issue613_flat_whole_blend_*` (face 21):
+
+| Removed | Offset | Before | Now |
+|---------|--------|--------|-----|
+| face 15 | 0.25, 0.5, 1, 2 | refused | 1617.8851, 3286.0136, 6773.6378, 14358.7727 |
+| face 15 | -0.25, -0.5, -1, -2 | refused | 1575.4511, 3116.4126, 6096.2692, 11657.5021 |
+| face 21 | 0.25, 0.5, 1, 2 | refused, refused, 6773.6496, 14358.8004 | 1617.8873, 3286.0189, 6773.6496, 14358.8004 |
+| face 21 | -0.25, -0.5, -1, -2 | refused, refused, refused, 11657.5105 | 1575.4539, 3116.4171, 6096.2767, 11657.5105 |
+
+All valid, one solid. The two flats agree to 2e-6 of the volume (the
+blend is modelled twice). Each result is also read by points: 1500 at
+random within the thickness of the part's skin and more than 1.6 times the
+thickness from the removed flat, each inside the result exactly where it
+is outside the part (inside, for an inward one) and nearer than the
+thickness to it -- 11 of the 16 results read (`f15` and `f21` at 1 and 2
+either way, `f15` at 0.5 either way, `f21` at -0.5), not a point wrong.
+The rule near the flat is the tube's (sec 34), and is not read here.
+
+![#613's part, a flat of its roof removed](models/pictures/issue613_roof_flat.png)
+
+Each case three ways -- upstream, the fork before, the fork now -- as the
+other sections have them: upstream answers seven of the eight with an
+invalid solid and one (face 21, 0.5 outward) with the part itself.
+
+![issue613_flat_split_blend_in](models/pictures/issue613_flat_split_blend_in.png)
+![issue613_flat_whole_blend_out_half](models/pictures/issue613_flat_whole_blend_out_half.png)
+
+**What is left of the corpus' 168.** 126 refused and 8 throwing. Looked at and not mended:
+
+- *The cylinder below the cone (face 3).* The cone leans 1.5 deg. Outward
+  the cylinder, carried on upward, meets the cone's offset 38 above the
+  cone's foot -- above the part; inward it never does, and the floor is
+  cut loose from the rest. There is no answer of this kind.
+- *The blends up to the ridge (faces 17 and 20), at 1.* They are 1.81
+  wide: the rims from their two sides, each 1 wide, would overlap. At 0.5
+  face 17 is made and face 20 is not: the offsets of the blend below and
+  of a corner blend (faces 12 and 14) come out with an edge each along
+  their common one, the same curve twice.
+- *The blends made as B-splines (faces 2, 4 to 6, 8 to 14).* A tube's edge
+  on the removed face is found by a circle round each point of the edge
+  meeting the face's surface. The surface of such a blend ends where the
+  face does, and at a corner that is not square the circle passes 0.02 to
+  0.05 outside it: no edge, no tube (`TangentTubeNoEdge`). Face 12's long
+  tubes are made and its two end tubes are not.
+- *The cone (face 1)*: 22 tubes; not looked into.
+- *The Intersection join*: nothing was made but the top, the bottom and
+  (outward) one flat before, and nothing more is now.
+
+**What it moved.** Seven lines of the corpus, from refused to made
+(`corpus/baseline.txt`). Nothing else: not a case line of the suites, not a
+line of the sweep.
+
+**Validation** (`575b0f6c53` against `7b79d5b639`, on Linux): thickness
+PASS=691 (683 + these 8) at level 0 and at level 3 frozen, every other case
+line the same; boolean 103, draft 105, fillet 827 + 1 XFAIL, the same line
+for line; the corpus as its baseline but for the seven lines made here;
+sweep 928 of 928, the same line for line; FreeCAD's Python suite 4388 OK
+(`b4ff77d741`). Not run: macOS, thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

@@ -80,6 +80,7 @@ STAGES = {
     "s62": ("d82a097786", "62"),
     "s63": ("5110153daf", "63"),
     "s66": ("097cdf483c", "66"),
+    "s70": ("7b79d5b639", "70"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -699,6 +700,16 @@ CASES = {
     "issue363_cut_remade_wall_out1": ("s66", "cut363remade", 4, 1, False, 0, 3678.0197),
     "issue363_cut_remade_wall_out1_join": ("s66", "cut363remade", 4, 1, False, 2, 3704.4064),
     "groove_tool_turned90_wall_out": ("s66", "grooveturned90", 3, 1, False, 0, 3795.0668),
+    # #613's part, a flat of its roof removed (sec 70): face 15, its blend to
+    # the cone in two halves, and face 21, its mirror image, the blend in one.
+    "issue613_flat_split_blend_out": ("s70", "issue613", 15, 1, False, 0, 6773.6378),
+    "issue613_flat_split_blend_in": ("s70", "issue613", 15, -1, False, 0, 6096.2692),
+    "issue613_flat_split_blend_out_half": ("s70", "issue613", 15, 0.5, False, 0, 3286.0136),
+    "issue613_flat_split_blend_in_half": ("s70", "issue613", 15, -0.5, False, 0, 3116.4126),
+    "issue613_flat_whole_blend_out": ("s70", "issue613", 21, 1, False, 0, 6773.6496),
+    "issue613_flat_whole_blend_in": ("s70", "issue613", 21, -1, False, 0, 6096.2767),
+    "issue613_flat_whole_blend_out_half": ("s70", "issue613", 21, 0.5, False, 0, 3286.0189),
+    "issue613_flat_whole_blend_in_half": ("s70", "issue613", 21, -0.5, False, 0, 3116.4171),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

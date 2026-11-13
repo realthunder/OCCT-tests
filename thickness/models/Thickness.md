@@ -3701,6 +3701,61 @@ XFAIL, boolean 70, draft 104 + 1 FAIL (FreeCAD's SheetMetal branch, before
 its `f2d9db811e`); FreeCAD's Python suite 5302 OK, and its
 `ThickSolidHistory` check, which fails without this.
 
+### Sec 70: #613's part, a flat of its roof removed
+
+**A removed face all of whose edges are tangent, two of them going on
+from each other** (`BRepOffset_MakeOffset.cxx` `ShareTubeEnds`,
+`BRepAlgo_Loop.cxx` `DartAngle`).
+
+- The two flats of #613's roof are mirror images but for the blend below
+  them: one face under face 21, two halves under face 15. Every edge of a
+  flat is tangent to its neighbour, so the wall is closed by a tube round
+  each edge (sec 34). Face 15 was refused at any thickness, either way;
+  face 21 was made at 1 and 2 outward and 2 inward and refused at 0.25,
+  0.5 and inward at 1.
+- Face 15: the two tubes along the halves of the blend end in the same
+  quarter circle where the halves meet, and each had its own. Tangent to
+  each other, nothing cut one by the other; the shell stayed open along
+  the two arcs, every face of the offset hung from there and was dropped,
+  and the rim alone was left. The second tube now takes the first one's
+  arc, and its edge on the flat the arc's vertex.
+- Face 21: its two tubes touch at each corner, and their section, on the
+  spline tube, runs straight to its end while its derivative at the end
+  parameter itself points 48 deg off, across the tube's own edge. The
+  loop sorts the edges at a vertex by that derivative, found one of the
+  tube's three regions, and the strip was not made. The direction is the
+  chord's to a point a thousandth of the way along where the two differ
+  by more than 0.05 rad.
+
+| Removed | 0.25 | 0.5 | 1 | 2 | -0.25 | -0.5 | -1 | -2 |
+|---------|------|-----|---|---|-------|------|----|----|
+| face 15 | 1617.8851 | 3286.0136 | 6773.6378 | 14358.7727 | 1575.4511 | 3116.4126 | 6096.2692 | 11657.5021 |
+| face 21 | 1617.8873 | 3286.0189 | 6773.6496 | 14358.8004 | 1575.4539 | 3116.4171 | 6096.2767 | 11657.5105 |
+
+All valid, one solid, the two flats to 2e-6 of each other; 11 of the 16
+read by 1500 points at random away from the removed flat, none wrong.
+Of the corpus' 168 runs on this part 126 are still refused and 8 throw
+(the README has what was looked at).
+Upstream answers seven of the eight pictured with an invalid solid and
+one (face 21, 0.5 outward) with the part itself, unhollowed.
+
+Regression (`575b0f6c53`, Linux): thickness PASS=691 (683 + these 8) at
+level 0 and at level 3 frozen, every other case line the same; boolean 103,
+draft 105, fillet 827 + 1 XFAIL, the same line for line; the corpus as its
+baseline but for the seven lines made here; sweep 928 of 928, the same line
+for line; FreeCAD's Python suite 4388 OK (`b4ff77d741`). Not run: macOS,
+thickness levels 1 and 2.
+
+![issue613_roof_flat](pictures/issue613_roof_flat.png)
+![issue613_flat_split_blend_out](pictures/issue613_flat_split_blend_out.png)
+![issue613_flat_split_blend_in](pictures/issue613_flat_split_blend_in.png)
+![issue613_flat_split_blend_out_half](pictures/issue613_flat_split_blend_out_half.png)
+![issue613_flat_split_blend_in_half](pictures/issue613_flat_split_blend_in_half.png)
+![issue613_flat_whole_blend_out](pictures/issue613_flat_whole_blend_out.png)
+![issue613_flat_whole_blend_in](pictures/issue613_flat_whole_blend_in.png)
+![issue613_flat_whole_blend_out_half](pictures/issue613_flat_whole_blend_out_half.png)
+![issue613_flat_whole_blend_in_half](pictures/issue613_flat_whole_blend_in_half.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
