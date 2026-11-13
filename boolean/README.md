@@ -863,6 +863,18 @@ nothing at all), but towards +x with the profile cut in two by FreeCAD's
 default face maker the fuse is invalid, a vertex of 11.5, before this as
 after -- the walking lines there are several on top of each other.
 
+**2026-11-13**: that cut in two was FreeCAD's fault and is gone (FreeCAD
+`fa38ec098d`). The default face maker since 2026-10-02 asks where a curve
+meets itself and took the foot of every normal from each such point to the
+curve; a closed curve meets itself at its seam, so every closed B-spline
+was cut once more, opposite the seam, and the pad had a second side face
+and a second seam down it -- in the plane of symmetry here. Only the feet
+on the curve are taken now. With the profile whole the pad on the
+symmetric torus is valid and one solid both ways: 126817.94 towards +x
+for 126823.24 (a vertex of 0.028, the 5.3 short not looked into yet) and
+109149.02 towards -x for 109149.01. The kernel on the profile cut in two
+is as it was, invalid; that is left open, with no model that needs it.
+
 **What it moved.** Nothing in the suites, the thickness corpus (1072 runs)
 or the thickness sweep, not a line; of the 29 issue models made again,
 #617's two Pads and nothing else.

@@ -174,7 +174,7 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-12, OCCT `3e81901253`, FreeCAD `230d1778eb`)
+## Where the models stand (2026-11-13, OCCT `3e81901253`, FreeCAD `fa38ec098d`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
@@ -245,6 +245,16 @@ What went since the table of 2026-11-11, none of it the kernel's:
   line/face intersector, whose polyhedron of the flank allowed too little
   for its border (occt `3e81901253`; `../boolean/README.md`, "#474: a point
   outside a helix said inside it"). None of the models changes by it.
+- **A closed spline profile was cut in two** (FreeCAD's, fixed
+  2026-11-13, FreeCAD `fa38ec098d`): the default face maker since
+  2026-10-02 cut every closed B-spline once more, opposite its seam, so a
+  pad on one had a side face and a seam too many. Seen on the pad of
+  #617's kind on a torus cut through its plane of symmetry, where that
+  seam made the fuse invalid (`../boolean/README.md`, "#617: a pad standing
+  on a torus along its own cut", the note of 2026-11-13). None of the 29
+  models changes by it; a feature made since 2026-10-02 on a closed
+  B-spline has one side face fewer when it is made again (the owner's
+  word: as it is, no version).
 - **#280's Pocket** recomputed with no error and removed nothing
   (98639.0377, the volume of `Mirrored001` under it; the file has
   98638.9078, the report's own failure). The pocket's tool and the part,
