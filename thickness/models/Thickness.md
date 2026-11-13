@@ -3756,6 +3756,34 @@ thickness levels 1 and 2.
 ![issue613_flat_whole_blend_out_half](pictures/issue613_flat_whole_blend_out_half.png)
 ![issue613_flat_whole_blend_in_half](pictures/issue613_flat_whole_blend_in_half.png)
 
+### Sec 71: #613's blend up to the ridge, on the other side
+
+**Two faces left with an edge each along one curve**
+(`BRepOffset_MakeLoops.cxx` `BuildFaces`).
+
+- The blends up to #613's ridge, faces 17 and 20, are mirror images. At
+  0.5 either way face 17 was made and face 20 refused.
+- The offsets of the blend below and of a corner blend share an edge. The
+  loop of the corner blend's offset renews a vertex at its end and with it
+  the edge, a copy with the new vertex; the other face takes the copy if
+  it is rebuilt after, and here it had been rebuilt before. With the
+  vertices put back at the end the two faces held an edge each, the same
+  curve between the same vertices, and the shell was open there.
+- Which happens is the order the faces come in. A face still holding such
+  an edge is now given its copy.
+
+Now 3629.8323 and 3453.5477, as face 17.
+
+Regression (`bdeae6c4e2`, Linux): thickness PASS=695 (691 + these 4) at
+level 0 and at level 3 frozen, every other case line the same; boolean 103,
+draft 105, fillet 829 + 1 XFAIL, the same line for line; the corpus as its
+baseline but for the two lines made here; sweep 928 of 928, the same line
+for line; FreeCAD's Python suite 4388 OK (`b4ff77d741`). Not run: macOS,
+thickness levels 1 and 2.
+
+![issue613_ridge_blend_left_out_half](pictures/issue613_ridge_blend_left_out_half.png)
+![issue613_ridge_blend_left_in_half](pictures/issue613_ridge_blend_left_in_half.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

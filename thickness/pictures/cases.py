@@ -81,6 +81,7 @@ STAGES = {
     "s63": ("5110153daf", "63"),
     "s66": ("097cdf483c", "66"),
     "s70": ("7b79d5b639", "70"),
+    "s71": ("39599b9791", "71"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -710,6 +711,10 @@ CASES = {
     "issue613_flat_whole_blend_in": ("s70", "issue613", 21, -1, False, 0, 6096.2767),
     "issue613_flat_whole_blend_out_half": ("s70", "issue613", 21, 0.5, False, 0, 3286.0189),
     "issue613_flat_whole_blend_in_half": ("s70", "issue613", 21, -0.5, False, 0, 3116.4171),
+    # #613's part, the blend up to the ridge on the left removed (sec 71):
+    # face 20, the mirror image of face 17, which was made.
+    "issue613_ridge_blend_left_out_half": ("s71", "issue613", 20, 0.5, False, 0, 3629.8323),
+    "issue613_ridge_blend_left_in_half": ("s71", "issue613", 20, -0.5, False, 0, 3453.5477),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

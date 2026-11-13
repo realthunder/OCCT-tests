@@ -3144,7 +3144,7 @@ invalid solid and one (face 21, 0.5 outward) with the part itself.
   wide: the rims from their two sides, each 1 wide, would overlap. At 0.5
   face 17 is made and face 20 is not: the offsets of the blend below and
   of a corner blend (faces 12 and 14) come out with an edge each along
-  their common one, the same curve twice.
+  their common one, the same curve twice. (Mended: sec 71.)
 - *The blends made as B-splines (faces 2, 4 to 6, 8 to 14).* A tube's edge
   on the removed face is found by a circle round each point of the edge
   meeting the face's surface. The surface of such a blend ends where the
@@ -3164,6 +3164,60 @@ PASS=691 (683 + these 8) at level 0 and at level 3 frozen, every other case
 line the same; boolean 103, draft 105, fillet 827 + 1 XFAIL, the same line
 for line; the corpus as its baseline but for the seven lines made here;
 sweep 928 of 928, the same line for line; FreeCAD's Python suite 4388 OK
+(`b4ff77d741`). Not run: macOS, thickness levels 1 and 2.
+
+## #613: the blend up to the ridge, on the other side (`bdeae6c4e2`, 2026-11-14, sec 71)
+
+**Where it was met.** Sec 70's list of what is left: the two blends up to
+the ridge, faces 17 and 20, are mirror images, a quarter cylinder 1.81
+wide. At 1 neither can be made (the rims from its two sides, each 1 wide,
+would overlap). At 0.5, either way, face 17 was made and face 20 refused.
+
+**What was broken.** With face 20 removed the offsets of the blend below
+it (face 12) and of a corner blend (face 14) came out with an edge each
+along their common one: the same curve, the same range, the same two
+vertices, twice. The shell was open there, the two faces hung, and
+everything went with them (`OffsetRimOnly`).
+
+`BRepOffset_MakeLoops::BuildFaces` rebuilds a face when one of its edges
+has an image, going over the faces until none is rebuilt. The loop of
+the corner blend's offset renews the vertex at one end of that common
+edge and with it the edge -- a copy, the same curve and range, with the
+new vertex -- and the copy is the edge's image. The blend's offset, on
+the other side of the edge, takes the copy if it is rebuilt after that.
+Here it had been rebuilt before, with the common edge as it was, and a
+face once rebuilt is not gone over again. At the end the renewed vertices are put back for the old ones
+(`myVerVerMap`), and the copy then differs from the edge in nothing but
+being another edge. With face 17 removed the faces come in the other
+order and the blend's offset takes the copy.
+
+**The fix.** After the vertices are put back, a face still holding an
+edge whose image is one edge on the same curve, over the same range,
+between the same vertices is given that edge.
+
+| Case | What |
+|------|------|
+| `issue613_ridge_blend_left_out_half`, `_in_half` | face 20 removed, 0.5 and -0.5, Arc: 3629.8323 and 3453.5477 (refused before) |
+| `issue613_ridge_blend_right_out_half`, `_in_half` | face 17, the mirror image: the same two volumes, made before too |
+
+Read by points as in sec 70 (1500 at random, away from the removed
+face): both of face 20's, not a point wrong. Upstream throws on the one
+outward and answers the one inward with an invalid solid.
+
+![issue613_ridge_blend_left_out_half](models/pictures/issue613_ridge_blend_left_out_half.png)
+![issue613_ridge_blend_left_in_half](models/pictures/issue613_ridge_blend_left_in_half.png)
+
+Of the corpus' 168 runs on this part 124 are refused now and 8 throw.
+
+**What it moved.** Two lines of the corpus, from refused to made
+(`corpus/baseline.txt`). Nothing else: not a case line of the suites, not a
+line of the sweep.
+
+**Validation** (`bdeae6c4e2` against `39599b9791`, on Linux): thickness
+PASS=695 (691 + these 4) at level 0 and at level 3 frozen, every other case
+line the same; boolean 103, draft 105, fillet 829 + 1 XFAIL, the same line
+for line; the corpus as its baseline but for the two lines made here; sweep
+928 of 928, the same line for line; FreeCAD's Python suite 4388 OK
 (`b4ff77d741`). Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)

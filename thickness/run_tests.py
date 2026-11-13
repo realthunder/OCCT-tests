@@ -665,6 +665,18 @@ for tag, face in (("split_blend", 15), ("whole_blend", 21)):
                              ("in_half", -0.5, (3116.4126, 3116.4171))):
         thickness_case("issue613_flat_%s_%s" % (tag, way), issue613, [face], value, "pass",
                        vols[0 if face == 15 else 1], loose_ok=0.03 * abs(value))
+# The same part, a blend up to the ridge removed, 0.5 either way: faces 17
+# and 20, mirror images, a quarter cylinder 1.81 wide (at 1 the rims from
+# its two sides would overlap, and it is refused). Face 17 was made and
+# face 20 refused: the offsets of the blend below and of a corner blend
+# share an edge that the loop of one renews, its end vertex renewed, and
+# the other, rebuilt before, kept as it was -- an edge each along one curve
+# once the vertices were put back, and the shell open there. On face 17's
+# side the faces come in the other order (README.md, sec 71).
+for tag, face in (("right", 17), ("left", 20)):
+    for way, value, vol in (("out_half", 0.5, 3629.8323), ("in_half", -0.5, 3453.5477)):
+        thickness_case("issue613_ridge_blend_%s_%s" % (tag, way), issue613, [face], value, "pass",
+                       vol, loose_ok=0.03 * abs(value))
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)
