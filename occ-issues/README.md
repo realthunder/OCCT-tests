@@ -266,16 +266,18 @@ rest none of it the kernel's):
   torus (4.6 mm3 short before, a vertex of 0.0135). None of the 29 models
   changes.
 - **The patterns, by points at random** (2026-11-13): the reading that
-  found #617's `_simple` Pad left patterns out. Of the 26 in the models, 23
+  found #617's `_simple` Pad left patterns out. Of the 26 in the models, 24
   answer right: 1500 points in the pattern's box, each inside the result
   where it is inside the support with every copy but the first of each
   original's add and sub shapes fused in and cut out, in the order the
   originals have in the body (a pattern or a dress-up among the originals
   brings both kinds, packed in its `AddSubShape`). Not read: #360's
-  `Mirrored004` (a `TransformOffset`), and #474's `Mirrored001` and #580's
-  `MultiTransform`, which are not made again, the feature under each being
-  in error. Nothing found. The two readings are `audit/features.py` and
-  `audit/patterns.py`.
+  `Mirrored004` (a `TransformOffset`) and #474's `Mirrored001`, which is
+  not made again, the fillet under it being in error. Nothing found. The
+  two readings are `audit/features.py` and `audit/patterns.py`; at OCCT
+  `17ddf3b4a8` and FreeCAD `b4ff77d741` the first reads 139 features and
+  the second the 24, #580's mirror among them, and neither finds a point
+  out of place.
 - **#280's Pocket** recomputed with no error and removed nothing
   (98639.0377, the volume of `Mirrored001` under it; the file has
   98638.9078, the report's own failure). The pocket's tool and the part,
