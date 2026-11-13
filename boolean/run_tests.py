@@ -11,6 +11,7 @@
 import math
 import os
 import sys
+import time
 import traceback
 
 import FreeCAD as App
@@ -410,6 +411,66 @@ def issue617_torus_pad_runs(torus, pad, kind):
 
 
 guarded(issue617_torus_pad)
+
+
+# The same pad on a torus cut through a plane of symmetry (R 30, r 12 about
+# y, the plane x = 10; both curves of the cut, each its own mirror image in
+# y = 0): towards +x ("forward"), towards -x ("back"), and towards +x with
+# each curve cut in two near y = 0 ("split"), as FreeCAD's face maker had
+# them until 2026-11-13. Several walking lines of one wall go by one tangent
+# point: forward gave one solid with a vertex of 0.028 and the fuse 11.4
+# short, split an invalid fuse with a vertex of 11 and half the common, and
+# back was right at more than 100 s a boolean. The volumes wanted are those
+# of the prism moved 0.01 along x either way, halved; the solids are counted
+# (what is left of the torus beyond the plane touches the rest along the
+# profile only), no vertex may be looser than the profile says (a section
+# curve of "split" is given as 2.2e-4), no edge has a face missing, and none
+# takes a minute (README.md, "#617: the same line more than once past a
+# tangent point").
+#
+# And the pad on a torus about a tilted axis, on both curves of its cut by
+# x = 0 (mirror images of each other only): towards +x ("tilt") and towards
+# -x ("tiltback"), where two lines of one wall go by one tangent point, one of
+# them given as 1.1e-3 and swinging 0.018 out of its wall past the point --
+# valid, a vertex of 0.0135, the fuse 4.6 short.
+def issue617_symtorus_pad():
+    sym = Part.read(os.path.join(HERE, "models", "issue617_symtorus.brep"))
+    tilted = Part.read(os.path.join(HERE, "models", "issue617_tilttorus.brep"))
+    forward = (("cut", 68644.34, 2), ("common", 16629.04, 2), ("fuse", 126823.24, 1))
+    back = (("cut", 50970.12, 4), ("common", 34303.27, 2), ("fuse", 109149.01, 1))
+    tilt = (("cut", 46379.70, 2), ("common", 32890.45, 2), ("fuse", 108216.35, 1))
+    tiltback = (("cut", 63229.37, 2), ("common", 16040.78, 2), ("fuse", 125066.03, 1))
+    for torus, kind, model, runs, tolmax in (
+            (sym, "forward", "issue617_symtorus_pad.brep", forward, 1e-4),
+            (sym, "back", "issue617_symtorus_pad_back.brep", back, 1e-4),
+            (sym, "split", "issue617_symtorus_pad_split.brep", forward, 3e-4),
+            (tilted, "tilt", "issue617_tilttorus_pad.brep", tilt, 1e-4),
+            (tilted, "tiltback", "issue617_tilttorus_pad_back.brep", tiltback, 1e-3)):
+        pad = Part.read(os.path.join(HERE, "models", model))
+        for name, want, nsolids in runs:
+            start = time.time()
+            res = getattr(torus, name)(pad)
+            took = time.time() - start
+            solids = len(res.Solids)
+            vol = res.Volume if solids else 0.0
+            tol = max(v.Tolerance for v in res.Vertexes) if solids else 0.0
+            loose = 0
+            for e in res.Edges:
+                faces = res.ancestorsOfType(e, Part.Face)
+                if (not e.Degenerated and len(faces) % 2
+                        and not (len(faces) == 1 and e.isSeam(faces[0]))):
+                    loose += 1
+            ok = (res.isValid() and solids == nsolids and abs(vol - want) <= 1e-5 * want
+                  and tol <= tolmax and loose == 0 and took < 60.0)
+            report("issue617_symtorus_pad_%s_%s" % (kind, name), ok,
+                   "%s, %d solid(s) (want %d), volume %.4f (want %.2f), largest vertex "
+                   "tolerance %.2g (want <= %.0e), %d edge(s) with a face missing, %.1f s "
+                   "(want < 60)"
+                   % ("valid" if res.isValid() else "invalid", solids, nsolids, vol, want,
+                      tol, tolmax, loose, took))
+
+
+guarded(issue617_symtorus_pad)
 
 
 # #617's Pad itself: the revolution fused with the two prisms padded from its

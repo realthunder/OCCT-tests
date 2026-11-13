@@ -107,6 +107,10 @@ fix 617torus 066e82ba7d src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6
 fix 474helix 3e81901253 \
     src/ModelingAlgorithms/TKGeomAlgo/IntCurveSurface/IntCurveSurface_ThePolyhedronOfHInter.cxx \
     issue474_helix_classify $HERE/../models/issue474_helix.brep --write
+# #617: the pad on a torus cut through a plane of symmetry, its curves cut in two
+fix 617sym dec6b59a04 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
+    issue617_symtorus_pad $HERE/../models/issue617_symtorus.brep \
+    $HERE/../models/issue617_symtorus_pad_split.brep split --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

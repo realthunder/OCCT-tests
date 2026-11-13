@@ -644,6 +644,45 @@ for stage, title in (("before", "before"), ("after", "after")):
           colors={str(k): ORANGE for k in range(nfaces, len(shape.Faces))}, bad=said != 0)
 pictures.append(pic)
 
+# #617: the pad on a torus cut through a plane of symmetry, each curve of its
+# profile cut in two -- the input, and the common before and after
+# (issue617_symtorus_pad.cpp --write).
+def symtorus_line(stage):
+    for line in open(os.path.join(W, "617sym", stage + ".txt")):
+        if line.startswith("common:"):
+            w = line.split(":", 1)[1].split(",")
+            return w[0].strip(), int(w[1].split()[0]), float(w[3].split()[1])
+
+
+pic = dict(name="issue617_symtorus_pad",
+           title="#617: the same line more than once past a tangent point",
+           caption="BRepAlgoAPI_Common of a torus with a prism standing on the torus' own cut "
+                   "through a plane of symmetry; the right volume is 16629.04, in two solids. "
+                   "Each wall of the prism is tangent to the torus at a point of the profile, "
+                   "and several walking lines of their section go by that point, each lost "
+                   "its own way.",
+           panels=[])
+storus = Part.read(os.path.join(MODELS, "issue617_symtorus.brep"))
+spad = Part.read(os.path.join(MODELS, "issue617_symtorus_pad_split.brep"))
+both = Part.makeCompound([storus, spad])
+EYESYM = [1.0, 0.7, 0.45]
+CSYM = [20, 0, 0]
+i = len(jobs)
+out = os.path.join(W, "panel%d.brep" % i)
+both.exportBrep(out)
+png = os.path.join(W, "panel%d.png" % i)
+jobs.append(dict(brep=out, png=png, eye=EYESYM, center=CSYM, height=120,
+                 facecolors={str(k): ORANGE for k in range(len(storus.Faces), len(both.Faces))}))
+pic["panels"].append(dict(png=png, title="the input", note="the torus, 85273.38, and the "
+                          "prism (orange), 58178.90", bad=False))
+for stage, title in (("before", "the common, before"), ("after", "the common, after")):
+    valid, solids, vol = symtorus_line(stage)
+    com = Part.read(os.path.join(W, "617sym", stage, "common.brep"))
+    note = "%s, %d solid%s, %.2f" % (valid, solids, "" if solids == 1 else "s", vol)
+    panel(pic, com, title, note, EYESYM, CSYM, 120,
+          bad=not (valid == "valid" and solids == 2 and abs(vol - 16629.04) <= 0.17))
+pictures.append(pic)
+
 json.dump(dict(size=[420, 420], panels=jobs), open(os.path.join(W, "jobs.json"), "w"))
 json.dump(pictures, open(os.path.join(W, "pictures.json"), "w"))
 emit("DONE")

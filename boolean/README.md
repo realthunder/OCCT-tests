@@ -873,7 +873,8 @@ on the curve are taken now. With the profile whole the pad on the
 symmetric torus is valid and one solid both ways: 126817.94 towards +x
 for 126823.24 (a vertex of 0.028, the 5.3 short not looked into yet) and
 109149.02 towards -x for 109149.01. The kernel on the profile cut in two
-is as it was, invalid; that is left open, with no model that needs it.
+was as it had been, invalid; that and the 5.3 are the section "#617: the
+same line more than once past a tangent point" below (`dec6b59a04`).
 
 **What it moved.** Nothing in the suites, the thickness corpus (1072 runs)
 or the thickness sweep, not a line; of the 29 issue models made again,
@@ -951,3 +952,147 @@ fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928. FreeCAD (`230d1778eb`):
 the Python suite 4380 OK. Not run: macOS,
 thickness levels 1 and 2.
+
+## #617: the same line more than once past a tangent point (`dec6b59a04`, 2026-11-13)
+
+**Where it was met.** What "#617: a pad standing on a torus along its own
+cut" left: the same pad on a torus cut through a plane of symmetry
+(`models/issue617_symtorus.brep`: R 30, r 12 about y, cut by x = 10 in two
+closed curves, each its own mirror image in y = 0; the profile is the two as
+a sketch keeps them, 6e-5 off the torus and saying 8.1e-5). Three prisms on
+it:
+
+- towards +x (`issue617_symtorus_pad.brep`): valid, one solid, and wrong --
+  a vertex of 0.028, the fuse 126811.87 for 126823.24, the cut 5.9 short and
+  the common 1.2;
+- towards +x with each curve cut in two at (10, -0.0053, +-14.9666), as
+  FreeCAD's face maker had them until 2026-11-13
+  (`issue617_symtorus_pad_split.brep`): the fuse and the cut invalid, a
+  vertex of 11, the common one solid of the two, 8311.26 for 16629.04;
+- towards -x (`issue617_symtorus_pad_back.brep`): right, at more than 100 s
+  a boolean.
+
+And the pad of FreeCAD's own test (`PartDesignTests.TestIntersectionProfile`)
+on both curves of a torus about a tilted axis (`issue617_tilttorus.brep`:
+the circle of radius 12 at (39, 12, 0) about the line from (15, 40, 0) to
+(9, 0, 0), cut by x = 0 in two curves that are each other's mirror image
+only): towards +x (`issue617_tilttorus_pad.brep`) valid with a vertex of
+0.0097 and the fuse 1.05 over; towards -x (`issue617_tilttorus_pad_back.brep`)
+valid with a vertex of 0.0135 and the fuse 4.6 short, 125061.40 for
+125066.03.
+
+**What was broken.** Each wall is tangent to the torus at (10, +-12,
++-28.2843) on the profile, and `bridgeToVertex()` (the section above) cuts a
+walking line that loses its way there and joins it to the point by a curve
+of its own. It took a line one side of which is lost near the point. Here:
+
+- three lines of one wall go by one point. One stops 0.016 short of it and
+  was cut and joined. The other two come round the point 0.022 off and run
+  on along the profile for some 25, to stop on it: no side of them
+  is lost near the point, so they took the point as it was, which grew to
+  0.028 to reach them and swallowed the first line's curve;
+- cutting each of them at its own point and joining each is no better (a
+  first attempt: the fuse 89293.76). Within 0.12 of the point the three are
+  up to 2.4e-3 apart -- the faces are within 8e-5 of each other all over
+  that neighbourhood, and each line is right to that -- so the cut lines and
+  their curves cross each other and close slivers;
+- with the curves cut in two, a line that runs along the profile to the end
+  of its wall goes 0.013 past it (the intersector widens a face's domain),
+  with the wall's corner vertex put on it: not a side with nothing on it;
+- and one line comes by the point 0.0057 off, runs on beside the profile for
+  0.44, turns round, comes by the point again 0.017 off and leaves on the
+  other branch. Its nearest point is the first, and what was kept from there
+  had the hook in it (the turn is looked for within 64 times the nearest,
+  0.37);
+- on the tilted torus, towards -x, two lines of one wall go by one point,
+  and one of them (given as 1.1e-3 by the intersector) swings 0.018 out of
+  its wall past the point and comes back: not a side lost near the point
+  either. With the rest of this in and that left, the other line was cut
+  and joined and this one took the point grown: the same line twice between
+  the point and the cut, the fuse invalid (FreeCAD's test caught it);
+- towards -x on the symmetric torus nothing was wrong but the time:
+  `curveAlongEdges()` spreads
+  points evenly along a line by `GCPnts_UniformAbscissa`, which integrates
+  each span's length down to the curve's resolution, and one walking line's
+  is 5e-24.
+
+**The fix.** In `BOPAlgo_PaveFiller_6.cxx`:
+
+- a side of a line is lost also when it runs on beside the edges the faces
+  share however far: 64 points of it, each on such an edge as far as the
+  faces tell or off one of the faces. What is along a shared edge is that
+  edge's already; the vertices put on such a side go with it. A point off a
+  face counts for a side that ends near the point too;
+- the first line joined to a tangent point owns it. A later line going by
+  the same point is the same line once more: it is cut at the first of its
+  points from which on it lies on the owner (within the two tolerances) and
+  ends there, on the owner, with no curve of its own. So is a line no side
+  of which is lost, if one side lies on the owner -- left as it is it would
+  be there twice -- and a line the point could not be joined to is tried
+  again once the point has an owner, before the point is grown to it;
+- the cut is not taken on a shared edge (within ten times the line's
+  tolerance of it): the curve from there to the point would run along that
+  edge. The tilted torus' line reaches the profile 0.0064 from the point,
+  and joined from there the fuse was right and the common one solid of two;
+- every foot of the point on the line from which the faces are together to
+  the point is tried, not the nearest only, and the one that leaves least
+  of the line is taken: a line that comes by twice is cut after the second
+  time;
+- the points evenly along a line are taken off the polygon through its
+  knots (`evenParameters()`), in the three places that asked
+  `GCPnts_UniformAbscissa`.
+
+**The cases.** `models/issue617_symtorus_pad.cpp` (a torus, a prism, and
+`forward`, `back`, `split`, `tilt` or `tiltback`) and `run_tests.py` (the
+fifteen): the cut, the common and the fuse of each prism -- valid, the
+solids counted (the cut towards +x is two: what is left of the torus beyond
+the plane touches the rest along the profile only), the volumes those of
+the prism moved 0.01 either way, halved, no vertex looser than 1e-4 (3e-4
+with the curves cut in two, where the intersector gives a line as 2.2e-4,
+and 1e-3 on the tilted torus towards -x, where it gives one as 5.4e-4), no
+edge with a face missing, none a minute long. As they are now, with the
+volumes wanted under them:
+
+| prism | cut | common | fuse | largest vertex | a boolean |
+|-------|-----|--------|------|----------------|-----------|
+| +x | 68644.3431 | 16629.0389 | 126823.2417 | 8.7e-5 | 4.7 s |
+| +x, cut in two | 68644.3591 | 16629.0277 | 126823.2613 | 2.2e-4 | 3.2 s |
+| | 68644.34 | 16629.04 | 126823.24 | | |
+| -x | 50970.1173 | 34303.2632 | 109149.0159 | 8.1e-5 | 4.6 s |
+| | 50970.12 | 34303.27 | 109149.01 | | |
+| tilted, +x | 46379.7023 | 32890.4480 | 108216.3439 | 7.9e-5 | 0.4 s |
+| | 46379.70 | 32890.45 | 108216.35 | | |
+| tilted, -x | 63229.3658 | 16040.7731 | 125066.0089 | 5.2e-4 | 0.4 s |
+| | 63229.37 | 16040.78 | 125066.03 | | |
+
+In FreeCAD the pad on the whole sketch, on one face and on the other, both
+ways: 126823.2417, 106048.3119, 106048.3119 (2e-9 off; they were 4e-5 off
+with a vertex of 0.028) and 109149.0159, 97211.1983, 97211.1995.
+
+![#617: the same line more than once past a tangent point: before and after](models/pictures/issue617_symtorus_pad.png)
+
+**What is left.** The prism with its curves cut in two, moved 0.001 to 0.05
+into the torus (-x): the common is nothing and the fuse 37 short, valid and
+with no error, before this as after (at 0.1 it is right, and the prism of
+whole curves is right at 0.01). The profile's edge then crosses the torus
+at a grazing angle near each tangent point and gets a vertex of 0.046
+there, at which five edges of the wall end, two pairs of them parallel and
+0.01 apart; two of the wall's four pieces come out with their wires wrong
+(areas of -0.31 and -0.26). The tilted torus' prisms moved 0.01 into it
+come out invalid, their volumes as wanted, before this as after. Not
+looked into further. And a boolean on the symmetric torus takes 3 to 5 s
+where one on the tilted takes 0.4: the intersector walks a line of 170000
+points there and approximates it.
+
+**What it moved.** The cut, the common and the fuse of the pad on #617's
+torus with its edge alone told (`issue617_torus_pad_edge`), by 2e-4 mm3
+(70020.5549, 7959.7902, 122396.0384). Nothing else in the suites, the
+thickness corpus (1072 runs) or the thickness sweep, not a line; of the 29
+issue models made again, nothing.
+
+**Validation** (against `48fd8933ab`, on Linux): boolean 94 (79 + these
+15), draft 105, thickness PASS=683 at level 0 and at level 3 frozen, the
+fillet suite PASS=824 XFAIL=1, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
+(`fa38ec098d`): the Python suite 4386 OK. Not run: macOS, thickness levels
+1 and 2.

@@ -174,7 +174,7 @@ The picture: `issue334_arc_reference_shapes.py` (FreeCADCmd; the two
 shapes), `issue334_arc_reference_picture.py` (FreeCAD under xvfb-run; the
 panels, invalid faces red), `issue334_arc_reference_compose.py`.
 
-## Where the models stand (2026-11-13, OCCT `3e81901253`, FreeCAD `fa38ec098d`)
+## Where the models stand (2026-11-13, OCCT `dec6b59a04`, FreeCAD `fa38ec098d`)
 
 Every model opened and every object made again (each touched, then one
 recompute), on Linux. 24 of the 29 recompute with no object in error and
@@ -255,6 +255,16 @@ What went since the table of 2026-11-11, none of it the kernel's:
   models changes by it; a feature made since 2026-10-02 on a closed
   B-spline has one side face fewer when it is made again (the owner's
   word: as it is, no version).
+- **The pad of #617's kind on a torus cut through a plane of symmetry**
+  (the kernel's, fixed 2026-11-13, occt `dec6b59a04`;
+  `../boolean/README.md`, "#617: the same line more than once past a
+  tangent point"): valid and one solid, and 5.3 mm3 short with a vertex of
+  0.028 mm; with the profile cut in two, invalid. Several walking lines of
+  one wall go by one tangent point. The pads are right to 2e-8 now, either
+  way and with the profile cut or whole, and so is the pad of FreeCAD's
+  `PartDesignTests.TestIntersectionProfile` on both curves of its tilted
+  torus (4.6 mm3 short before, a vertex of 0.0135). None of the 29 models
+  changes.
 - **#280's Pocket** recomputed with no error and removed nothing
   (98639.0377, the volume of `Mirrored001` under it; the file has
   98638.9078, the report's own failure). The pocket's tool and the part,
