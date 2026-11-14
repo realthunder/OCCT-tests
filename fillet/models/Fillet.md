@@ -2343,6 +2343,43 @@ made again at the latest level, so the chamfer is made at every level:
 
 ![issue273_rim_chamfer_0.3](pictures/issue273_rim_chamfer_0.3.png)
 
+### A stripe reset: two chamfers at a corner of four edges (`f378bf5c5e`, #631's block)
+
+A stripe marks each of its ends once a corner has put the end's curves in
+the data structure, and the structure's filling skips an end so marked.
+`ChFiDS_Stripe::Reset()` left the marks standing, and the builder computes
+again from `Reset()` in every fallback, into a new data structure each
+time: an end marked by the computation before was left out, the shell had
+a hole, and the result was refused. Here the corner's plate is looser
+than the opposite corner fallback takes a result for, the corner it tries
+gives none either, and the computation made again "as it was" was not.
+Upstream's files make this chamfer, and the fork had since `e9bd6ed68f`
+refused it, with 21 more of the vertex sweep. The marks are cleared now:
+41818.1309, upstream's to 0.01. The corner's patch has a side 0.049 long
+between vertices of tolerance 0.041, which BOP's check reports, as it
+does upstream's.
+
+The same took #273's rim chamfered with the top's plane as the first face
+below fix level 2 (the section above): the retry at the latest level
+started from the marks of the computation it retried.
+
+![issue631_corner_chamfer_e10_e20_1](pictures/issue631_corner_chamfer_e10_e20_1.png)
+
+### A chamfer's walk past its end (`94464f1dc6`, #273's cup)
+
+The same rim at 2. Past each end of a stripe that does not end on an
+obstacle the walk runs on, and where that comes back not done the stripe
+is made without it. A fillet's comes back not done here; a chamfer's
+surface that cannot be approximated is thrown instead ("Fail of
+approximation") and took the stripe with it: refused at 1 and at 2,
+upstream's too. The failure is caught where the walk is such an
+extension: 8475.5421 at 2, clean by BOP's check, what it takes one piece
+nowhere further than 2 from the rim. The patch at each foot of the handle
+stands up to 0.22 out of the input, as the patch of the chamfer at 0.8
+and of the fillets does, by less.
+
+![issue273_rim_chamfer_2](pictures/issue273_rim_chamfer_2.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

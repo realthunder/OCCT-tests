@@ -6316,17 +6316,14 @@ chamfer is made at every level. FreeCAD: `OCCTFilletFixLevelLatest` 2
 
 | Case | What |
 |------|------|
-| `issue273_rim_chamfer_0.3`, `_0.8` | the rim's chamfer: 8557.4895 and 8545.5138, valid, clean by BOP's check, the same told from either face (refused before) |
+| `issue273_rim_chamfer_0.3`, `_0.8` | the rim's chamfer: 8557.4895 and 8545.5138, valid, clean by BOP's check (refused before). The same told from the other face at level 2; below it only since `f378bf5c5e` (the next section) |
 | `issue273_rim_chamfer_0.3_level{0,1,2}` | the same at each level |
 | `issue474_coil_v5_e5_e6_e17_e20_r1_level{1,2}`, `issue474_coil_v9_e11_e12_e17_e25_r1_level{1,2}` | the fillets it moves: as they were at level 1, 1829.5115 and 1844.9557, and at level 2, 1829.7069 and 1845.1766 |
 
 `models/pictures/issue273_rim_chamfer_0.3.png`: upstream's 8.0.1 refuses it too.
 
-**What is left.** The same chamfer at 2: the walk past the end throws
-("Fail of approximation") where a fillet's only fails, and the stripe is
-lost for it. `issue273_Fillet001`'s E39 and E40, the pocket's edges at the
-handle's apex: a chamfer of 0.3 ends in `PerformOneCorner` on "Failed to
-get p-curve of edge", from either face, where the fillet is made.
+**What is left.** The same chamfer at 2, and `issue273_Fillet001`'s E39
+and E40: the next section.
 
 **Validation** (`7019fd0c47` against `a8461992ff`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
@@ -6339,6 +6336,100 @@ PASS=695 at level 0 and at level 3 frozen, every case line the same; the
 thickness corpus as its baseline; the thickness sweep 928 of 928; of the
 29 issue models made again, not a line. FreeCAD (`3fccfa01bf`): the Python
 suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## A stripe reset, and a chamfer's walk past its end (`f378bf5c5e`, `94464f1dc6`, 2026-11-14)
+
+**Where it was met.** The rim of the section above, told from the other
+face. A chamfer's faces are taken from the first of the edge's two; with
+the top's plane ahead of the wall the rim's chamfer was made at fix level
+2 and refused at levels 0 and 1 -- what the section above said ("the same
+told from either face") held at level 2 only.
+
+**What was broken: the reset.** A stripe marks each end whose curves a
+corner has already put in the data structure (`ChFiDS_Stripe::InDS`), and
+the filling of the structure skips an end so marked.
+`ChFiDS_Stripe::Reset()` -- "everything except Spine" -- left the marks
+standing. The builder computes again from `Reset()` in every fallback and
+at the retry at the latest fix level, each time into a new data structure:
+an end the computation before had marked was left out of the new one, and
+the result was a shell with a hole, refused.
+
+For the rim: below level 2 the computation with the plane first fails
+later than with the wall first, after the corner has marked the stripe,
+and the retry at the latest level made nothing.
+
+The same took 22 chamfers of the vertex sweep, on #631's block: two
+edges with no common face at a vertex of four edges, at 0.3 and at 1. The
+plate at such a corner is looser than the opposite corner fallback takes a
+result for (`ComputeOppositeCorners`, `e9bd6ed68f`), the corner it tries
+instead gives none either, and "the computation as it was", made again
+after it, was not as it was. Upstream's files (the pictures' column,
+`91be8c4c71`) make 20 of the 22.
+
+**The fix.** `Reset()` clears the marks (`f378bf5c5e`). Nothing made
+before changes by it, so it is no fix level.
+
+**What was broken: the walk.** At 2, and at 1, the same rim was refused
+from either face at every level. Past each end of a stripe that does not
+end on an obstacle the walk runs on (`PerformSetOfSurfOnElSpine`), and
+where that comes back not done the stripe is made without it. A fillet's
+does come back not done there. A chamfer's surface that cannot be
+approximated is thrown instead (`ChFi3d_ChBuilder::PerformSurf`, "Fail of
+approximation"), and took the stripe with it.
+
+**The fix.** The failure is caught where the walk is such an extension,
+and counts as the walk not done (`94464f1dc6`).
+
+| Case | What |
+|------|------|
+| `issue273_rim_chamfer_top_first_0.3_level{0,1,2}`, `_0.8_level{0,1,2}` | the rim's chamfer with the top's plane the first face: 8557.4895 and 8545.5138 at each level (refused at 0 and 1) |
+| `issue273_rim_chamfer_2`, `issue273_rim_chamfer_top_first_2` | the rim at 2, from either face: 8475.5421, valid, clean by BOP's check (refused) |
+| `issue631_corner_chamfer_e2_e5_1`, `_e5_e17_1`, `_e13_e17_1`, `_e2_e5_0.3` | two chamfers at a corner of four edges: 41865.5441, 41856.1911, 41874.9665, 41870.2100, clean by BOP's check (refused; upstream's the same to 0.01) |
+| `issue631_corner_chamfer_e10_e20_1`, `_e6_e15_0.3` | the same, 41818.1309 and 41865.3446, valid; not held to BOP's check (below) |
+
+**Checked by another measure.** The rim at 2: what the chamfer takes away
+is one piece of 84.1147, nowhere further than 2.0000 from the rim (a wedge
+of legs 2 swept over the rim's whole arc is 85.9320). The corner chamfers:
+the volume of each within 0.29 of the sum of its two edges chamfered alone
+at 1 and 0.008 at 0.3, the corner the two share; on `issue631_Fillet`
+what each takes or adds lies within 1.22 of its two edges at 1 and 0.37
+at 0.3 (on the other three shapes a chamfer runs on along its edge's
+tangent neighbours, and that was not measured).
+
+**What it does not do.** The corner patch at each foot of the handle
+stands out of the input: up to 0.22 at 2 (0.153 of volume in all), as the
+patch of the chamfer at 0.8 (0.009) and of the fillets (0.008 at 0.8)
+does. Ten of the 22 corner chamfers -- five pairs, both sizes -- have a
+corner patch with one side shorter than its vertices' tolerance (at 1:
+0.049 long, the vertices 0.041), which BOP's check reports as vertices
+that interfere; upstream's are the same. The rim together with the edge
+under the handle (E7) at 1 is made too, 8537.9688, and BOP's check reports
+its vertices as well.
+
+`models/pictures/issue631_corner_chamfer_e10_e20_1.png` (upstream's files
+make it) and `issue273_rim_chamfer_2.png` (upstream's refuse it).
+
+**What is left.** `issue273_Fillet001`'s E39 and E40, the pocket's rim in
+the handle's top, chamfered at 0.3: the land between the pocket's corner
+and the handle's rounded edge is 0.286 wide, the chamfer's line on the top
+runs off it onto the round, and the corner (`PerformOneCorner`) has the
+edge to carry on in the top and the line's end on the round: "Failed to
+get p-curve of edge". A chamfer of 0.2 is made. The fillet of 0.3 fails
+the same way and is made by the setback fallback
+(`ComputeSetbackFallback`), which is for fillets.
+
+**Validation** (`94464f1dc6` against `7019fd0c47`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered, at the level a plain call has, 0: the fillets not
+a status, not a volume (2666 and 9712 made); the chamfers the 26 above
+made that were refused -- the rim at 2, three lines of the rim at 1, and
+the 22 at #631's corners -- nothing else (2436 and 8812 made). The suite PASS=852
+XFAIL=1 at fix levels 0, 1 and 2: the 838, the same line for line at
+each, and the 14 above. Boolean 103, draft 105, thickness PASS=695 at
+level 0 and at level 3 frozen, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928; of the 29 issue
+models made again, not a line. FreeCAD (`3fccfa01bf`): the Python suite
+4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

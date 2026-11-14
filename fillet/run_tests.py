@@ -3346,6 +3346,57 @@ fillet_case("issue273_rim_chamfer_0.8", _rim273, 6, 0.8, "pass", 8545.5138, cham
 for _lvl in (0, 1, 2):
     fillet_case("issue273_rim_chamfer_0.3_level%d" % _lvl, _rim273, 6, 0.3, "pass", 8557.4895,
                 chamfer=True, vol_tol=1e-3, fix_level=_lvl)
+# The same with the top ahead of the wall among the solid's faces: a
+# chamfer's faces are told from the first of the edge's two, so the stripe's
+# are the other way round. Below level 2 it was still refused: the
+# computation at the level set fails later this way round, after the corner
+# has put the stripe's end in the data structure; the stripe kept the mark
+# of that through Reset() (ChFiDS_Stripe::InDS), and the computation at the
+# latest level left that end out for it -- a shell with a hole, refused.
+def faces_first(shape, edge_index, surface_type):
+    """The solid with the face of that surface type beside the edge first
+    among its faces, and the edge's index in it."""
+    edge = shape.Edges[edge_index - 1]
+    first = [f for f in shape.Faces if f.Surface.TypeId == surface_type
+             and any(e.isSame(edge) for e in f.Edges)]
+    rest = [f for f in shape.Faces if not any(f.isSame(g) for g in first)]
+    solid = Part.Solid(Part.Shell(first + rest))
+    return solid, [i for i, e in enumerate(solid.Edges) if e.isSame(edge)][0] + 1
+
+
+_rim273t, _rimt = faces_first(_rim273, 6, "Part::GeomPlane")
+for _lvl in (0, 1, 2):
+    fillet_case("issue273_rim_chamfer_top_first_0.3_level%d" % _lvl, _rim273t, _rimt, 0.3,
+                "pass", 8557.4895, chamfer=True, vol_tol=1e-3, fix_level=_lvl)
+    fillet_case("issue273_rim_chamfer_top_first_0.8_level%d" % _lvl, _rim273t, _rimt, 0.8,
+                "pass", 8545.5138, chamfer=True, vol_tol=1e-3, fix_level=_lvl)
+# At 2 the walk on past each end of the rim fails: a fillet's comes back
+# not done and the stripe is made without it, a chamfer's threw ("Fail of
+# approximation") and took the stripe with it. Made without, as the
+# fillet. What it takes away is one piece, inside the input but for the
+# corner patch at each foot of the handle (as at 0.3 and 0.8, and as the
+# fillet's), and nowhere further than 2 from the rim.
+fillet_case("issue273_rim_chamfer_2", _rim273, 6, 2, "pass", 8475.5421, chamfer=True,
+            vol_tol=1e-3, bop=True)
+fillet_case("issue273_rim_chamfer_top_first_2", _rim273t, _rimt, 2, "pass", 8475.5421,
+            chamfer=True, vol_tol=1e-3, bop=True)
+# Two chamfers at a vertex of four edges, on two of them that share no
+# face (#631's block; the vertex sweep's pairs). The plate at the corner is
+# looser than the opposite corner fallback takes a result for
+# (ComputeOppositeCorners), the corner it tries instead makes nothing, and
+# "the computation as it was" after it was not: it started with the
+# stripes' ends marked as in the data structure (above) and made a shell
+# with a hole -- 22 chamfers refused that upstream's files make, the fork's
+# since e9bd6ed68f. As upstream's now, to 0.01 of volume. No bop on the
+# last two: the corner's patch has a side shorter than its vertices'
+# tolerance (0.049 at 1, the vertices 0.041), which BOP's check reports --
+# upstream's too.
+_b631 = sweep_shape("issue631_Fillet")
+for _es, _d, _vol, _bop in (([2, 5], 1, 41865.5441, True), ([5, 17], 1, 41856.1911, True),
+                            ([13, 17], 1, 41874.9665, True), ([2, 5], 0.3, 41870.2100, True),
+                            ([10, 20], 1, 41818.1309, False), ([6, 15], 0.3, 41865.3446, False)):
+    fillet_case("issue631_corner_chamfer_%s_%g" % ("_".join("e%d" % e for e in _es), _d),
+                _b631, _es, _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=_bop)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")
