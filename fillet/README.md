@@ -6712,6 +6712,8 @@ vertex of four edges, which the corner of two is not let at (51 of them
 sound by these measures when it was, and 4, with a split between
 coplanar faces, not), those looser than a twentieth of the chamfer, and
 those the corner of several edges makes invalid or not at all.
+(39 of those at four edges are made since `3ee86acb22`: the next
+section.)
 
 **Validation** (`4c5359fcbc` against `13c9971e34`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
@@ -6724,6 +6726,60 @@ PASS=695 at level 0 and at level 3 frozen, every case line the same; the
 thickness corpus as its baseline; the thickness sweep 928 of 928; of the
 29 issue models made again, not a line. FreeCAD (`7e8a9fdad3`): the Python
 suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## Two chamfers at a vertex of four edges (`3ee86acb22`, 2026-11-15)
+
+**Where it was met.** What was left of the chamfer pairs: most at a
+vertex of four edges, where the corner of two, failing, was not let at
+the corner of several edges ("Two chamfers at a vertex", above).
+
+**What was tried.** Let through at four edges, 55 chamfers of the vertex
+sweep were made, and each was measured as before. Three were wrong, the
+same corner in two shapes: #962's block, its upright edge at the top
+with the edge along a split between coplanar pieces of the wall --
+vertices BOP's check reports, a cut that fails, one of them 1.01 of a
+cube of its size off its two edges alone. Those three are pairs with no
+face in common: the fourth edge, the split, lies *between* the two. Of
+the 16 pairs with no common face the other 13 are sound; all 39 with a
+common face are.
+
+**The fix.** At a vertex of four edges the corner of two is let at the
+corner of several edges where the two chamfered edges are on one face,
+the fourth edge beside them (`ChFi3d_ChBuilder::PerformTwoCorner`). No
+fix level: nothing made before moves, and the 39 are the same at level 0
+and at 3.
+
+| Case | What |
+|------|------|
+| `mini_arm_upright_and_foot_chamfer_e1_e6_0.3`, `_1` | the minimal arm on a block, the arm's upright edge with its foot, the fourth edge the split between their coplanar bottoms: 4602.4366, 4591.1408 (refused) |
+| `issue962_arm_foot_and_upright_chamfer_e25_e49_0.3`, `_1` | the same corner on #962: 11583.0350, 11572.0786 (refused) |
+
+`issue962_split_wall_chamfer_e2_e6_1` stays refused: no common face.
+`models/pictures/issue962_arm_foot_and_upright_chamfer_e25_e49_1.png`.
+
+**Checked by another measure.** All 39, each cut from the input and the
+input from it: within 0.46 of a cube of its size of its two edges
+chamfered alone; what it takes and adds within 1.42 sizes of its edges
+(the corner's far point, the two chamfers' lines crossed); no vertex
+looser than 0.011 of its size.
+
+**What is left.** 275 pairs of the vertex sweep refused as chamfers where
+each edge alone is chamfered: the 13 sound ones with no common face,
+which nothing told from the three; those looser than a twentieth of the
+chamfer; and those the corner of several edges makes invalid or not at
+all.
+
+**Validation** (`3ee86acb22` against `4c5359fcbc`, on Linux): the chamfer
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+at level 0 and at level 3 each against `4c5359fcbc` at that level: the 39
+chamfers at vertices made that were refused, nothing else (8966 made at
+vertices now). Fillets do not pass through the change. The suite PASS=891
+XFAIL=1 at fix levels 0, 1, 2 and 3: the 887, the same line for line at
+each, and the four above. Boolean 103, draft 105, thickness PASS=695 at
+level 0 and at level 3 frozen, every case line the same; the thickness
+corpus as its baseline; the thickness sweep 928 of 928; of the 29 issue
+models made again, not a line. FreeCAD (`7e8a9fdad3`): the Python suite
+4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

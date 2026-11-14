@@ -2439,6 +2439,22 @@ takes and adds within 1.000 of its edges.
 
 ![issue523_post_side_and_top_edge_chamfer_e12_e14_1](pictures/issue523_post_side_and_top_edge_chamfer_e12_e14_1.png)
 
+### Two chamfers at a vertex of four edges (`3ee86acb22`, #962's arm)
+
+The arm stands on a block, their bottoms coplanar and split where they
+meet. At the vertex under the arm's upright edge four edges meet: that
+edge, the arm's foot, the block's foot, and the split. Two chamfers
+there, on the upright edge and the arm's foot, were refused: the corner
+of two that their intersection cannot make was let at the corner of
+several edges only at a vertex of three. At four it is let there now
+where the two chamfered edges are on one face, the fourth edge beside
+them: 39 chamfers of the vertex sweep, this one 11572.0786 at 1. Not
+where the two have no face in common -- there the fourth edge can be a
+split between the two, and three such corners came out with vertices
+BOP's check reports.
+
+![issue962_arm_foot_and_upright_chamfer_e25_e49_1](pictures/issue962_arm_foot_and_upright_chamfer_e25_e49_1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

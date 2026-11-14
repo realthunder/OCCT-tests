@@ -112,6 +112,7 @@ STAGES = {
     "stwo": ("94464f1dc6", "ad184c02f7"),
     "slevel3": ("ad184c02f7", "fe5e57d291"),
     "scpoint": ("13c9971e34", "4c5359fcbc"),
+    "sfour": ("4c5359fcbc", "3ee86acb22"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1196,6 +1197,13 @@ CASES = {
         "slevel3", "p962", [((38.5, 10.2, 14), (38.5, 13.7, 14)),
                             ((38.5, 13.7, 14), (38.5, 17.1, 14))],
         0.3, 11584.0804, (38.5, 13.7, 14), (-1, 0.9, 0.8)),
+    # #962's arm on its block, the arm's foot with its upright edge, chamfered:
+    # a vertex of four edges, the fourth the split between the coplanar
+    # bottoms of arm and block, beside the two
+    "issue962_arm_foot_and_upright_chamfer_e25_e49_1": (
+        "sfour", "p962", [((17.3560383, -9.4249899, -9.75), (38.5, 10.2, -9.75)),
+                          ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))],
+        1.0, 11572.0786, (38.3, 10.0, -9.4), (0.4, -1, -0.8)),
     "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
                            1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
@@ -1682,6 +1690,7 @@ CHAMFER = {
     "issue631_corner_chamfer_e10_e20_1": (1.0,),
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (1.0,),
     "issue523_post_side_and_top_edge_chamfer_e12_e14_1": (1.0,),
+    "issue962_arm_foot_and_upright_chamfer_e25_e49_1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1748,6 +1757,8 @@ ZOOMLABEL = {
                                                             (110, 110, 110)),
     "issue523_post_side_and_top_edge_chamfer_e12_e14_1": ("the corner of the two chamfers",
                                                           (110, 110, 110)),
+    "issue962_arm_foot_and_upright_chamfer_e25_e49_1": ("the corner of the two chamfers, from "
+                                                        "below", (240, 240, 240)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1785,6 +1796,8 @@ EDGES = {
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
     "issue962_rail_in_line_e51_e52_r0.3": "two edges of the rail in one line, under a slope and "
                                           "under a wall",
+    "issue962_arm_foot_and_upright_chamfer_e25_e49_1": "the arm's foot on the block and the "
+                                                       "upright edge where the arm meets it",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
     "issue474_f003_coilfoot_v1_e6_e10_r1": "the coil's foot and the block's top edge beside it",
     "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "

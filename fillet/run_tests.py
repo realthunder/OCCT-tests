@@ -3518,6 +3518,20 @@ for _name, _shape, _es, _d, _vol in (
         ("issue962_arm_foot_and_slanted_side", _arm962c, [15, 45], 1, 11684.5709)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# Two chamfers at a vertex of four edges, the two chamfered edges on one
+# face: the corner of two is let at the corner of several edges there too.
+# The fourth edge is then beside the two -- #962's arm on its block, the
+# arm's upright edge with its foot, the fourth edge the split between the
+# coplanar bottoms of arm and block. Where the two have no face in common
+# it stays refused (issue962_split_wall_chamfer_e2_e6_1, above).
+_armblock = sweep_shape("mini_ab_r3")
+for _name, _shape, _es, _d, _vol in (
+        ("mini_arm_upright_and_foot", _armblock, [1, 6], 0.3, 4602.4366),
+        ("mini_arm_upright_and_foot", _armblock, [1, 6], 1, 4591.1408),
+        ("issue962_arm_foot_and_upright", _arm962, [25, 49], 0.3, 11583.0350),
+        ("issue962_arm_foot_and_upright", _arm962, [25, 49], 1, 11572.0786)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")
