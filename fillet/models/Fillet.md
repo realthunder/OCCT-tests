@@ -2455,6 +2455,22 @@ BOP's check reports.
 
 ![issue962_arm_foot_and_upright_chamfer_e25_e49_1](pictures/issue962_arm_foot_and_upright_chamfer_e25_e49_1.png)
 
+### A chamfer's corner set back (`3f5f5832d5`, #273's pocket)
+
+A rim of the pocket in the handle's top, chamfered at 0.3. Between the
+pocket's corner and the handle's rounded edge the top is 0.286 wide: the
+chamfer's line on the top runs off it onto the round, and the corner of
+the stripe fails there ("Failed to get p-curve of edge"). The fillet of
+0.3 fails the same way and was made already, by the fallback that makes
+it again with the corner set back and closed by one patch. A chamfer had
+no such fallback and was refused; it has now, from fix level 3:
+8534.7649, as deep as asked along the whole rim. 63 chamfers of the
+sweeps are made by it. It leaves alone a crease, a rim its setbacks
+would take whole, and a result with an edge its own vertices cover
+(#474's coil, made at the next setback).
+
+![issue273_f001_pocket_rim_chamfer_e39_0.3](pictures/issue273_f001_pocket_rim_chamfer_e39_0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

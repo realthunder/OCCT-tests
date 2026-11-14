@@ -2302,7 +2302,7 @@ fillet_case("issue273_corner_circle_end_e5_r0.3", p273f, 5, 0.3, "pass", 8559.49
 # extended, the corner cut along the strip (BOP's check: edges and faces
 # crossing themselves; #474's invalid). Refused at the end, and set back.
 # (3e-3 for the compiler: E5 is 8559.4290 on arm64, clang, 0.0011 from
-# Linux's -- measured on the mini, 2026-11-15, the same before ad184c02f7.)
+# Linux's -- measured on the mini, 2026-11-14, the same before ad184c02f7.)
 for e, r, vol in ((5, 2, 8559.4279), (7, 2, 8559.4286)):
     fillet_case("issue273_rim_run_on_e%d_r%g" % (e, r), p273f, e, r, "pass", vol,
                 vol_tol=3e-3, bop=True)
@@ -3441,13 +3441,13 @@ for _es, _vol in (([38, 42], 8535.0406), ([39, 42], 8534.8062)):
                 % "_".join("e%d" % e for e in _es), p273f1, _es, 0.3, "pass", _vol, chamfer=True,
                 vol_tol=1e-3)
 # What stays refused. A chamfer of 1 on a 0.7 piece of an edge with the
-# edge up from its end: made with vertices of 0.23. Two chamfers at a vertex
-# of four edges, one of them a split between coplanar faces: BOP's check
-# reports the result's vertices, and a cut with it fails.
+# edge up from its end: made with vertices of 0.23. (Two chamfers at a vertex
+# of four edges, one of them a split between coplanar faces, were refused
+# here too -- by the corner of several edges BOP's check reports the
+# result's vertices, and a cut with it fails: issue962_split_wall_chamfer_
+# e2_e6_1, below, made since with its corner set back.)
 refused_case("mini_slot_split_short_piece_chamfer_e9_e16_1", sweep_shape("mini_slot_split"),
              [9, 16], 1, chamfer=True)
-refused_case("issue962_split_wall_chamfer_e2_e6_1", sweep_shape("issue962_Chamfer"), [2, 6], 1,
-             chamfer=True)
 # Fix level 3: at a corner of several edges a stripe's line that no
 # neighbour crosses, and that runs on past the vertex by more than one and
 # a half times the stripe's size, is cut at the vertex. A fillet of two
@@ -3523,7 +3523,8 @@ for _name, _shape, _es, _d, _vol in (
 # The fourth edge is then beside the two -- #962's arm on its block, the
 # arm's upright edge with its foot, the fourth edge the split between the
 # coplanar bottoms of arm and block. Where the two have no face in common
-# it stays refused (issue962_split_wall_chamfer_e2_e6_1, above).
+# the corner of two is not let at them (issue962_split_wall_chamfer_e2_e6_1,
+# below, which the corner set back makes).
 _armblock = sweep_shape("mini_ab_r3")
 for _name, _shape, _es, _d, _vol in (
         ("mini_arm_upright_and_foot", _armblock, [1, 6], 0.3, 4602.4366),
@@ -3532,6 +3533,54 @@ for _name, _shape, _es, _d, _vol in (
         ("issue962_arm_foot_and_upright", _arm962, [25, 49], 1, 11572.0786)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# The chamfer's setback fallback. A fillet whose corner fails is made again
+# with that corner set back and closed by one patch (ComputeSetbackFallback);
+# a chamfer was left refused. #273's Fillet001, a rim of the pocket in the
+# handle's top chamfered at 0.3: the land between the pocket's corner and
+# the handle's rounded edge is 0.286 wide, the chamfer's line runs off it
+# onto the round, and the corner of one stripe has no edge to carry on there
+# ("Failed to get p-curve of edge"). Set back, the chamfer is as deep along
+# the whole rim (0.212) and what it takes within 0.66 of it. No bop: the
+# input fails BOP's check itself.
+for _e, _vol in ((39, 8534.7649), (40, 8534.7650)):
+    fillet_case("issue273_f001_pocket_rim_chamfer_e%d_0.3" % _e, p273f1, _e, 0.3, "pass", _vol,
+                chamfer=True, vol_tol=1e-3)
+# Two chamfers at a vertex of four edges with no face in common, the fourth
+# edge a split between the coplanar faces they stand on (the fin on its
+# base; #962's arm, its foot with the block's): the corner of two is not
+# let at these, and the corner set back makes them.
+for _name, _shape, _es, _d, _vol in (
+        ("mini_fin_base_no_common_face", sweep_shape("mini_finbase"), [3, 11], 0.3, 769.2835),
+        ("mini_fin_base_no_common_face", sweep_shape("mini_finbase"), [3, 11], 1, 762.1271),
+        ("issue962_arm_foot_and_block_foot", _arm962, [25, 39], 1, 11564.3699),
+        ("issue962_split_wall", sweep_shape("issue962_Chamfer"), [2, 6], 1, 11695.9896)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# What the fallback must not make. A corner set back as far as the edge is
+# long: #273's D-hole, the flat's rim of 5.2 chamfered at 2, came out as
+# deep as asked at its middle and 1.2 long, between two patches of 10.8
+# each that stood out of the bottom -- refused, the chamfer looked for at
+# a quarter, a half and three quarters of what the setbacks leave. A
+# crease: #876's post, 1 deg, where the corner set back is all there is.
+refused_case("issue273_dhole_flat_rim_chamfer_e36_2", sweep_shape("issue273_Fillet"), 36, 2,
+             chamfer=True)
+refused_case("issue876_crease_chamfer_e10_0.3", sweep_shape("issue876_Fillet"), 10, 0.3,
+             chamfer=True)
+# An edge its own vertices cover. #474's coil, the edges of a vertex
+# chamfered at 1 -- three chamfers, the fourth edge smooth: with the corner
+# set back to where the stripes meet, an edge of 0.042 between vertices of
+# 0.03 (0.050 between vertices of 0.025 at the vertex across), which BOP's
+# check reports. Such a result is passed by, and the corner set back by the
+# chamfer's size is clean.
+for _es, _vol in (([5, 6, 17, 20], 1756.7311), ([11, 12, 17, 25], 1788.6947)):
+    fillet_case("issue474_coil_three_chamfers_and_smooth_edge_chamfer_%s_1"
+                % "_".join("e%d" % e for e in _es), sweep_shape("issue474_Fillet"), _es, 1, "pass",
+                _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# And not before a level above makes the chamfer whole: #631's ellipse at
+# 0.8 is level 1's guide (41501.9498, vertices of 0.00016); set back at
+# level 0 first it was 41502.3346 with vertices of 0.04.
+fillet_case("issue631_f002_ellipse_chamfer_e4_0.8_level0", sweep_shape("issue631_Fillet002"), 4, 0.8,
+            "pass", 41501.9498, chamfer=True, vol_tol=1e-3, fix_level=0)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")

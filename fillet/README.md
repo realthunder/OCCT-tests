@@ -6121,8 +6121,12 @@ the whole curve, the ends held to the elspine's points and tangents.
 Level 2 (2026-11-14, `7019fd0c47`) is the surfaces kept at a corner: "A
 chamfer of a rim beside a chord", below.
 
-Level 3 (2026-11-15, `fe5e57d291`) is a line that runs past the vertex,
-cut there: "Fix level 3", below.
+Level 3 (2026-11-14, `fe5e57d291`) is a line that runs past the vertex,
+cut there: "Fix level 3", below. From level 3 too (2026-11-15,
+`3f5f5832d5`) a chamfer whose corner fails is made with the corner set
+back -- only what no level makes whole, as below level 3 the end is
+passed over and the levels above are tried: "A chamfer's corner set
+back", below.
 
 What was refused needs no level, so a computation below the latest level
 that makes nothing -- it failed, or its result was refused as invalid --
@@ -6554,7 +6558,7 @@ thickness corpus as its baseline; the thickness sweep 928 of 928; of the
 29 issue models made again, not a line. FreeCAD (`3fccfa01bf`): the Python
 suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
-## Fix level 3: a line that runs past the vertex (`fe5e57d291`, 2026-11-15)
+## Fix level 3: a line that runs past the vertex (`fe5e57d291`, 2026-11-14)
 
 **Where it was met.** The vertex sweep as fillets: 57 pairs refused where
 each edge alone is filleted. 39 are with a crease of a degree or two
@@ -6653,7 +6657,7 @@ again with FreeCAD at level 3, not a line. FreeCAD (`7e8a9fdad3`): the
 Python suite 4388 OK. Not run: macOS, the frozen suite, thickness levels
 1 and 2.
 
-## A common point that is not where its parameter is (`4c5359fcbc`, 2026-11-15)
+## A common point that is not where its parameter is (`4c5359fcbc`, 2026-11-14)
 
 **Where it was met.** The limit on the chamfer's corner of two, kept at
 fix level 3 because #523's box came out wrong without it, for a reason
@@ -6727,7 +6731,7 @@ thickness corpus as its baseline; the thickness sweep 928 of 928; of the
 29 issue models made again, not a line. FreeCAD (`7e8a9fdad3`): the Python
 suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
-## Two chamfers at a vertex of four edges (`3ee86acb22`, 2026-11-15)
+## Two chamfers at a vertex of four edges (`3ee86acb22`, 2026-11-14)
 
 **Where it was met.** What was left of the chamfer pairs: most at a
 vertex of four edges, where the corner of two, failing, was not let at
@@ -6780,6 +6784,106 @@ level 0 and at level 3 frozen, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928; of the 29 issue
 models made again, not a line. FreeCAD (`7e8a9fdad3`): the Python suite
 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## A chamfer's corner set back (`3f5f5832d5`, from fix level 3, 2026-11-15)
+
+**Where it was met.** #273's Fillet001, a rim of the pocket in the
+handle's top chamfered at 0.3 (`issue273_f001_pocket_rim_chamfer_e39_0.3`).
+The land between the pocket's corner and the handle's rounded edge is
+0.286 wide; the chamfer's line runs off it onto the round, and the corner
+of one stripe has the edge to carry on in the top and the line's end on
+the round ("Failed to get p-curve of edge"). Refused. The fillet of 0.3
+there fails the same way, and is made: a fillet whose corner fails at a
+vertex is made again with that corner set back and closed by one patch
+(`ComputeSetbackFallback`). A chamfer was not -- its spine has no
+setback, and the fallback passed it by.
+
+**The fix.** The setback of a spine's end is asked through
+`ChFi3d_SpineSetback` / `ChFi3d_SetSpineSetback` (`ChFi3d_Builder_0`): a
+fillet's own, and a chamfer's -- which the spine has no room for -- kept
+for the calling thread while the fallback runs. The fallback, and the
+corner of several edges that closes a corner set back, take either; a
+chamfer's size there is its larger distance.
+
+**What it must not make.** Each of these was met in the sweeps when the
+fallback was first let at chamfers:
+
+- *A crease.* 113 of 180 results were chamfers of creases of a degree
+  (#876's post), where the corner set back is all there is of the
+  chamfer. A chamfer's stripe of an edge whose faces are less than 5 deg
+  apart is not set back.
+- *A corner set back as far as the edge is long.* #273's D-hole, the
+  flat's rim of 5.2 chamfered at 2: as deep as asked at its middle and
+  1.2 long, between two patches of 10.8 each that stood out of the
+  bottom. `AreChamfersMade`, beside `AreFilletsMade`: the edge's point
+  off the result by half the chamfer's depth at a quarter, a half and
+  three quarters of what the setbacks leave of the stripe, and no less
+  left than its size.
+- *A result a level above makes whole.* Set back at its own level first,
+  91 chamfers that a level above makes came out set back at level 0
+  (#631's ellipse at 0.8, level 1's guide: 41501.9498 with vertices of
+  0.00016; set back, 41502.3346 with vertices of 0.04). A chamfer is set
+  back from fix level 3; below it the end is noted as passed over, and
+  the levels above are tried in turn.
+- *An edge its own vertices cover.* #474's coil, the edges of a vertex
+  chamfered at 1 -- three chamfers, the fourth edge smooth. With the
+  corner set back to where the stripes meet the result is valid, with an
+  edge of 0.042 between vertices of 0.03 (at the vertex across, 0.050
+  between vertices of 0.025): BOP's check reports the vertices as
+  interfering. The only four of the 63 results with such an edge; in the
+  others the shortest edge with a loosened vertex is 6.6 times its
+  vertices' tolerances together. `HasCoveredEdge`: a chamfer's result
+  with an edge no longer than twice its vertices' tolerances together, a
+  vertex of it looser than the input's loosest, is passed by. The next
+  step, the corner set back by the chamfer's size, is clean on all four.
+
+| Case | What |
+|------|------|
+| `issue273_f001_pocket_rim_chamfer_e39_0.3`, `_e40_0.3` | the pocket's rims: 8534.7649, 8534.7650 (refused) |
+| `mini_fin_base_no_common_face_chamfer_e3_e11_0.3`, `_1` | a fin on its base, two chamfers at a vertex of four edges with no face in common: 769.2835, 762.1271 (refused) |
+| `issue962_arm_foot_and_block_foot_chamfer_e25_e39_1` | the same on #962, the arm's foot with the block's: 11564.3699 (refused) |
+| `issue962_split_wall_chamfer_e2_e6_1` | #962's block, its upright edge with the split of the wall -- what the corner of several edges made wrongly ("Two chamfers at a vertex of four edges", above): 11695.9896, BOP's check clean (refused) |
+| `issue474_coil_three_chamfers_and_smooth_edge_chamfer_e5_e6_e17_e20_1`, `_e11_e12_e17_e25_1` | the coil's two vertices: 1756.7311, 1788.6947, BOP's check clean (refused) |
+| `issue273_dhole_flat_rim_chamfer_e36_2`, `issue876_crease_chamfer_e10_0.3` | stay refused: the D-hole's rim at 2, the crease |
+| `issue631_f002_ellipse_chamfer_e4_0.8_level0` | level 0 goes on to level 1: 41501.9498 |
+
+`models/pictures/issue273_f001_pocket_rim_chamfer_e39_0.3.png`.
+
+**Checked by another measure.** 63 chamfers of the sweeps made that were
+refused (2 lines of the edge sweep, 65 of the vertex sweep), the same at
+level 0 and at 3. Of the 53 pairs, each cut from the input and the input
+from it: 43 within one cube of their size of their two edges chamfered
+alone and 8 within 1.6 -- a corner set back takes less than two chamfers
+run to the vertex -- and what each takes and adds no further from its
+edges than alone; two are on `issue273_Fillet001`, which no cut gets
+past. BOP's check: 56 clean; the 7 others are on that input, which is not
+clean itself (vertices of 0.7). The pocket's rim: as deep as asked along
+the whole edge (0.212) and what it takes within 0.66 of it. The coil's
+four: what they take and add within 1.36 sizes of the edges; the three
+chamfers at (-13, 0, 11) take 1.9 cubes of the size less than the three
+edges alone.
+
+**What is left.** The cut of #474's coil with its own chamfer at
+(-13, 0, 11), and with the *fillet* of the same edges as made before this
+change, returns both shapes whole (the common of the two, nothing): a
+boolean's fault, not looked into. Chamfer pairs still refused where each
+edge alone is chamfered: those the corner set back makes invalid, loose
+or not as deep as asked.
+
+**Validation** (`3f5f5832d5` against `3ee86acb22`, on Linux): the chamfer
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+at level 0 and at level 3 each against `3ee86acb22` at that level: the 63
+chamfers made that were refused (2 lines at edges, 65 at vertices), the
+same volumes at both levels, nothing else. The fillet sweeps at levels 0
+and 3: not a line. The suite PASS=901 XFAIL=1 at fix levels 0, 1, 2 and 3:
+of the 891, 890 the same line for line at each and
+`issue962_split_wall_chamfer_e2_e6_1` made where it was refused, and the
+ten new ones above. Boolean 103, draft 105, thickness PASS=695 at level 0
+and at level 3 frozen, every case line the same; the thickness corpus as
+its baseline; the thickness sweep 928 of 928; of the 29 issue models made
+again, not a result (one message names the other of a pocket's two twin
+properties). FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run:
+macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

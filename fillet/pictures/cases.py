@@ -113,6 +113,7 @@ STAGES = {
     "slevel3": ("ad184c02f7", "fe5e57d291"),
     "scpoint": ("13c9971e34", "4c5359fcbc"),
     "sfour": ("4c5359fcbc", "3ee86acb22"),
+    "schsetback": ("3ee86acb22", "3f5f5832d5"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -797,6 +798,12 @@ UVFACE_CASE = {
     "issue273_f001_apex_line_end_e40_r0.3": (
         lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
         and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
+    # the chamfer's own face along the pocket's rim E39, short of the
+    # pocket's corner by the corner's patch
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": (
+        lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
+        and f.BoundBox.XMin > -0.5 and f.BoundBox.YMin > 7.0 and f.BoundBox.ZMin > 30.5
+        and 3.0 < f.Area < 4.0),
     "issue273_f001_apex_flat_e40_r0.3": (
         lambda f: f.Surface.__class__.__name__ == "BSplineSurface"
         and f.BoundBox.YMin > 15.1 and f.BoundBox.ZMax > 30.9 and f.Area > 1.0),
@@ -1091,6 +1098,7 @@ UVLABEL_CASE = {
     "issue962_invalid_refused_e6_r0.3": ("the gap's end face holding the edge", False),
     "issue273_f001_apex_off_round_e39_r0.3": ("the round at the top's end", False),
     "issue273_f001_apex_line_end_e40_r0.3": ("the round at the top's end", False),
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": ("the chamfer's face", False),
     "issue273_f001_apex_flat_e40_r0.3": ("the round at the top's end", False),
     "issue962_opposite_v38_e54_e84_r0.3": ("the ledge along the top", False),
     "issue962_rail_in_line_e51_e52_r0.3": ("the ledge along the top", False),
@@ -1162,6 +1170,13 @@ CASES = {
     "issue273_f001_apex_off_round_e39_r0.3": (
         "soffround", "p273b", ((0, 15.013479, 31), (1.524712, 7.124642, 31)), 0.3,
         8534.9736, (0.05, 15.25, 30.9), (1, -0.5, 1.1)),
+    # the same rim chamfered at 0.3: the land between the pocket's corner and
+    # the handle's rounded edge is 0.286 wide, the chamfer's line runs off it
+    # onto the round, and the corner of one stripe fails there; set back, as
+    # a fillet's corner is
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": (
+        "schsetback", "p273b", ((0, 15.013479, 31), (1.524712, 7.124642, 31)), 0.3,
+        8534.7649, (1.6, 7.3, 31.05), (0.5, -1, 0.9)),
     # its mirror E40: the stripe ended where its side on the wall met the
     # apex's edge, short of the top's end; its line on the top runs on to it,
     # and the cut off the top is now taken from the line's end
@@ -1691,6 +1706,7 @@ CHAMFER = {
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (1.0,),
     "issue523_post_side_and_top_edge_chamfer_e12_e14_1": (1.0,),
     "issue962_arm_foot_and_upright_chamfer_e25_e49_1": (1.0,),
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": (0.3,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1759,6 +1775,8 @@ ZOOMLABEL = {
                                                           (110, 110, 110)),
     "issue962_arm_foot_and_upright_chamfer_e25_e49_1": ("the corner of the two chamfers, from "
                                                         "below", (240, 240, 240)),
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": ("the chamfer's end at the pocket's corner",
+                                                 (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1773,6 +1791,7 @@ ZOOM = {
     "issue631_loft_joint_e18_r15": 36.0,
     "issue631_fillet002_chamfer_e12_0.3": 3.0,
     "issue273_f001_apex_off_round_e39_r0.3": 2.0,
+    "issue273_f001_pocket_rim_chamfer_e39_0.3": 2.0,
     "issue273_f001_apex_line_end_e40_r0.3": 2.0,
     "issue273_f001_apex_flat_e40_r0.3": 2.0,
     # the fillet is 0.005 wide; the old one's first cut at x=4.043
