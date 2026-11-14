@@ -2301,9 +2301,11 @@ fillet_case("issue273_corner_circle_end_e5_r0.3", p273f, 5, 0.3, "pass", 8559.49
 # fillet's free side ran on past the vertex as far as the spine was
 # extended, the corner cut along the strip (BOP's check: edges and faces
 # crossing themselves; #474's invalid). Refused at the end, and set back.
+# (3e-3 for the compiler: E5 is 8559.4290 on arm64, clang, 0.0011 from
+# Linux's -- measured on the mini, 2026-11-15, the same before ad184c02f7.)
 for e, r, vol in ((5, 2, 8559.4279), (7, 2, 8559.4286)):
     fillet_case("issue273_rim_run_on_e%d_r%g" % (e, r), p273f, e, r, "pass", vol,
-                vol_tol=1e-3, bop=True)
+                vol_tol=3e-3, bop=True)
 p474f3 = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes", "issue474_Fillet003.brep"))
 for e, r, vol in ((2, 0.3, 1988.8707), (18, 0.8, 1988.8386)):
     fillet_case("issue474_f003_run_on_e%d_r%g" % (e, r), p474f3, e, r, "pass", vol, 1e-3,
@@ -3452,6 +3454,53 @@ refused_case("mini_slot_split_short_piece_chamfer_e9_e16_1", sweep_shape("mini_s
              [9, 16], 1, chamfer=True)
 refused_case("issue962_split_wall_chamfer_e2_e6_1", sweep_shape("issue962_Chamfer"), [2, 6], 1,
              chamfer=True)
+# Fix level 3: at a corner of several edges a stripe's line that no
+# neighbour crosses, and that runs on past the vertex by more than one and
+# a half times the stripe's size, is cut at the vertex. A fillet of two
+# planes is made as long as the planes, and where nothing crossed its line
+# the corner took the line's far end for the stripe's, and set every other
+# stripe as far from the vertex as that.
+# #962's rail along its teeth: two edges in one line, a slope's (45 deg)
+# and a wall's, their fillets of different width beside each other, at a
+# vertex of four edges. The wall's fillet was given its start 13 further
+# on, at the far end of the rail, and the next corner had a line of no
+# length. Refused before, at every level: made at every level now (what a
+# level refuses is made again at the next above it that makes it).
+_rail962 = sweep_shape("issue962_Fillet")
+fillet_case("issue962_rail_in_line_e51_e52_r0.3", _rail962, [51, 52], 0.3, "pass", 11584.0804,
+            vol_tol=1e-3, bop=True)
+fillet_case("issue962_rail_in_line_e52_e53_r0.3", _rail962, [52, 53], 0.3, "pass", 11584.0798,
+            vol_tol=1e-3, bop=True)
+fillet_case("issue962_rail_whole_e51_to_e55_r0.3", _rail962, [51, 52, 53, 54, 55], 0.3, "pass",
+            11584.0256, vol_tol=1e-3, bop=True)
+fillet_case("issue962_rail_in_line_chamfer_e51_e52_0.3", _rail962, [51, 52], 0.3, "pass",
+            11584.0983, chamfer=True, vol_tol=1e-3, bop=True)
+# What it moves, each as it was below 3 and as it is from 3.
+# #273's creases under the handle (2 deg), chamfered: the chamfer went on
+# 5.8 past its end and stood out of the cup (+0.81 at 0.3, +5.95 at 2);
+# within its size of the edge now.
+# (Each on the shape as it is read: a chamfer raises the tolerances of what
+# its input shares with the result, and the cases before these have. Held
+# to 5e-3: at 2 the shape read gives 8558.7109 and a copy of it, as the
+# sweep makes, 8558.7094.)
+for _d, _old, _new in ((0.3, 8560.2938, 8559.4673), (2, 8565.4374, 8558.7109)):
+    fillet_case("issue273_crease_chamfer_e5_%g_level2" % _d, sweep_shape("issue273_Fillet"), 5, _d,
+                "pass", _old, chamfer=True, vol_tol=5e-3, fix_level=2)
+    fillet_case("issue273_crease_chamfer_e5_%g_level3" % _d, sweep_shape("issue273_Fillet"), 5, _d,
+                "pass", _new, chamfer=True, vol_tol=5e-3, fix_level=3)
+# #474's Fillet003, a crease (0.9 deg) with the edge across it, filleted at
+# 1: 0.67 more than the two alone below 3, 0.005 from 3.
+_f003 = sweep_shape("issue474_Fillet003")
+fillet_case("issue474_f003_crease_and_edge_e2_e10_r1_level2", _f003, [2, 10], 1, "pass",
+            1987.0803, vol_tol=1e-3, fix_level=2)
+fillet_case("issue474_f003_crease_and_edge_e2_e10_r1_level3", _f003, [2, 10], 1, "pass",
+            1987.7429, vol_tol=1e-3, fix_level=3)
+# A chamfer that level 0 refuses and level 2 makes keeps level 2's shape
+# at level 0 when a level 3 makes it differently: the crease with the rim.
+for _lvl, _vol in ((0, 8557.8886), (2, 8557.8886), (3, 8557.4825)):
+    fillet_case("issue273_crease_and_rim_chamfer_e5_e6_0.3_level%d" % _lvl,
+                sweep_shape("issue273_Fillet"), [5, 6], 0.3, "pass", _vol, chamfer=True,
+                vol_tol=1e-3, fix_level=_lvl)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")

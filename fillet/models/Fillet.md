@@ -2400,6 +2400,25 @@ this one 1094.7154 at 1, within 0.03 of its two edges chamfered alone.
 
 ![issue523_post_side_and_bottom_rim_chamfer_e12_e13_1](pictures/issue523_post_side_and_bottom_rim_chamfer_e12_e13_1.png)
 
+### Fix level 3: a line that runs past the vertex (`fe5e57d291`, #962's rail)
+
+Two edges of the rail lie in one line, one under a slope and one under a
+wall, so their fillets are of different width and nothing joins them but
+a corner of several edges. A fillet of two planes is made as long as the
+planes -- here the whole rail -- and that corner ends a stripe no
+neighbour crosses where its line ends: 13.5 past the vertex, at the far
+end of the rail. Every other stripe was then set as far from the vertex
+as that, the wall's fillet started 13.2 along, and the next corner had a
+line of no length: refused, upstream's too. A line that runs past the
+vertex by more than one and a half times the fillet's size is cut at the
+vertex now. From fix level 3, because it also puts right chamfers that
+were made wrong -- on the creases under #273's handle, where the chamfer
+went on 5.8 past its end -- and those are made as they were below it. The
+rail is made at every level: what a level refuses is made again at the
+next level above it that makes it.
+
+![issue962_rail_in_line_e51_e52_r0.3](pictures/issue962_rail_in_line_e51_e52_r0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

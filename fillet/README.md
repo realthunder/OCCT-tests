@@ -6121,13 +6121,20 @@ the whole curve, the ends held to the elspine's points and tangents.
 Level 2 (2026-11-14, `7019fd0c47`) is the surfaces kept at a corner: "A
 chamfer of a rim beside a chord", below.
 
+Level 3 (2026-11-15, `fe5e57d291`) is a line that runs past the vertex,
+cut there: "Fix level 3", below.
+
 What was refused needs no level, so a computation below the latest level
 that makes nothing -- it failed, or its result was refused as invalid --
-where it passed over a correction above the level, is computed once more
-at the latest (`ChFi3d_Builder::Compute`, `ChFi3d_FixPassedOver`): the
-guide adjusted where level 1 would have adjusted it differently. The
-input's tolerances are put back for it, as for the fallbacks. A failure
-where nothing above the level was passed over is not computed again.
+where it passed over a correction above the level, is computed again
+(`ChFi3d_Builder::Compute`, `ChFi3d_FixPassedOver`): the guide adjusted
+where level 1 would have adjusted it differently. At each level above its
+own in turn, and the first that makes it is the result (since
+`fe5e57d291`; once more at the latest until then, and a shape that level
+0 refuses and level 2 makes would have been level 3's as soon as there
+was one). The input's tolerances are put back for each, as for the
+fallbacks. A failure where nothing above the level was passed over is
+not computed again.
 
 FreeCAD gives each fillet and chamfer feature a hidden `_FilletFixLevel`
 -- Part's `Fillet` and `Chamfer` (on `FilletBase`), PartDesign's `Fillet`
@@ -6544,6 +6551,98 @@ PASS=695 at level 0 and at level 3 frozen, every case line the same; the
 thickness corpus as its baseline; the thickness sweep 928 of 928; of the
 29 issue models made again, not a line. FreeCAD (`3fccfa01bf`): the Python
 suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## Fix level 3: a line that runs past the vertex (`fe5e57d291`, 2026-11-15)
+
+**Where it was met.** The vertex sweep as fillets: 57 pairs refused where
+each edge alone is filleted. 39 are with a crease of a degree or two
+(#474's, #876's). The other 18 are #962's rail along its teeth: two edges
+in one line, a slope's (45 deg) and a wall's (90 deg), at a vertex of
+four edges, their fillets of different width beside each other on the
+rail's face.
+
+**What was broken.** At a corner of several edges
+(`PerformMoreThreeCorner`), a stripe whose lines its neighbours do not
+cross is ended where its lines end. A fillet of two planes is made as
+long as the planes, here the whole rail; a walked surface runs on along
+the next edge. Such a line ends far past the vertex, and the corner took
+that end for the stripe's -- and then set every other stripe as far from
+the vertex as the farthest. The slope's line ran 13.5 on to the far end
+of the rail; the wall's fillet was given its start 13.2 along; the corner
+after it had a line of no length to work with
+("Geom2dAdaptor_Curve::Load"), and nothing was made. With all four edges
+of the vertex filleted the lines cross, and it was made.
+
+The same end is what let two chamfers at a vertex run on along an edge
+nobody asked for (the section above).
+
+**The fix.** A line that no neighbour crosses and that runs past the
+stripe's end at the vertex by more than one and a half times the
+stripe's size is cut at that end (`CutAtSpineEnd`,
+`ChFi3d_Builder_CnCrn.cxx`). Cut wherever a line runs past the vertex at
+all, 213 results of the sweeps moved -- most by a hair, one to nonsense
+-- and five were lost: hence the one and a half sizes.
+
+**Fix level 3.** It makes shapes that were made before differently, so
+it is asked for (`ChFi3d_SetFixLevel(3)`, the latest now; FreeCAD
+`OCCTFilletFixLevelLatest` 3, `7e8a9fdad3`):
+
+- 37 chamfers of the sweeps on #273's creases under the handle (2 deg),
+  alone and with a neighbour. The chamfer went on 5.8 past its end and
+  stood out of the cup: +0.81 of volume at 0.3, +5.95 at 2. It is within
+  its size of the edge now: -0.018, -0.774.
+- 2 fillets, a crease of #474's Fillet003 (0.9 deg) with the edge across
+  it: 0.67 more than the two alone at 1 before, 0.005 now.
+- 1 chamfer lost: `issue273_Fillet001`'s E1 at 0.8, a result with a
+  vertex of 5.63.
+
+**What a level refuses.** Below the latest level, a computation that
+makes nothing and passed over a correction above its level was made
+again at the latest. A shape that level 0 refuses and level 2 makes was
+then level 2's until a level 3 came, and level 3's after -- three
+chamfers of #273's cup moved at level 0 with the first build of this. It
+is made again at each level above its own in turn now, and the first
+that makes it is the result. So the rail is made at every level.
+
+| Case | What |
+|------|------|
+| `issue962_rail_in_line_e51_e52_r0.3`, `_e52_e53_r0.3` | two edges of the rail in one line, filleted: 11584.0804, 11584.0798, clean by BOP's check (refused) |
+| `issue962_rail_whole_e51_to_e55_r0.3` | the rail whole, five edges: 11584.0256 (refused) |
+| `issue962_rail_in_line_chamfer_e51_e52_0.3` | the same pair chamfered: 11584.0983 (refused) |
+| `issue273_crease_chamfer_e5_0.3_level{2,3}`, `_2_level{2,3}` | the crease under the handle chamfered: 8560.2938 and 8565.4374 at level 2, 8559.4673 and 8558.7109 at 3 |
+| `issue474_f003_crease_and_edge_e2_e10_r1_level{2,3}` | 1987.0803 at level 2, 1987.7429 at 3 |
+| `issue273_crease_and_rim_chamfer_e5_e6_0.3_level{0,2,3}` | refused by level 0 and made by level 2: 8557.8886 at 0 and at 2, 8557.4825 at 3 |
+
+`models/pictures/issue962_rail_in_line_e51_e52_r0.3.png`.
+
+**Checked by another measure.** The 11 fillets (ten of #962's 18 and one
+of #474's) and 8 chamfers made: each within 0.63 of a cube of its size of its two edges alone (the chamfers
+the sum itself, to four decimals), and what it takes and adds reaches no
+further from its edges than alone. The chamfers of the creases: what the
+one at 0.3 takes and adds reached 5.76 from its edge at level 2 and
+reaches 0.300 at 3; at 2, 6.07 and 2.001.
+
+**What it does not do.** The chamfer's corner of two (the section above)
+keeps its limit on a surface that runs past the vertex, at every level.
+Let through at level 3, it made four chamfers of #523's box with the
+top's chamfer 4 round the post: that corner finds a crossing for the
+line, far out, and a line that is crossed is not cut. So the 96 sound
+pairs the limits turn away are still turned away; and the rail's pairs
+at 1 are refused (an invalid shape).
+
+**Validation** (`fe5e57d291` against `ad184c02f7`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered. At level 0, what a plain call has: the 11 fillets
+and 8 chamfers above made that were refused, nothing else. At level 3
+against `ad184c02f7` at level 2: those 19 made, the 39 moved and the one
+lost above, nothing else. The suite PASS=883 XFAIL=1 at fix levels 0, 1, 2
+and 3: the 870, the same line for line at each of 0, 1 and 2, and the 13
+above; at 3 as at 2. Boolean 103, draft 105, thickness PASS=695 at level 0
+and at level 3 frozen, every case line the same; the thickness corpus as
+its baseline; the thickness sweep 928 of 928; of the 29 issue models made
+again with FreeCAD at level 3, not a line. FreeCAD (`7e8a9fdad3`): the
+Python suite 4388 OK. Not run: macOS, the frozen suite, thickness levels
+1 and 2.
 
 ## Known broken (XFAIL)
 

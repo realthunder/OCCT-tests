@@ -110,6 +110,7 @@ STAGES = {
     "sreset": ("7019fd0c47", "f378bf5c5e"),
     "swalk": ("f378bf5c5e", "94464f1dc6"),
     "stwo": ("94464f1dc6", "ad184c02f7"),
+    "slevel3": ("ad184c02f7", "fe5e57d291"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -783,6 +784,7 @@ UVFACE_CASE = {
             f.Surface.Axis)) < 1e-4),
     # the ledge between the steps, the slope fillet's cap joined to it past the step
     "issue962_opposite_v38_e54_e84_r0.3": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
+    "issue962_rail_in_line_e51_e52_r0.3": _plane_at("z", 14, {"y": 10.0}, {"y": 28.0}),
     "issue962_groove_v38_e54_e90_r1": _plane_at("z", 14, {"y": 21.0}, {"y": 23.0}),
     # the corner's plate, its vertices up to 1.4 from the vertex at 1
     "issue474_f003_coilfoot_v1_e6_e10_r1": _plate_near(-13, 0, 13, 2.0),
@@ -1089,6 +1091,7 @@ UVLABEL_CASE = {
     "issue273_f001_apex_line_end_e40_r0.3": ("the round at the top's end", False),
     "issue273_f001_apex_flat_e40_r0.3": ("the round at the top's end", False),
     "issue962_opposite_v38_e54_e84_r0.3": ("the ledge along the top", False),
+    "issue962_rail_in_line_e51_e52_r0.3": ("the ledge along the top", False),
     "issue962_groove_v38_e54_e90_r1": ("the groove's floor", False),
     "issue962_arm_corner_e25_e26_r1": ("the floor", False),
     "issue474_f002_whole_in_end_r0.3": ("the block's side holding both edges", False),
@@ -1185,6 +1188,13 @@ CASES = {
         "sopp2", "p962", [((38.5, 20.3, 14), (38.5, 23.7, 14)),
                           ((38.5, 20.3, 14), (35.470838, 20.3, 17.029162))],
         0.3, 11583.6228, (38.5, 20.3, 14), (-1, 0.9, 0.8)),
+    # #962's rail, two of its edges in one line, a slope's and a wall's: the
+    # slope's fillet, as long as the rail, was ended at the rail's far end,
+    # and the corner set the wall's fillet as far from the vertex as that
+    "issue962_rail_in_line_e51_e52_r0.3": (
+        "slevel3", "p962", [((38.5, 10.2, 14), (38.5, 13.7, 14)),
+                            ((38.5, 13.7, 14), (38.5, 17.1, 14))],
+        0.3, 11584.0804, (38.5, 13.7, 14), (-1, 0.9, 0.8)),
     "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
                            1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
@@ -1761,6 +1771,8 @@ EDGES = {
     "pocket_v10_d1_flat_tip_rims_r0.8": "both rims of the pocket at its apex",
     "issue360_f008_four_edges_r4": "the four edges of the block's side x=-53.2",
     "issue962_opposite_v38_e54_e84_r0.3": "the top's edge along the rail and the slope's edge",
+    "issue962_rail_in_line_e51_e52_r0.3": "two edges of the rail in one line, under a slope and "
+                                          "under a wall",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
     "issue474_f003_coilfoot_v1_e6_e10_r1": "the coil's foot and the block's top edge beside it",
     "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "
