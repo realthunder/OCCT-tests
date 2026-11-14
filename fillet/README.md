@@ -6418,6 +6418,22 @@ get p-curve of edge". A chamfer of 0.2 is made. The fillet of 0.3 fails
 the same way and is made by the setback fallback
 (`ComputeSetbackFallback`), which is for fillets.
 
+**Against upstream.** The 22 were a loss against upstream, so all four
+sweeps were run on upstream's files too (`91be8c4c71`, the pictures'
+column) for anything else it makes and the fork refuses. Upstream makes
+2139 and 7839 fillets (the fork 2666 and 9712) and 2060 and 7448 chamfers
+(2436 and 8812). 174 of its results the fork does not make: no fillet of
+an edge, 49 fillets at a vertex, 8 chamfers of an edge and 117 at a
+vertex. 142 of them have the volume of fewer edges than were asked for --
+upstream's own result for one of the two edges, or for one or two of the
+four, at the same vertex: an edge left as it was without a word, which
+the fork refuses. 30 are chamfers of 0.3 on four edges of #474's coil
+(E12, E28, E37 and E45, in two shapes: alone, 8 lines of the edge sweep
+and 16 of the vertex sweep, and 6 with a neighbour), the faulty coil of
+the section above. 2 are all four edges at a vertex of
+`issue273_Fillet001` filleted at 0.3, one of them an edge neither library
+fillets alone. Nothing else.
+
 **Validation** (`94464f1dc6` against `7019fd0c47`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
 filleted and chamfered, at the level a plain call has, 0: the fillets not
