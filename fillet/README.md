@@ -6118,6 +6118,9 @@ Level 1 is the chamfer guide's two changes in `ChFi3d_PerformElSpine`.
 Below it the guide is adjusted as before, `GeomLib::AdjustExtremity` over
 the whole curve, the ends held to the elspine's points and tangents.
 
+Level 2 (2026-11-14, `7019fd0c47`) is the surfaces kept at a corner: "A
+chamfer of a rim beside a chord", below.
+
 What was refused needs no level, so a computation below the latest level
 that makes nothing -- it failed, or its result was refused as invalid --
 where it passed over a correction above the level, is computed once more
@@ -6265,6 +6268,77 @@ level 0 and at level 3 frozen, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
 (`b4ff77d741`): the Python suite 4388 OK. Not run: macOS, the frozen suite,
 thickness levels 1 and 2.
+
+## A chamfer of a rim beside a chord (`7019fd0c47`, fix level 2, 2026-11-14)
+
+**Where it was met.** The edge sweep run as a chamfer next to the fillet's
+(as for #631 above): 236 edges and sizes where the fillet is made and the
+chamfer of the same size refused, 30 of them at 0.3. Most are of little
+use or on a faulty input -- #876's are chamfers of the post's creases of
+1 deg, #474's are on its coil -- and #273's cup has the first that is
+neither: the rim beside the handle (the draft sweep's `issue273_Fillet`,
+E6), filleted at 0.3, 0.8 and 2 and refused as a chamfer at every size,
+both of its end vertices faulty.
+
+**What was broken.** The cup's top is the piece of a disc between the rim
+and a chord; the handle's front stands on the chord. At each end of the
+rim four edges meet -- the rim, the rim going on under the handle, the
+chord, and the handle's side -- and the corner is made by
+`PerformMoreThreeCorner`, the same for a fillet and a chamfer.
+
+Past each end of the rim the walk runs on, the cylinder's side on the
+cylinder and the top's on the top's plane carried on. A fillet's two
+pieces there are thrown away (`ChFi3d_Purge`: the cylinder's side did not
+end on an edge). A chamfer's did, 8 along, and are kept, the plane's side
+of each no face: the stripe is three surfaces, the rim's own between the
+two.
+
+Before the corner is made the stripe's surfaces not at this vertex are
+removed (`RemoveSurfData`): all before the last one that has, at its near
+end, a point on one of the two edges beside the rim at the vertex. The
+chord is beside the rim at *both* vertices. The surface past the far end
+starts on the chord too, by the far vertex; it was the last such, and the
+rim's own surface went with the one before it. The corner then started
+from a surface whose side on the top is no face: "Failed to find edge".
+
+**The fix.** A point on an edge beside the spine counts where it is on
+this vertex's half of that edge (`CpOnEdge`, `ChFi3d_Builder_CnCrn.cxx`).
+
+**Fix level 2.** Four fillets the fork made before are made differently
+by it -- #474's coil at two of its vertices, radius 1, in two of the
+sweep's shapes: 1829.5115 to 1829.7069 and 1844.9557 to 1845.1766, the
+largest tolerance of each 0.025 before and 0.003 now. So it is asked for
+(`ChFi3d_SetFixLevel(2)`, the latest now; "The fillet fix level", above):
+below 2 a point by the far vertex counts as it did, and the computation,
+where it then makes nothing, is made again at the latest level -- the
+chamfer is made at every level. FreeCAD: `OCCTFilletFixLevelLatest` 2
+(FreeCAD `3fccfa01bf`).
+
+| Case | What |
+|------|------|
+| `issue273_rim_chamfer_0.3`, `_0.8` | the rim's chamfer: 8557.4895 and 8545.5138, valid, clean by BOP's check, the same told from either face (refused before) |
+| `issue273_rim_chamfer_0.3_level{0,1,2}` | the same at each level |
+| `issue474_coil_v5_e5_e6_e17_e20_r1_level{1,2}`, `issue474_coil_v9_e11_e12_e17_e25_r1_level{1,2}` | the fillets it moves: as they were at level 1, 1829.5115 and 1844.9557, and at level 2, 1829.7069 and 1845.1766 |
+
+`models/pictures/issue273_rim_chamfer_0.3.png`: upstream's 8.0.1 refuses it too.
+
+**What is left.** The same chamfer at 2: the walk past the end throws
+("Fail of approximation") where a fillet's only fails, and the stripe is
+lost for it. `issue273_Fillet001`'s E39 and E40, the pocket's edges at the
+handle's apex: a chamfer of 0.3 ends in `PerformOneCorner` on "Failed to
+get p-curve of edge", from either face, where the fillet is made.
+
+**Validation** (`7019fd0c47` against `a8461992ff`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered, at the level a plain call has, 0: the fillets not
+a status, not a volume (2666 and 9712 made); the chamfers the eight of the
+rim made that were refused (2435 and 8787 made), nothing else. The suite
+PASS=838 XFAIL=1 at fix levels 0, 1 and 2: the 829, the same line for
+line at each, and the nine above. Boolean 103, draft 105, thickness
+PASS=695 at level 0 and at level 3 frozen, every case line the same; the
+thickness corpus as its baseline; the thickness sweep 928 of 928; of the
+29 issue models made again, not a line. FreeCAD (`3fccfa01bf`): the Python
+suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

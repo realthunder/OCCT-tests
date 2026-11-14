@@ -106,6 +106,7 @@ STAGES = {
     "sguide": ("46934730d6", "1420e35a51"),
     "s580": ("bf3ca2e833", "17ddf3b4a8"),
     "s580base": ("110e649512", "7615df6b50"),
+    "srimchord": ("a8461992ff", "7019fd0c47"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1499,6 +1500,14 @@ CASES = {
     # to a point, and the piece's range on the spine was read off it
     "issue580_pad_rim_chamfer_base_2_5": ("s580base", "p580base", ((12, 0, 0), (0, 12, 0)), 2.0,
                                           476.2935, (8.5, 8.5, 1.5), (0.7, 0.7, -0.5)),
+    # #273's cup, the rim beside the handle chamfered: the chord the handle
+    # stands on is beside the rim at both its ends, and the surface run on
+    # past the far end, which starts on the chord too, was taken for the one
+    # at each corner
+    "issue273_rim_chamfer_0.3": ("srimchord", "p273",
+                                 ((-2.3338652, 16.5866083, 18), (-5.4331299, -15.8443554, 18),
+                                  (-16.67, 1.59, 18)),
+                                 0.3, 8557.4895, (-2.6, 16.4, 18.1), (-1, 0.9, 0.8)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1611,6 +1620,7 @@ CHAMFER = {
     "issue631_fillet002_chamfer_e12_0.3": (0.3,),
     "issue580_pad_rim_chamfer_5_2": (5.0, 2.0),
     "issue580_pad_rim_chamfer_base_2_5": (2.0, 5.0),
+    "issue273_rim_chamfer_0.3": (0.3,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1670,6 +1680,7 @@ ZOOMLABEL = {
     "issue580_pad_rim_chamfer_5_2": ("the chamfer's end, at the line's far end", (110, 110, 110)),
     "issue580_pad_rim_chamfer_base_2_5": ("the chamfer's end, at the line's far end",
                                           (110, 110, 110)),
+    "issue273_rim_chamfer_0.3": ("the chamfer's end at the handle's front", (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1770,6 +1781,8 @@ EDGES = {
                                           "(17.98,24.95,43.13)",
     "issue580_pad_rim_chamfer_5_2": "the base's rim, its quarter circle (12,0,0)-(0,12,0)",
     "issue580_pad_rim_chamfer_base_2_5": "the base's rim, its quarter circle (12,0,0)-(0,12,0)",
+    "issue273_rim_chamfer_0.3": "the cup's rim beside the handle, (-2.33,16.59,18)-"
+                                "(-5.43,-15.84,18)",
 }
 
 

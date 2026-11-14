@@ -3324,6 +3324,38 @@ fillet_case("issue580_pad_rim_chamfer_base_2_5", _q580, _s580, (2.0, 5.0), "pass
 fillet_case("issue580_pad_rim_chamfer_base_2_1", _q580, _s580, (2.0, 1.0), "pass", 573.1029,
             chamfer=True, vol_tol=1e-3, bop=True)
 
+
+# #273's cup, its rim beside the handle (the draft sweep's issue273_Fillet,
+# E6): the top is the piece of a disc between the rim and a chord, the
+# handle's front standing on the chord, so the chord is beside the rim at
+# both of the rim's ends. A chamfer keeps the surface it runs on with past
+# each end; the one past the far end starts on the chord too, and at each
+# corner it was taken for the surface at that vertex: the rim's own was
+# removed, and the corner was left one whose side on the top is no face
+# ("Failed to find edge"). Refused at any size, where the fillet, whose
+# surfaces past the ends are not kept, was made. A surface is the one at a
+# vertex only where its point on the edge beside the spine is on that
+# vertex's half of it -- from fix level 2, since it makes four fillets at
+# the vertices of #474's coil differently; below, what is then refused is
+# computed again at the latest, so the chamfer is made at every level.
+_rim273 = sweep_shape("issue273_Fillet")
+fillet_case("issue273_rim_chamfer_0.3", _rim273, 6, 0.3, "pass", 8557.4895, chamfer=True,
+            vol_tol=1e-3, bop=True)
+fillet_case("issue273_rim_chamfer_0.8", _rim273, 6, 0.8, "pass", 8545.5138, chamfer=True,
+            vol_tol=1e-3, bop=True)
+for _lvl in (0, 1, 2):
+    fillet_case("issue273_rim_chamfer_0.3_level%d" % _lvl, _rim273, 6, 0.3, "pass", 8557.4895,
+                chamfer=True, vol_tol=1e-3, fix_level=_lvl)
+# the fillets it moves, #474's coil at two of its vertices, radius 1: as
+# they were below level 2, and from it
+_coil474 = sweep_shape("issue474_Fillet")
+for _name, _edges, _old, _new in (("v5_e5_e6_e17_e20", [5, 6, 17, 20], 1829.5115, 1829.7069),
+                                  ("v9_e11_e12_e17_e25", [11, 12, 17, 25], 1844.9557, 1845.1766)):
+    fillet_case("issue474_coil_%s_r1_level1" % _name, _coil474, _edges, 1.0, "pass", _old,
+                vol_tol=1e-3, fix_level=1)
+    fillet_case("issue474_coil_%s_r1_level2" % _name, _coil474, _edges, 1.0, "pass", _new,
+                vol_tol=1e-3, fix_level=2)
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

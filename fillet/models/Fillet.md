@@ -2324,6 +2324,25 @@ from the side.
 
 ![issue580_pad_rim_chamfer_base_2_5](pictures/issue580_pad_rim_chamfer_base_2_5.png)
 
+### A chamfer of a rim beside a chord (`7019fd0c47`, fix level 2, #273's cup)
+
+The cup's top is the piece of a disc between the rim and a chord, the
+handle's front standing on the chord: the chord is beside the rim at both
+of the rim's ends. A chamfer of the rim keeps the surface it runs on with
+past each end, and before a corner is made the surfaces of the stripe that
+are not at that vertex are removed -- all before the last that starts on
+an edge beside the rim there. The one past the far end starts on the chord
+too. It was taken for the surface at this vertex, the rim's own was
+removed, and the corner was left a surface one side of which is no face:
+refused at any size, at both ends, upstream's 8.0.1 too, where the fillet
+was made. A surface counts now where its point is on this vertex's half
+of the edge. From fix level 2, because four fillets on #474's coil come
+out differently by it (0.2 mm3 of 1830); below, what is then refused is
+made again at the latest level, so the chamfer is made at every level:
+8557.4895 at 0.3.
+
+![issue273_rim_chamfer_0.3](pictures/issue273_rim_chamfer_0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
