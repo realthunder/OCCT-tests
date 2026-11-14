@@ -6624,11 +6624,17 @@ reaches 0.300 at 3; at 2, 6.07 and 2.001.
 
 **What it does not do.** The chamfer's corner of two (the section above)
 keeps its limit on a surface that runs past the vertex, at every level.
-Let through at level 3, it made four chamfers of #523's box with the
-top's chamfer 4 round the post: that corner finds a crossing for the
-line, far out, and a line that is crossed is not cut. So the 96 sound
-pairs the limits turn away are still turned away; and the rail's pairs
-at 1 are refused (an invalid shape).
+Let through at level 3, it made four chamfers of #523's box wrong: the
+post's line on the box's side with the box's top edge, the top split
+along the edge's chamfer carried on across the post's top, and the
+corner's patch over all of that top (7.9 of area, reaching 4 from the
+edges). The corner's own cuts are at the vertex there, 0.3 along each
+stripe; why the top is split that far is not known. (`fe5e57d291`'s
+message and its comment in `ChFi3d_ChBuilder_C2.cxx` said that corner
+finds a crossing for the line, far out. That was a guess, and a trace of
+the corner does not show it; the comment is put right in `13c9971e34`.) So
+the 96 sound pairs the limits turn away are still turned away; and the
+rail's pairs at 1 are refused (an invalid shape).
 
 **Validation** (`fe5e57d291` against `ad184c02f7`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
