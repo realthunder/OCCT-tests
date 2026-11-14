@@ -1295,7 +1295,8 @@ a thickness of two faces, an offset, the cut, fuse, common, general fuse
 and section with a moved copy, the fuse refined, the common with a box, a
 solid of the general fuse's compsolid -- each in three processes, the
 faces, edges and vertices of each result in order compared (414 results,
-76 of them refusals): all the same in the three runs but one. The offset
+76 of them refusals; the run of #474's Fillet002 ended after six, in
+time): all the same in the three runs but one. The offset
 of #474's coil by 0.2 (`Part.Shape.makeOffsetShape(0.2, 1e-3)` on
 `../draft/sweep/shapes/issue474_Fillet.brep`; invalid in every run) has
 one vertex at x = -12.998 in some runs and at -13.000 in others, 5 and 3
