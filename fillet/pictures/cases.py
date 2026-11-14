@@ -114,6 +114,7 @@ STAGES = {
     "scpoint": ("13c9971e34", "4c5359fcbc"),
     "sfour": ("4c5359fcbc", "3ee86acb22"),
     "schsetback": ("3ee86acb22", "3f5f5832d5"),
+    "schinvalid": ("3f5f5832d5", "d2c2d39f9d"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1219,6 +1220,13 @@ CASES = {
         "sfour", "p962", [((17.3560383, -9.4249899, -9.75), (38.5, 10.2, -9.75)),
                           ((38.5, 10.2, -3.75), (38.5, 10.2, -9.75))],
         1.0, 11572.0786, (38.3, 10.0, -9.4), (0.4, -1, -0.8)),
+    # #962, a concave edge (0.69 long, the end of a chain) with a convex one
+    # at a vertex of three edges, chamfered at 0.3: the corner of two built
+    # as a corner of several edges, invalid; set back
+    "issue962_invalid_corner_set_back_chamfer_e76_e77_0.3": (
+        "schinvalid", "p962", [((49.308025, 17.1, 14), (50, 17.1, 14)),
+                               ((50, 17.1, 14), (50, 13.7, 14))],
+        0.3, 11584.5076, (50, 17.1, 14), (1, 0.7, -0.6)),
     "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
                            1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
@@ -1706,6 +1714,7 @@ CHAMFER = {
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (1.0,),
     "issue523_post_side_and_top_edge_chamfer_e12_e14_1": (1.0,),
     "issue962_arm_foot_and_upright_chamfer_e25_e49_1": (1.0,),
+    "issue962_invalid_corner_set_back_chamfer_e76_e77_0.3": (0.3,),
     "issue273_f001_pocket_rim_chamfer_e39_0.3": (0.3,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
@@ -1775,6 +1784,8 @@ ZOOMLABEL = {
                                                           (110, 110, 110)),
     "issue962_arm_foot_and_upright_chamfer_e25_e49_1": ("the corner of the two chamfers, from "
                                                         "below", (240, 240, 240)),
+    "issue962_invalid_corner_set_back_chamfer_e76_e77_0.3": ("the corner of the two chamfers",
+                                                             (240, 240, 240)),
     "issue273_f001_pocket_rim_chamfer_e39_0.3": ("the chamfer's end at the pocket's corner",
                                                  (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
@@ -1817,6 +1828,8 @@ EDGES = {
                                           "under a wall",
     "issue962_arm_foot_and_upright_chamfer_e25_e49_1": "the arm's foot on the block and the "
                                                        "upright edge where the arm meets it",
+    "issue962_invalid_corner_set_back_chamfer_e76_e77_0.3": "a concave edge and a convex one at "
+                                                            "a vertex of three edges",
     "issue962_groove_v38_e54_e90_r1": "the groove floor's edge at the mouth and the wall's foot",
     "issue474_f003_coilfoot_v1_e6_e10_r1": "the coil's foot and the block's top edge beside it",
     "fin_on_block_wall_piece_foot_and_top_r1": "the 0.7 piece of the edge under the fin's wall "

@@ -2471,6 +2471,21 @@ would take whole, and a result with an edge its own vertices cover
 
 ![issue273_f001_pocket_rim_chamfer_e39_0.3](pictures/issue273_f001_pocket_rim_chamfer_e39_0.3.png)
 
+### A chamfer's corner built, but invalid (`d2c2d39f9d`, #962)
+
+A concave edge, the short end of a chain, meets a convex one at a vertex
+of three edges. Chamfered at 0.3 the corner of the two is built, as a
+corner of several edges, and the result is invalid: refused. (At 1 that
+corner fails, and is made set back since `3f5f5832d5`.) Such a result
+now has its corner set back too, from fix level 3 -- where one corner is
+at fault, at a vertex of three sharp edges: 11584.5076 here, and 80
+chamfers of the vertex sweep. With two corners, or at a vertex of four
+sharp edges, some of what came out cut several times the cube of the
+chamfer's size more than the two edges alone, sizes away from the
+vertex, and nothing told those from the sound ones; they stay refused.
+
+![issue962_invalid_corner_set_back_chamfer_e76_e77_0.3](pictures/issue962_invalid_corner_set_back_chamfer_e76_e77_0.3.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

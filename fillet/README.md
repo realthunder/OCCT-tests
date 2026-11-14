@@ -6123,10 +6123,11 @@ chamfer of a rim beside a chord", below.
 
 Level 3 (2026-11-14, `fe5e57d291`) is a line that runs past the vertex,
 cut there: "Fix level 3", below. From level 3 too (2026-11-15,
-`3f5f5832d5`) a chamfer whose corner fails is made with the corner set
-back -- only what no level makes whole, as below level 3 the end is
-passed over and the levels above are tried: "A chamfer's corner set
-back", below.
+`3f5f5832d5`, `d2c2d39f9d`) a chamfer whose corner fails, or is built
+invalid, is made with the corner set back -- only what no level makes
+whole, as below level 3 the end is passed over and the levels above are
+tried: "A chamfer's corner set back" and "A chamfer's corner built, but
+invalid", below.
 
 What was refused needs no level, so a computation below the latest level
 that makes nothing -- it failed, or its result was refused as invalid --
@@ -6906,6 +6907,104 @@ its baseline; the thickness sweep 928 of 928; of the 29 issue models made
 again, not a result (one message names the other of a pocket's two twin
 properties). FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run:
 macOS, the frozen suite, thickness levels 1 and 2.
+
+## A chamfer's corner built, but invalid (`d2c2d39f9d`, from fix level 3, 2026-11-15)
+
+**Where it was met.** #962, a concave edge 0.69 long at the end of a
+chain with a convex one, at a vertex of three edges, chamfered at 0.3
+(`issue962_invalid_corner_set_back_chamfer_e76_e77_0.3`; E68 and E69 of
+the chamfer's input). At 1 the corner fails, and since `3f5f5832d5` it is
+made set back. At 0.3 it does not fail: the corner of two chamfers is
+built as a corner of several edges, by the plate, and the result is
+invalid -- refused, as before. The fallback that sets back the corners
+the plate made of an invalid result was for fillets.
+
+**What was tried.** Let at every chamfer result that is built with a
+plate corner and invalid (or looser than a twentieth of the chamfer, the
+term a corner of two chamfers is refused on), the vertex sweep made 152
+chamfers that were refused. Each pair was put against its two edges
+chamfered alone, put together -- what is in both, and what either adds
+to the input: where the pair differs from that, by how much, and how far
+from the vertex. Twice: by cuts, which fail on a third of them (the set
+back patch lies within its tolerance of the faces under it; "A chamfer's
+corner set back", what is left), and by 24000 random points about each
+corner, classified in the pair's solid, the two alone and the input,
+which takes no cut.
+
+- *The plate made two corners* (16). The one that was sound is set back
+  with the other. #474's coil, E17 with E20 at 0.3: 5.8 cubes of the
+  chamfer's size less than the two alone, up to 13 sizes from the vertex.
+- *One corner, at a vertex not of three sharp edges* (56). #962, E50 with
+  E51 at 1: 4.4 cubes less, up to 4.9 sizes from the vertex; #631, E9
+  with E16: 2.1 less, up to 3.5. Others are no further than 2.2 sizes
+  but 1 to 2 cubes off. Nothing was found that tells them apart.
+- *One corner at a vertex of three sharp edges* (80). None is off the
+  two alone further than 2.2 sizes from its vertex, nor by more than 0.6
+  cubes -- but the eight set back by one and a half sizes (1.7 cubes, a
+  corner set back taking less).
+
+**The fix.** After the step back, which makes some of these today, a
+chamfer result with a plate corner that is invalid or too loose has that
+corner set back (`ComputeSetbackFallback`) -- where the plate made one
+corner, and that at a vertex of three sharp edges. From fix level 3, as
+where a chamfer's corner fails; below it the end is noted as passed over
+and the levels above are tried.
+
+| Case | What |
+|------|------|
+| `issue962_invalid_corner_set_back_chamfer_e76_e77_0.3`, `_e68_e69_0.3` | the concave and the convex edge, on the fillet's input and the chamfer's: 11584.5076, 11698.2000 (refused) |
+| `issue962_invalid_corner_set_back_chamfer_e1_e4_0.3` | a rim with an upright edge, the fourth edge at their vertex smooth: 11701.5689 (refused) |
+| `issue309_invalid_corner_set_back_chamfer_e1_e2_0.3` | #309: 12760.8446 (refused) |
+| `issue631_invalid_corner_set_back_chamfer_e21_e32_0.3` | #631's Fillet001, set back by the chamfer's size: 42215.4366 (refused) |
+| `issue962_invalid_corner_set_back_chamfer_e48_e64_1` | set back by one and a half sizes: 11689.6730 (refused) |
+| `mini_fin_base_invalid_corner_set_back_chamfer_e3_e14_0.3` | a fin on its base: 770.1357 (refused) |
+| `mini_slot_split_short_piece_chamfer_e9_e16_1` | a chamfer of 1 on a 0.7 piece of an edge with the edge up from its end. Refused in the suite until now as wrong: by the corner of several edges vertices of 0.23 ("Two chamfers at a vertex", above). Set back, vertices of 0.007 and 0.06 cubes off the two alone: 1120.7760 |
+| `issue474_coil_two_plate_corners_chamfer_e17_e20_0.3` | stays refused: two corners |
+| `issue962_four_sharp_edges_chamfer_e50_e51_1`, `issue631_four_sharp_edges_chamfer_e9_e16_1` | stay refused: four sharp edges |
+
+`models/pictures/issue962_invalid_corner_set_back_chamfer_e76_e77_0.3.png`.
+
+**Checked by another measure.** The 80, against the two alone: by the
+cuts, where they work (59), none further than 2.2 sizes from its vertex
+(46 within 1.5); by the random points 59 within 1.5 sizes, 14 within
+2.2. Six have a few points further out, 0.04 to 0.15 cubes; on the two
+looked at (#631's Fillet001, E21 with E32 at 1; #962, E52 with E86 at
+0.3) they are the point classifier's and not the shape's -- below. One
+(#474's Fillet002, E44 with E49) is measured by the cuts only. All 80
+are clean by BOP's check; no vertex is looser than 0.036 of the size
+(off #273, whose input has 0.03).
+
+The same on the 53 pairs `3f5f5832d5` made, whose check then -- no
+further from the edges than alone -- says nothing where an edge runs on
+along a chain: by the random points all 53 are within 1.65 sizes of
+their vertex (43 within 1.5), none off by more than 0.9 cubes but the
+eight set back by one and a half sizes (1.5).
+
+**What is left.**
+
+- *The point classifier.* #631's Fillet001, E21 with E32 chamfered at 1
+  (valid, its volume the two alone's to 0.01): the point (47.056, 38.163,
+  95.37), 0.56 inside the solid -- its nearest face the cylinder's, as in
+  the input, which has it inside -- is classified outside. With the
+  solid's faces listed the other way round, inside. Not looked into.
+- The 72 left refused: the two-corner results want the fallback to set
+  back only the corner the invalid part is at (as for the fillets, "A
+  chamfer's corner set back", what is left); the four-edge ones a way to
+  tell the sound from the others.
+
+**Validation** (`d2c2d39f9d` against `3f5f5832d5`, on Linux): the chamfer
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+at level 0 and at level 3 each against `3f5f5832d5` at that level: the 80
+chamfers at vertices made that were refused, the same volumes at both
+levels, nothing else. The fillet sweeps at levels 0 and 3: not a line. The
+suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3: of the 901, 900 the
+same line for line at each and `mini_slot_split_short_piece_chamfer_e9_e16_1`
+made where it was refused, and the ten new ones above. Boolean 103, draft
+105, thickness PASS=695 at level 0 and at level 3 frozen, every case line
+the same; the thickness corpus as its baseline; the thickness sweep 928
+of 928; of the 29 issue models made again, not a result (in one, three
+messages in another order). FreeCAD (`7e8a9fdad3`): the Python suite 4388
+OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

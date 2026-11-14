@@ -3440,14 +3440,13 @@ for _es, _vol in (([38, 42], 8535.0406), ([39, 42], 8534.8062)):
     fillet_case("issue273_f001_pocket_rim_and_upright_chamfer_%s_0.3"
                 % "_".join("e%d" % e for e in _es), p273f1, _es, 0.3, "pass", _vol, chamfer=True,
                 vol_tol=1e-3)
-# What stays refused. A chamfer of 1 on a 0.7 piece of an edge with the
-# edge up from its end: made with vertices of 0.23. (Two chamfers at a vertex
-# of four edges, one of them a split between coplanar faces, were refused
-# here too -- by the corner of several edges BOP's check reports the
-# result's vertices, and a cut with it fails: issue962_split_wall_chamfer_
-# e2_e6_1, below, made since with its corner set back.)
-refused_case("mini_slot_split_short_piece_chamfer_e9_e16_1", sweep_shape("mini_slot_split"),
-             [9, 16], 1, chamfer=True)
+# (What the corner of several edges made wrongly was refused here: a
+# chamfer of 1 on a 0.7 piece of an edge with the edge up from its end, with
+# vertices of 0.23 -- mini_slot_split_short_piece_chamfer_e9_e16_1 -- and
+# two chamfers at a vertex of four edges, one of them a split between
+# coplanar faces, where BOP's check reports the result's vertices and a cut
+# with it fails -- issue962_split_wall_chamfer_e2_e6_1. Both are below, made
+# since with the corner set back.)
 # Fix level 3: at a corner of several edges a stripe's line that no
 # neighbour crosses, and that runs on past the vertex by more than one and
 # a half times the stripe's size, is cut at the vertex. A fillet of two
@@ -3576,6 +3575,38 @@ for _es, _vol in (([5, 6, 17, 20], 1756.7311), ([11, 12, 17, 25], 1788.6947)):
     fillet_case("issue474_coil_three_chamfers_and_smooth_edge_chamfer_%s_1"
                 % "_".join("e%d" % e for e in _es), sweep_shape("issue474_Fillet"), _es, 1, "pass",
                 _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# A corner of two chamfers built, but invalid (or looser than a twentieth
+# of the chamfer): set back as one that fails, from fix level 3 -- where
+# the plate made one corner, and that at a vertex of three sharp edges.
+# #962, E68 (concave) with E69 (convex) at 0.3; E1 with E4, the fourth edge
+# at their vertex smooth; #309, E1 with E2; #631's Fillet001, E21 with E32,
+# set back by the chamfer's size; #962, E48 with E64 at 1, by one and a
+# half; a fin on its base, E3 with E14.
+for _name, _shape, _es, _d, _vol in (
+        ("issue962_invalid_corner_set_back", _arm962c, [68, 69], 0.3, 11698.2000),
+        ("issue962_invalid_corner_set_back", _arm962, [76, 77], 0.3, 11584.5076),
+        ("issue962_invalid_corner_set_back", _arm962c, [1, 4], 0.3, 11701.5689),
+        ("issue309_invalid_corner_set_back", sweep_shape("issue309_shape"), [1, 2], 0.3,
+         12760.8446),
+        ("issue631_invalid_corner_set_back", _b631a, [21, 32], 0.3, 42215.4366),
+        ("issue962_invalid_corner_set_back", _arm962c, [48, 64], 1, 11689.6730),
+        ("mini_fin_base_invalid_corner_set_back", sweep_shape("mini_finbase"), [3, 14], 0.3,
+         770.1357),
+        # (refused until now: by the corner of several edges vertices of
+        # 0.23, set back 0.007)
+        ("mini_slot_split_short_piece", sweep_shape("mini_slot_split"), [9, 16], 1, 1120.7760)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# Not where the plate made two corners -- the sound one is set back with
+# the other (#474's coil, E17 with E20 at 0.3: 5.8 cubes of the chamfer's
+# size less than the two edges alone put together, up to 13 sizes from the
+# vertex) -- nor at a vertex of four sharp edges (#962, E50 with E51 at 1:
+# 4.4 cubes less, up to 4.9 sizes away; #631, E9 with E16: 2.1, up to 3.5).
+refused_case("issue474_coil_two_plate_corners_chamfer_e17_e20_0.3", sweep_shape("issue474_Fillet"),
+             [17, 20], 0.3, chamfer=True)
+refused_case("issue962_four_sharp_edges_chamfer_e50_e51_1", _arm962c, [50, 51], 1, chamfer=True)
+refused_case("issue631_four_sharp_edges_chamfer_e9_e16_1", sweep_shape("issue631_Fillet"), [9, 16],
+             1, chamfer=True)
 # And not before a level above makes the chamfer whole: #631's ellipse at
 # 0.8 is level 1's guide (41501.9498, vertices of 0.00016); set back at
 # level 0 first it was 41502.3346 with vertices of 0.04.
