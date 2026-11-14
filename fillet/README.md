@@ -6865,10 +6865,32 @@ edges alone.
 
 **What is left.** The cut of #474's coil with its own chamfer at
 (-13, 0, 11), and with the *fillet* of the same edges as made before this
-change, returns both shapes whole (the common of the two, nothing): a
-boolean's fault, not looked into. Chamfer pairs still refused where each
-edge alone is chamfered: those the corner set back makes invalid, loose
-or not as deep as asked.
+change, returns both shapes whole (the common of the two, nothing). Looked
+into on the smallest case that shows it, the fillet of E17 and E20 at 1
+(the general fuse of the coil and the fillet: three solids, 1884.8436,
+1884.3987 and 2.4990, the first two one inside the other): the piece the
+fillet of E17 adds is not closed at the fillet's far end, (-9, 0, 11).
+That end is set back, and of its patch (tolerance 0.012) an area of 1.02
+lies within that tolerance of the two faces of the input under it, beside
+the smooth edge up from the vertex; the fuse neither takes the patch for
+those faces nor cuts them by it, and three edges there are left with one
+face. Not a fault of the fillet's shape -- it is valid, and BOP's check
+is clean -- but nothing that shares the input's faces there can be fused
+with it. Two things follow, neither done:
+
+- That far end need not be set back at all: E17 alone is made without
+  (vertices of 0.003, and its cut is right). The corner at (-13, 0, 11)
+  fails, the computation made again with the ends there as break points
+  builds both corners with the plate and is invalid, and the fallback
+  then sets back every corner the plate made. Setting back only those the
+  invalid part is at would leave the far end as it is alone -- a
+  different shape for a fillet made today, so a fix level.
+- With E5 as well (E5, E17, E20) only (-13, 0, 11) is set back and the
+  fuse returns the two bodies whole, not split at all; where that one is
+  open was not looked for.
+
+Chamfer pairs still refused where each edge alone is chamfered: those the
+corner set back makes invalid, loose or not as deep as asked.
 
 **Validation** (`3f5f5832d5` against `3ee86acb22`, on Linux): the chamfer
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
