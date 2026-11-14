@@ -111,6 +111,7 @@ STAGES = {
     "swalk": ("f378bf5c5e", "94464f1dc6"),
     "stwo": ("94464f1dc6", "ad184c02f7"),
     "slevel3": ("ad184c02f7", "fe5e57d291"),
+    "scpoint": ("13c9971e34", "4c5359fcbc"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1556,6 +1557,14 @@ CASES = {
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (
         "stwo", "p523s", [((0, 2, 0), (0, 2, 10)), ((0, 2, 0), (2, 0, 0), (-1.4142136, -1.4142136, 0))],
         1.0, 1094.7154, (-0.3, 1.8, 0.4), (-1, 0.5, -0.7)),
+    # the post's line on the box's side with the box's top edge: the edge's
+    # line runs on over the post's top and leaves it across the rim's circle
+    # in the quarter the rim's edge does not cover; its common point there
+    # had the parameter of the line's other crossing, and the corner put the
+    # rim's point at that
+    "issue523_post_side_and_top_edge_chamfer_e12_e14_1": (
+        "scpoint", "p523s", [((0, 2, 0), (0, 2, 10)), ((0, 2, 10), (0, 10, 10))],
+        1.0, 1094.4233, (-0.3, 1.8, 9.6), (-1, 0.5, 0.7)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1672,6 +1681,7 @@ CHAMFER = {
     "issue273_rim_chamfer_2": (2.0,),
     "issue631_corner_chamfer_e10_e20_1": (1.0,),
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (1.0,),
+    "issue523_post_side_and_top_edge_chamfer_e12_e14_1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1736,6 +1746,8 @@ ZOOMLABEL = {
     "issue631_corner_chamfer_e10_e20_1": ("the corner of the two chamfers", (110, 110, 110)),
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": ("the corner of the two chamfers",
                                                             (110, 110, 110)),
+    "issue523_post_side_and_top_edge_chamfer_e12_e14_1": ("the corner of the two chamfers",
+                                                          (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1847,6 +1859,9 @@ EDGES = {
     "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": "the post's line on the box's side, "
                                                            "(0,2,0)-(0,2,10), and its rim at the "
                                                            "bottom",
+    "issue523_post_side_and_top_edge_chamfer_e12_e14_1": "the post's line on the box's side, "
+                                                         "(0,2,0)-(0,2,10), and the box's top "
+                                                         "edge from it, (0,2,10)-(0,10,10)",
 }
 
 

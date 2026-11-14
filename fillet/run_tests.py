@@ -3440,16 +3440,10 @@ for _es, _vol in (([38, 42], 8535.0406), ([39, 42], 8534.8062)):
     fillet_case("issue273_f001_pocket_rim_and_upright_chamfer_%s_0.3"
                 % "_".join("e%d" % e for e in _es), p273f1, _es, 0.3, "pass", _vol, chamfer=True,
                 vol_tol=1e-3)
-# What stays refused. The arm's foot on #962's block with the arm's side
-# where it leaves the cylinder: the foot's surface runs on 13 past the
-# vertex along the block's foot, and the corner of several edges left it in
-# the result -- valid, clean by BOP's check, a chamfer of an edge nobody
-# asked for. A chamfer of 1 on a 0.7 piece of an edge with the edge up from
-# its end: made with vertices of 0.23. Two chamfers at a vertex of four
-# edges, one of them a split between coplanar faces: BOP's check reports
-# the result's vertices, and a cut with it fails.
-refused_case("issue962_arm_foot_run_on_chamfer_e15_e45_0.3", sweep_shape("issue962_Chamfer"),
-             [15, 45], 0.3, chamfer=True)
+# What stays refused. A chamfer of 1 on a 0.7 piece of an edge with the
+# edge up from its end: made with vertices of 0.23. Two chamfers at a vertex
+# of four edges, one of them a split between coplanar faces: BOP's check
+# reports the result's vertices, and a cut with it fails.
 refused_case("mini_slot_split_short_piece_chamfer_e9_e16_1", sweep_shape("mini_slot_split"),
              [9, 16], 1, chamfer=True)
 refused_case("issue962_split_wall_chamfer_e2_e6_1", sweep_shape("issue962_Chamfer"), [2, 6], 1,
@@ -3501,6 +3495,29 @@ for _lvl, _vol in ((0, 8557.8886), (2, 8557.8886), (3, 8557.4825)):
     fillet_case("issue273_crease_and_rim_chamfer_e5_e6_0.3_level%d" % _lvl,
                 sweep_shape("issue273_Fillet"), [5, 6], 0.3, "pass", _vol, chamfer=True,
                 vol_tol=1e-3, fix_level=_lvl)
+# A chamfer whose surface runs on past the vertex, with another at a
+# vertex of three edges (the corner of two that was let at the corner of
+# several edges only where neither ran on, above). The corner put its point
+# on the third edge by a common point of the stripe that lies on that edge
+# with a parameter that is not where the point is: the line left the face
+# across the edge's curve beyond the edge's end, the point there, the
+# parameter that of the curve's other crossing. #523's box: the box's top
+# edge runs on over the post's top, whose rim is three quarters of a
+# circle, and crosses the quarter that is not there; the corner's patch
+# went over the whole top of the post (valid, the top's chamfer 4 from its
+# edge). #962's arm: its foot's chamfer 13 along the block's foot. Such a
+# point places nothing now, and from fix level 3, which cuts the line at
+# the vertex, the corner of two is let at these -- at every level so, what
+# a level refuses being made at the next that makes it.
+_arm962c = sweep_shape("issue962_Chamfer")
+for _name, _shape, _es, _d, _vol in (
+        ("issue523_post_side_and_top_edge", _box523, [12, 14], 0.3, 1094.3183),
+        ("issue523_post_side_and_top_edge", _box523, [12, 14], 1, 1094.4233),
+        ("issue523_side_foot_and_post_side", _box523, [8, 10], 0.3, 1094.3183),
+        ("issue962_arm_foot_and_slanted_side", _arm962c, [15, 45], 0.3, 11696.6244),
+        ("issue962_arm_foot_and_slanted_side", _arm962c, [15, 45], 1, 11684.5709)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")

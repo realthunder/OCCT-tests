@@ -6522,7 +6522,7 @@ as deep along its edge (0.212 at 0.3).
 | `issue273_dhole_rim_and_flat_chamfer_e35_e41_0.3` | #273's D-hole, its rim with the flat's edge: 8559.4848 |
 | `mini_wall_two_edges_chamfer_e4_e12_1` | the minimal wall: 990.4474 |
 | `issue273_f001_pocket_rim_and_upright_chamfer_e38_e42_0.3`, `_e39_e42_0.3` | the pocket in #273's handle, a rim with the upright edge at its end: 8535.0406, 8534.8062 (the long rim alone is still refused at 0.3, the section above) |
-| `issue962_arm_foot_run_on_chamfer_e15_e45_0.3` | stays refused: the foot's surface runs 13 past the vertex |
+| `issue962_arm_foot_run_on_chamfer_e15_e45_0.3` | stayed refused, the foot's surface running 13 past the vertex, until `4c5359fcbc` made it right ("A common point that is not where its parameter is", below, where the case has another name) |
 | `mini_slot_split_short_piece_chamfer_e9_e16_1` | stays refused: vertices of 0.23 |
 | `issue962_split_wall_chamfer_e2_e6_1` | stays refused: a vertex of four edges |
 
@@ -6537,6 +6537,8 @@ would have to cut a surface back to the vertex itself before it is let at
 them. And 265 the fallback does not make either, an invalid shape or no
 corner: `issue523_box` E8 with E10, the foot of the box's side with the
 post's line on it, is one -- the foot's chamfer runs on under the post.
+(Since: 8 more with fix level 3 and 60 with `4c5359fcbc`, that pair of
+the box among them; 314 are left. The two sections below.)
 
 **Validation** (`ad184c02f7` against `94464f1dc6`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
@@ -6634,7 +6636,8 @@ message and its comment in `ChFi3d_ChBuilder_C2.cxx` said that corner
 finds a crossing for the line, far out. That was a guess, and a trace of
 the corner does not show it; the comment is put right in `13c9971e34`.) So
 the 96 sound pairs the limits turn away are still turned away; and the
-rail's pairs at 1 are refused (an invalid shape).
+rail's pairs at 1 are refused (an invalid shape). (The cause was found
+after, and 60 of those pairs made: the next section.)
 
 **Validation** (`fe5e57d291` against `ad184c02f7`, on Linux): the fillet
 sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
@@ -6649,6 +6652,78 @@ its baseline; the thickness sweep 928 of 928; of the 29 issue models made
 again with FreeCAD at level 3, not a line. FreeCAD (`7e8a9fdad3`): the
 Python suite 4388 OK. Not run: macOS, the frozen suite, thickness levels
 1 and 2.
+
+## A common point that is not where its parameter is (`4c5359fcbc`, 2026-11-15)
+
+**Where it was met.** The limit on the chamfer's corner of two, kept at
+fix level 3 because #523's box came out wrong without it, for a reason
+the section above could not give.
+
+**What was broken.** At a corner of several edges the point on a sharp
+edge is stepped back to a neighbouring stripe's common point where that
+lies on the edge, by the common point's parameter on it
+(`PerformMoreThreeCorner`, "it is attempted to limit the edge by a
+commonpoint"). A line that leaves its face across the edge's *curve*
+beyond the edge's end has its common point there, and for its parameter
+that of the curve's other crossing, which is on the edge.
+
+The box has a round post on its upright edge. The box's top edge,
+chamfered, has its line on the top run on over the post's top to the
+post's rim: a circle of which the rim's edge is three quarters, 90 to
+360 deg. The line's common point is at (0.300, 1.977, 10) -- the circle
+at 81.4 deg, 0.3 from the vertex, in the quarter that is not there. Its
+parameter on the rim is 4.8630, 278.6 deg: the line's other crossing,
+3.95 away. With the post's line on the box's side chamfered too, the
+corner put the rim's point there, and its patch over the whole top of
+the post: valid, clean by BOP's check, the top's chamfer reaching 4 from
+its edge.
+
+**The fix.** A common point on the edge places the edge's point only
+where the edge's point at its parameter is the common point (`isOnSharp`;
+it was already so for a common point on another arc). No fix level:
+nothing the sweeps made before moves by it, at level 0 or at 3.
+
+With it, and with level 3's cut of a line at the vertex, the chamfer's
+corner of two is let at a surface that runs past the vertex from fix
+level 3. Below it the corner is left as before and noted as passed over,
+so it is made at the next level that makes it: at every level.
+
+| Case | What |
+|------|------|
+| `issue523_post_side_and_top_edge_chamfer_e12_e14_0.3`, `_1` | the post's line on the box's side with the box's top edge: 1094.3183, 1094.4233, clean by BOP's check (refused; the top of the post gone when first let through) |
+| `issue523_side_foot_and_post_side_chamfer_e8_e10_0.3` | the foot of the box's side with the post's line: 1094.3183 (refused) |
+| `issue962_arm_foot_and_slanted_side_chamfer_e15_e45_0.3`, `_1` | #962's arm, its foot with the side where it leaves the cylinder: 11696.6244, 11684.5709 (refused; the foot's chamfer 13 along the block's foot when first let through). It was `issue962_arm_foot_run_on_chamfer_e15_e45_0.3`, held refused, in the section before last |
+
+`models/pictures/issue523_post_side_and_top_edge_chamfer_e12_e14_1.png`.
+
+**Checked by another measure.** 60 chamfers of the vertex sweep made that
+were refused, the same 60 at level 0 and at 3. 58 were cut from the input
+and the input from them: each within 0.42 of a cube of its size of its
+two edges chamfered alone, and what it takes and adds reaches no further
+from its edges than alone -- the box's 0.300 where it was 4.000, the
+arm's 0.300 where it was 13.45. The other two are on
+`issue273_Fillet001`, the pocket's short rim with a long one (which is
+refused alone at 0.3): no cut gets past that input's vertices; each is
+as deep along both edges as a chamfer alone, 0.212.
+
+**What is left.** 314 pairs of the vertex sweep refused as chamfers where
+each edge alone is chamfered, 302 of them made as fillets: those at a
+vertex of four edges, which the corner of two is not let at (51 of them
+sound by these measures when it was, and 4, with a split between
+coplanar faces, not), those looser than a twentieth of the chamfer, and
+those the corner of several edges makes invalid or not at all.
+
+**Validation** (`4c5359fcbc` against `13c9971e34`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered, at level 0 and at level 3 each against
+`13c9971e34` at that level: the 60 chamfers at vertices made that were
+refused, nothing else -- not a fillet, not a chamfer of an edge. The suite
+PASS=887 XFAIL=1 at fix levels 0, 1, 2 and 3: the 883 less the one case
+that was held refused, and five. Boolean 103, draft 105, thickness
+PASS=695 at level 0 and at level 3 frozen, every case line the same; the
+thickness corpus as its baseline; the thickness sweep 928 of 928; of the
+29 issue models made again, not a line. FreeCAD (`7e8a9fdad3`): the Python
+suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

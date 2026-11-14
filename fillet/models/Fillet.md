@@ -2419,6 +2419,26 @@ next level above it that makes it.
 
 ![issue962_rail_in_line_e51_e52_r0.3](pictures/issue962_rail_in_line_e51_e52_r0.3.png)
 
+### A common point that is not where its parameter is (`4c5359fcbc`, #523's box)
+
+The box's top edge and the post's line on the box's side, chamfered. The
+top edge's line on the top runs on over the post's top and leaves it
+across the post's rim -- a circle of which the rim's edge is three
+quarters, and the line crosses the quarter that is not there. Its common
+point is at that crossing, 0.3 from the vertex, with the parameter of the
+circle's other crossing, 3.95 away on the edge. A corner of several
+edges steps the point on its sharp edge back to such a common point by
+its parameter: the rim's point went to the far crossing and the corner's
+patch over the whole top of the post, valid and clean by BOP's check.
+That is why the corner of two chamfers was not let at a surface that
+runs past the vertex. A common point places the edge's point only where
+the edge's point at its parameter is the common point now, and from fix
+level 3 the corner of two is let at such surfaces: 60 chamfers of the
+vertex sweep made that were refused, this one 1094.4233 at 1, what it
+takes and adds within 1.000 of its edges.
+
+![issue523_post_side_and_top_edge_chamfer_e12_e14_1](pictures/issue523_post_side_and_top_edge_chamfer_e12_e14_1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;
