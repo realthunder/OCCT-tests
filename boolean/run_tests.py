@@ -583,6 +583,41 @@ def issue631_chamfer_classify():
 
 guarded(issue631_chamfer_classify)
 
+
+# A solid made of a compsolid (BRepLib_MakeSolid): the faces met once, in
+# the order they are met. They came out of a map keyed by the shape, in the
+# order of the addresses the faces happened to have -- another from one run
+# to the next (FreeCAD's Connect of a box and a cylinder, #523: an edge of
+# the result Edge3 in one run and Edge6 in the next). Here the pieces of a
+# box and a cylinder's general fuse, as Connect merges them (README.md, "A
+# solid of a compsolid, its faces in another order every run").
+def makesolid_face_order():
+    box = Part.makeBox(10, 10, 10)
+    cyl = Part.makeCylinder(2, 10)
+    pieces = box.generalFuse([cyl])[0].Solids
+    comp = Part.CompSolid(pieces)
+    met, count = [], []
+    for sh in comp.Shells:
+        for f in sh.Faces:
+            for k, g in enumerate(met):
+                if g.isSame(f):
+                    count[k] += 1
+                    break
+            else:
+                met.append(f)
+                count.append(1)
+    want = [f for f, n in zip(met, count) if n % 2]
+    solid = Part.makeSolid(comp)
+    got = solid.Faces
+    ok = len(got) == len(want) and all(a.isSame(b) for a, b in zip(got, want))
+    report("makesolid_face_order", ok and solid.isValid(),
+           "%d faces (want %d), %s the order they are met in, %s" % (
+               len(got), len(want), "in" if ok else "NOT in",
+               "valid" if solid.isValid() else "invalid"))
+
+
+guarded(makesolid_face_order)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

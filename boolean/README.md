@@ -1242,7 +1242,7 @@ models made again, not a result. (The message that tells which element a
 reference was moved to names another edge or face from one run to the
 next in two of them, #521 and #523, with the same kernel: a `Connect`
 whose faces come out in an order that is not the same twice. Not this
-change's, and not looked into.)
+change's; the next section.)
 
 **Validation** (against `d2c2d39f9d`, on Linux): boolean 105 (103 +
 these 2), draft 105, thickness PASS=695 at level 0 and at level 3 frozen,
@@ -1250,3 +1250,48 @@ the fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every case
 line the same; the thickness corpus as its baseline; the thickness sweep
 928 of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run:
 macOS, thickness levels 1 and 2.
+
+## A solid of a compsolid, its faces in another order every run (`121087d66c`, 2026-11-15)
+
+**Where it was met.** Making the 29 issue models again after the fix
+above: the results were the same to the line, but in
+`../occ-issues/models/issue523_fillet_explodes.FCStd` and
+`issue521_thickness_intersection.FCStd` the message that tells which
+element a reference was moved to named another one -- `Edge6 -> Edge3`
+in three runs, `Edge6 -> Edge6` in the fourth. Not the fix: the same
+kernel gave either from one run to the next.
+
+**What was broken.** Both models have a `Connect`. FreeCAD's Connect
+takes the pieces of a general fuse and merges those it keeps with
+`Part.makeSolid(Part.CompSolid(...))`, which is
+`BRepLib_MakeSolid(TopoDS_CompSolid)`: the faces two solids share are
+left out and the others put in one shell. It kept the faces in a map
+keyed by the shape and added them to the shell in the map's order -- the
+order of the addresses the faces happen to have. The address space is
+laid out at random for each process, so the order was another every run:
+a box with a cylinder, the same solid with its eleven faces in four
+orders in four runs.
+
+**The fix.** The faces are counted in an indexed map and added to the
+shell in the order they are first met. As before, a face met an even
+number of times is left out and reported deleted.
+
+**The cases.** `run_tests.py`, `makesolid_face_order`: the pieces of a
+box and a cylinder's general fuse in a compsolid, the solid made of it --
+its faces are those met once, in the order met (in one run in 40 million
+by chance before).
+
+**What it moved.** No result: not a case line in the suites, not a line
+of the thickness corpus or the thickness sweep, and of the 29 issue models
+made again not a result. The two models' message is the same in three
+runs now (`Edge6 -> Edge3`, `Face6 -> Face6`), where three runs of the
+kernel before gave `Edge6`, `Edge3`, `Edge3` and `Face7`, `Face6`,
+`Face7`; the box and cylinder's Connect, four runs, one order (four
+before).
+
+**Validation** (against `c1b55edd39`, on Linux): boolean 106 (105 + this
+one), draft 105, thickness PASS=695 at level 0 and at level 3 frozen, the
+fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every case line
+the same; the thickness corpus as its baseline; the thickness sweep 928
+of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run: macOS,
+thickness levels 1 and 2.
