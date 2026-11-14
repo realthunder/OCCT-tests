@@ -6982,11 +6982,14 @@ eight set back by one and a half sizes (1.5).
 
 **What is left.**
 
-- *The point classifier.* #631's Fillet001, E21 with E32 chamfered at 1
-  (valid, its volume the two alone's to 0.01): the point (47.056, 38.163,
-  95.37), 0.56 inside the solid -- its nearest face the cylinder's, as in
-  the input, which has it inside -- is classified outside. With the
-  solid's faces listed the other way round, inside. Not looked into.
+- *The point classifier* was wrong on these solids, not they: #631's
+  Fillet001, E21 with E32 chamfered at 1 (valid, its volume the two
+  alone's to 0.01), had the point (47.056, 38.163, 95.37), 0.56 inside
+  it, classified outside. Fixed in the kernel, `c1b55edd39`
+  (`../boolean/README.md`, "A line that passes an edge within its
+  tolerance"); with it the six are
+  within 2.0 sizes of their vertex as the others (the four of #631
+  within 1.1).
 - The 72 left refused: the two-corner results want the fallback to set
   back only the corner the invalid part is at (as for the fillets, "A
   chamfer's corner set back", what is left); the four-edge ones a way to

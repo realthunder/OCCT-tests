@@ -550,6 +550,39 @@ def issue474_helix_classify():
 
 guarded(issue474_helix_classify)
 
+
+# #631's Fillet001 with two edges at a vertex chamfered at 1, the corner set
+# back and closed by a patch with edges of tolerance 0.011: points inside
+# the solid that BRepClass3d_SolidClassifier said outside. Its line from the
+# point passed such an edge within the edge's tolerance, 0.008 from its
+# curve, and the pass was taken for a crossing into the solid, as of a line
+# through the edge (README.md, "A line that passes an edge within its
+# tolerance").
+def issue631_chamfer_classify():
+    solid = Part.read(os.path.join(HERE, "models", "issue631_chamfer_corner.brep"))
+    points = [(46.955725, 37.499967, 94.849289), (45.004238, 36.470048, 92.334427),
+              (46.088384, 37.300863, 93.738921), (47.028547, 38.460188, 95.627670),
+              (45.918066, 38.248505, 94.513218), (46.490766, 38.643030, 95.362799),
+              (47.462874, 37.663013, 95.246202), (46.673168, 37.377404, 94.545603),
+              (46.843711, 37.733031, 94.788969), (47.461501, 37.914552, 95.870643),
+              (45.799292, 37.038818, 93.248019), (45.665392, 38.194349, 94.241543),
+              (46.968651, 38.873260, 95.988404)]
+    said = [q for q in points if not solid.isInside(V(*q), 1e-7, True)]
+    report("issue631_chamfer_points", not said,
+           "%d of %d points inside the solid said outside (want 0)" % (len(said), len(points)))
+    # #962 with two edges chamfered at 0.3, the corner set back, a patch with
+    # edges of 0.0024: the line passes one of them 0.0008 from its curve and
+    # crosses the edge's two faces a thousandth either side of the pass, in
+    # and then out; the first crossing made the point outside.
+    solid = Part.read(os.path.join(HERE, "models", "issue962_chamfer_corner.brep"))
+    points = [(38.409, 26.466, 14.86), (38.428167, 26.430298, 14.902213)]
+    said = [q for q in points if not solid.isInside(V(*q), 1e-7, True)]
+    report("issue962_chamfer_points", not said,
+           "%d of %d points inside the solid said outside (want 0)" % (len(said), len(points)))
+
+
+guarded(issue631_chamfer_classify)
+
 failed = results.count(False)
 emit("---")
 emit("summary: PASS=%d%s" % (results.count(True), "  FAIL=%d" % failed if failed else ""))

@@ -1172,3 +1172,81 @@ fillet suite PASS=827 XFAIL=1, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928. FreeCAD
 (`b4ff77d741`): the Python suite 4388 OK. Not run: macOS, thickness levels
 1 and 2.
+
+## A line that passes an edge within its tolerance (`c1b55edd39`, 2026-11-15)
+
+**Where it was met.** Measuring the chamfers the fillet builder makes with
+a corner set back (`../fillet/README.md`, "A chamfer's corner built, but
+invalid"): random points about each corner, classified in the chamfered
+solid and in the two edges chamfered alone. #631's Fillet001 with E21 and
+E32 chamfered at 1 (`models/issue631_chamfer_corner.brep`: one solid,
+valid, 42166.9504, BOP's check clean) had a handful of points up to 5
+from the corner that were in everything but it. They are in it:
+`BRepClass3d_SolidClassifier` said OUT for (47.056, 38.163, 95.37), which
+is 0.56 inside the solid, its nearest face the cylinder's as in the input.
+Of 60000 points sampled in the cube of 8 about the vertex, 13 inside were
+said outside. With the solid's faces listed in reverse the same point is
+IN.
+
+**What was broken.** The classifier casts a line from the point to a
+point of a face, and takes the first crossing of the solid's skin along
+it. Besides the faces' own crossings it looks at the edges the line
+passes within their tolerance, and took such a pass for a crossing there:
+in or out by the normals of the edge's two faces (`GetTransi`). That is
+how a line *through* the edge crosses. The corner's patch is a B-spline
+face with edges of tolerance 0.011, and the point's line passes one of
+them 0.008 from its curve, at 5.9 -- where it clips a notch of the patch,
+out of the solid and in again within the edge's tolerance, neither
+crossing on a face (the next crossing found is at 98, going out, which
+alone says inside). The pass was read as going in, so the point was
+outside.
+
+A second way, on #962 with E52 and E86 chamfered at 0.3
+(`models/issue962_chamfer_corner.brep`, a patch with edges of 0.0024):
+the line of (38.409, 26.466, 14.86), inside, passes one of those edges
+0.0008 from its curve at 0.7047, and crosses the edge's two faces at
+0.7037, in, and at 0.7053, out, on the border of the second. The line
+only touches the solid there, where the two faces overlap within the
+edge's tolerance; the first of the two crossings was taken, and the
+point was outside.
+
+**The fix.** In `BRepClass3d_SClassifier::Perform`: a pass further from
+the edge's curve than the classifier's tolerance (or the confusion) is no
+crossing. Where it is nearer than the first crossing found it makes the
+line faulty, as a pass by a vertex does, and another line is taken. Where
+every line is faulty so, the lines are taken again with the pass trusted
+as before, so no point that had an answer is left without one. And a
+crossing found on a face no further before such a pass than the edge's
+tolerance makes the line faulty too.
+
+**The cases.** `models/issue631_chamfer_classify.cpp`: the thirteen
+points found are inside (all thirteen said outside before); of 24000
+points sampled about the vertex, none said outside is inside by the
+crossings of seven lines from it counted, each face intersected on its
+own (6 before). `run_tests.py` has the thirteen points, and the two
+found about #962's corner (of 60000 sampled in the cube of 2.4 about it,
+one; the other by the chamfers' measure).
+
+![A line that passes an edge within its tolerance: before and after](models/pictures/issue631_chamfer_classify.png)
+
+**Audit.** The classifier as it was against this one, on 40000 random
+points in the box of each of 44 shapes -- the issues' sweep shapes, the
+fillet suite's models, four results with a set back corner: 3 points of
+1760000 change, all on `issue273_Fillet001` (whose input has vertices of
+0.7), said inside before and outside now; of fifteen lines counted from
+each, 14, 10 and 11 say outside.
+
+**What it moved.** Nothing: not a case line in the suites, not a line of
+the thickness corpus (1073 runs) or the thickness sweep; of the 29 issue
+models made again, not a result. (The message that tells which element a
+reference was moved to names another edge or face from one run to the
+next in two of them, #521 and #523, with the same kernel: a `Connect`
+whose faces come out in an order that is not the same twice. Not this
+change's, and not looked into.)
+
+**Validation** (against `d2c2d39f9d`, on Linux): boolean 105 (103 +
+these 2), draft 105, thickness PASS=695 at level 0 and at level 3 frozen,
+the fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every case
+line the same; the thickness corpus as its baseline; the thickness sweep
+928 of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run:
+macOS, thickness levels 1 and 2.

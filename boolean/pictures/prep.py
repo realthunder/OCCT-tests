@@ -644,6 +644,39 @@ for stage, title in (("before", "before"), ("after", "after")):
           colors={str(k): ORANGE for k in range(nfaces, len(shape.Faces))}, bad=said != 0)
 pictures.append(pic)
 
+# #631: a chamfered solid's corner and the sampled points inside the solid
+# that were said outside, a ball at each
+# (issue631_chamfer_classify.cpp --write). The balls are in the material:
+# only the faces within 5 of the vertex are drawn, seen from inside.
+def chamfer_line(stage):
+    for line in open(os.path.join(W, "631classify", stage + ".txt")):
+        if line.startswith("sample:"):
+            w = line.split(":", 1)[1].split()
+            return int(w[0]), int(w[2])
+
+
+pic = dict(name="issue631_chamfer_classify",
+           title="A line that passes an edge within its tolerance",
+           caption="BRepClass3d_SolidClassifier on 24000 points about a vertex of #631 where two "
+                   "chamfers end in a patch with edges of tolerance 0.011: a ball at each point "
+                   "inside the solid that was said outside. Seen from inside the solid, only "
+                   "the faces about the vertex drawn. The point's line passed an edge of the "
+                   "patch within the edge's tolerance, beside its curve, and that was taken "
+                   "for a crossing into the solid.",
+           panels=[])
+EYE631 = [0.6, 0.35, 0.72]
+C631 = [45.2, 37.2, 93.6]
+V631 = Part.Vertex(V(44.0, 36.332, 92.0))
+for stage, title in (("before", "before"), ("after", "after")):
+    said, of = chamfer_line(stage)
+    shape = Part.read(os.path.join(W, "631classify", stage, "said_out.brep"))
+    near = [f for f in shape.Solids[0].Faces if f.distToShape(V631)[0] < 5.0]
+    balls = [so for so in shape.Solids[1:]]
+    shown = Part.makeCompound(near + balls)
+    panel(pic, shown, title, "%d of %d points inside said outside" % (said, of), EYE631, C631,
+          9, colors={str(k): ORANGE for k in range(len(near), len(shown.Faces))}, bad=said != 0)
+pictures.append(pic)
+
 # #617: the pad on a torus cut through a plane of symmetry, each curve of its
 # profile cut in two -- the input, and the common before and after
 # (issue617_symtorus_pad.cpp --write).

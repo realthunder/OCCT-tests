@@ -115,6 +115,10 @@ fix 617sym dec6b59a04 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.c
 fix 617sunk 3141bc4389 src/ModelingAlgorithms/TKBO/BOPAlgo/BOPAlgo_PaveFiller_6.cxx \
     issue617_symtorus_pad $HERE/../models/issue617_symtorus.brep \
     $HERE/../models/issue617_symtorus_pad_split.brep sunk --write
+# #631: points inside a chamfered solid said outside it
+fix 631classify c1b55edd39 \
+    src/ModelingAlgorithms/TKTopAlgo/BRepClass3d/BRepClass3d_SClassifier.cxx \
+    issue631_chamfer_classify $HERE/../models/issue631_chamfer_corner.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }
