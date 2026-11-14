@@ -2380,6 +2380,26 @@ and of the fillets does, by less.
 
 ![issue273_rim_chamfer_2](pictures/issue273_rim_chamfer_2.png)
 
+### Two chamfers at a vertex (`ad184c02f7`, #523's box and its post)
+
+A round post stands on the box's upright edge. The post's line on the
+box's side is a concave edge, its rim at the bottom a convex one, and
+they meet at a vertex with the foot of the box's side. Two chamfers at a
+vertex are joined by crossing their lines on the face they share
+(`PerformTwoCornerbyInter`); one convex and one concave do not cross.
+The chamfer builder did not look at that failure, and the corner was
+left with nothing: refused, upstream's too, where two fillets fall back
+on the corner of several edges. Two chamfers do now -- at a vertex of
+three edges, where neither chamfer's surface runs on past the vertex,
+and the result is refused if the corner leaves an edge looser than a
+twentieth of the chamfer. Those limits are there because the plain
+fallback also made chamfers that were valid and wrong: on #962's arm
+the foot's chamfer went on 13 along the block's foot, an edge nobody
+asked for. 47 chamfers of the vertex sweep are made that were refused;
+this one 1094.7154 at 1, within 0.03 of its two edges chamfered alone.
+
+![issue523_post_side_and_bottom_rim_chamfer_e12_e13_1](pictures/issue523_post_side_and_bottom_rim_chamfer_e12_e13_1.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

@@ -6416,7 +6416,9 @@ runs off it onto the round, and the corner (`PerformOneCorner`) has the
 edge to carry on in the top and the line's end on the round: "Failed to
 get p-curve of edge". A chamfer of 0.2 is made. The fillet of 0.3 fails
 the same way and is made by the setback fallback
-(`ComputeSetbackFallback`), which is for fillets.
+(`ComputeSetbackFallback`), which is for fillets. (With the upright edge
+at its end, E42 or E43, the rim is chamfered at 0.3 since `ad184c02f7`:
+the next section.)
 
 **Against upstream.** The 22 were a loss against upstream, so all four
 sweeps were run on upstream's files too (`91be8c4c71`, the pictures'
@@ -6446,6 +6448,102 @@ level 0 and at level 3 frozen, every case line the same; the thickness
 corpus as its baseline; the thickness sweep 928 of 928; of the 29 issue
 models made again, not a line. FreeCAD (`3fccfa01bf`): the Python suite
 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## Two chamfers at a vertex (`ad184c02f7`, 2026-11-14)
+
+**Where it was met.** The vertex sweep run as chamfers, after the section
+above: 432 lines refused where every edge of the line, chamfered alone,
+is made -- 425 of them pairs of edges at a vertex. As fillets, 57.
+Upstream's files refuse them as well.
+
+**What was broken.** `ChFi3d_ChBuilder::PerformTwoCorner` is one line, a
+call of `PerformTwoCornerbyInter`, whose answer it did not look at. That
+corner is made by crossing the two chamfers' lines on the face they
+share. It gives up where one edge is convex and the other concave, where
+the lines do not cross, where an end is not on an edge -- before it has
+put anything in the data structure -- and the corner was left with
+nothing: "A corner left a stripe's end without its points". Two fillets
+there fall back on the corner of several edges
+(`ChFi3d_FilBuilder::PerformTwoCorner`, `PerformMoreThreeCorner`).
+
+**The fix, and what it must not make.** Falling back the same way made 162
+chamfers (160 of the 425, and two with an edge that is refused alone).
+Each was then measured against its two edges chamfered alone
+-- the volume against their sum, and, cutting the result from the input
+and the input from the result, how far what it takes and adds reaches
+from the edges -- and 19 were wrong while valid:
+
+- 12 chamfered an edge nobody asked for. The corner of several edges
+  takes each surface's end where it is; a chamfer's surface that had run
+  on past the vertex along the next edge stayed in the result. #962's
+  arm: the chamfer of its foot went on 13 along the block's foot --
+  valid, clean by BOP's check, the volume the only sign.
+- 7 could not be cut with, five of them with vertices BOP's check
+  reports: three more where a surface had run past the vertex, four at a
+  vertex of four edges of which one is a split between coplanar faces.
+
+Six more had vertices of 0.23 for a chamfer of 1, on a piece of an edge
+0.7 long.
+
+So the fallback is taken only at a vertex of the two edges and one more,
+and only where neither chamfer's surface runs past the vertex by more
+than one and a half times its size; and a result made through it is
+refused where an edge is looser than the input's or a twentieth of the
+chamfer (`ChFi3d_TwoChamferCorner`; `ChFi3d_Builder::Compute`, where an
+invalid result is refused) -- the terms the setback fallback takes a
+result on. That leaves 47 (45 of the 425), the same 47 at fix level 0
+and at 2, and nothing else in the four sweeps moves: no fix level.
+
+**Checked by another measure.** All 47. At level 2 the volume of each is
+within 0.6 of a cube of its size of the sum of its two edges alone (45;
+two are with an edge that is refused alone). At level 0 the same within
+one cube but for #631's slope with the ellipse beside it at 1, 2.3 off:
+there it is the ellipse's chamfer alone that is wrong below level 1,
+0.47 deep by the vertex and 0.84 at the far end, and the pair's is 0.80
+all along. 39 were cut from the input and the input from them: what each
+takes and adds reaches no further from its edges than alone, and each is
+clean by BOP's check. The other eight are on `issue273_Fillet001`, whose
+own vertices (0.7) neither a cut nor BOP's check gets past: their new
+vertices lie no further from the edges than alone, and the chamfer is
+as deep along its edge (0.212 at 0.3).
+
+| Case | What |
+|------|------|
+| `issue523_post_side_and_bottom_rim_chamfer_e12_e13_0.3`, `_1`, `issue523_post_top_rim_and_side_chamfer_e11_e12_0.3` | #523's box with a round post on its upright edge: the post's line on the box's side (concave) with its rim (convex): 1094.2826, 1094.7154, 1094.2752 (refused) |
+| `issue631_slope_and_ellipse_chamfer_e16_e26_0.3_level{0,1,2}`, `_1_level{0,1,2}` | #631's slope (concave, 39 deg) with the ellipse beside it: 42217.2112 and 42186.3219 at level 0, 42217.1939 and 42186.1290 from level 1 |
+| `issue962_arm_foot_and_side_chamfer_e23_e35_0.3`, `_1` | #962's arm, its foot on the block with its side: 11583.0146, 11571.2915 |
+| `issue273_dhole_rim_and_flat_chamfer_e35_e41_0.3` | #273's D-hole, its rim with the flat's edge: 8559.4848 |
+| `mini_wall_two_edges_chamfer_e4_e12_1` | the minimal wall: 990.4474 |
+| `issue273_f001_pocket_rim_and_upright_chamfer_e38_e42_0.3`, `_e39_e42_0.3` | the pocket in #273's handle, a rim with the upright edge at its end: 8535.0406, 8534.8062 (the long rim alone is still refused at 0.3, the section above) |
+| `issue962_arm_foot_run_on_chamfer_e15_e45_0.3` | stays refused: the foot's surface runs 13 past the vertex |
+| `mini_slot_split_short_piece_chamfer_e9_e16_1` | stays refused: vertices of 0.23 |
+| `issue962_split_wall_chamfer_e2_e6_1` | stays refused: a vertex of four edges |
+
+`models/pictures/issue523_post_side_and_bottom_rim_chamfer_e12_e13_1.png`.
+
+**What is left.** 380 of the 425 pairs, 358 of them made as fillets. 115
+the plain fallback made and the limits turn away, 96 of them sound by
+the measures above: 39 where a surface runs past the vertex and the
+corner trims it all the same, 21 more of those and 30 others at vertices
+of four edges, six looser than the terms. The corner of several edges
+would have to cut a surface back to the vertex itself before it is let at
+them. And 265 the fallback does not make either, an invalid shape or no
+corner: `issue523_box` E8 with E10, the foot of the box's side with the
+post's line on it, is one -- the foot's chamfer runs on under the post.
+
+**Validation** (`ad184c02f7` against `94464f1dc6`, on Linux): the fillet
+sweeps -- every edge (3921) and every vertex (12242) of the issues' shapes,
+filleted and chamfered, at the level a plain call has, 0: the fillets not
+a status, not a volume (2666 and 9712 made); the chamfers of an edge the
+same (2436 made); the chamfers at a vertex the 47 above made that were
+refused, nothing else (8859 made). The chamfers at a vertex at level 2 as
+well, against `94464f1dc6` at level 2: the same 47, nothing else. The
+suite PASS=870 XFAIL=1 at fix levels 0, 1 and 2: the 852, the same line
+for line at each, and the 18 above. Boolean 103, draft 105, thickness
+PASS=695 at level 0 and at level 3 frozen, every case line the same; the
+thickness corpus as its baseline; the thickness sweep 928 of 928; of the
+29 issue models made again, not a line. FreeCAD (`3fccfa01bf`): the Python
+suite 4388 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 

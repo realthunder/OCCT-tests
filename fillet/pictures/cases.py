@@ -109,6 +109,7 @@ STAGES = {
     "srimchord": ("a8461992ff", "7019fd0c47"),
     "sreset": ("7019fd0c47", "f378bf5c5e"),
     "swalk": ("f378bf5c5e", "94464f1dc6"),
+    "stwo": ("94464f1dc6", "ad184c02f7"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -559,6 +560,7 @@ SHAPES = {
     "p631l": _brep("issue631_loft_joint.brep"),
     "p631c": _brep("issue631_fillet002_base.brep"),
     "p631b": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue631_Fillet.brep")),
+    "p523s": _brep(os.path.join("..", "..", "draft", "sweep", "shapes", "issue523_box.brep")),
     "postplate": _post_on_plate,
     "postdraft": lambda: _post_on_plate(draft=1.0),
     "postseam": lambda: _post_on_plate(turn=270),
@@ -679,6 +681,8 @@ UVFACE = {
               and f.distToShape(Part.Vertex(App.Vector(7.5, 17.852122, 30)))[0] < 1.0),
     # the patch at the corner of the two chamfers
     "p631b": _plate_near(57, 62, 92, 2.0),
+    # the patch at the corner of the two chamfers
+    "p523s": _plate_near(0, 2, 0, 2.5),
     # the plate's side, whose outline ran up to the top and back down
     "postplate": _plane_at("y", -3),
     # the post's cone, carried on below its base by the cut
@@ -908,6 +912,8 @@ NAMES = {
              "cylinder of radius 49 in an ellipse)",
     "p631b": "#631's Fillet input (the sweep's issue631_Fillet: the body before its first "
              "fillet)",
+    "p523s": "#523's box, a round post of radius 2 on its upright edge (the sweep's "
+             "issue523_box)",
     "p273b": "#273's Fillet001 input (the cup, its rim filleted at 1 on the handle's far side)",
     "postplate": "a post r3 on a 3-thick plate, the plate's side y=-3 running tangent into "
                  "its round end under the post",
@@ -985,6 +991,7 @@ VIEW = {
     "p631l": ((-13, -15, 25), 70.0),
     "p631c": ((25, 23, 56), 125.0),
     "p631b": ((25, 23, 56), 125.0),
+    "p523s": ((4, 4, 5), 24.0),
     "postplate": ((-4.5, 0, 9), 20.0),
     "postdraft": ((-4.5, 0, 9), 20.0),
     "postseam": ((-4.5, 0, 9), 20.0),
@@ -1037,6 +1044,7 @@ UVLABEL = {
     "p631l": ("the plate at the end", False),
     "p631c": ("the chamfer's face", False),
     "p631b": ("the corner's patch", False),
+    "p523s": ("the corner's patch", False),
     "postplate": ("the plate's side", False),
     "postdraft": ("the post's cone", False),
     "postseam": ("the post's cylinder", True),
@@ -1531,6 +1539,13 @@ CASES = {
                                           [((57, 62, 92), (7.5, 15, 30)),
                                            ((57, 62, 112), (57, 62, 92))],
                                           1.0, 41818.1309, (56.7, 61.6, 92.2), (1, 1, 0.5)),
+    # #523's box and its post: the post's line on the box's side, concave,
+    # and the post's rim at the bottom, convex -- two chamfers at a vertex of
+    # three edges that do not cross on the cylinder they share; the failed
+    # intersection was not looked at and the corner left with nothing
+    "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (
+        "stwo", "p523s", [((0, 2, 0), (0, 2, 10)), ((0, 2, 0), (2, 0, 0), (-1.4142136, -1.4142136, 0))],
+        1.0, 1094.7154, (-0.3, 1.8, 0.4), (-1, 0.5, -0.7)),
     # #273's handle on the cup's top, its side's foot: the fillet ends where
     # the handle's front stands on the cup's rim, and the piece of the rim
     # from the vertex to the fillet's end came out the wrong way round
@@ -1646,6 +1661,7 @@ CHAMFER = {
     "issue273_rim_chamfer_0.3": (0.3,),
     "issue273_rim_chamfer_2": (2.0,),
     "issue631_corner_chamfer_e10_e20_1": (1.0,),
+    "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": (1.0,),
 }
 # case -> (the largest tolerance it may carry, how far its volume may be off):
 # a result is also held to these and to BOP's check (Shape.check(True)), where
@@ -1708,6 +1724,8 @@ ZOOMLABEL = {
     "issue273_rim_chamfer_0.3": ("the chamfer's end at the handle's front", (110, 110, 110)),
     "issue273_rim_chamfer_2": ("the chamfer's end at the handle's front", (110, 110, 110)),
     "issue631_corner_chamfer_e10_e20_1": ("the corner of the two chamfers", (110, 110, 110)),
+    "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": ("the corner of the two chamfers",
+                                                            (110, 110, 110)),
     "issue876_kink_e52_r0.3": ("where the old fillet was first cut, x=4.043", (110, 110, 110)),
     "issue962_e36_r2": ("the fillet's end, from below", (240, 240, 240)),
     "issue962_ring_rim_flat_e26_r2": ("the fillet's end, from below", (240, 240, 240)),
@@ -1814,6 +1832,9 @@ EDGES = {
                               "(-5.43,-15.84,18)",
     "issue631_corner_chamfer_e10_e20_1": "the slanted edge (57,62,92)-(7.5,15,30) and the "
                                          "upright one above it, (57,62,112)-(57,62,92)",
+    "issue523_post_side_and_bottom_rim_chamfer_e12_e13_1": "the post's line on the box's side, "
+                                                           "(0,2,0)-(0,2,10), and its rim at the "
+                                                           "bottom",
 }
 
 

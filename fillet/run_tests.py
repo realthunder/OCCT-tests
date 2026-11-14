@@ -3397,6 +3397,61 @@ for _es, _d, _vol, _bop in (([2, 5], 1, 41865.5441, True), ([5, 17], 1, 41856.19
                             ([10, 20], 1, 41818.1309, False), ([6, 15], 0.3, 41865.3446, False)):
     fillet_case("issue631_corner_chamfer_%s_%g" % ("_".join("e%d" % e for e in _es), _d),
                 _b631, _es, _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=_bop)
+# Two chamfers at a vertex of three edges whose corner their intersection
+# cannot make (PerformTwoCornerbyInter: one edge convex and the other
+# concave, their lines on the common face not crossing, an end not on an
+# edge). The chamfer builder did not look at that failure and left the
+# corner with nothing -- refused, upstream's too, where two fillets fall
+# back on the corner of several edges. A chamfer does now, where neither
+# surface runs on past the vertex and the corner leaves no edge looser
+# than a twentieth of the chamfer. Each volume within the corner of the
+# sum of its two edges chamfered alone, and what each takes or adds no
+# further from its edges than alone.
+_box523 = sweep_shape("issue523_box")
+_b631a = sweep_shape("issue631_Fillet001")
+_arm962 = sweep_shape("issue962_Fillet")
+for _name, _shape, _es, _d, _vol, _bop in (
+        ("issue523_post_side_and_bottom_rim", _box523, [12, 13], 0.3, 1094.2826, True),
+        ("issue523_post_side_and_bottom_rim", _box523, [12, 13], 1, 1094.7154, True),
+        ("issue523_post_top_rim_and_side", _box523, [11, 12], 0.3, 1094.2752, True),
+        ("issue962_arm_foot_and_side", _arm962, [23, 35], 0.3, 11583.0146, True),
+        ("issue962_arm_foot_and_side", _arm962, [23, 35], 1, 11571.2915, True),
+        ("issue273_dhole_rim_and_flat", _rim273, [35, 41], 0.3, 8559.4848, True),
+        ("mini_wall_two_edges", sweep_shape("mini_mini_wall"), [4, 12], 1, 990.4474, True)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=_bop)
+# #631's slope with the ellipse where the arm's underside cuts the pad's
+# cylinder: the ellipse's chamfer is level 1's (its guide; below it the
+# chamfer of 1 grows shallower toward this vertex, alone), so the volume
+# is each level's -- at 2 within 0.27 of the two alone at 1.
+for _lvl, _v03, _v1 in ((0, 42217.2112, 42186.3219), (1, 42217.1939, 42186.1290),
+                        (2, 42217.1939, 42186.1290)):
+    fillet_case("issue631_slope_and_ellipse_chamfer_e16_e26_0.3_level%d" % _lvl, _b631a, [16, 26],
+                0.3, "pass", _v03, chamfer=True, vol_tol=1e-3, bop=True, fix_level=_lvl)
+    fillet_case("issue631_slope_and_ellipse_chamfer_e16_e26_1_level%d" % _lvl, _b631a, [16, 26],
+                1, "pass", _v1, chamfer=True, vol_tol=1e-3, bop=True, fix_level=_lvl)
+# #273's Fillet001, the pocket in the handle's top: its short rim with the
+# upright edge at its end, and the long rim with it -- the long rim alone
+# is refused at 0.3 (README, "A stripe reset ...", what is left). No bop:
+# the input fails BOP's check itself (its vertices at 0.7).
+for _es, _vol in (([38, 42], 8535.0406), ([39, 42], 8534.8062)):
+    fillet_case("issue273_f001_pocket_rim_and_upright_chamfer_%s_0.3"
+                % "_".join("e%d" % e for e in _es), p273f1, _es, 0.3, "pass", _vol, chamfer=True,
+                vol_tol=1e-3)
+# What stays refused. The arm's foot on #962's block with the arm's side
+# where it leaves the cylinder: the foot's surface runs on 13 past the
+# vertex along the block's foot, and the corner of several edges left it in
+# the result -- valid, clean by BOP's check, a chamfer of an edge nobody
+# asked for. A chamfer of 1 on a 0.7 piece of an edge with the edge up from
+# its end: made with vertices of 0.23. Two chamfers at a vertex of four
+# edges, one of them a split between coplanar faces: BOP's check reports
+# the result's vertices, and a cut with it fails.
+refused_case("issue962_arm_foot_run_on_chamfer_e15_e45_0.3", sweep_shape("issue962_Chamfer"),
+             [15, 45], 0.3, chamfer=True)
+refused_case("mini_slot_split_short_piece_chamfer_e9_e16_1", sweep_shape("mini_slot_split"),
+             [9, 16], 1, chamfer=True)
+refused_case("issue962_split_wall_chamfer_e2_e6_1", sweep_shape("issue962_Chamfer"), [2, 6], 1,
+             chamfer=True)
 # the fillets it moves, #474's coil at two of its vertices, radius 1: as
 # they were below level 2, and from it
 _coil474 = sweep_shape("issue474_Fillet")
