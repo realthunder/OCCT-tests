@@ -6885,7 +6885,11 @@ with it. Two things follow, neither done:
   builds both corners with the plate and is invalid, and the fallback
   then sets back every corner the plate made. Setting back only those the
   invalid part is at would leave the far end as it is alone -- a
-  different shape for a fillet made today, so a fix level.
+  different shape for a fillet made today, so a fix level. Counted since
+  (2026-11-15, the fillet sweeps at level 3, 16163 fillets): the
+  fallback is entered for an invalid result with plate corners 149
+  times, 106 with one corner and 43 with two -- 38 on #474's coil and its
+  two successors, 5 on #962.
 - With E5 as well (E5, E17, E20) only (-13, 0, 11) is set back and the
   fuse returns the two bodies whole, not split at all; where that one is
   open was not looked for.
