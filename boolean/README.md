@@ -1289,6 +1289,20 @@ kernel before gave `Edge6`, `Edge3`, `Edge3` and `Face7`, `Face6`,
 `Face7`; the box and cylinder's Connect, four runs, one order (four
 before).
 
+**The same looked for elsewhere.** Seventeen operations on each of the 25
+sweep shapes of the issues -- a fillet and a chamfer of three edges each,
+a thickness of two faces, an offset, the cut, fuse, common, general fuse
+and section with a moved copy, the fuse refined, the common with a box, a
+solid of the general fuse's compsolid -- each in three processes, the
+faces, edges and vertices of each result in order compared (414 results,
+76 of them refusals): all the same in the three runs but one. The offset
+of #474's coil by 0.2 (`Part.Shape.makeOffsetShape(0.2, 1e-3)` on
+`../draft/sweep/shapes/issue474_Fillet.brep`; invalid in every run) has
+one vertex at x = -12.998 in some runs and at -13.000 in others, 5 and 3
+of eight. With the address space not randomised (`setarch -R`) six runs
+give one answer, so it is an order of addresses again, somewhere in the
+offset. Not looked for.
+
 **Validation** (against `c1b55edd39`, on Linux): boolean 106 (105 + this
 one), draft 105, thickness PASS=695 at level 0 and at level 3 frozen, the
 fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every case line
