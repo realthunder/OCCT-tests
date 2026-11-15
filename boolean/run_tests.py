@@ -481,7 +481,11 @@ guarded(issue617_symtorus_pad)
 # 0.046 wide, a face of the torus not made: the common nothing, the cut the
 # torus less 31 and the fuse 38 short, valid and with no error. The volumes
 # wanted are the prism of whole curves' own at the same places, which was
-# right (README.md, "A vertex stretched onto a line that passes it").
+# right (README.md, "A vertex stretched onto a line that passes it"). The
+# prism's own tolerance is 8.07e-5 and the results' vertices have 8.08e-5 on
+# x86; on arm64 one section edge of the cut and the common at 0.01 ends
+# 3.7e-5 from its vertex, which gets 1.24e-4 (the volumes the same). The
+# fault was vertices of 0.0023, so the limit is 2e-4.
 def issue617_symtorus_sunk():
     torus = Part.read(os.path.join(HERE, "models", "issue617_symtorus.brep"))
     split = Part.read(os.path.join(HERE, "models", "issue617_symtorus_pad_split.brep"))
@@ -496,10 +500,10 @@ def issue617_symtorus_sunk():
             vol = res.Volume if solids else 0.0
             tol = max(v.Tolerance for v in res.Vertexes) if solids else 0.0
             ok = (res.isValid() and solids == nsolids and abs(vol - want) <= 1e-5 * want
-                  and tol <= 1e-4)
+                  and tol <= 2e-4)
             report("issue617_symtorus_sunk_%g_%s" % (depth, name), ok,
                    "%s, %d solid(s) (want %d), volume %.4f (want %.2f), largest vertex "
-                   "tolerance %.2g (want <= 1e-4)"
+                   "tolerance %.2g (want <= 2e-4)"
                    % ("valid" if res.isValid() else "invalid", solids, nsolids, vol, want, tol))
 
 

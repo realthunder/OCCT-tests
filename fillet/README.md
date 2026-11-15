@@ -6960,7 +6960,7 @@ and the levels above are tried.
 | `issue962_invalid_corner_set_back_chamfer_e1_e4_0.3` | a rim with an upright edge, the fourth edge at their vertex smooth: 11701.5689 (refused) |
 | `issue309_invalid_corner_set_back_chamfer_e1_e2_0.3` | #309: 12760.8446 (refused) |
 | `issue631_invalid_corner_set_back_chamfer_e21_e32_0.3` | #631's Fillet001, set back by the chamfer's size: 42215.4366 (refused) |
-| `issue962_invalid_corner_set_back_chamfer_e48_e64_1` | set back by one and a half sizes: 11689.6730 (refused) |
+| `issue962_invalid_corner_set_back_chamfer_e48_e64_1` | set back by one and a half sizes: 11689.6730 (refused). To 0.3: on arm64 (macOS) it is 11689.8976, the same faces, edges and vertices, the patch that fills the corner another surface on them (area 8.8246 for 8.6581); why is not known |
 | `mini_fin_base_invalid_corner_set_back_chamfer_e3_e14_0.3` | a fin on its base: 770.1357 (refused) |
 | `mini_slot_split_short_piece_chamfer_e9_e16_1` | a chamfer of 1 on a 0.7 piece of an edge with the edge up from its end. Refused in the suite until now as wrong: by the corner of several edges vertices of 0.23 ("Two chamfers at a vertex", above). Set back, vertices of 0.007 and 0.06 cubes off the two alone: 1120.7760 |
 | `issue474_coil_two_plate_corners_chamfer_e17_e20_0.3` | stays refused: two corners |
