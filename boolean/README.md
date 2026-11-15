@@ -1316,3 +1316,72 @@ fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every case line
 the same; the thickness corpus as its baseline; the thickness sweep 928
 of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not run: macOS,
 thickness levels 1 and 2.
+
+## A face that ends a hair past a knot of its surface (`45d77acfdf`, 2026-11-15)
+
+**Where it was met.** Measuring fillets at the vertices of #474's coil
+against the same edges filleted alone, by random points: every pair with
+the block's upright edge at the coil's foot (E20) differed from the two
+alone by three to five cubes of the radius, up to five and a half radii
+from the vertex, at every fix level. The fillets are right. The points
+were wrong: in the
+solid with E20 alone filleted at 0.3 (`models/issue474_coil_edge_filleted.brep`:
+one solid, valid, the input less 0.2125, which is the fillet's own
+volume) `BRepClass3d_SolidClassifier` says IN for (-12.958, -0.347, 9.870),
+which is 0.40 outside it, and OUT for (-12.896, -0.814, 11.676), which is
+inside. Of 24000 points sampled in the cube of 2.4 about the coil's foot,
+333 were said on the wrong side.
+
+**What was broken.** The classifier casts a line from the point to a
+point of a face and takes the first crossing of the solid's skin along
+it; `IntCurvesFace_Intersector` finds the crossings on a polyhedron of the
+face and then exactly. The line of the first point is aimed at the coil's
+first helical face, crosses it at 1.149 -- 0.04 from the face's outer
+edge, well inside the face by the face's own classifier -- and the
+intersector found no crossing there: the next one, at 3.145 and going
+out, was the first, and the point was inside.
+
+The face is a B-spline surface with a knot at u = 4, its outer edge. The
+fillet ends on it, and the face's bounds as read from its pcurves end at
+u = 4.0000000172. For a surface of several C2 intervals the intersector
+builds its polyhedron interval by interval (`ComputeSamplePars`), and the
+interval from 4 to 4.0000000172 got a row of triangles of its own,
+1.7e-8 wide. That row was the polyhedron's border. The border is where a
+polyhedron lets a line in that passes outside its chords but inside the
+face's edge, which bulges out of them (0.16 here, the chords 18 degrees
+of the helix each; `#474: a point outside a helix said inside it` above):
+the border triangles' boxes are grown by that much and a point within it
+of a border edge is taken. The row before the last, 0.2 wide, which the
+line had to be tried against, was no border row, and the line passed it
+by.
+
+**The fix.** In `IntCurvesFace_Intersector`'s `ComputeSamplePars`: an
+interval narrower than the confusion (1e-7, in the surface's parameter)
+is no interval of its own; its bound is left out, the last bound kept.
+
+**The cases.** `models/issue474_coil_classify.cpp`: the four points
+found are on their sides (all four wrong before); of 24000 points sampled
+about the foot, none is said on the side that six of seven lines from it
+deny (333 before); the common of a line through the first point with the
+solid is the 0.8509 of it inside the solid (1.4491 before, the part
+outside). `run_tests.py` has the four points and the line
+(`issue474_coil_points`, `issue474_coil_line_common`).
+
+![A face that ends a hair past a knot of its surface: before and after](models/pictures/issue474_coil_classify.png)
+
+**Audit.** The intersector as it was against this one, the classifier on
+40000 random points in the box of each of 45 shapes -- the 44 of the
+audit above and this solid: no point changes on the 44; on this solid 86
+of 40000 change, 72 to outside and 14 to inside, and fifteen lines
+counted from each agree with every one of them.
+
+**What it moved.** Nothing else: not a case line in the suites, not a
+line of the thickness corpus (1073 runs) or the thickness sweep; of the
+29 issue models made again, not a result.
+
+**Validation** (against `6a0d5260bf`, on Linux): boolean 108 (106 + these
+2), draft 105, thickness PASS=696 at level 0 and at level 3 frozen, the
+fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every other
+case line the same; the thickness corpus as its baseline; the thickness
+sweep 928 of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not
+run: macOS, thickness levels 1 and 2.

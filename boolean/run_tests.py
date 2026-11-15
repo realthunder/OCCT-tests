@@ -555,6 +555,31 @@ def issue474_helix_classify():
 guarded(issue474_helix_classify)
 
 
+# #474's coil with the upright edge at its foot filleted: points said on the
+# wrong side of it, and the common of a line with it, which kept the part
+# outside. The coil's first helical face ends 1.7e-8 past a knot of its
+# surface, and the polyhedron IntCurvesFace_Intersector made of it had a
+# last row of triangles that wide for its border: a line crossing the face
+# near its edge was lost (README.md, "A face that ends a hair past a knot of
+# its surface").
+def issue474_coil_classify():
+    coil = Part.read(os.path.join(HERE, "models", "issue474_coil_edge_filleted.brep"))
+    outside = [(-12.958, -0.347, 9.870), (-12.883, -0.886, 9.834)]
+    inside = [(-12.896, -0.814, 11.676), (-12.885, -0.931, 11.869)]
+    wrong = ([q for q in outside if coil.isInside(V(*q), 1e-7, True)]
+             + [q for q in inside if not coil.isInside(V(*q), 1e-7, True)])
+    report("issue474_coil_points", not wrong,
+           "%d of %d points said on the wrong side of the solid (want 0)"
+           % (len(wrong), len(outside) + len(inside)))
+    p, d = V(-12.958, -0.347, 9.870), V(-0.001308, 0.061261, 0.998121)
+    com = coil.common(Part.makeLine(p - d * 0.3, p + d * 2.0))
+    report("issue474_coil_line_common", len(com.Edges) == 1 and abs(com.Length - 0.8509) <= 1e-3,
+           "%d edge(s), length %.4f (want 1, 0.8509)" % (len(com.Edges), com.Length))
+
+
+guarded(issue474_coil_classify)
+
+
 # #631's Fillet001 with two edges at a vertex chamfered at 1, the corner set
 # back and closed by a patch with edges of tolerance 0.011: points inside
 # the solid that BRepClass3d_SolidClassifier said outside. Its line from the

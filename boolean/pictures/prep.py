@@ -677,6 +677,40 @@ for stage, title in (("before", "before"), ("after", "after")):
           9, colors={str(k): ORANGE for k in range(len(near), len(shown.Faces))}, bad=said != 0)
 pictures.append(pic)
 
+# #474: the foot of the coil with the block's upright edge filleted, and the
+# sampled points said on the wrong side of the solid, a ball at each
+# (issue474_coil_classify.cpp --write). Only the faces within 1.7 of the
+# foot's vertex are drawn: the points said outside are in the material.
+def coil_line(stage):
+    for line in open(os.path.join(W, "474coil", stage + ".txt")):
+        if line.startswith("sample:"):
+            w = line.split(":", 1)[1].split()
+            return int(w[0]), int(w[2])
+
+
+pic = dict(name="issue474_coil_classify",
+           title="A face that ends a hair past a knot of its surface",
+           caption="BRepClass3d_SolidClassifier on 24000 points about the foot of #474's coil, "
+                   "the block's upright edge filleted at 0.3: a ball at each point said on the "
+                   "wrong side of the solid. Only the faces about the foot are drawn. The "
+                   "helical face ends 1.7e-8 past a knot of its surface, the polyhedron the "
+                   "line/face intersector made of it had a last row of triangles that wide for "
+                   "its border, and a line crossing the face near its edge was lost.",
+           panels=[])
+EYECOIL = [-0.75, -0.6, 0.3]
+CCOIL = [-12.7, -0.2, 11.0]
+VCOIL = Part.Vertex(V(-13.0, 0.0, 11.0))
+for stage, title in (("before", "before"), ("after", "after")):
+    said, of = coil_line(stage)
+    shape = Part.read(os.path.join(W, "474coil", stage, "said_wrong.brep"))
+    near = [f for f in shape.Solids[0].Faces if f.distToShape(VCOIL)[0] < 1.7]
+    balls = [so for so in shape.Solids[1:]]
+    shown = Part.makeCompound(near + balls)
+    panel(pic, shown, title, "%d of %d points said on the wrong side" % (said, of), EYECOIL,
+          CCOIL, 3.2, colors={str(k): ORANGE for k in range(len(near), len(shown.Faces))},
+          bad=said != 0)
+pictures.append(pic)
+
 # #617: the pad on a torus cut through a plane of symmetry, each curve of its
 # profile cut in two -- the input, and the common before and after
 # (issue617_symtorus_pad.cpp --write).
