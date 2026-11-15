@@ -997,12 +997,12 @@ t613 thk f11 1 j1 | not done
 t613 thk f12 1 j1 | not done
 t613 thk f13 1 j1 | not done
 t613 thk f14 1 j1 | not done
-t613 thk f15 1 j1 | threw Geom_TrimmedCurve::parameters out of range
+t613 thk f15 1 j1 | not done
 t613 thk f16 1 j1 | done valid 1 solids 1 vol 5770.0583
-t613 thk f17 1 j1 | threw GeomAdaptor_Surface::EvalD2: evaluation failed
+t613 thk f17 1 j1 | not done
 t613 thk f18 1 j1 | not done
 t613 thk f19 1 j1 | not done
-t613 thk f20 1 j1 | threw GeomAdaptor_Surface::EvalD0: evaluation failed
+t613 thk f20 1 j1 | not done
 t613 thk f21 1 j1 | not done
 t613 off -1 j1 | done valid 1 faces 21 area 6449.6072
 t613 thk f1 -1 j1 | not done
@@ -1015,10 +1015,10 @@ t613 thk f7 -1 j1 | done valid 1 solids 1 vol 6681.4497
 t613 thk f8 -1 j1 | not done
 t613 thk f9 -1 j1 | not done
 t613 thk f10 -1 j1 | not done
-t613 thk f11 -1 j1 | threw Geom_OffsetSurface::EvalD0
+t613 thk f11 -1 j1 | not done
 t613 thk f12 -1 j1 | not done
 t613 thk f13 -1 j1 | not done
-t613 thk f14 -1 j1 | threw Geom_OffsetSurface::EvalD0
+t613 thk f14 -1 j1 | not done
 t613 thk f15 -1 j1 | not done
 t613 thk f16 -1 j1 | done valid 1 solids 1 vol 5323.4771
 t613 thk f17 -1 j1 | not done
@@ -1041,12 +1041,12 @@ t613 thk f11 0.5 j1 | not done
 t613 thk f12 0.5 j1 | not done
 t613 thk f13 0.5 j1 | not done
 t613 thk f14 0.5 j1 | not done
-t613 thk f15 0.5 j1 | threw Geom_TrimmedCurve::parameters out of range
+t613 thk f15 0.5 j1 | not done
 t613 thk f16 0.5 j1 | done valid 1 solids 1 vol 2828.0748
-t613 thk f17 0.5 j1 | threw GeomAdaptor_Surface::EvalD0: evaluation failed
+t613 thk f17 0.5 j1 | not done
 t613 thk f18 0.5 j1 | not done
 t613 thk f19 0.5 j1 | not done
-t613 thk f20 0.5 j1 | threw GeomAdaptor_Surface::EvalD0: evaluation failed
+t613 thk f20 0.5 j1 | not done
 t613 thk f21 0.5 j1 | not done
 t613 off -0.5 j1 | done valid 1 faces 21 area 6801.2855
 t613 thk f1 -0.5 j1 | not done

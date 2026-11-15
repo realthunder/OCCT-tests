@@ -3803,6 +3803,17 @@ The picture is not one of `make_pictures.sh`'s: `pictures/vertex_dump.py`
 both answers have come, once with the one after) writes the edges next to
 the vertex, and `pictures/vertex_draw.py` draws them.
 
+### Sec 73: #613, an exception where a refusal is due
+
+No picture: nothing is made before or now. #613's part with a flat of
+its roof or a blend removed and the Intersection join has no answer, and
+eight such thicknesses did not say so: an exception came out of the
+offset, of a curve trimmed to no range or a surface evaluated where it is
+not, which FreeCAD showed as it came. An exception out of the thick
+solid's computation is a refusal now (`28112588a2`), and the offset's
+second way is tried after it as after any other; FreeCAD says "Thickness
+failed".
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

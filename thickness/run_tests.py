@@ -677,6 +677,34 @@ for tag, face in (("right", 17), ("left", 20)):
     for way, value, vol in (("out_half", 0.5, 3629.8323), ("in_half", -0.5, 3453.5477)):
         thickness_case("issue613_ridge_blend_%s_%s" % (tag, way), issue613, [face], value, "pass",
                        vol, loose_ok=0.03 * abs(value))
+# The same part with the Intersection join, a flat or a blend removed: no
+# answer, and none came -- an exception came out of the offset where a
+# refusal is due, of a curve trimmed to no range, of a surface evaluated
+# where it is not: a message that says nothing, and the offset's other way
+# untried. Refused now (README.md, sec 73).
+def own_refusal_case(name, shape, face_indices, value, inter=False, join=0):
+    """Refused by the offset itself (FreeCAD's CADKernelError, "Thickness
+    failed"): not by an exception out of it, which FreeCAD hands on as it
+    came (Part.OCCError, the kernel's class and function for a message)."""
+    before = signature(shape)
+    faces = [shape.Faces[i - 1] for i in face_indices]
+    try:
+        r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
+        report(name, False, False, "answered: %s valid=%s vol=%.4f" % (
+            r.ShapeType, r.isValid(), r.Volume))
+    except Part.OCCError as e:
+        report(name, False, False,
+               "an exception of the kernel's: %s" % " ".join(str(e).split())[:90])
+    except App.Base.FreeCADError:
+        problems = input_problems(shape, before)
+        report(name, not problems, False, "; ".join(problems) if problems else "refused")
+
+
+for face, value in ((15, 1.0), (15, 0.5), (17, 1.0), (17, 0.5), (20, 1.0), (20, 0.5), (11, -1.0),
+                    (14, -1.0)):
+    own_refusal_case("issue613_inter_join_f%d_%s%g_refused" % (face, "out" if value > 0 else "in",
+                                                             abs(value)),
+                     issue613, [face], value, False, 2)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

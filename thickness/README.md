@@ -3271,6 +3271,59 @@ of 928, the same line for line; the 29 issue models recompute as before;
 FreeCAD's Python suite 4388 OK (`7e8a9fdad3`). Not run: macOS, thickness
 levels 1 and 2.
 
+## #613: an exception where a refusal is due (`28112588a2`, 2026-11-15, sec 73)
+
+**Where it was met.** Sec 70's list of what is left of the corpus on
+#613's part: 8 of the 168 runs threw. All eight are with the
+Intersection join, a flat of the roof or a blend removed: faces 15, 17
+and 20 at 1 and 0.5 outward, faces 11 and 14 at 1 inward.
+
+**What was broken.** `BRepOffset_MakeOffset::MakeThickSolid` computes the
+thick solid and, where that gives no valid answer, computes it again with
+the loops' wires taken by the way their edges run (sec 60). An exception
+out of the first computation went straight on to the caller: no error
+set, the second way untried, and for a message the kernel's class and
+function -- in FreeCAD "Geom_TrimmedCurve::parameters out of range" or
+"Geom_OffsetSurface::EvalD0" for a thickness that cannot be made. The
+eight throw from four places, all in the Intersection join's own path
+(`BuildOffsetByInter`):
+
+| Removed | Thrown | From |
+|---------|--------|------|
+| face 15, 1 | `Geom_TrimmedCurve::parameters out of range` | `TrimEdge`, the edge's `BRepLib::SameParameter`: a pcurve trimmed to no range |
+| face 15, 0.5 | the same | `PiecesOnTheFace`, a point sought in a face (`IntTools_Context::Hatcher`) |
+| faces 17 and 20, 1 and 0.5 | `GeomAdaptor_Surface::EvalD0`, `EvalD2` | `BRepOffset_Inter2d`'s `EdgeInter`: a curve on a surface evaluated outside it |
+| faces 11 and 14, -1 | `Geom_OffsetSurface::EvalD0` | `BRepOffset_Inter2d::FuseVertices`, a vertex's tolerance read on an offset surface that has no normal there |
+
+**The fix.** The exception is caught at the outermost computation: not
+done, `BRepOffset_UnknownError`, and the second way is tried as after any
+other refusal. What made each state that threw is not mended: with this
+join nothing is made on this part but its top, its bottom and (outward)
+one flat (sec 70).
+
+**The results.** The eight are refused: the second way makes none of
+them. In FreeCAD they fail as a thickness that cannot be made
+("Thickness failed"), not with the kernel's exception. `run_tests.py`,
+`issue613_inter_join_f<face>_<way><value>_refused` (8), which take a
+refusal of the offset's own and not an exception handed on.
+
+No picture: nothing is made before or now.
+
+**What it moved.** Eight lines of the corpus, from threw to refused
+(`corpus/baseline.txt`). Nothing else: not a case line of the suites, not
+a line of the sweep.
+
+Of the corpus' 168 runs on this part 132 are refused now and none
+throws.
+
+**Validation** (`28112588a2` against `fd614fc070`, on Linux): thickness
+PASS=704 (696 + these 8) at level 0 and at level 3 frozen, every other
+case line the same; boolean 111, draft 105, fillet 919 + 1 XFAIL at fix
+levels 0 to 4, the same line for line; the corpus as its baseline but for
+the eight lines; sweep 928 of 928, the same line for line; the 29 issue
+models as before; FreeCAD's Python suite 4388 OK (`763d0acadb`). Not run:
+macOS, thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
