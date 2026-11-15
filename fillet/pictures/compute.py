@@ -9,9 +9,10 @@ import sys
 sys.path.insert(0, os.environ["FILLET_TOOLS"])
 import FreeCAD as App
 import Part
-from cases import (CASES, CHAMFER, FLAT, REFUSED, SHAPES, STRICT, UVFACE, UVFACE_CASE,
+from cases import (CASES, CHAMFER, FLAT, LEVEL, REFUSED, SHAPES, STRICT, UVFACE, UVFACE_CASE,
                    edge_between)
 sys.path.insert(0, os.path.join(os.environ["FILLET_TOOLS"], "..", ".."))
+from fix_level import set_fillet_fix_level  # noqa: E402
 from flat_end import FlatEnd, available as flat_available  # noqa: E402
 
 OUT = os.environ["OUT"]
@@ -73,9 +74,15 @@ for name, (st, sk, ends, radius, ref, focus, look) in CASES.items():
         edges = [edge_between(s, *e) for e in pairs]
         # the flat end where the case asks for it and the OCCT has it: an
         # OCCT from before makes the end it made
-        with FlatEnd(name in FLAT and flat_available()):
-            r = (s.makeChamfer(*CHAMFER[name], edges) if name in CHAMFER
-                 else s.makeFillet(radius, edges))
+        # at the case's fix level, where it has one
+        was = set_fillet_fix_level(LEVEL[name]) if name in LEVEL else None
+        try:
+            with FlatEnd(name in FLAT and flat_available()):
+                r = (s.makeChamfer(*CHAMFER[name], edges) if name in CHAMFER
+                     else s.makeFillet(radius, edges))
+        finally:
+            if was is not None:
+                set_fillet_fix_level(was)
         p = []
         if (s.isValid(), round(s.Volume, 6)) != before:
             p.append("input changed")

@@ -2979,10 +2979,12 @@ fillet_case("issue474_coil_v9_e12_e25_r1", sweep_shape("issue474_Fillet"), [12, 
 # nothing valid; the plates made again, stepped back on their sharp edges
 # only to points on them (README.md, "A common point on another edge"):
 # valid, clean by BOP's check
+# (V1's as below fix level 4: from it the one corner at fault is set back
+# before the plates are made again, the cases at the end)
 for _v, _es, _vol in ((1, (6, 10), 1988.4351), (5, (6, 21), 1988.6625)):
     fillet_case("issue474_f003_coilfoot_v%d_e%d_e%d_r1" % ((_v,) + _es),
                 sweep_shape("issue474_Fillet003"), list(_es), 1.0, "pass", _vol,
-                vol_tol=1e-3, bop=True)
+                vol_tol=1e-3, bop=True, fix_level=min(FIX_LEVEL, 3) if _v == 1 else None)
 
 # #273's Fillet001: edge 12, a B-spline wall's edge on the plane at z 18, at
 # 0.3. The setback fallback's corner of more than three edges projects a curve
@@ -3624,6 +3626,27 @@ for _name, _edges, _old, _new in (("v5_e5_e6_e17_e20", [5, 6, 17, 20], 1829.5115
                 vol_tol=1e-3, fix_level=1)
     fillet_case("issue474_coil_%s_r1_level2" % _name, _coil474, _edges, 1.0, "pass", _new,
                 vol_tol=1e-3, fix_level=2)
+
+# Fix level 4: a result invalid where the plate made several corners has
+# each of them set back alone first, and all of them together only where
+# none alone makes it (README.md, "Fix level 4"). Fillets at the vertices
+# of #474's coil, as they are at level 3 -- every corner set back, or, V1's,
+# the plates made again -- and from level 4, one corner set back: the top
+# end of the coil, E52 with E53 and with E46, and its foot. With the
+# loosest tolerance each may have: 0.066 and 0.0005 for the first.
+for _name, _inp, _es, _old, _new, _told, _tnew in (
+        ("issue474_f003_coil_end_e52_e53", "issue474_Fillet003", [52, 53], 1988.2101, 1988.2868,
+         0.07, 1e-3),
+        ("issue474_f003_coil_end_e46_e52", "issue474_Fillet003", [46, 52], 1946.4543, 1946.3476,
+         0.01, 1e-3),
+        ("issue474_coil_v9_e17_e25", "issue474_Fillet", [17, 25], 1884.7960, 1885.0169,
+         0.03, 0.01),
+        ("issue474_f003_coilfoot_v1_e6_e10", "issue474_Fillet003", [6, 10], 1988.4351, 1988.0179,
+         0.01, 0.01)):
+    fillet_case("%s_r1_level3" % _name, sweep_shape(_inp), _es, 1.0, "pass", _old, _told,
+                vol_tol=1e-3, fix_level=3)
+    fillet_case("%s_r1_level4" % _name, sweep_shape(_inp), _es, 1.0, "pass", _new, _tnew,
+                vol_tol=1e-3, fix_level=4)
 
 counts = {}
 for _, verdict, _ in results:

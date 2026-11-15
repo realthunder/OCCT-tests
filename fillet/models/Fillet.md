@@ -2486,6 +2486,19 @@ vertex, and nothing told those from the sound ones; they stay refused.
 
 ![issue962_invalid_corner_set_back_chamfer_e76_e77_0.3](pictures/issue962_invalid_corner_set_back_chamfer_e76_e77_0.3.png)
 
+### Fix level 4: the corner at fault set back alone (`11c15cb231`, #474's coil)
+
+The long edge of the coil's end face with a short one, filleted at 1.
+The plate builds both corners and the result is invalid; below fix level
+4 both are set back together, the sound one with the other, and the
+result has edges of tolerance 0.066. From level 4 each corner is set
+back alone first, and the first that gives a valid result is kept:
+1988.2868 for 1988.2101, nothing looser than 0.0005. 25 fillets of the
+sweeps, all on this coil. The picture's "before" is the library before
+the fix asked for level 4, which it makes as its latest, 3.
+
+![issue474_f003_coil_end_e52_e53_r1_level4](pictures/issue474_f003_coil_end_e52_e53_r1_level4.png)
+
 ## Making the pictures
 
 `tests/fork/fillet/pictures/make_pictures.sh` does it all, on Linux or macOS;

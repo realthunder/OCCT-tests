@@ -115,6 +115,7 @@ STAGES = {
     "sfour": ("4c5359fcbc", "3ee86acb22"),
     "schsetback": ("3ee86acb22", "3f5f5832d5"),
     "schinvalid": ("3f5f5832d5", "d2c2d39f9d"),
+    "slevel4": ("a66c0bf308", "11c15cb231"),
 }
 # stage -> the toolkits its "before" library is built of, when not TKFillet alone
 STAGE_TOOLKITS = {
@@ -1227,6 +1228,13 @@ CASES = {
         "schinvalid", "p962", [((49.308025, 17.1, 14), (50, 17.1, 14)),
                                ((50, 17.1, 14), (50, 13.7, 14))],
         0.3, 11584.5076, (50, 17.1, 14), (1, 0.7, -0.6)),
+    # #474's Fillet003, the end of the coil: the end face's long edge with
+    # its short one, at 1. Invalid where the plate made two corners; both
+    # set back below fix level 4, one from it (computed at level 4: LEVEL)
+    "issue474_f003_coil_end_e52_e53_r1_level4": (
+        "slevel4", "p474", [((4.441365, 7.827788, 27.660694), (6.415306, 11.306805, 27.660692)),
+                            ((6.415306, 11.306805, 27.660692), (8.154814, 10.319835, 27.660692))],
+        1.0, 1988.2868, (6.415306, 11.306805, 27.660692), (0.3, 1.0, 0.9)),
     "roof_block_feet_r1": ("sopp", "roof", [((0, 0, 0), (0, 20, 0)), ((0, 0, 0), (13, 0, 0))],
                            1.0, 56223.9184, (0, 0, 0), (-1, -1, 0.7)),
     "seam_end_top_r1": ("s523", "boxcyl", ((2, 0, 10), (10, 0, 10)), 1.0, 1092.5263,
@@ -1818,8 +1826,13 @@ ZOOM = {
     "issue474_f002_sliver_top_r0.3": 1.2,
     "issue474_f002_whole_in_end_r0.3": 1.2,
 }
+# case -> the fillet fix level it is computed at (the suite's, 0, otherwise):
+# a library from before the level makes it as its own latest does
+LEVEL = {"issue474_f003_coil_end_e52_e53_r1_level4": 4}
 # multi-edge case -> what its edges are, for the picture's heading
 EDGES = {
+    "issue474_f003_coil_end_e52_e53_r1_level4": "the long and a short edge of the coil's end "
+                                                "face, at fix level 4",
     "issue273_pocket_flat_tip_e23_e24_r0.8": "both rims of the pocket at its apex",
     "pocket_v10_d1_flat_tip_rims_r0.8": "both rims of the pocket at its apex",
     "issue360_f008_four_edges_r4": "the four edges of the block's side x=-53.2",

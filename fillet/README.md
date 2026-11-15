@@ -6129,6 +6129,9 @@ whole, as below level 3 the end is passed over and the levels above are
 tried: "A chamfer's corner set back" and "A chamfer's corner built, but
 invalid", below.
 
+Level 4 (2026-11-15, `11c15cb231`) is the corner at fault set back alone
+where the plate made several: "Fix level 4", below.
+
 What was refused needs no level, so a computation below the latest level
 that makes nothing -- it failed, or its result was refused as invalid --
 where it passed over a correction above the level, is computed again
@@ -6889,7 +6892,8 @@ with it. Two things follow, neither done:
   (2026-11-15, the fillet sweeps at level 3, 16163 fillets): the
   fallback is entered for an invalid result with plate corners 149
   times, 106 with one corner and 43 with two -- 38 on #474's coil and its
-  two successors, 5 on #962.
+  two successors, 5 on #962. Done since, as fix level 4 ("Fix level 4",
+  below).
 - With E5 as well (E5, E17, E20) only (-13, 0, 11) is set back and the
   fuse returns the two bodies whole, not split at all; where that one is
   open was not looked for.
@@ -7012,6 +7016,77 @@ the same; the thickness corpus as its baseline; the thickness sweep 928
 of 928; of the 29 issue models made again, not a result (in one, three
 messages in another order). FreeCAD (`7e8a9fdad3`): the Python suite 4388
 OK. Not run: macOS, the frozen suite, thickness levels 1 and 2.
+
+## Fix level 4: the corner at fault set back alone (`11c15cb231`, 2026-11-15)
+
+**Where it was met.** "A chamfer's corner set back", what is left: a
+fillet whose result is invalid where corners were built with the plate
+has all those corners set back together (`ChFi3d_Builder::Compute`,
+`ComputeSetbackFallback`). Where the plate made two, one of them is
+usually sound, and set back with the other it lost its shape for nothing:
+#474's Fillet003, the long edge of the coil's end face with a short one
+(E52, E53) at 1, had edges of tolerance 0.066 so.
+
+**The fix.** From fix level 4 each of the plate's corners is set back
+alone first, in the order the vertices are kept (`myVDataMap`), and the
+first that gives a valid result is the result; all of them together only
+where none does. Below level 4 nothing changes: an object made before
+recomputes as it was.
+
+**What it moves.** Of the 16163 fillets of the vertex and edge sweeps 25
+are made differently at level 4, all at vertices of #474's coil
+(`issue474_Fillet`, `_Fillet001`, `_Fillet003`); none is made that was
+refused, none refused that was made, and at levels 0 and 3 every line of
+the four sweeps is as it was. The chamfers are untouched (their corner
+fallback keeps its rule of one plate corner at three sharp edges: without
+the rule, the corners tried one by one, 74 more chamfers of the sweeps
+are made, among them corners of four sharp edges found wrong before).
+
+**Measured.** Each of the 25 against the same edges filleted alone, by
+3000 random points in the cube of eight radii about each vertex of the
+edges (a point is where the two alone put it: in both, or out of both,
+or else on the other side from the input): 17 are nearer the edges alone
+at level 4, 7 the same and one a point further (0.85 cubes of the radius
+for 0.68); together they are 15.3 cubes off for 21.1. Their loosest
+tolerances go down, E52 with E53 from 0.066 to 0.0005. (The first such
+measure, before the classifier's fix `45d77acfdf`, showed every pair with
+the block's upright edge E20 three to five cubes off at any level: the
+points were wrong, not the fillets -- `../boolean/README.md`, "A face that
+ends a hair past a knot of its surface".)
+
+One of the 25 was not set back at all at level 3: Fillet003's E6 with E10
+at 1 ("A common point on another edge"), where setting back both corners
+gave nothing valid and the plates were made again, stepped back on their
+sharp edges. At level 4 one corner set back makes it first: 1988.0179 for
+1988.4351, the two edges alone summing to 1988.2047 -- 0.19 under for
+0.23 over.
+
+| Case | What |
+|------|------|
+| `issue474_f003_coil_end_e52_e53_r1_level3`, `_level4` | the coil's end: 1988.2101 with tolerances up to 0.066, and 1988.2868 with none over 0.001 |
+| `issue474_f003_coil_end_e46_e52_r1_level3`, `_level4` | the same end, the coil's long edge with the end face's: 1946.4543 and 1946.3476 |
+| `issue474_coil_v9_e17_e25_r1_level3`, `_level4` | the coil's foot on its block: 1884.7960 and 1885.0169 |
+| `issue474_f003_coilfoot_v1_e6_e10_r1_level3`, `_level4` | the plates made again, and one corner set back: 1988.4351 and 1988.0179 |
+
+`issue474_f003_coilfoot_v1_e6_e10_r1` itself runs at the suite's level up
+to 3.
+
+![issue474_f003_coil_end_e52_e53_r1_level4](models/pictures/issue474_f003_coil_end_e52_e53_r1_level4.png)
+
+The picture's "before" is the library before the fix asked for level 4,
+which it makes as its own latest, 3.
+
+**Validation** (`11c15cb231` against `45d77acfdf`, on Linux): the fillet
+suite PASS=919 XFAIL=1 (911 + these 8) at fix levels 0, 1, 2, 3 and 4;
+levels 0 to 3 line for line as before but for the 8, level 4 as level 3
+but for one line (`issue474_f003_opposite_e5_e21_r0.3`, 1983.5637 for
+1983.5655, within its 0.1). The fillet sweeps at levels 0 and 3 as they
+were and at 4 the 25 moved; the chamfer sweeps at level 0 as they were
+and at level 4 as at 3. Boolean 108, draft 105, thickness PASS=696 at level 0 and at level 3
+frozen, the thickness corpus as its baseline, the thickness sweep 928 of
+928, the 29 issue models as before. FreeCAD with
+`OCCTFilletFixLevelLatest` 4: the Python suite 4388 OK. Not run: macOS,
+thickness levels 1 and 2.
 
 ## Known broken (XFAIL)
 
