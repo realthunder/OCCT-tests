@@ -123,6 +123,10 @@ fix 631classify c1b55edd39 \
 fix 474coil 45d77acfdf \
     src/ModelingAlgorithms/TKTopAlgo/IntCurvesFace/IntCurvesFace_Intersector.cxx \
     issue474_coil_classify $HERE/../models/issue474_coil_edge_filleted.brep --write
+# #617: points outside the tilted torus' prisms said inside, their line grazing a wall
+fix 617graze fd614fc070 \
+    src/ModelingAlgorithms/TKTopAlgo/BRepClass3d/BRepClass3d_SClassifier.cxx \
+    issue617_grazing_classify $HERE/../models/issue617_tilttorus_pad_back.brep --write
 
 FREECAD_USER_HOME=$W/home $RUN $FCBUILD/bin/FreeCADCmd $HERE/prep.py > $W/prep.log 2>&1
 grep -q '^DONE' $W/prep.log || { echo "prep failed, see $W/prep.log"; exit 1; }

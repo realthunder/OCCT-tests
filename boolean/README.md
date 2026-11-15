@@ -1385,3 +1385,74 @@ fillet suite PASS=911 XFAIL=1 at fix levels 0, 1, 2 and 3, every other
 case line the same; the thickness corpus as its baseline; the thickness
 sweep 928 of 928. FreeCAD (`7e8a9fdad3`): the Python suite 4388 OK. Not
 run: macOS, thickness levels 1 and 2.
+
+## A line that grazes a face (`fd614fc070`, 2026-11-15)
+
+**Where it was met.** After the section above the classifier was put to
+an audit that does not compare it with itself: 8000, then 30000, random
+points in the box of each solid of the suites' models (65), each
+classified, and the answer set against the parity of the crossings of
+nine random lines from the point, each face intersected on its own. Of
+1950000 points 13 were said on the side that eight of the nine lines
+deny, all of them outside and said inside: 9 on the prisms padded from
+the cut of #617's tilted torus (`models/issue617_tilttorus_pad.brep`,
+`_pad_back.brep`), one on the split prism of the torus of symmetry, two
+on #474's helix, one on #617's revolution. One of them is 6.9 from the
+solid.
+
+**What was broken.** The classifier casts a line from the point to a
+point of a face and takes the first crossing of the solid's skin along
+it; `IntCurvesFace_Intersector` finds the crossings on a polyhedron of
+each face and then exactly. The prisms' walls are extrusions of closed
+B-splines. The line of (24.190, 31.107, -26.782) passes through a bulge
+of a wall: it crosses it at 6.356 and again at 6.588, 0.4 degrees off the
+wall's tangent plane. That of (10.669, 30.842, -25.857) crosses it at
+4.695 and at 6.310, 2.9 degrees off. A line so near the surface crosses
+the polyhedron once or not at all where it crosses the surface twice,
+and the intersector returned the second crossing alone, going out of the
+solid: the point was inside. (A polygon of the line in 12 to 200 pieces
+for the polyhedron changes nothing.)
+
+**The fix.** In `BRepClass3d_SClassifier::Perform`: a line whose first
+crossing is within 0.1 of the face's tangent plane, by the cosine with
+the normal, is not believed alone. Its answer stands where the next line
+that does not graze agrees with it; where that one says otherwise a
+third line decides between the two; lines in one direction count once;
+and where the lines run out the first is trusted as it was before.
+
+Taking the next line's answer alone, tried first, made two points wrong
+that were right: (3.568, 29.170, -19.612), 0.03 inside the same wall.
+Its first line grazes the wall and is right; its second leaves through
+the wall between the wall and its polyhedron, which is up to 0.11 from
+it, where no crossing is found.
+
+**The cases.** `models/issue617_grazing_classify.cpp`: eight points
+found outside the prisms are outside (all eight said inside before); of
+30000 points sampled in the shape's box none is said on the side that
+eight of nine lines deny (6 before). `run_tests.py` has the fourteen
+points found on the three prisms (`issue617_tilt_pad_points`,
+`issue617_tiltback_pad_points`, `issue617_sym_pad_points`).
+
+![A line that grazes a face: before and after](models/pictures/issue617_grazing_classify.png)
+
+**Audit.** The classifier as it was against this one, on 40000 random
+points in the box of each of the 65 solids: 9 points change, 8 on the
+two prisms to outside and one on #580's pad to inside, and fifteen lines
+counted from each agree with every one of them. The audit by parity
+again: 3 of the 1950000 points are wrong still.
+
+**What is left.** Those three: two on #474's helix and one on #617's
+revolution, outside and said inside. On the helix the crossing that
+grazes is the one lost -- the line enters through a wall 3.1 and 5.4
+degrees off its tangent plane, 0.21 and 0.24 from the wall's edge, and
+the crossing found after it, going out, is sound: nothing found tells
+that one is missing. The third was not traced. They are the
+intersector's, not the classifier's: a line between a face and its
+polyhedron.
+
+**Validation** (against `11c15cb231`, on Linux): boolean 111 (108 + these
+3), draft 105, thickness PASS=696 at level 0 and at level 3 frozen, the
+fillet suite PASS=919 XFAIL=1 at fix levels 0 to 4, every other case line
+the same; the thickness corpus as its baseline; the thickness sweep 928
+of 928; the 29 issue models as before. FreeCAD (`763d0acadb`): the Python
+suite 4388 OK. Not run: macOS, thickness levels 1 and 2.

@@ -711,6 +711,39 @@ for stage, title in (("before", "before"), ("after", "after")):
           bad=said != 0)
 pictures.append(pic)
 
+# #617: the prisms of the tilted torus and the points outside them that were
+# said inside, a ball at each (issue617_grazing_classify.cpp --write).
+def graze_line(stage):
+    points = sample = of = 0
+    for line in open(os.path.join(W, "617graze", stage + ".txt")):
+        w = line.split(":", 1)[1].split()
+        if line.startswith("points:"):
+            points = int(w[0])
+        elif line.startswith("sample:"):
+            sample, of = int(w[0]), int(w[2])
+    return points, sample, of
+
+
+pic = dict(name="issue617_grazing_classify",
+           title="A line that grazes a face",
+           caption="BRepClass3d_SolidClassifier on eight points found outside the prisms padded "
+                   "from the cut of #617's tilted torus, and on 30000 points sampled in their "
+                   "box: a ball at each point said on the wrong side. The point's line passed "
+                   "through a bulge of a wall, crossing it twice close by, and the line/face "
+                   "intersector returned the second crossing alone, going out of the solid.",
+           panels=[])
+EYEGRAZE = [0.35, 1.0, 0.45]
+CGRAZE = [-30, 18, -24]
+for stage, title in (("before", "before"), ("after", "after")):
+    points, said, of = graze_line(stage)
+    shape = Part.read(os.path.join(W, "617graze", stage, "said_wrong.brep"))
+    nfaces = sum(len(so.Faces) for so in shape.Solids[:2])
+    panel(pic, shape, title, "%d of 8 points, %d of %d sampled said on the wrong side"
+          % (points, said, of), EYEGRAZE, CGRAZE, 80,
+          colors={str(k): ORANGE for k in range(nfaces, len(shape.Faces))},
+          bad=points + said != 0)
+pictures.append(pic)
+
 # #617: the pad on a torus cut through a plane of symmetry, each curve of its
 # profile cut in two -- the input, and the common before and after
 # (issue617_symtorus_pad.cpp --write).

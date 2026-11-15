@@ -580,6 +580,34 @@ def issue474_coil_classify():
 guarded(issue474_coil_classify)
 
 
+# The prisms padded from #617's cuts, their walls extrusions of B-splines:
+# points outside them said inside. The point's line passed through a bulge
+# of a wall, crossing it twice close by, a few degrees off its tangent
+# plane or less, and IntCurvesFace_Intersector returned the second crossing
+# alone, going out. A line whose first crossing grazes the face is not
+# believed alone (README.md, "A line that grazes a face").
+def issue617_grazing_classify():
+    for tag, name, points in (
+            ("tilt", "issue617_tilttorus_pad.brep",
+             [(24.190250, 31.107302, -26.782223), (10.668823, 30.842055, -25.857114),
+              (-4.417922, 5.393937, -38.464740), (5.556987, 29.908879, -22.223268),
+              (61.275644, 5.484870, -35.884340)]),
+            ("tiltback", "issue617_tilttorus_pad_back.brep",
+             [(-64.417922, 5.393937, -38.464740), (-56.791860, 30.220370, -23.466659),
+              (-18.876547, 31.332908, -27.669281), (-16.536926, 31.875933, -29.833540),
+              (-16.616102, 31.442742, -28.171500), (1.275644, 5.484870, -35.884340),
+              (-19.710294, 29.986907, -22.564094), (-35.809750, 31.107302, -26.782223)]),
+            ("sym", "issue617_symtorus_pad_split.brep", [(22.792941, 13.425282, 29.594097)])):
+        pads = Part.read(os.path.join(HERE, "models", name))
+        said = [q for q in points if pads.isInside(V(*q), 1e-7, True)]
+        report("issue617_%s_pad_points" % tag, not said,
+               "%d of %d points outside the prisms said inside (want 0)"
+               % (len(said), len(points)))
+
+
+guarded(issue617_grazing_classify)
+
+
 # #631's Fillet001 with two edges at a vertex chamfered at 1, the corner set
 # back and closed by a patch with edges of tolerance 0.011: points inside
 # the solid that BRepClass3d_SolidClassifier said outside. Its line from the
