@@ -1145,7 +1145,11 @@ asked the curve to come to the edge in every case lost it.
 **The cases.** `run_tests.py`, `issue617_symtorus_sunk_<depth>_<op>`: the
 prism of cut curves 0.003, 0.01 and 0.05 inside the torus, its cut, common
 and fuse -- valid, the solids counted, the volumes the whole-curve prism's
-at the same place to 1e-5 (they are within 1e-8), no vertex over 1e-4.
+at the same place to 1e-5 (they are within 1e-8), no vertex over 2e-4
+(the prism's own tolerance is 8.07e-5 and the results' vertices have
+8.08e-5 on x86; on arm64 one section edge of the cut and the common at
+0.01 ends 3.7e-5 from its vertex, which gets 1.24e-4, the volumes the
+same; the fault was vertices of 0.0023).
 `models/issue617_symtorus_pad.cpp ... sunk` is the one at 0.01.
 
 ![A vertex stretched onto a line that passes it: before and after](models/pictures/issue617_symtorus_sunk.png)
@@ -1302,7 +1306,9 @@ of #474's coil by 0.2 (`Part.Shape.makeOffsetShape(0.2, 1e-3)` on
 one vertex at x = -12.998 in some runs and at -13.000 in others, 5 and 3
 of eight. With the address space not randomised (`setarch -R`) six runs
 give one answer, so it is an order of addresses again, somewhere in the
-offset. Not looked for.
+offset. (Found since, `6a0d5260bf`: a ring of vertex replacements that
+`BRepOffset_MakeLoops::Build` resolved in the order of a map;
+`../thickness/README.md`, sec 72.)
 
 **Validation** (against `c1b55edd39`, on Linux): boolean 106 (105 + this
 one), draft 105, thickness PASS=695 at level 0 and at level 3 frozen, the

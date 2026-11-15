@@ -3220,6 +3220,54 @@ for line; the corpus as its baseline but for the two lines made here; sweep
 928 of 928, the same line for line; FreeCAD's Python suite 4388 OK
 (`b4ff77d741`). Not run: macOS, thickness levels 1 and 2.
 
+## An offset's vertex in one of two places, by the run (`6a0d5260bf`, 2026-11-15, sec 72)
+
+**Where it was met.** The check of the boolean suite's README, "The same
+looked for elsewhere": seventeen operations on each sweep shape, each in
+three processes, every result's faces, edges and vertices compared. One
+differed from run to run: `makeOffsetShape(0.2, 1e-3)` of #474's coil with
+its fillet (`../draft/sweep/shapes/issue474_Fillet.brep`), an offset that
+is invalid in every run, had one vertex at x = -12.9985 in five runs of
+eight and at x = -13.0000 in three. Everything else was the same.
+
+**What was broken.** Four edges of the offset end there, at the foot of
+the coil's first turn: the line where the tube round a vertical edge
+touches an offset plane and a short edge of the tube end at x = -13; the
+long edge of the turn's offset and an edge of 4 on the same plane end at
+x = -12.9985, 0.0015 beside it. The intersections made a vertex at each,
+and the loops bound each of the two to the other in the map of vertices to
+replace (`BRepAlgo_Loop`'s, handed on from face to face).
+`BRepOffset_MakeLoops::Build` compresses that map's chains, so that every
+vertex is bound to the last of its chain, and of two vertices bound to
+each other it keeps the one it starts from. It started from the map's own
+order, which is the order of the addresses the vertices happen to have:
+with the address space randomised, another one from one run of the same
+program to the next. How the two came to be bound to each other was not
+traced.
+
+**The fix.** The compression starts from the vertices in the order the
+faces' images hold them, and from the ones no face holds after that. What
+comes out is one of the two results that came out before -- here the
+vertex on the line -- and the same in every run (twenty of twenty).
+
+![issue474_coil_offset_vertex](models/pictures/issue474_coil_offset_vertex.png)
+
+The case is `issue474_coil_offset_vertex_same_every_run`: one vertex
+within 0.05 of the place, on the line. It does not ask the offset to be
+valid, which it is not, before or now; before the fix it failed in five
+runs of eight.
+
+**What it moved.** Nothing else: not a case line of the suites, not a line
+of the corpus or the sweep, not a model of the issues.
+
+**Validation** (`6a0d5260bf` against `121087d66c`, on Linux): thickness
+PASS=696 (695 + this one) at level 0 and at level 3 frozen, boolean 106,
+draft 105, fillet 911 + 1 XFAIL at fix levels 0, 1, 2 and 3, every other
+case line the same; the corpus as its baseline (1073 lines); the sweep 928
+of 928, the same line for line; the 29 issue models recompute as before;
+FreeCAD's Python suite 4388 OK (`7e8a9fdad3`). Not run: macOS, thickness
+levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
@@ -3304,6 +3352,8 @@ under Xvfb, or on the screen on macOS); add a case to `pictures/cases.py`,
 with its stage, to picture it, and `ONLY="<case> ..."` draws just those.
 `pictures/mkpage.py` then makes the "Thickness Before and After" page from
 them, published again after every fix.
+Sec 72's picture is drawn otherwise, from numbers:
+`pictures/vertex_dump.py` and `pictures/vertex_draw.py`.
 
 ## Layout
 

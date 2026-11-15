@@ -2428,6 +2428,30 @@ whole_edges_case("issue360_plate_top_in3_inter_edges", issue360, 5, -3.0, 438, T
 whole_edges_case("issue360_plate_top_in5_inter_edges", issue360, 5, -5.0, 438, True)
 whole_edges_case("issue360_plate_top_in2_inter_edges", issue360, 5, -2.0, 606, True)
 
+
+
+# The offset of #474's coil with its fillet by 0.2 is invalid, before and
+# now; but one of its vertices was at x = -12.9985 in five runs of eight and
+# at x = -13 in three, a ring of vertex replacements resolved in the order
+# of addresses (README.md, sec 72). It is on the line now, every run.
+def issue474_coil_offset_vertex():
+    try:
+        shape = Part.read(os.path.join(HERE, "..", "draft", "sweep", "shapes",
+                                       "issue474_Fillet.brep"))
+        r = shape.makeOffsetShape(0.2, 1e-3)
+        at = App.Vector(-13.0, -0.2, 10.811873)
+        near = [v.Point for v in r.Vertexes if v.Point.distanceToPoint(at) < 0.05]
+        ok = len(near) == 1 and near[0].distanceToPoint(at) < 1e-5
+        detail = "%d vertices near, %s" % (len(near), "; ".join(
+            "x=%.4f %.2g off the line's end" % (q.x, q.distanceToPoint(at)) for q in near))
+    except Exception as e:
+        ok = False
+        detail = "raised: %s" % str(e).splitlines()[0][:150]
+    report("issue474_coil_offset_vertex_same_every_run", ok, False, detail)
+
+
+issue474_coil_offset_vertex()
+
 counts = {}
 for _, verdict, _ in results:
     counts[verdict] = counts.get(verdict, 0) + 1

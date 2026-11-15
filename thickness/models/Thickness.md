@@ -3784,6 +3784,25 @@ thickness levels 1 and 2.
 ![issue613_ridge_blend_left_out_half](pictures/issue613_ridge_blend_left_out_half.png)
 ![issue613_ridge_blend_left_in_half](pictures/issue613_ridge_blend_left_in_half.png)
 
+### Sec 72: an offset's vertex in one of two places, by the run
+
+No thickness here: the offset of #474's coil with its fillet by 0.2
+(`makeOffsetShape(0.2, 1e-3)` of `../../draft/sweep/shapes/issue474_Fillet.brep`),
+which is invalid before and now. Four of its edges end at one place, two
+at x = -13 and two 0.0015 beside it, and the vertex they share was at the
+one end in some runs of the same program and at the other in the rest:
+two vertices each bound to the other in the map of vertices to replace,
+and the one kept was the one the map's order -- the order of addresses --
+came to first. The map's chains are now compressed from the vertices in
+the order the faces hold them (`6a0d5260bf`).
+
+![issue474_coil_offset_vertex](pictures/issue474_coil_offset_vertex.png)
+
+The picture is not one of `make_pictures.sh`'s: `pictures/vertex_dump.py`
+(under FreeCADCmd, once with the library before the fix preloaded until
+both answers have come, once with the one after) writes the edges next to
+the vertex, and `pictures/vertex_draw.py` draws them.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
