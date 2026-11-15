@@ -3255,7 +3255,10 @@ vertex on the line -- and the same in every run (twenty of twenty).
 The case is `issue474_coil_offset_vertex_same_every_run`: one vertex
 within 0.05 of the place, on the line. It does not ask the offset to be
 valid, which it is not, before or now; before the fix it failed in five
-runs of eight.
+runs of eight. On arm64 (macOS) this offset is not made at all -- "Null
+shape", eight tries of eight at `6a0d5260bf` and four of four with the
+file as it was before it -- and the case, with no vertex to look at,
+passes saying so.
 
 **What it moved.** Nothing else: not a case line of the suites, not a line
 of the corpus or the sweep, not a model of the issues.
