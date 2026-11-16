@@ -2645,6 +2645,79 @@ def _tube_fillet_cases():
 
 _tube_fillet_cases()
 
+# Sec 79. A box with edges chamfered, a face removed inward, at a corner of
+# which three faces that stay meet (a side of the box with its top edges
+# chamfered: the next side and two chamfers). The offsets of two of the
+# three share only that vertex and must cut each other, and the Arc join
+# intersects the offsets of faces across an edge only: refused, 36 runs of
+# the probe's two chamfered boxes; with the Intersection join ten of the
+# box with every edge chamfered were invalid. A thick solid of a shape whose every
+# face is a plane, refused or invalid, is made once more with every pair of
+# faces intersected. Worked out by booleans: inward the skin of a convex
+# polyhedron is the polyhedron less what is left of it with every plane
+# that stays moved in by the thickness.
+def _polyhedron_wall_in(shape, face_index, t):
+    b = shape.BoundBox
+    m = b.DiagonalLength
+    rest = Part.makeBox(b.XLength + 2 * m, b.YLength + 2 * m, b.ZLength + 2 * m,
+                        App.Vector(b.XMin - m, b.YMin - m, b.ZMin - m))
+    for i, f in enumerate(shape.Faces):
+        n = f.normalAt(0, 0)
+        p = f.CenterOfMass - n * (0.0 if i + 1 == face_index else t)
+        u = n.cross(App.Vector(1, 0, 0))
+        if u.Length < 1e-6:
+            u = n.cross(App.Vector(0, 1, 0))
+        u.normalize()
+        w = n.cross(u)
+        corners = [p + u * (4 * m) + w * (4 * m), p - u * (4 * m) + w * (4 * m),
+                   p - u * (4 * m) - w * (4 * m), p + u * (4 * m) - w * (4 * m)]
+        half = Part.Face(Part.makePolygon(corners + [corners[0]])).extrude(n * (-8 * m))
+        rest = rest.common(half)
+    return shape.Volume - rest.Volume
+
+
+def _chamfered_box_cases():
+    box = Part.makeBox(20.0, 30.0, 10.0)
+    top4 = box.makeChamfer(2, [e for e in box.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9
+                               and abs(e.BoundBox.ZMax - 10) < 1e-9])
+    every = box.makeChamfer(2, box.Edges)
+
+    def find(shape, test):
+        return [i + 1 for i, f in enumerate(shape.Faces) if test(f.BoundBox, f)][0]
+
+    faces = (("long_side", find(top4, lambda b, f: b.XMax < 1e-9)),
+             ("short_side", find(top4, lambda b, f: b.YMax < 1e-9)),
+             ("long_chamfer", find(top4, lambda b, f: abs(b.ZMin - 8) < 1e-9 and b.XMax < 2 + 1e-9
+                                   and b.YLength > 20)),
+             ("short_chamfer", find(top4, lambda b, f: abs(b.ZMin - 8) < 1e-9
+                                    and b.YMax < 2 + 1e-9 and b.XLength > 15)))
+    for tag, face in faces:
+        for t in (0.5, 1.0):
+            if "chamfer" in tag and t == 1.0:
+                # the chamfer is 2.83 wide, and the rims of the top and of the side reach
+                # 1.41 into it each: nothing opens
+                own_refusal_case("chamferbox_top4_%s_in1_refused" % tag, top4, [face], -1.0)
+                continue
+            thickness_case("chamferbox_top4_%s_in%g" % (tag, t), top4, face, -t, "pass",
+                           _polyhedron_wall_in(top4, face, t))
+    bottom = find(every, lambda b, f: b.ZMax < 1e-9)
+    for t in (0.5, 1.0):
+        want = _polyhedron_wall_in(every, bottom, t)
+        thickness_case("chamferbox_all_bottom_in%g" % t, every, bottom, -t, "pass", want)
+        # invalid before, 718.2264 and 1382.5471
+        thickness_case("chamferbox_all_bottom_join_in%g" % t, every, bottom, -t, "pass", want,
+                       False, 2)
+    # invalid before, 4730.3015
+    side = find(every, lambda b, f: b.XMax < 1e-9)
+    thickness_case("chamferbox_all_long_side_join_in0.5", every, side, -0.5, "pass",
+                   _polyhedron_wall_in(every, side, 0.5), False, 2)
+    # A corner's facet is covered whole by the rim of a skin of 0.5: nothing opens.
+    corner = find(every, lambda b, f: len(f.Edges) == 3)
+    own_refusal_case("chamferbox_all_corner_in0.5_refused", every, [corner], -0.5)
+
+
+_chamfered_box_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

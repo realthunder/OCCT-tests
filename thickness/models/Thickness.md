@@ -3952,6 +3952,25 @@ one by the other. Refused from the fork's offset fix level 5
 
 ![tube_fillet_outer_out1_refused_level5](pictures/tube_fillet_outer_out1_refused_level5.png)
 
+### Sec 79: a chamfered box, two offsets that meet at a vertex alone
+
+A box with its top edges chamfered, a side removed inward with the Arc
+join: refused. At each end of the side's top edge three faces that stay
+meet, and the offsets of two of them -- the next side and the chamfer
+above the removed one, which share that vertex and no edge -- must cut
+each other; the Arc join intersects offsets across an edge only, and the
+two were left whole. A thick solid of a shape whose every face is a
+plane, refused or invalid, is made once more with every pair of faces
+intersected (`f683997bb8`), and taken where it is sound, opens through the
+removed face and weighs no more than a skin can. By booleans, 882.7938:
+
+![chamferbox_top4_long_side_in0.5](pictures/chamferbox_top4_long_side_in0.5.png)
+
+The box with all twelve edges chamfered, the same side, the Intersection
+join: invalid at 4730.3015, three shells; 844.9916 now.
+
+![chamferbox_all_long_side_join_in0.5](pictures/chamferbox_all_long_side_join_in0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

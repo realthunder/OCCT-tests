@@ -3842,7 +3842,8 @@ The four sides are read by 3000 points each: not a point wrong.
   chamfer removed (the box with every edge chamfered: all 104). At such
   a corner the offsets of two faces that share only that vertex must cut
   each other, and the Arc join intersects faces across an edge only;
-  upstream throws there or gives the part back unhollowed. The fillets
+  upstream throws there or gives the part back unhollowed (sec 79 makes
+  36 of them, the inward ones). The fillets
   of the boxes (`box_top4` 16, `box_all12` 33, `box_round` 9, `hex_top`
   24) and the pocket's walls (24) are refused likewise; not traced one
   by one.
@@ -3876,6 +3877,91 @@ level 4, and at level 5 as at level 4; the sweep 928 of 928 at levels 0,
 FreeCAD's Python suite 4388 OK with new objects at level 5 (`82896672ef`);
 the probe with the four fixes differs from the one before in the runs
 named here and no other. Not run: macOS, thickness levels 1 and 2.
+
+## A chamfered box: two offsets that meet at a vertex alone (`f683997bb8`, 2026-11-16, sec 79)
+
+**Where it was met.** Sec 78's probe, the largest group of what it left:
+of the box with its four top edges chamfered (20 x 30 x 10, chamfers of
+2) and the box with all twelve, 136 of the 144 runs with the Arc join
+were refused, and with the Intersection join 25 of the second box's were
+invalid (a long side removed 0.5 inward: 4730.3015 for 844.9916).
+
+**What was broken.** A side of the first box has, at each end of its top
+edge, a corner where three faces that stay meet: the next side and two
+chamfers. Inward the offsets of the next side and of the chamfer above
+the removed side -- two faces that share that vertex and no edge -- cut
+each other from the corner's offset to the removed face. The Arc join
+intersects the offsets of faces across an edge (`ConnexIntByArc`), and
+each offset with the removed face at that face's vertices
+(`ContextIntByArc`); not two offsets that meet at a vertex alone. The
+two came out whole, the shell open along them, and every face of the
+offset was dropped in turn. Traced on the first box, a long side 0.5
+inward: the next sides' offsets 20 x 8 and the chamfer's whole. Upstream
+throws there outward and gives the box back unhollowed inward.
+
+**The fix.** `MakeThickSolid`, after its other ways: where every face of
+the shape is a plane and the caller did not ask for Intersection, once
+more with it -- every pair of faces intersected -- either way of the
+loops. An answer is taken where it is valid and crosses itself nowhere,
+opens through the faces removed (`OpensNowhere`) and weighs no more than
+a skin can: half the thickness times its area (`IsNoHeavierThanASkin`;
+a wall between a surface and its offset is the thickness times the mean
+of the two areas, less where two offsets cut each other, no more where a
+tube or a piece of sphere joins them, by Steiner's formula). An invalid
+answer is replaced so too -- made on another object first, so that it
+stays where the new one is none. No fix level: what was made validly is
+made as it was.
+
+Of planes only. Tried on any shape, the corpus had three of #613's
+blends at 1 back as valid solids of 43667, clean by BOP's check, where
+the part is 21192, and one run past its two minutes; the weight above
+would have refused the three, and is kept for that.
+
+**The results.** Worked out by booleans (`run_tests.py`,
+`_polyhedron_wall_in`): inward the skin of a convex polyhedron is the
+polyhedron less what is left of it with every plane that stays moved in
+by the thickness -- half spaces, cut one after another.
+
+| Case | By booleans | Before |
+|------|-------------|--------|
+| `chamferbox_top4_long_side_in0.5`, `_in1` | 882.7938, 1696.4934 | refused |
+| `chamferbox_top4_short_side_in0.5`, `_in1` | 918.0083, 1757.3513 | refused |
+| `chamferbox_top4_long_chamfer_in0.5`, `_short_` | 959.1025, 968.6735 | refused |
+| `chamferbox_top4_long_chamfer_in1_refused`, `_short_` | refused: the chamfer is 2.83 wide and the rims of the top and of the side reach 1.41 into it each | refused |
+| `chamferbox_all_bottom_in0.5`, `_in1` | 719.5627, 1388.0285 | refused |
+| `chamferbox_all_bottom_join_in0.5`, `_in1` | the same | invalid, 718.2264 and 1382.5471 |
+| `chamferbox_all_long_side_join_in0.5` | 844.9916 | invalid, 4730.3015 |
+| `chamferbox_all_corner_in0.5_refused` | refused: a corner's facet is covered whole by the rim | refused |
+
+On the probe: the Arc join 36 runs from refused to right by its points
+(all inward: 12 of the first box, 24 of the second); the Intersection
+join ten from invalid and two from refused to valid, at the Arc join's
+volumes; every other run as it was.
+
+![chamferbox_top4_long_side_in0.5](models/pictures/chamferbox_top4_long_side_in0.5.png)
+![chamferbox_all_long_side_join_in0.5](models/pictures/chamferbox_all_long_side_join_in0.5.png)
+
+**What is left.** With the Arc join 100 runs of the two boxes stay
+refused: the 68 outward, where every pair intersected finds no sound
+answer either (not traced), and 32 inward -- the sixteen chamfers at 1
+and the eight corner facets at 0.5 and at 1, whose opening the skin
+closes. The shapes that
+are not all planes (the fillets of the boxes, the pocket's walls) are as
+sec 78 left them.
+
+**What it moved.** Nothing made validly before: not a case line of the
+suites at any level, not a line of the corpus (levels 0, 4 and 5) or of
+the sweep (levels 0, 4 and 5).
+
+**Validation** (`f683997bb8` against `7846725cda`, on Linux): thickness
+PASS=839 (825 + these 14) at level 0, at level 3 frozen, at level 4 and
+at level 5, every other case line the same; boolean 111, draft 105,
+fillet 919 + 1 XFAIL at fix levels 0 to 4, the same line for line; the
+corpus as its baselines at levels 0 and 4, and at level 5 as at level 4;
+the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`82896672ef`); the probe differs from sec 78's in the 48 runs above and
+no other. Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 

@@ -86,6 +86,7 @@ STAGES = {
     "s75": ("8f37f86b3f", "75"),
     "s77": ("c1f4d9f6df", "77"),
     "s78": ("d075006c59", "78"),
+    "s79": ("d3d0956329", "79"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -198,6 +199,14 @@ def _tubefillet():
     t = Part.makeCylinder(10, 12).cut(Part.makeCylinder(6, 12))
     return t.makeFillet(1, [e for e in t.Edges
                             if abs(e.BoundBox.ZMin - 12) < 1e-9 and abs(e.BoundBox.ZMax - 12) < 1e-9])
+
+
+def _chamferbox(every):
+    # 20 x 30 x 10 with its four top edges chamfered at 2, or all twelve:
+    # Face1 is the long side at x = 0 either way.
+    b = Part.makeBox(20, 30, 10)
+    return b.makeChamfer(2, b.Edges if every else [
+        e for e in b.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9 and abs(e.BoundBox.ZMax - 10) < 1e-9])
 
 
 def _filleteddome():
@@ -438,6 +447,8 @@ SHAPES = {
     "roundtop": lambda: _roundtop(),
     "roundtop20": lambda: _roundtop20(),
     "tubefillet": lambda: _tubefillet(),
+    "chamferbox_top4": lambda: _chamferbox(False),
+    "chamferbox_all": lambda: _chamferbox(True),
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
@@ -753,6 +764,8 @@ CASES = {
     "roundtop_top_out1": ("s77", "roundtop", 8, +1, False, 0, 407.5290),
     "roundtop_20x30x10_long_side_out1": ("s78", "roundtop20", 1, +1, False, 0, 2048.0806),
     "tube_fillet_outer_out1_refused_level5": ("s78", "tubefillet", 2, +1, False, 0, None),
+    "chamferbox_top4_long_side_in0.5": ("s79", "chamferbox_top4", 1, -0.5, False, 0, 882.7938),
+    "chamferbox_all_long_side_join_in0.5": ("s79", "chamferbox_all", 1, -0.5, False, 2, 844.9916),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
