@@ -85,16 +85,18 @@ SUMMARY = {
     66: "A groove cut in the bottom of a cylinder by another cylinder, the groove's wall removed, outward (#363's Thickness002): invalid, where the same solid as the issue's file stores it is made. The wall is half the cutting cylinder and one of its straight edges lies on that cylinder's seam, kept with both of a seam's pcurves. The rim outward is a ring round the wall with the wall's outline as its hole; the hole runs that edge the other way round, which is its other pcurve, a period away from the rest, so the ring was taken for a face running round the cylinder and dropped, and the whole wall's surface stayed in the offset. The ring is now cut in two along the seam's line. Upstream throws, or gives the input back.",
     70: "#613's part with a flat of its roof removed. Every edge of a flat is tangent to the blend beside it, so the wall is closed by a tube round each edge. The right flat (face 15) stands over a blend made in two halves: the two tubes along it end in the same quarter circle where the halves meet, each had an arc of its own, the shell stayed open there and the thickness was refused at any value. The second tube now takes the first one's arc. The left flat (face 21), the blend in one, was made at 1 and 2 outward and 2 inward and refused otherwise: the section of its two tubes at a corner has, on one of them, a derivative at its very end 48 degrees off the way it runs, and the loop took it for an edge leaving the other side of the tube's edge. An edge's direction at a vertex is now its chord's where the two differ. Both flats are made from 0.25 to 2 either way, to 2e-6 of each other. Upstream answers seven of the eight pictured with an invalid solid and one with the part itself.",
     71: "#613's part with the blend up to its ridge removed, 0.5 either way: made on one side of the ridge and refused on the other, a mirror image. Two offset faces share an edge; the loop of one renews a vertex at its end and with it the edge, a copy, and the other face takes the copy only if it is rebuilt after. Rebuilt before, it kept the edge as it was, and with the vertices put back the two faces held an edge each along one curve: an open shell. Which happens was the order the faces come in. A face still holding such an edge is given its copy.",
+    74: "From the fork's offset fix level 4. #613's side is a cylinder with a cone 1.5 degrees off it above, and any two faces within 0.1 rad were taken for tangent: their offsets joined as they are, not cut by each other. At a thickness of 2 the two walls ran 0.052 past each other inward and ended 0.052 apart outward, under an edge loose enough to hold either; the solid is valid, but its volume, summed over its faces, was 45 short of 10240 inward and 65 short of 11313 outward. Now two faces are tangent only while their offsets would miss by no more than 0.001 (or the faces are within 0.001 rad): the crease is cut inward and closed by a tube outward, and the wall's volume is the one by hand. The crease is 0.05 across on a part of 45, so both columns of the panels look alike at this scale; the drawn figure shows the skin's section there.",
 }
 
 # Pictures of a section made by make_fix_pictures.sh (a C++ driver of the fix,
-# before and after) rather than from cases of the suite: shown after the
-# section's cases.
+# before and after) rather than from cases of the suite, or drawn from
+# numbers (sec 74's, crease_draw.py): shown after the section's cases.
 FIXPICS = {
     40: ["issue346_revolve", "issue346_crossed"],
     63: ["issue360_plate_search_time", "issue613_side_refusal_time",
          "issue360_plate_edge_pieces"],
     70: ["issue613_roof_flat"],
+    74: ["issue613_crease"],
 }
 
 TAGLINE = "Every pictured case of the OCCT fork's thickness suite, each run three ways"

@@ -5,6 +5,8 @@
 # 1072 runs. The env assignment picks the libraries, e.g.
 #   corpus.sh bin DYLD_LIBRARY_PATH=/tmp/lib        (macOS; LD_LIBRARY_PATH on Linux)
 #   corpus.sh bin X=1                               (the tools' own rpath: the install)
+# THICK_FIX_LEVEL=<n> in the environment runs it at the fork's offset fix level n
+# (baseline_level4.txt is the result at 4); unset, at 0.
 # Compare with baseline.txt, timings stripped:
 #   diff <(perl -pe 's/ [0-9.]+s$//' baseline.txt) <(perl -pe 's/ [0-9.]+s$//' new.txt)
 T=$(cd "${1:?usage: corpus.sh <tool dir> [env assignment]}" && pwd)

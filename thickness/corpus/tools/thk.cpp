@@ -12,8 +12,13 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <dlfcn.h>
 int main(int argc, char** argv)
 {
+  // THICK_FIX_LEVEL=<n>: the fork's offset fix level, where the library has one
+  if (getenv("THICK_FIX_LEVEL"))
+    if (void* f = dlsym(RTLD_DEFAULT, "BRepOffset_SetFixLevel"))
+      ((int (*)(int))f)(atoi(getenv("THICK_FIX_LEVEL")));
   TopoDS_Shape s; BRep_Builder B; BRepTools::Read(s, argv[1], B);
   double off = atof(argv[2]); GeomAbs_JoinType j = atoi(argv[3]) ? GeomAbs_Intersection : GeomAbs_Arc; bool inter = atoi(argv[4]);
   TopTools_IndexedMapOfShape F; TopExp::MapShapes(s, TopAbs_FACE, F);

@@ -3814,6 +3814,52 @@ solid's computation is a refusal now (`28112588a2`), and the offset's
 second way is tried after it as after any other; FreeCAD says "Thickness
 failed".
 
+### Sec 74: #613's crease taken for tangent, from fix level 4
+
+**A crease is tangent only while its offsets would not miss**
+(`BRepOffset_Analyse.cxx` `EdgeAnalyse`, `BRepOffset_MakeOffset.cxx`
+`MakeThickSolid`; the fork's offset fix level 4, `313767fc27`).
+
+- #613's side is a cylinder up to z = 8 and a cone 1.5 deg off it above.
+  Two faces that are not both planes were tangent by a weak test up to
+  0.1 rad, whatever the offset, and the offsets of tangent faces are
+  joined as they are, not cut by each other.
+- At a thickness of 2 the crease's offset by the cylinder's normal and
+  its offset by the cone's are 0.052 apart. Inward the two walls ran
+  0.052 past each other, outward they ended 0.052 apart, under an edge
+  loose enough to hold either.
+- Valid, and every point asked of it right. The volume, summed over the
+  faces, counts the band both walls cover twice and the band neither
+  covers not at all: 10194.83 for 10240.23 inward, 11247.71 for 11312.65
+  outward.
+- From level 4 the weak test's angle is the one at which the offsets miss
+  by 0.001, no more than 0.1 rad and no less than 0.001. The crease is
+  cut inward and closed by a tube outward, and the wall between z = 2 and
+  z = 12 has the volume by hand to four places, at 2 and at 0.5, either
+  way.
+- #662's part has the same, a cone 4.4 deg off its cylinder: its own
+  thickness of 1.2 comes to 1918.17 at level 4, not 1908.17, with no end
+  loose (0.046 before).
+- A file's object keeps its level, and its shape.
+
+Regression (`313767fc27`, Linux): thickness PASS=744 (704 + 40 new) at
+level 0, at level 3 frozen and at level 4, every other case line the
+same; boolean 111, draft 105, fillet 919 + 1 XFAIL at fix levels 0 to 4;
+the corpus as its baseline at level 0, 44 lines of #613's part other at
+level 4 than at level 3, all valid; sweep 928 of 928 at level 0 and at
+level 4, the same line for line; the 29 issue models as before; FreeCAD's
+Python suite 4388 OK (`d171a04be6`). Not run: macOS, thickness levels 1
+and 2.
+
+The panels below look alike in both columns: the crease is 0.05 across on
+a part of 45. The figure after them is drawn from numbers
+(`pictures/crease_dump.py`, `pictures/crease_draw.py`): each face's
+section with the plane y = 0 at the crease.
+
+![issue613_fillet_top_bottom_in_level4](pictures/issue613_fillet_top_bottom_in_level4.png)
+![issue613_fillet_top_bottom_out_level4](pictures/issue613_fillet_top_bottom_out_level4.png)
+![issue613_crease](pictures/issue613_crease.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

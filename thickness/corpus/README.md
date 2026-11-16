@@ -38,6 +38,19 @@ platform. Since sec 56 the Arc join makes all of them on Linux, and since
 sec 58 the two `rev-3` -1 runs with the Intersection join too (invalid on
 Linux, refused on macOS before).
 
+The tools run at the fork's offset fix level 0, the library's default, which is
+what a document saved before the levels recomputes at. `THICK_FIX_LEVEL=<n>` in
+the environment runs `thk` and `offs` at level n (`BRepOffset_SetFixLevel`,
+looked up by name, so the tools still build and run against a library without
+it):
+
+    THICK_FIX_LEVEL=4 ./corpus.sh bin > new4.txt
+    diff <(perl -pe 's/ [0-9.]+s$//' baseline_level4.txt) <(perl -pe 's/ [0-9.]+s$//' new4.txt)
+
+`baseline_level4.txt` is the result at level 4, the highest (Linux,
+2026-11-16): it differs from `baseline.txt` in the runs levels 2, 3 and 4
+change (../README.md sec 57, 59 and 74).
+
 `baseline.txt` is the fork's current result (timings stripped). A fix changes it
 only in the runs it means to make. Note each change in the fix's README section
 (the "Over the corpus (1072 runs) N change" line), and commit the new baseline
@@ -62,8 +75,8 @@ Built by `build.sh` from `tools/`. Face and vertex indices are 1-based, in
 
 | Tool | What it does |
 |------|--------------|
-| `thk <brep> <off> <join> <inter> <faces...>` | MakeThickSolidByJoin, Skin; join 0 Arc, nonzero Intersection; `OUT=file` writes the result |
-| `offs <brep> <off> <join> <inter>` | MakeOffsetShape of the whole; `OUT=` |
+| `thk <brep> <off> <join> <inter> <faces...>` | MakeThickSolidByJoin, Skin; join 0 Arc, nonzero Intersection; `OUT=file` writes the result; `THICK_FIX_LEVEL=n` |
+| `offs <brep> <off> <join> <inter>` | MakeOffsetShape of the whole; `OUT=`; `THICK_FIX_LEVEL=n` |
 | `thke2` | `thk`, also printing MakeOffset's error code |
 | `thkm2 <brep> <off> <join> <inter> <f1,f2,...>` | `thk` with the debug dumps: `SHOWKEYS="file.cxx ..."` prints the `SHOW_TOPO_SHAPE` points in those sources, `SHOWSAVE=dir` writes each shape shown |
 | `faces`, `fedges`, `fchk` | faces: surface, area, wires, edges, BRepCheck |

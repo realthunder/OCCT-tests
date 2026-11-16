@@ -82,6 +82,7 @@ STAGES = {
     "s66": ("097cdf483c", "66"),
     "s70": ("7b79d5b639", "70"),
     "s71": ("39599b9791", "71"),
+    "s74": ("1cbcbd7a73", "74"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -715,6 +716,11 @@ CASES = {
     # face 20, the mirror image of face 17, which was made.
     "issue613_ridge_blend_left_out_half": ("s71", "issue613", 20, 0.5, False, 0, 3629.8323),
     "issue613_ridge_blend_left_in_half": ("s71", "issue613", 20, -0.5, False, 0, 3453.5477),
+    # #613's part, its top and bottom removed, at the fork's offset fix level 4
+    # (sec 74): the crease between its cylinder and its cone cut, not left
+    # 0.052 open under a loose edge. The volumes are the ones by hand.
+    "issue613_fillet_top_bottom_in_level4": ("s74", "issue613", [7, 16], -2, False, 0, 10240.2303),
+    "issue613_fillet_top_bottom_out_level4": ("s74", "issue613", [7, 16], 2, False, 0, 11312.6514),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
@@ -754,10 +760,12 @@ REFUSED = {
 # Cases made at a fix level of the fork's (BRepOffset_SetFixLevel, 0 unless
 # set): the fix comes at that level only, so that a document saved before
 # recomputes as it did (sec 31). Libraries without the level run them as
-# they are. None now: sec 31's fixes are made at every level (sec 32).
+# they are. Sec 31's fixes are made at every level since (sec 32).
 FIX_LEVEL = {
     "issue346_revolve_thick_out_join_level2": 2,
     "issue346_steep_dimple_shell_apex_thick_out_level3": 3,
+    "issue613_fillet_top_bottom_in_level4": 4,
+    "issue613_fillet_top_bottom_out_level4": 4,
 }
 # The captured user models; upstream 8.0.1 passes them all, so not pictured.
 DOCS = {

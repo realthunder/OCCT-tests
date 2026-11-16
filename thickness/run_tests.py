@@ -636,16 +636,22 @@ thickness_case("case5829_fillet_in", case5829, 8, -1.0, "pass", 19564.4844, loos
 # loose end (README.md, #613, sec 41).
 issue613 = Part.Shape()
 issue613.importBrep(os.path.join(MODELS, "issue613_fillet.brep"))
+# Up to the fork's offset fix level 3, that is: from level 4 the crease is
+# cut, the two walls by each other, and the volumes are others (sec 74,
+# below). These run at the suite's level, 3 at most.
+_LEVEL3 = min(FIX_LEVEL, 3)
 thickness_case("issue613_fillet_top_bottom_in", issue613, [7, 16], -2.0, "pass", 10194.8311,
-               loose_ok=0.06)
-thickness_case("issue613_fillet_top_in", issue613, [7], -2.0, "pass", 12835.3408, loose_ok=0.06)
+               loose_ok=0.06, fix_level=_LEVEL3)
+thickness_case("issue613_fillet_top_in", issue613, [7], -2.0, "pass", 12835.3408, loose_ok=0.06,
+               fix_level=_LEVEL3)
 thickness_case("issue613_fillet_top_bottom_in_half", issue613, [7, 16], -0.5, "pass", 2647.5510,
-               loose_ok=0.015)
+               loose_ok=0.015, fix_level=_LEVEL3)
 thickness_case("issue613_fillet_top_bottom_out", issue613, [7, 16], +2.0, "pass", 11247.7097,
-               loose_ok=0.06)
-thickness_case("issue613_fillet_top_out", issue613, [7], +2.0, "pass", 14889.3719, loose_ok=0.06)
+               loose_ok=0.06, fix_level=_LEVEL3)
+thickness_case("issue613_fillet_top_out", issue613, [7], +2.0, "pass", 14889.3719, loose_ok=0.06,
+               fix_level=_LEVEL3)
 thickness_case("issue613_fillet_top_bottom_out_half", issue613, [7, 16], +0.5, "pass", 2713.3574,
-               loose_ok=0.015)
+               loose_ok=0.015, fix_level=_LEVEL3)
 # The same part, one flat of its roof removed. Every edge of a flat is
 # tangent to its neighbour -- the blend to the cone and the blend to the
 # ridge -- so the rim is closed by tubes round the edges (README.md, sec 70).
@@ -664,7 +670,8 @@ for tag, face in (("split_blend", 15), ("whole_blend", 21)):
                              ("out_half", 0.5, (3286.0136, 3286.0189)),
                              ("in_half", -0.5, (3116.4126, 3116.4171))):
         thickness_case("issue613_flat_%s_%s" % (tag, way), issue613, [face], value, "pass",
-                       vols[0 if face == 15 else 1], loose_ok=0.03 * abs(value))
+                       vols[0 if face == 15 else 1], loose_ok=0.03 * abs(value),
+                       fix_level=_LEVEL3)
 # The same part, a blend up to the ridge removed, 0.5 either way: faces 17
 # and 20, mirror images, a quarter cylinder 1.81 wide (at 1 the rims from
 # its two sides would overlap, and it is refused). Face 17 was made and
@@ -676,18 +683,20 @@ for tag, face in (("split_blend", 15), ("whole_blend", 21)):
 for tag, face in (("right", 17), ("left", 20)):
     for way, value, vol in (("out_half", 0.5, 3629.8323), ("in_half", -0.5, 3453.5477)):
         thickness_case("issue613_ridge_blend_%s_%s" % (tag, way), issue613, [face], value, "pass",
-                       vol, loose_ok=0.03 * abs(value))
+                       vol, loose_ok=0.03 * abs(value), fix_level=_LEVEL3)
 # The same part with the Intersection join, a flat or a blend removed: no
 # answer, and none came -- an exception came out of the offset where a
 # refusal is due, of a curve trimmed to no range, of a surface evaluated
 # where it is not: a message that says nothing, and the offset's other way
 # untried. Refused now (README.md, sec 73).
-def own_refusal_case(name, shape, face_indices, value, inter=False, join=0):
+def own_refusal_case(name, shape, face_indices, value, inter=False, join=0, fix_level=None):
     """Refused by the offset itself (FreeCAD's CADKernelError, "Thickness
     failed"): not by an exception out of it, which FreeCAD hands on as it
-    came (Part.OCCError, the kernel's class and function for a message)."""
+    came (Part.OCCError, the kernel's class and function for a message). At
+    the fork's offset fix level `fix_level` if given."""
     before = signature(shape)
     faces = [shape.Faces[i - 1] for i in face_indices]
+    previous = None if fix_level is None else set_offset_fix_level(fix_level)
     try:
         r = shape.makeThickness(faces, value, 1e-7, inter, False, 0, join)
         report(name, False, False, "answered: %s valid=%s vol=%.4f" % (
@@ -698,6 +707,9 @@ def own_refusal_case(name, shape, face_indices, value, inter=False, join=0):
     except App.Base.FreeCADError:
         problems = input_problems(shape, before)
         report(name, not problems, False, "; ".join(problems) if problems else "refused")
+    finally:
+        if previous is not None:
+            set_offset_fix_level(previous)
 
 
 for face, value in ((15, 1.0), (15, 0.5), (17, 1.0), (17, 0.5), (20, 1.0), (20, 0.5), (11, -1.0),
@@ -705,6 +717,192 @@ for face, value in ((15, 1.0), (15, 0.5), (17, 1.0), (17, 0.5), (20, 1.0), (20, 
     own_refusal_case("issue613_inter_join_f%d_%s%g_refused" % (face, "out" if value > 0 else "in",
                                                              abs(value)),
                      issue613, [face], value, False, 2)
+
+
+# Sec 74, the fork's offset fix level 4. The part's side is a cylinder up to
+# z = 8 and a cone 1.5 deg off it above: a crease, and the analysis took the
+# two for tangent (any two faces within 0.1 rad are, by its weak test). The
+# offsets of tangent faces are joined as they are, along the offset of their
+# edge, not cut by each other: 2 inward the two walls ran 0.052 past each
+# other at the crease and outward they ended 0.052 apart, the edge between
+# them loose enough to hold either, and the solid's volume, summed over its
+# faces, counted that band of the wall twice or not at all -- 46 short of
+# 10240, and 66 of 11313 outward. From level 4 the faces are tangent by that test while
+# their offsets miss by no more than 0.001 (or the faces are within 0.001
+# rad): the crease is cut, inward, or closed by a tube, outward.
+# The volumes of the wall between z = 2 and z = 12, where the part is its
+# side alone, are the hand values: the side's meridian is a line and a line.
+def issue613_wall_by_hand(value, z0=2.0, z1=12.0, steps=40000):
+    """The volume between the part's side and its offset by `value` between
+    two heights, the offsets of the cylinder and the cone cut by each other
+    (inward) or joined by the tube round the crease (outward)."""
+    al, t = math.radians(1.5), abs(value)
+
+    def cone(z):
+        return 22.5 - (z - 8) * math.tan(al)
+
+    def side(z):
+        return 22.5 if z <= 8 else cone(z)
+
+    def skin(z):
+        if value > 0:
+            if z <= 8:
+                return 22.5 + t
+            if z <= 8 + t * math.sin(al):
+                return 22.5 + math.sqrt(t * t - (z - 8) ** 2)
+            return cone(z) + t / math.cos(al)
+        # the two offsets cross below the crease, at 8 - t tan(al / 2)
+        return 22.5 - t if z <= 8 - t * math.tan(al / 2) else cone(z) - t / math.cos(al)
+
+    h = (z1 - z0) / steps
+    return sum(math.pi * abs(skin(z0 + (i + 0.5) * h) ** 2 - side(z0 + (i + 0.5) * h) ** 2)
+               for i in range(steps)) * h
+
+
+def issue613_wall_case(name, face_indices, value, fix_level, short=0.0, within=0.01):
+    """The thickness of #613's part at the fork's offset fix level
+    `fix_level`, cut between z = 2 and z = 12: the hand value less `short`,
+    to `within`."""
+    previous = set_offset_fix_level(fix_level)
+    try:
+        r = issue613.makeThickness([issue613.Faces[i - 1] for i in face_indices], value, 1e-7,
+                                   False, False, 0, 0)
+        got = r.common(Part.makeBox(100, 100, 10, App.Vector(-50, -50, 2))).Volume
+        want = issue613_wall_by_hand(value) - short
+        ok = r.isValid() and abs(got - want) < within
+        detail = "wall %.4f, by hand %.4f%s" % (got, want + short,
+                                                " less %.4f" % short if short else "")
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    finally:
+        set_offset_fix_level(previous)
+    report(name, ok, False, detail)
+
+
+for way, faces, value, vol, gap in (("top_bottom_in", [7, 16], -2.0, 10240.2303, 1e-3),
+                                    ("top_in", [7], -2.0, 12880.7391, 1e-3),
+                                    ("top_bottom_in_half", [7, 16], -0.5, 2660.6365, 1e-3),
+                                    ("top_bottom_out", [7, 16], +2.0, 11312.6514, 2e-3),
+                                    ("top_out", [7], +2.0, 14954.3397, 2e-3),
+                                    ("top_bottom_out_half", [7, 16], +0.5, 2727.6577, 1e-3)):
+    thickness_case("issue613_fillet_%s_level4" % way, issue613, faces, value, "pass", vol,
+                   loose_ok=gap, fix_level=4, max_gap=gap)
+for way, value in (("in", -2.0), ("out", +2.0), ("in_half", -0.5), ("out_half", +0.5)):
+    issue613_wall_case("issue613_wall_by_hand_%s_level4" % way, [7, 16], value, 4)
+# Below level 4 as before, short by the band: 46.10 inward, 65.84 outward
+# (2/3 pi r^2 x 0.0524 is 46.09 at r = 20.5 and 65.82 at 24.5).
+issue613_wall_case("issue613_wall_by_hand_in_level3", [7, 16], -2.0, 3, short=46.0976, within=0.05)
+issue613_wall_case("issue613_wall_by_hand_out_level3", [7, 16], +2.0, 3, short=65.8383, within=0.05)
+for tag, face in (("split_blend", 15), ("whole_blend", 21)):
+    for way, value, vols in (("out", 1.0, (6803.5011, 6803.5087)),
+                             ("in", -1.0, (6121.2553, 6121.2586)),
+                             ("out_half", 0.5, (3300.3137, 3300.3169)),
+                             ("in_half", -0.5, (3129.4968, 3129.4993))):
+        thickness_case("issue613_flat_%s_%s_level4" % (tag, way), issue613, [face], value, "pass",
+                       vols[0 if face == 15 else 1], loose_ok=0.03 * abs(value), fix_level=4)
+        issue613_wall_case("issue613_flat_%s_wall_by_hand_%s_level4" % (tag, way), [face], value,
+                           4)
+for tag, face in (("right", 17), ("left", 20)):
+    for way, value, vol in (("out_half", 0.5, 3644.1299), ("in_half", -0.5, 3466.6297)):
+        thickness_case("issue613_ridge_blend_%s_%s_level4" % (tag, way), issue613, [face], value,
+                       "pass", vol, loose_ok=0.03 * abs(value), fix_level=4)
+# #662's part has the same crease, wider: a quarter of a cylinder of radius 20,
+# 5 high, under a cone that comes in to 17 at z = 44 -- 4.4 deg -- and its
+# thickness of 1.2 with the Intersection join, the two flat sides and the
+# bottom removed, was 10 short of 1918.17 with an end 0.046 loose. Here that
+# outer shape alone, whose thick solid has a value by hand whole: the side's
+# wall as above, and the top's.
+def issue662_quarter():
+    v = App.Vector
+    profile = Part.Face(Part.makePolygon([v(0, 0, 0), v(20, 0, 0), v(20, 0, 5), v(17, 0, 44),
+                                          v(0, 0, 44), v(0, 0, 0)]))
+    return profile.revolve(v(), v(0, 0, 1), 90)
+
+
+def issue662_quarter_by_hand(value, join, steps=20000):
+    """The thick solid of issue662_quarter(), its two flat sides and its
+    bottom removed: a quarter turn of the area between the meridian and its
+    offset by `value`, the offsets of the cylinder and the cone cut by each
+    other or (outward, the Arc join, `join` 0) joined by a tube, and the
+    same at the top's rim."""
+    al, t = math.atan(3.0 / 39.0), abs(value)
+
+    def cone(z):
+        return 20.0 - (z - 5) * math.tan(al)
+
+    def side(z):
+        return 20.0 if z <= 5 else cone(z)
+
+    def skin(z):
+        if value < 0:
+            return 20.0 - t if z <= 5 - t * math.tan(al / 2) else cone(z) - t / math.cos(al)
+        if join:
+            return 20.0 + t if z <= 5 + t * math.tan(al / 2) else cone(z) + t / math.cos(al)
+        if z <= 5:
+            return 20.0 + t
+        if z <= 5 + t * math.sin(al):
+            return 20.0 + math.sqrt(t * t - (z - 5) ** 2)
+        if z <= 44 + t * math.sin(al):
+            return cone(z) + t / math.cos(al)
+        return 17.0 + math.sqrt(max(t * t - (z - 44) ** 2, 0.0))
+
+    def integral(f, a, b):
+        h = (b - a) / steps
+        return sum(f(a + (i + 0.5) * h) for i in range(steps)) * h
+
+    # piece by piece, so that no step straddles a corner of the meridian
+    if value > 0:
+        cuts = [0.0, 5.0, 5 + t * math.tan(al / 2), 5 + t * math.sin(al), 44.0,
+                44 + t * math.sin(al), 44 + t]
+        f = lambda z: skin(z) ** 2 - (side(z) ** 2 if z < 44 else 0.0)  # noqa: E731
+    else:
+        cuts = [0.0, 5 - t * math.tan(al / 2), 5.0, 44 - t, 44.0]
+        f = lambda z: side(z) ** 2 - (skin(z) ** 2 if z < 44 - t else 0.0)  # noqa: E731
+    return math.pi / 4 * sum(integral(f, a, b) for a, b in zip(cuts, cuts[1:]))
+
+
+def issue662_quarter_case(name, value, join, fix_level, short=0.0):
+    """At the fork's offset fix level `fix_level`: valid, the volume by hand
+    less `short`, to 0.002, and with nothing short no end loose."""
+    shape = issue662_quarter()
+    faces = [f for f in shape.Faces
+             if f.Surface.TypeId == "Part::GeomPlane" and f.BoundBox.ZMin < 43]
+    previous = set_offset_fix_level(fix_level)
+    try:
+        r = shape.makeThickness(faces, value, 1e-7, False, False, 0, join)
+        want = issue662_quarter_by_hand(value, join) - short
+        problems = [] if r.isValid() else ["invalid"]
+        if len(faces) != 3:
+            problems.append("%d faces to remove" % len(faces))
+        if abs(r.Volume - want) > 0.002:
+            problems.append("volume %.4f != %.4f" % (r.Volume, want))
+        if not short and widest(r) > 1e-6:
+            problems.append("gap %.3g" % widest(r))
+        detail = "; ".join(problems) if problems else "vol=%.4f, by hand %.4f%s" % (
+            r.Volume, want + short, " less %.4f" % short if short else "")
+        ok = not problems
+    except Exception as e:
+        ok = False
+        detail = "EXCEPTION " + str(e).strip().splitlines()[-1]
+    finally:
+        set_offset_fix_level(previous)
+    report(name, ok, False, detail)
+
+
+for way, value in (("out", 1.2), ("in", -1.2)):
+    for tag, join in (("arc", 0), ("join", 2)):
+        issue662_quarter_case("issue662_quarter_%s_%s_level4" % (way, tag), value, join, 4)
+# With the crease cut, a blend of the roof removed inward came back "done":
+# of the offsets only the bottom's and the cylinder's, closed into a void by
+# the cone's with no bounds but the crease, the removed blend back whole;
+# invalid, 21192 for a wall of some 3400. Refused below level 4 (the same
+# faces there weigh no less than the part), and refused at level 4: an
+# invalid answer that opens through none of the removed faces is none.
+for face, value, join in ((11, -0.5, 0), (14, -0.5, 0), (5, -1.0, 2), (12, -0.5, 2)):
+    own_refusal_case("issue613_blend_f%d_in%g_%s_refused_level4" % (
+        face, abs(value), "join" if join else "arc"), issue613, [face], value, False, join,
+        fix_level=4)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

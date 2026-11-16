@@ -3324,6 +3324,137 @@ the eight lines; sweep 928 of 928, the same line for line; the 29 issue
 models as before; FreeCAD's Python suite 4388 OK (`763d0acadb`). Not run:
 macOS, thickness levels 1 and 2.
 
+## #613: a crease taken for tangent, from fix level 4 (`313767fc27`, 2026-11-16, sec 74)
+
+**Where it was met.** Sec 41's cases on the issue's own shape pass with a
+loose end of 0.05 allowed (`loose_ok=0.06`): the edge between the offsets
+of the part's cylinder and of the cone above it has a tolerance of 0.055.
+Asked what that looseness holds, the answer was a wrong volume.
+
+**What was broken.** The part's side is a cylinder of radius 22.5 up to
+z = 8 and above it a cone that leans in by 1.5 deg: a crease of 1.5 deg
+all round. `BRepOffset_Analyse` gives every edge the way its two faces
+meet -- convex, concave or tangent -- and the offset is built by it: the
+offsets of faces that meet at an angle are cut by each other (or joined by
+a tube, outward with the Arc join), the offsets of tangent faces are
+joined as they are, along the offset of their edge. Tangent is decided
+twice: by the angle the tolerance allows over the offset
+(`analyseTolAngle`), and, for two faces that are not both planes, by a
+"weak condition", `ChFi3d::IsTangentFaces` at its default of 0.1 rad --
+5.7 deg, whatever the offset. The crease passed the second.
+
+The crease's offset by the cylinder's normal and its offset by the cone's
+are 2 x 2 sin(0.75 deg) = 0.052 apart at a thickness of 2. Inward the two
+walls ran 0.052 past each other, outward they ended 0.052 apart, and the
+edge between them was given the tolerance to hold either (0.055). Such a
+solid is valid, by BRepCheck and by BOP's check, and a point asked of it
+is answered right (6000 at random about the side, in the way of sec 70:
+none wrong, at 2 and at 0.5, either way). Its volume is not: summed over
+the faces, the band both walls cover is counted twice, and the band
+neither covers not at all. That is 2/3 pi r^2 x 0.052 -- 46.09 at the
+inner wall's 20.5 and 65.82 at the outer wall's 24.5 -- and the wall
+between z = 2 and z = 12 came out 46.10 and 65.84 short of its value by
+hand (the whole solid 10194.83 for 10240.23 and 11247.71 for 11312.65);
+at 0.5 the whole was 13.08 and 14.30 short.
+
+**The fix.** From the fork's offset fix level 4 the weak test's angle is
+the one at which the two offsets miss each other by 0.001 -- the offset
+times the angle; 0.001 is the distance within which that test takes the
+faces to meet at all -- and no more than 0.1 rad nor less than 0.001. At a
+thickness of 1 and more that is 0.001 rad, at 0.05 it is 0.02, at 0.01
+and below the 0.1 of before. The offset is told to the analysis for the
+calling thread while the offset is made
+(`BRepOffset_Analyse::SetTangencyOffset`, a static function: the class
+keeps its layout). Below level 4 nothing changes.
+
+The lower bound is where faces that are meant to be tangent end. Over the
+29 issue models and the suites' own shapes, of 1539 edges between two
+faces within 0.2 rad of each other and not both planes:
+
+| Angle between the faces | Edges | Where |
+|-------------------------|-------|-------|
+| up to 5.3e-5 | 1221 | two B-splines 729, a cylinder and a torus 124, two cylinders 115, a B-spline and a plane 106, a B-spline and a cylinder 85 |
+| 5.6e-4 | 3 | two B-splines of #474's model |
+| 0.0058 to 0.0088 | 9 | #962's model: a B-spline against a plane and against a cylinder |
+| 0.012 to 0.084 | 246 | 17 models: #613's cone (0.026), #662's (0.077), #876's (0.017), #474's coil (0.025 and 0.084) |
+| 0.10 to 0.18 | 60 | |
+
+(An edge is counted once for each feature of a model that still has it.)
+A pair meant to be tangent misses by its offset times its angle whatever
+is done with it; a pair past 0.001 rad whose offsets miss by more than
+0.001 is a crease.
+
+**A refusal kept.** With the crease cut, 20 of the corpus' runs on this
+part that were refused came back "done" -- a blend of the roof removed
+inward, both joins. Of the offsets only the bottom's and the cylinder's
+are made in them (the roof's fail as before, sec 70), and the cone's with
+the crease alone for its bounds: a face of no area that closes the two
+into a void. The removed blend is back whole; the result is invalid, 21192
+for a wall of some 3400. Below level 4, the crease not cut, a result of as
+many faces weighs no less than the part and is refused for that.
+`MakeThickSolid` keeps an invalid answer when its second way (sec 60) has
+no sound one; from level 4 it does not keep one that opens through none
+of the removed faces -- each of them still whole on the result's faces, by
+a grid of its points. By points, not by areas: a T's arm top removed
+outward leaves, of its plane, a rim of 12 round the opening and a strip of
+4 under the stem's wall, the 16 of the face, which is open. The corpus'
+other invalid answers (#363's slot, #521's) open, and stay.
+
+**The results**, at level 4 (`run_tests.py`):
+
+| Case | What |
+|------|------|
+| `issue613_fillet_top_bottom_in_level4`, `_top_in_`, `_top_bottom_in_half_` | top and bottom (or top) removed, 2 and 0.5 inward: 10240.2303, 12880.7391, 2660.6365; no end more than 0.001 off its vertex (0.052 before) |
+| `issue613_fillet_top_bottom_out_level4`, `_top_out_`, `_top_bottom_out_half_` | outward: 11312.6514, 14954.3397, 2727.6577; no end more than 0.002 off |
+| `issue613_wall_by_hand_<in, out, in_half, out_half>_level4` | the wall between z = 2 and z = 12, where the part is its side alone, against its value by hand (the meridian is a line and a line): 2699.4907, 2950.8840, 698.4409, 714.1529, each to four places |
+| `issue613_wall_by_hand_in_level3`, `_out_level3` | the same below level 4: 46.0976 and 65.8383 short |
+| `issue613_flat_<split, whole>_blend_<way>_level4` (8), `issue613_flat_..._wall_by_hand_..._level4` (8) | sec 70's flats: their volumes with the crease cut, and their walls by hand to four places |
+| `issue613_ridge_blend_<right, left>_<way>_level4` (4) | sec 71's blends: 3644.1299 and 3466.6297 |
+| `issue662_quarter_<out, in>_<arc, join>_level4` | #662's outer shape, a cone 4.4 deg off a cylinder, a quarter turn, 1.2 either way with both joins: the whole volume by hand to four places, nothing loose (below level 4 some 9.2 and 9.3 short outward, 6.7 and 2.7 inward, with an end 0.061 or 0.046 off) |
+| `issue613_blend_f<11, 14>_in0.5_arc_refused_level4`, `_f5_in1_join_`, `_f12_in0.5_join_` | four of the twenty: refused |
+
+The cases of sec 41, 70 and 71 run at the suite's level, 3 at most, with
+the volumes they had.
+
+![issue613_crease](models/pictures/issue613_crease.png)
+
+The figure is drawn from numbers (`pictures/crease_dump.py`, under
+FreeCADCmd, writes each face's section with the plane y = 0;
+`pictures/crease_draw.py` draws them): the skin at the crease, 2 inward
+and 2 outward, up to level 3 and at level 4. The panels of
+`make_pictures.sh` look alike in their last two columns, the crease being
+0.05 across on a part of 45:
+
+![issue613_fillet_top_bottom_in_level4](models/pictures/issue613_fillet_top_bottom_in_level4.png)
+![issue613_fillet_top_bottom_out_level4](models/pictures/issue613_fillet_top_bottom_out_level4.png)
+
+**The issue models.** An object a file holds keeps its level. Made at
+level 4, of the ten objects of the 29 models that offset, two change:
+#613's Thickness as above, and #662's (1.2, the Intersection join):
+1918.1739 with no end loose for 1908.1731 with an end 0.046 off, its wall
+between z = 1 and z = 8 the value by hand (271.5077; 8.42 short before).
+The other eight are the same to the digit.
+
+**What it moved.** At level 4: the 18 cases of sec 41, 70 and 71 as
+above; 44 lines of the corpus against level 3, all on #613's part and all
+valid before and now (36 thicknesses, 8 offsets); not a line of the
+sweep. At the levels below: nothing, not a case line of the suites, not a
+line of the corpus or the sweep.
+
+The corpus runs at a level now (`THICK_FIX_LEVEL=4 corpus/corpus.sh`),
+and `corpus/baseline_level4.txt` is its result there.
+
+**Validation** (`313767fc27` against `28112588a2`, on Linux): thickness
+PASS=744 (704 + these 40) at level 0, at level 3 frozen and at level 4,
+every other case line the same; boolean 111, draft 105, fillet 919 + 1
+XFAIL at fix levels 0 to 4, the same line for line; the corpus as its
+baseline at level 0 (1073 lines) and, at level 4, 126 lines from it
+(`baseline_level4.txt`, made here); the sweep 928 of 928 at level 0 and at
+level 4, the same line for line; the 29 issue models recompute as before;
+FreeCAD's Python suite 4388 OK and its C++ test of the level with
+`OCCTOffsetFixLevelLatest` at 4 (`d171a04be6`). Not run: macOS, thickness
+levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
@@ -3409,7 +3540,8 @@ with its stage, to picture it, and `ONLY="<case> ..."` draws just those.
 `pictures/mkpage.py` then makes the "Thickness Before and After" page from
 them, published again after every fix.
 Sec 72's picture is drawn otherwise, from numbers:
-`pictures/vertex_dump.py` and `pictures/vertex_draw.py`.
+`pictures/vertex_dump.py` and `pictures/vertex_draw.py`; so is sec 74's
+figure, by `pictures/crease_dump.py` and `pictures/crease_draw.py`.
 
 ## Layout
 
