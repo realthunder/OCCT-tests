@@ -899,7 +899,9 @@ for way, value in (("out", 1.2), ("in", -1.2)):
 # invalid, 21192 for a wall of some 3400. Refused below level 4 (the same
 # faces there weigh no less than the part), and refused at level 4: an
 # invalid answer that opens through none of the removed faces is none.
-for face, value, join in ((11, -0.5, 0), (14, -0.5, 0), (5, -1.0, 2), (12, -0.5, 2)):
+# (Two of them, faces 11 and 14 at 0.5 inward with the Arc join, were cases
+# here until they were made: sec 76.)
+for face, value, join in ((5, -1.0, 2), (12, -0.5, 2)):
     own_refusal_case("issue613_blend_f%d_in%g_%s_refused_level4" % (
         face, abs(value), "join" if join else "arc"), issue613, [face], value, False, join,
         fix_level=4)
@@ -922,7 +924,16 @@ for face, value, vol3, vol4 in ((2, 0.5, 3614.0645, 3628.3739), (2, -0.5, 3453.1
                                 (13, -0.5, 3474.3596, 3487.4385), (13, -1.0, 6774.2630, 6799.2378),
                                 # the corner blend next to the long one, at 1: its edge with the
                                 # long blend is 0.9 deg off tangent, a tube in the last attempt
-                                (8, 1.0, 7451.2253, 7481.0829), (8, -1.0, 6774.4527, 6799.4308)):
+                                (8, 1.0, 7451.2253, 7481.0829), (8, -1.0, 6774.4527, 6799.4308),
+                                # Sec 76: the other corner blends. The section of two tubes
+                                # that start from one corner is put on the corner's vertex
+                                # where it ends within a thousandth of the smaller tube's size
+                                # of it; here it ends 0.0033 off, 0.0032 being that. From
+                                # five thousandths in the last attempt.
+                                (4, 1.0, 7451.2254, 7481.0830), (4, -1.0, 6774.4527, 6799.4308),
+                                (11, -0.5, 3474.7235, 3487.8039), (14, -0.5, 3474.7235, 3487.8039),
+                                (11, 1.0, 7451.2691, 7481.1316), (11, -1.0, 6774.4680, 6799.4462),
+                                (14, 1.0, 7451.2691, 7481.1316), (14, -1.0, 6774.4680, 6799.4462)):
     tag = "issue613_blend_f%d_%s%g" % (face, "out" if value > 0 else "in", abs(value))
     thickness_case(tag, issue613, [face], value, "pass", vol3, loose_ok=0.03 * abs(value),
                    fix_level=_LEVEL3)

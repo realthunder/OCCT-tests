@@ -3901,6 +3901,18 @@ issue models recompute as before; FreeCAD's Python suite 4388 OK
 ![issue613_blend_f8_out1](pictures/issue613_blend_f8_out1.png)
 ![issue613_cylinder_in1](pictures/issue613_cylinder_in1.png)
 
+### Sec 76: #613's other corner blends
+
+No picture: the four corner blends are mirror images, and face 8's is in
+sec 75. Two tubes that start from one corner of a removed face have their
+section put on the corner's vertex where it ends within a thousandth of
+the smaller tube's size of it; round face 11, 0.5 inward, it ends 0.0033
+off, 0.0032 being that, and the piece it cut off one tube's edge left the
+shell open. A thick solid refused both ways now has that end put on the
+vertex from up to five thousandths in its last attempt (`544d3a920a`).
+Faces 4, 11 and 14 are made where face 8 was: 8 more runs of the corpus,
+at every level.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

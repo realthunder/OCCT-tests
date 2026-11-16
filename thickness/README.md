@@ -3413,7 +3413,7 @@ other invalid answers (#363's slot, #521's) open, and stay.
 | `issue613_flat_<split, whole>_blend_<way>_level4` (8), `issue613_flat_..._wall_by_hand_..._level4` (8) | sec 70's flats: their volumes with the crease cut, and their walls by hand to four places |
 | `issue613_ridge_blend_<right, left>_<way>_level4` (4) | sec 71's blends: 3644.1299 and 3466.6297 |
 | `issue662_quarter_<out, in>_<arc, join>_level4` | #662's outer shape, a cone 4.4 deg off a cylinder, a quarter turn, 1.2 either way with both joins: the whole volume by hand to four places, nothing loose (below level 4 some 9.2 and 9.3 short outward, 6.7 and 2.7 inward, with an end 0.061 or 0.046 off) |
-| `issue613_blend_f<11, 14>_in0.5_arc_refused_level4`, `_f5_in1_join_`, `_f12_in0.5_join_` | four of the twenty: refused |
+| `issue613_blend_f5_in1_join_refused_level4`, `_f12_in0.5_join_` | two of the twenty: refused (faces 11 and 14 at 0.5 inward with the Arc join were cases too, until sec 76 made them) |
 
 The cases of sec 41, 70 and 71 run at the suite's level, 3 at most, with
 the volumes they had.
@@ -3588,6 +3588,76 @@ baselines at level 0 and at level 4 but for the 26 lines made here; the
 sweep 928 of 928 at level 0 and at level 4, the same line for line; the 29
 issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`d171a04be6`). Not run: macOS, thickness levels 1 and 2.
+
+## #613: the corner blends, a section's end beside the corner (`544d3a920a`, 2026-11-16, sec 76)
+
+**Where it was met.** Sec 75's list of what is left: the four corner
+blends (faces 4, 8, 11, 14) are mirror images of each other, and of the
+sixteen runs on them eight were made: all four at 0.5 outward, 4 and 8 at
+0.5 inward, 8 at 1 either way.
+
+**What was broken.** A corner blend is closed by four tubes, and two
+tubes that start from one corner of the blend -- from one vertex of the
+offset, where the offsets of the two faces beside the blend meet -- have
+their section run from that vertex down to where their edges on the blend
+cross. The tubes all but touch there, so the section's end is found a
+little off the vertex, and `BRepOffset_Tool::Inter3D` puts it on the
+vertex where it is within a thousandth of the smaller face's size of it
+(the filleted dome's corners, sec 35). At the corner where a corner blend,
+the long blend beside it and the cone meet -- where the long blend stands
+0.9 deg off the corner blend (sec 75) -- with face 11 removed 0.5 inward
+the section ends 0.0033 off the vertex, a thousandth of the smaller tube
+being 0.0032. Left where it was, it cut a piece 0.0033 long off the upper
+edge of one tube in that tube's loop alone (`BRepAlgo_Loop`'s `CutEdge`):
+the pieces were in one face each, the shell open along them, and every
+face of the offset was dropped in turn. On the mirror side the section is
+put on the vertex -- it ends within the thousandth there. The long blend
+is one face on this side (face 12) and two on the other (2 and 6):
+modelled twice, a little otherwise.
+
+**The fix.** The last attempt of sec 75 -- after a refusal both ways of
+the loops -- is made also where a section ended between one and five
+thousandths of the smaller face's size from a vertex both faces have, and
+puts such an end on the vertex (`BRepOffset_Tool::SetWideSectionSnap`,
+`HasNearSectionEnd`, static functions for the calling thread). After a
+refusal only: what had an answer keeps it.
+
+**The results** (`run_tests.py`, `issue613_blend_f<face>_<way><value>` at
+the suite's level, 3 at most, and `_level4`):
+
+| Removed | Offset | Up to level 3 | Level 4 |
+|---------|--------|---------------|---------|
+| face 4 | 1, -1 | 7451.2254, 6774.4527 | 7481.0830, 6799.4308 |
+| faces 11 and 14 | -0.5 | 3474.7235 | 3487.8039 |
+| faces 11 and 14 | 1, -1 | 7451.2691, 6774.4680 | 7481.1316, 6799.4462 |
+
+All valid and nowhere through themselves (BOP's check), no edge further
+from its pcurve than its tolerance, and the volumes those of their mirror
+images to 6e-6 (faces 4 and 8 to the last digit but one; 11 and 14
+against them by what the two models of the long blend differ). Each is
+read by 1500 points about the removed face, as in sec 75, at level 0 and
+at level 4: not a point wrong.
+
+No picture: the four are face 8's (sec 75), mirrored.
+
+**What is left of the corpus' 168.** 98 refused; 70 made. Sec 75's list
+without the corner blends. Two of sec 74's four refusal cases (faces 11
+and 14 at 0.5 inward, the Arc join, at level 4) are made now, and are
+cases of this section.
+
+**What it moved.** 8 lines of the corpus at level 0 and the same 8 at
+level 4, from refused to made. Nothing else: not a case line of the
+suites, not a line of the sweep.
+
+**Validation** (`544d3a920a` against `e09fe137e3`, on Linux): thickness
+PASS=806 (792, less the two refusal cases that are made, plus these 16) at
+level 0, at level 3 frozen and at level 4, every other case line the
+same; boolean 111, draft 105, fillet 919 + 1 XFAIL at fix levels 0 to 4,
+the same line for line; the corpus as its baselines at level 0 and at
+level 4 but for the 8 lines made here; the sweep 928 of 928 at level 0
+and at level 4, the same line for line; the 29 issue models recompute as
+before; FreeCAD's Python suite 4388 OK (`d171a04be6`). Not run: macOS,
+thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 
