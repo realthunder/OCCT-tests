@@ -2816,6 +2816,90 @@ def _chamfer_hair_cases():
 
 _chamfer_hair_cases()
 
+
+# Sec 84. A box with a notch across a corner, an outer face removed outward:
+# refused at 1.45 and 1.46, made at 1.44 and 1.47 -- a crossing at the end
+# of an elliptical section came back a period off the section's range. The
+# notch is cut by a prism extruded down from the top: with one extruded up
+# from the notch's floor the same box was made at every thickness, the
+# crossing falling the other side of the range's end.
+def _notch_box_cases():
+    box = Part.makeBox(30.0, 20.0, 10.0)
+    notch = Part.Face(Part.makePolygon([App.Vector(0, 0, 10), App.Vector(6, 0, 10),
+                                        App.Vector(0, 9, 10), App.Vector(0, 0, 10)]))
+    shape = box.cut(notch.extrude(App.Vector(0, 0, -4)))
+
+    def find(test):
+        return [i + 1 for i, f in enumerate(shape.Faces) if test(f.normalAt(0, 0), f)][0]
+
+    for tag, face in (("side", find(lambda n, f: n.y < -0.99)),
+                      ("top", find(lambda n, f: n.z > 0.99 and f.Area > 500))):
+        for t in (1.4, 1.45, 1.46):
+            thickness_case("notchbox_%s_out%g" % (tag, t), shape, face, t, "pass",
+                           _polyhedron_wall_out(shape, face, t))
+
+
+_notch_box_cases()
+
+
+# Sec 85. A stadium with its top edge filleted, an end fillet removed
+# outward: refused at one thickness in three. At 0.45 the intersection of
+# the two tubes that close the fillet's edges threw (an angle with a vector
+# of no length); at 0.2, 0.6 and 0.9 their section came back approximated
+# 3.46 long for 0.396 and 10.5 off the tubes. The two end fillets are mirror
+# images and have one volume; the volumes are the kernel's own, read by
+# random points (README sec 85).
+def _stadium_cases():
+    wire = Part.Wire([
+        Part.makeLine(App.Vector(-10, -5, 0), App.Vector(10, -5, 0)),
+        Part.ArcOfCircle(App.Vector(10, -5, 0), App.Vector(15, 0, 0),
+                         App.Vector(10, 5, 0)).toShape(),
+        Part.makeLine(App.Vector(10, 5, 0), App.Vector(-10, 5, 0)),
+        Part.ArcOfCircle(App.Vector(-10, 5, 0), App.Vector(-15, 0, 0),
+                         App.Vector(-10, -5, 0)).toShape()])
+    solid = Part.Face(wire).extrude(App.Vector(0, 0, 8))
+    shape = solid.makeFillet(1.5, [e for e in solid.Edges if abs(e.BoundBox.ZMin - 8) < 1e-9])
+    ends = [i + 1 for i, f in enumerate(shape.Faces) if "Toroid" in str(f.Surface)]
+    assert len(ends) == 2
+    for t, volume in ((0.2, 215.5817), (0.45, 501.9640), (0.6, 683.0455), (0.9, 1066.6306)):
+        for tag, face in zip(("left", "right"), ends):
+            thickness_case("stadium_%s_end_fillet_out%g" % (tag, t), shape, face, t, "pass",
+                           volume)
+
+
+_stadium_cases()
+
+
+# Sec 85 too. A box of 20 x 30 x 10 with all twelve edges filleted, 2: an
+# edge's fillet or a corner's ball removed was refused at most thicknesses
+# either way, for a section of two tubes gone astray. Every fillet along one
+# axis has one volume, and every corner.
+def _rounded_box_cases():
+    box = Part.makeBox(20.0, 30.0, 10.0)
+    shape = box.makeFillet(2, box.Edges)
+
+    def along(axis):
+        return [i + 1 for i, f in enumerate(shape.Faces)
+                if "Cylinder" in str(f.Surface)
+                and abs(abs(f.Surface.Axis.dot(axis)) - 1) < 1e-9]
+
+    balls = [i + 1 for i, f in enumerate(shape.Faces) if "Sphere" in str(f.Surface)]
+    assert len(balls) == 8
+    for tag, faces, volumes in (
+            ("x_fillet", along(App.Vector(1, 0, 0)),
+             ((0.5, 1018.5897), (-0.5, 936.0100), (1.0, 2137.6125), (-1.0, 1803.9267))),
+            ("y_fillet", along(App.Vector(0, 1, 0)),
+             ((0.5, 1005.0539), (-0.5, 925.9839), (1.0, 2115.7278), (-1.0, 1794.3955))),
+            ("corner", balls, ((0.5, 1037.1089), (-0.5, 950.1744)))):
+        for which, face in (("first", faces[0]), ("last", faces[-1])):
+            for t, volume in volumes:
+                thickness_case("roundedbox_%s_%s_%s%g" % (which, tag, "out" if t > 0 else "in",
+                                                          abs(t)),
+                               shape, face, t, "pass", volume)
+
+
+_rounded_box_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

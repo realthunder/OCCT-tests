@@ -4262,6 +4262,166 @@ the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
 issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`82896672ef`). Not run: macOS, thickness levels 1 and 2.
 
+## A scan over the thickness, and a crossing a period off (`4b348c4a11`, 2026-11-16, sec 84)
+
+**The scan.** Sec 83's two faults showed at some thicknesses and not at
+their neighbours, and the probe asks for 0.5 and 1 only. So every face
+of 49 shapes -- 42 of the probe's 43, the three chamfered boxes of sec
+83, a box with a notch across a corner, two frustums and a wedge, 466
+faces -- was removed at 30 thicknesses from 0.05 to 1.5, either way,
+with the Arc join (27960 runs), and read for islands: a thickness
+refused or invalid between two that are made, and a volume out of line
+with its neighbours'. It had 24507 made, 3252 refused, 201 invalid, and
+92 islands on six shapes. This section and the next take the first three
+causes found. The scan was made with a scratch driver on saved shapes;
+`probe/scan.py`, `scan.sh` and `islands.py` are the same in the tests'
+own terms, over the probe's two sets and `probe/shapes3.py` (the
+chamfered boxes and the notched one; the frustums and the wedge had no
+island and were not kept).
+
+**The notched box.** A box of 30 x 20 x 10 with a notch across a corner
+(a triangle of 6 by 9, 4 deep), any outer face removed 1.45 or 1.46
+outward: refused; made at 1.44 and at 1.47.
+
+The notch's wall, offset, is cut by the tube round the edge of the
+notch's floor in an ellipse, an edge from 3.73 to 3 pi / 2. Its crossing
+with the next edge of the wall's outline fell 6e-8 past that end, and
+`Geom2dInt_GInter` gave it at - pi / 2, a period down. The vertex was
+stored on the edge there: the edge's end on the ellipse, nowhere near
+it on a pcurve that is not periodic, and not seen by the test for a
+crossing at an end (within 1e-7 of the range's end). When the vertex
+was fused with its neighbours, the new one was measured against the
+edge's curves at that parameter and took a tolerance of 5.98; the loops
+then merged what lay within it.
+
+**The fix.** `BRepOffset_Inter2d`'s `EdgeInter` and `RefEdgeInter` take
+a crossing's parameter on a periodic pcurve a period nearer the curve's
+range where that is nearer (`NearRange`). No fix level.
+
+**The last digits.** The box that shows it has its notch cut by a prism
+extruded down from the top. Cut by the same prism extruded up from the
+notch's floor -- the same eight faces, the same eighteen edges -- it was
+made at 1.45 and 1.46 before the fix as after: the crossing falls the
+other side of the range's end. The cases and the picture build it the
+first way.
+
+**The cases** (`run_tests.py`, `_notch_box_cases`; each against the
+volume booleans give, `_polyhedron_wall_out` -- the notched box grown
+by the thickness, cut at the removed face's plane, less the box):
+
+| Case | Volume | Before |
+|------|--------|--------|
+| `notchbox_side_out1.4` | 2917.7561 | the same |
+| `notchbox_side_out1.45`, `1.46` | 3031.3550, 3054.1545 | refused |
+| `notchbox_top_out1.4` | 2477.4899 | the same |
+| `notchbox_top_out1.45`, `1.46` | 2574.4436, 2593.9063 | refused |
+
+![notchbox_side_out1.45](models/pictures/notchbox_side_out1.45.png)
+
+**What it moved.** The scan: the five runs of the notched box at 1.45
+made (five faces), no other run changed, none made before different.
+The bench of sec 82, the probe's two sets (3352 runs), the corpus at
+levels 0 and 5 and the sweep as they were.
+
+## Two tubes' section: an exception, and a curve gone astray (`bb59eaae9a`, `a444240f89`, 2026-11-16, sec 85)
+
+The scan's islands on the filleted shapes. A stadium (two half
+cylinders and two flats, 8 high, its top edge filleted 1.5), an end
+fillet removed outward: up to 1.15, refused at 0.2, 0.25, 0.3, 0.45,
+0.6, 0.65, 0.8, 0.9, 1.05 and 1.1 and made at the thicknesses between
+(the other end's fillet, its mirror image: at 0.25, 0.6, 0.7, 0.75, 1.0,
+1.05 and 1.1). A box of 20 x
+30 x 10 with all twelve edges filleted, 2: an edge's fillet or a
+corner's ball removed, refused at most thicknesses either way.
+
+A removed fillet is tangent to the faces beside it all round, and each
+of its edges is closed by a tube. Two tubes that meet at a corner of
+the fillet are intersected with each other (`BRepOffset_Tool::PipeInter`,
+`GeomInt_IntSS`), and both faults are in that intersection.
+
+**An exception.** Cutting the walked line where it leaves a surface's
+bounds, `GeomInt_LineTool`'s `FindPoint` looks for the boundary point in
+line with the last two points. Where the last point lies on the
+boundary already, the vector from it to that point has no length, and
+`gp_Vec2d::Angle` threw `gp_VectorWithNullMagnitude` -- the stadium at
+0.45. Such a candidate is now passed over (`bb59eaae9a`), which is what
+the test made on it says of a vector of no length. `IntTools_WLineTool`
+has the same lines and is left as it is, no case having been met there.
+
+**A curve gone astray.** At 0.2 one of the stadium's four sections,
+0.396 long, came back from the approximation 3.46 long and up to 10.5
+off the tubes, its two ends in place; its mirror image across the part
+was right to 3e-8, and the same line asked for without approximation
+right to 2.8e-7. The loops could close no wire with it. `PipeInter` now
+measures each section against the two surfaces at 15 points, and where
+one is further off than a thousandth of the smaller face's size -- what
+a section's end is snapped by -- takes the lines as walked: a curve
+fitted to the walked points where that lies as near the surfaces as the
+points joined, the points joined otherwise; the pcurves by projection
+(`a444240f89`).
+
+No fix level: both make what was refused.
+
+**How the results were judged.** No boolean gives these skins. By the
+probe's random points (sec 78): the stadium, every face at 0.2, 0.25,
+0.45, 0.6, 0.65 and 0.9 outward, 60 runs, valid and not a point wrong of
+the 172 to 400 read in each; the rounded box's 36 newly made probe runs
+likewise. And by symmetry: the stadium's two end fillets are mirror
+images and have one volume to the last digit, as have its two side
+fillets, its two half cylinders and its two flats; the rounded box's
+eight corners have one volume, and the fillets along one axis -- where
+one of a pair was made before and the other refused, the one now made
+has the volume the other had.
+
+**The cases** (`run_tests.py`, `_stadium_cases` and `_rounded_box_cases`;
+the volumes are the kernel's own, the same for both faces of a pair):
+
+| Case | Volume | Before |
+|------|--------|--------|
+| `stadium_left_end_fillet_out0.2`, `_right_` | 215.5817 | the left refused |
+| `stadium_left_end_fillet_out0.45`, `_right_` | 501.9640 | the left refused |
+| `stadium_left_end_fillet_out0.6`, `_right_` | 683.0455 | both refused |
+| `stadium_left_end_fillet_out0.9`, `_right_` | 1066.6306 | the left refused |
+| `roundedbox_first_x_fillet_out0.5`, `_in0.5`, `_out1`, `_in1`, and `_last_` | 1018.5897, 936.0100, 2137.6125, 1803.9267 | Face14 refused, all four; Face19 the same before |
+| `roundedbox_first_y_fillet_out0.5`, `_in0.5`, `_out1`, `_in1`, and `_last_` | 1005.0539, 925.9839, 2115.7278, 1794.3955 | Face20 refused, all four; Face3 the same before |
+| `roundedbox_first_corner_out0.5`, `_in0.5`, and `_last_` | 1037.1089, 950.1744 | Face26 refused at 0.5 outward; Face6 the same before |
+
+![stadium_left_end_fillet_out0.2](models/pictures/stadium_left_end_fillet_out0.2.png)
+
+![roundedbox_first_x_fillet_out0.5](models/pictures/roundedbox_first_x_fillet_out0.5.png)
+
+**What it moved.** The exception: 25 of the scan's refused runs made
+(the stadium 12, an enclosure 7, a box with rounded uprights 6), and
+three of the probe's; nothing else. The section: 536 of the scan's
+refused runs made (the rounded box 480, the box with rounded uprights
+38, the enclosure 9, the stadium 9) and 6 invalid ones; 8 invalid ones
+refused; one that was valid and wrong refused -- the rounded box with a
+corner's ball removed 1.35 outward, 5804.7114 between 2645.2770 at 1.2
+and 3391.2594 at 1.5; 36 of the probe's refused runs made. Nothing made
+before is different. Left worse in kind: 14 of the scan's refused runs
+come back invalid -- 13 of them the corner blend of the box with
+rounded uprights removed outward, invalid at the other 17 thicknesses
+as it was (a fault of its own, still open), and one an island among
+valid neighbours (the rounded box, a fillet removed 0.65 outward) --
+and two of the probe's, that corner blend again. The bench of sec 82,
+the corpus at levels 0 and 5 and the sweep as they were.
+
+**Where the scan stands** (the three fixes): 25078 made, 2681 refused,
+201 invalid. Not looked at yet: the stadium's end fillets are refused
+from 1.2 outward on, and at 1.15 come back valid at 5798.4033, between
+1338.6259 at 1.1 and nothing -- wrong, as it was before these fixes,
+and the first thing to take next.
+
+**Validation** of secs 84 and 85 together (`a444240f89` against
+`1617767b34`, on Linux): thickness PASS=914 (880 + sec 84's 6 and these
+28) at level 0, at level 3 frozen, at level 4 and at level 5, every other
+case line the same; boolean 111, draft 105, fillet 919 + 1 XFAIL at fix
+levels 0 to 4, the same line for line; the corpus as its baselines at
+levels 0 and 4, and at level 5 as at level 4; the sweep 928 of 928 at
+levels 0, 4 and 5, the same line for line; the 29 issue models recompute
+as before; FreeCAD's Python suite 4388 OK (`82896672ef`). Not run:
+macOS, thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

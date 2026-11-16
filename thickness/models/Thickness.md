@@ -4019,6 +4019,34 @@ one booleans give.
 
 ![chamfer2x1_short_chamfer_out0.5](pictures/chamfer2x1_short_chamfer_out0.5.png)
 
+### Sec 84: a crossing a period off
+
+A box of 30 x 20 x 10 with a notch across a corner, the side at y = 0
+removed 1.45 outward: refused (and at 1.46; made at 1.44 and 1.47). A
+crossing 6e-8 past the end of an elliptical section came back a period
+down, and the vertex stored there was fused into one with a tolerance
+of 5.98 (`4b348c4a11`). Found by removing every face of 43 shapes at 30
+thicknesses (`../probe/scan.py`). The volume, 3031.3550, is the one
+booleans give.
+
+![notchbox_side_out1.45](pictures/notchbox_side_out1.45.png)
+
+### Sec 85: two tubes' section
+
+A stadium with its top edge filleted, an end fillet removed 0.2
+outward; a box with all twelve edges filleted, an edge's fillet removed
+0.5 outward: refused. The section of two of the tubes that close the
+removed fillet's edges came back from the approximation off the tubes
+(3.46 long for 0.396 on the stadium); it is now taken as walked where
+it strays (`a444240f89`). At other thicknesses the same intersection
+threw, an angle taken with a vector of no length (`bb59eaae9a`). The
+results are right at every random point read, and mirror-image faces
+give one volume.
+
+![stadium_left_end_fillet_out0.2](pictures/stadium_left_end_fillet_out0.2.png)
+
+![roundedbox_first_x_fillet_out0.5](pictures/roundedbox_first_x_fillet_out0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

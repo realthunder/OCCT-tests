@@ -90,6 +90,8 @@ STAGES = {
     "s80": ("ebdea53240", "80"),
     "s81": ("4ffba34169", "81"),
     "s83": ("da2e0ec610", "83"),
+    "s84": ("67d87641b5", "84"),
+    "s85": ("bb59eaae9a", "85"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -218,6 +220,32 @@ def _chamferbox2x1():
     b = Part.makeBox(30, 20, 10)
     return b.makeChamfer(2, 1, [
         e for e in b.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9 and abs(e.BoundBox.ZMax - 10) < 1e-9])
+
+
+def _notchbox():
+    # 30 x 20 x 10 with a notch across a corner, a triangle of 6 by 9, 4 deep,
+    # the prism that cuts it extruded down from the top (sec 84): Face2 is
+    # the side at y = 0.
+    notch = Part.Face(Part.makePolygon([V(0, 0, 10), V(6, 0, 10), V(0, 9, 10), V(0, 0, 10)]))
+    return Part.makeBox(30, 20, 10).cut(notch.extrude(V(0, 0, -4)))
+
+
+def _stadium():
+    # two half cylinders of 5 and two flats 20 long, 8 high, the top edge
+    # filleted 1.5: Face7 is the end fillet at x = -10.
+    w = Part.Wire([Part.makeLine(V(-10, -5, 0), V(10, -5, 0)),
+                   Part.ArcOfCircle(V(10, -5, 0), V(15, 0, 0), V(10, 5, 0)).toShape(),
+                   Part.makeLine(V(10, 5, 0), V(-10, 5, 0)),
+                   Part.ArcOfCircle(V(-10, 5, 0), V(-15, 0, 0), V(-10, -5, 0)).toShape()])
+    st = Part.Face(w).extrude(V(0, 0, 8))
+    return st.makeFillet(1.5, [e for e in st.Edges if abs(e.BoundBox.ZMin - 8) < 1e-9])
+
+
+def _roundedbox():
+    # 20 x 30 x 10 with all twelve edges filleted, 2: Face14 is the fillet of
+    # the bottom edge along x at y = 0.
+    b = Part.makeBox(20, 30, 10)
+    return b.makeFillet(2, b.Edges)
 
 
 def _filleteddome():
@@ -461,6 +489,9 @@ SHAPES = {
     "chamferbox_top4": lambda: _chamferbox(False),
     "chamferbox_all": lambda: _chamferbox(True),
     "chamferbox2x1": lambda: _chamferbox2x1(),
+    "notchbox": lambda: _notchbox(),
+    "stadium": lambda: _stadium(),
+    "roundedbox": lambda: _roundedbox(),
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
@@ -781,6 +812,9 @@ CASES = {
     "chamferbox_top4_long_side_out0.5": ("s80", "chamferbox_top4", 1, +0.5, False, 0, 948.4371),
     "chamferbox_all_long_side_out0.5": ("s81", "chamferbox_all", 1, +0.5, False, 0, 904.2196),
     "chamfer2x1_short_chamfer_out0.5": ("s83", "chamferbox2x1", 3, +0.5, False, 0, 1073.6573),
+    "notchbox_side_out1.45": ("s84", "notchbox", 2, +1.45, False, 0, 3031.3550),
+    "stadium_left_end_fillet_out0.2": ("s85", "stadium", 7, +0.2, False, 0, 215.5817),
+    "roundedbox_first_x_fillet_out0.5": ("s85", "roundedbox", 14, +0.5, False, 0, 1018.5897),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
