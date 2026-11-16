@@ -3539,15 +3539,33 @@ points each over the whole part, at 2 and 0.5 either way, none wrong.
 **What is left of the corpus' 168.** 106 refused, none throwing; 62 made
 (36 before).
 
-- *The blends at 1* but for face 8 and, inward, the four beside the top:
-  with the end edges closed by tubes the long blend on the left comes out
-  valid and through itself (BOP's check), and is not taken. Face 4 is
-  face 8's mirror image and is not made; faces 11 and 14 are made at 0.5
-  outward and not inward. Not traced.
+- *The long blends at 1 (faces 2, 6, 12).* A long blend is 3.21 wide at
+  its ends and narrows to 1.75 at its lowest point: under 2 over the
+  middle third of face 12's length (faces 2 and 6 are the two halves of
+  the one on the right and narrow the same way toward their common end).
+  At 1 the two rims overlap there. With the
+  end edges closed by tubes (the last attempt) face 12 comes out valid,
+  its two long tubes through each other and their edges on the blend
+  crossed (BOP's check; 29 points of 2942 about the place wrong, a sliver
+  0.7 x 2.6 x 0.4): nothing cuts a tube by one that is not its
+  neighbour. Not taken, by the soundness test.
+- *The corner blends (faces 4, 8, 11, 14)*, four mirror images, 3.2 to
+  3.4 wide: an opening is left at 1. Made: all four at 0.5 outward, 4 and
+  8 at 0.5 inward, 8 at 1 either way. Not made: 11 and 14 at 0.5 inward
+  (face 11: a tube's end arc at a corner is left free and the shell is
+  open there), 4 at 1, 11 and 14 at 1. The
+  faces differ in their orientation and in what lies beside them (the
+  long blend in one face or in two). Not traced further.
 - *The blends beside the top (faces 5, 9, 10, 13), outward.* Their edge
   with the top stands at a right angle, and where its tube ends the corner
-  between the two tubes and the removed face is a piece of sphere whose arc
-  on the removed face is not found (`TangentCornerNoArc`). Not traced.
+  between the two tubes and the removed face is a piece of sphere whose
+  arc on the removed face is not found (`TangentCornerNoArc`): from its
+  4th to 10th point of 21 on, the arc has left the blend's surface, and
+  with the surface carried on by its own span (tried) it is still not
+  found. Not traced further.
+- *The blends up to the ridge (faces 17, 20) at 1*: 0.90 from the faces
+  that stay at their furthest, so the rims close over them: the answer
+  would be of the sealed kind. Refused.
 - *The cone (face 1)*: 22 tubes; not looked into.
 - *The Intersection join*: nothing is made but the top, the bottom and
   (outward) one flat.
