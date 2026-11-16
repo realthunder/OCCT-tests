@@ -3995,6 +3995,17 @@ booleans, 904.2196:
 
 ![chamferbox_all_long_side_out0.5](pictures/chamferbox_all_long_side_out0.5.png)
 
+### Sec 82: the Intersection join where it is the Arc join
+
+No picture: the solids are the Arc join's. On a shape where no edge
+between two faces that stay would be rounded and no removed face is
+tangent to its neighbour, the two joins have one skin; the Intersection
+join left with no valid answer there takes the Arc join's
+(`e5637b606b`). Found by holding fifteen convex polyhedra against
+booleans, every face, either way, both joins (`../probe/poly.py`): 24
+invalid and 8 refused runs with the Intersection join inward are right
+now.
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

@@ -2763,6 +2763,36 @@ def _chamfered_box_cases():
 
 _chamfered_box_cases()
 
+
+# Sec 82. The Intersection join inward on a convex polyhedron is the Arc
+# join's solid: no edge is rounded, no removed face is tangent to its
+# neighbour. Chamfers of 1 by 3 on a box's top edges, a side removed, and a
+# hexagon with its top edges chamfered, a side removed: invalid or refused
+# with the Intersection join, right with the Arc join.
+def _same_join_cases():
+    box = Part.makeBox(30.0, 20.0, 10.0)
+    uneven = box.makeChamfer(1, 3, [e for e in box.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9
+                                    and abs(e.BoundBox.ZMax - 10) < 1e-9])
+    hexagon = Part.Face(Part.makePolygon(
+        [App.Vector(10 * math.cos(math.radians(60 * i)), 10 * math.sin(math.radians(60 * i)), 0)
+         for i in range(7)])).extrude(App.Vector(0, 0, 8))
+    hexagon = hexagon.makeChamfer(1.5, [e for e in hexagon.Edges
+                                        if abs(e.BoundBox.ZMin - 8) < 1e-9
+                                        and abs(e.BoundBox.ZMax - 8) < 1e-9])
+    for tag, shape, test in (
+            ("chamfer1x3_end", uneven, lambda b, f: b.XMax < 1e-9),
+            ("chamfer1x3_side", uneven, lambda b, f: b.YMax < 1e-9),
+            ("hexchamfer_side", hexagon, lambda b, f: b.ZMax < 6.5 + 1e-9 and b.ZMin < 1e-9
+             and b.ZLength > 1 and abs(f.normalAt(0, 0).y + 1) < 1e-6)):
+        face = [i + 1 for i, f in enumerate(shape.Faces) if test(f.BoundBox, f)][0]
+        for t in (0.5, 1.0):
+            want = _polyhedron_wall_in(shape, face, t)
+            thickness_case("%s_in%g" % (tag, t), shape, face, -t, "pass", want)
+            thickness_case("%s_join_in%g" % (tag, t), shape, face, -t, "pass", want, False, 2)
+
+
+_same_join_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

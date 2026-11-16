@@ -4,13 +4,14 @@
 # env: FCBUILD  a FreeCAD build linked against this OCCT tree
 #      RUN      the wrapper that runs a command in the build's environment
 #      LIBN     a directory whose TKGeomAlgo, TKBool and TKOffset are preloaded
-#      N, TOL, JOINS, SKIP  as probe.py
+#      N, TOL, JOINS, SKIP, SET, INTER  as probe.py
 HERE=$(cd $(dirname $0) && pwd)
 RUN=${RUN:-$HOME/works/sw/fcad/.conda/run.sh}
 FCBUILD=${FCBUILD:-$HOME/works/sw/fcad/build/conda-relwithdebinfo-801}
 O=$1; shift
 mkdir -p $O/home
-[ $# -eq 0 ] && set -- $(python3 -c "import re; print(' '.join(re.findall(r'\"([a-z0-9_]+)\":', open('$HERE/shapes.py').read().split('SHAPES = {')[1])))")
+SHAPESFILE=$HERE/shapes.py; [ "$SET" = 2 ] && SHAPESFILE=$HERE/shapes2.py
+[ $# -eq 0 ] && set -- $(python3 -c "import re; print(' '.join(re.findall(r'\"([a-z0-9_]+)\":', open('$SHAPESFILE').read().split('SHAPES = {')[1])))")
 PRE=""
 for l in TKGeomAlgo TKBool TKOffset; do
     [ -n "$LIBN" ] && PRE="$PRE $LIBN/lib$l.so.8.0.1"

@@ -4112,6 +4112,85 @@ issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`82896672ef`); the probe differs from sec 80's in the 52 runs above and
 no other. Not run: macOS, thickness levels 1 and 2.
 
+## Convex polyhedra held against booleans, and the Intersection join where it is the Arc join (`e5637b606b`, 2026-11-16, sec 82)
+
+**A bench.** The probe reads an Arc result by random points, which
+passes a small fault and says nothing of the Intersection join. For a
+convex polyhedron the skin is known exactly, by booleans that share
+nothing with the offset (`probe/poly.py`, `probe/poly.sh`):
+
+- inward, either join: the polyhedron less what is left of it with
+  every plane that stays moved in by the thickness;
+- outward, the Intersection join: every plane that stays moved out, the
+  removed face's as it is, less the polyhedron;
+- outward, the Arc join: the polyhedron grown by the thickness (its
+  faces pushed out, a cylinder round every edge, a ball at every
+  vertex), cut off at the removed face's plane, less the polyhedron --
+  where no face beside the removed one stands at less than a right
+  angle to it. At a sharper edge the neighbour's offset is carried on
+  to the removed face's plane, t^2 (tan b - b) / 2 a length more than
+  the cylinder's sector (b the angle short of a right one), and the
+  bench gives such a run no reference: a prism on a triangle read 0.32
+  over at 0.5 for that, and is not wrong.
+
+Fifteen shapes -- a box; boxes with chamfers of 2, of 2 by 1 and of 1
+by 3 on the top edges, on every edge, on one edge and on two; two boxes
+whose sides lean; a wedge; prisms on a triangle, a pentagon and a
+hexagon; a box with a corner cut off; a hexagon with its top edges
+chamfered -- every face, 0.5 and 1, either way, both joins: 1088 runs.
+
+**What it found.** With the Arc join nothing wrong that has a
+reference. With the Intersection join inward 28 invalid and a number
+refused where the Arc join is right: the box with every edge chamfered
+(15), chamfers of 1 by 3 (a side or an end removed: 4 invalid, 4
+refused), the chamfered hexagon (a side: 8 invalid, 4 refused).
+
+**The fix.** The two joins differ at an edge between two faces that
+stay which the Arc join rounds with a tube (a concave one inward, a
+convex one outward) and at an edge where a removed face is tangent to
+its neighbour. A shape that has neither has one skin for both.
+`MakeThickSolid`, asked for the Intersection join and left with no
+valid answer on such a shape, makes the Arc join's -- as that join
+makes it, with every pair of faces intersected where the shape is all
+planes (sec 79) -- on another object first, so that this one keeps what
+it has where there is none. No fix level: what was valid is as it was.
+
+**The cases** (`run_tests.py`, `_same_join_cases`; the references by
+`_polyhedron_wall_in`):
+
+| Case | By booleans | Before, the Intersection join |
+|------|-------------|-------------------------------|
+| `chamfer1x3_end_in0.5`, `_in1`, and `_join_` | 925.4189, 1769.1707 | invalid |
+| `chamfer1x3_side_in0.5`, `_in1`, and `_join_` | 885.1375, 1698.0449 | refused |
+| `hexchamfer_side_in0.5`, `_in1`, and `_join_` | 413.9746, 778.5125 | invalid |
+
+No picture: the solids are the Arc join's.
+
+**Where the bench stands.** 960 right of 1088 (928 before), and 30
+with the Arc join outward that have no reference (the leaning boxes,
+the prism on a triangle, the wedge). 4 invalid: a chamfer of the box
+with every edge chamfered removed 1 inward with the Intersection join
+(3), where the Arc join refuses, and the one chamfer of a box removed 1
+inward with the Arc join. 94 refused: 90 inward, chamfers at 1 and
+corner facets, by both joins alike (the skin closes the opening where
+looked at, sec 79); and 4 outward that are made at 1 and refused at
+0.5, the chamfers of 2 by 1 with the Arc join -- not traced.
+
+**What it moved.** Nothing made validly before: not a case line of the
+suites at any level, not a line of the corpus (levels 0, 4 and 5) or of
+the sweep (levels 0, 4 and 5); of the probe's two sets (3352 runs) the
+twelve runs of the box with every edge chamfered that were invalid with
+the Intersection join, valid now.
+
+**Validation** (`e5637b606b` against `f30bae47f5`, on Linux): thickness
+PASS=866 (854 + these 12) at level 0, at level 3 frozen, at level 4 and
+at level 5, every other case line the same; boolean 111, draft 105,
+fillet 919 + 1 XFAIL at fix levels 0 to 4, the same line for line; the
+corpus as its baselines at levels 0 and 4, and at level 5 as at level 4;
+the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`82896672ef`). Not run: macOS, thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

@@ -4,6 +4,7 @@
 #   JOINS  "0 2" (Arc, Intersection)   TOL    the thickness' tolerance, 1e-7
 #   N      points an Arc result is read by, 400 (0: not read)
 #   SKIP   "tag;tag": runs to leave out (one that does not return)
+#   SET    2: the shapes of shapes2.py     INTER  1: with every pair of faces intersected
 # An Arc result is read by random points in the shape's box: in the wall where
 # on the right side of the part and nearer than the thickness to a face that
 # stays. Not read: at an edge of the removed face its neighbour stands at an
@@ -13,6 +14,8 @@
 import FreeCAD, Part, os, random, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shapes import SHAPES
+if os.environ.get("SET", "") == "2":
+    from shapes2 import SHAPES
 V = FreeCAD.Vector
 
 
@@ -29,6 +32,7 @@ name = os.environ["SHAPE"]
 joins = [int(x) for x in os.environ.get("JOINS", "0 2").split()]
 n = int(os.environ.get("N", "400"))
 TOL = float(os.environ.get("TOL", "1e-7"))
+INTER = os.environ.get("INTER", "") == "1"
 s = SHAPES[name]()
 
 
@@ -123,7 +127,7 @@ for fi in range(len(s.Faces)):
             solid = s.Solids[0]
             before = deep(s)
             try:
-                r = s.makeThickness([s.Faces[fi]], t, TOL, False, False, 0, join)
+                r = s.makeThickness([s.Faces[fi]], t, TOL, INTER, False, 0, join)
                 if not r.isValid():
                     res = "INVALID vol %.4f" % r.Volume
                 else:
