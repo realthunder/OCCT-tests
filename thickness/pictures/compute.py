@@ -61,12 +61,16 @@ for name, (st, sk, fi, val, inter, join, ref) in CASES.items():
         continue
     if name in REFUSED:
         # The right outcome is a refusal; an answer is the fault.
+        previous = set_offset_fix_level(FIX_LEVEL[name]) if name in FIX_LEVEL else None
         try:
             r = s.makeThickness(faces, val, 1e-7, inter, False, 0, join)
             r.exportBrep(os.path.join(OUT, name + ".brep"))
-            d.update(ok=False, problems=["answered where no face stays"], volume=r.Volume)
+            d.update(ok=False, problems=["answered where " + REFUSED[name]], volume=r.Volume)
         except Exception:
             d.update(ok=True, problems=[], volume=None, refused=True)
+        finally:
+            if previous is not None:
+                set_offset_fix_level(previous)
         res[name] = d
         emit("%-32s %s %s" % (name, "OK " if d["ok"] else "BAD", "; ".join(d["problems"]) or "refused"))
         continue

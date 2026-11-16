@@ -47,9 +47,11 @@ it):
     THICK_FIX_LEVEL=4 ./corpus.sh bin > new4.txt
     diff <(perl -pe 's/ [0-9.]+s$//' baseline_level4.txt) <(perl -pe 's/ [0-9.]+s$//' new4.txt)
 
-`baseline_level4.txt` is the result at level 4, the highest (Linux,
-2026-11-16): it differs from `baseline.txt` in the runs levels 2, 3 and 4
-change (../README.md sec 57, 59 and 74).
+`baseline_level4.txt` is the result at level 4 (Linux, 2026-11-16): it
+differs from `baseline.txt` in the runs levels 2, 3 and 4 change
+(../README.md sec 57, 59 and 74). Level 5, the highest, gives the same on
+every run of the corpus (sec 78: it refuses a thick solid whose tubes pass
+through each other, and the corpus has none that was made).
 
 `baseline.txt` is the fork's current result (timings stripped). A fix changes it
 only in the runs it means to make. Note each change in the fix's README section

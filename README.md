@@ -93,7 +93,8 @@ sec 31); measured, it moved the shapes before it within their tolerances,
 so it is made at every level now and level 1 makes nothing differently. It
 stays reserved, since FreeCAD has saved objects at 1: the next level is 2
 (sec 32). Levels 2 and 3 are the revolution's stretch and the apex (sec 57
-and 59); level 4 is the crease no longer taken for tangent (sec 74).
+and 59); level 4 is the crease no longer taken for tangent (sec 74); level
+5 refuses a thick solid whose tubes pass through each other (sec 78).
 
 ## Frozen shapes
 

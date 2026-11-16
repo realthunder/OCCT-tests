@@ -3729,8 +3729,153 @@ every other case line the same; boolean 111, draft 105, fillet 919 + 1
 XFAIL at fix levels 0 to 4, the same line for line; the corpus as its
 baselines at level 0 and at level 4; the sweep 928 of 928 at level 0 and
 at level 4, the same line for line; the 29 issue models recompute as
-before; FreeCAD's Python suite 4388 OK (`d171a04be6`). Not run: macOS,
-thickness levels 1 and 2.
+before; FreeCAD's Python suite 4388 OK (`d171a04be6`). Not run:
+thickness levels 1 and 2. On Intel macOS (2026-11-16, `d075006c59`) the
+suite is PASS=813 at the three levels with the seven cases at these
+volumes, and the corpus as both baselines.
+
+## Plain shapes with blends: a probe, and four faults of a tube and a box (2026-11-16, sec 78)
+
+**Where they were met.** Sec 77's fault was found on the first plain shape
+tried beside #613's part, so the same was done on more: 22 shapes as a
+FreeCAD user makes them -- boxes, cylinders, a slot shape, a hexagon, a
+tube, a boss, a pocket, an L bracket, a wedge, a cone, with edges filleted
+or chamfered -- every face removed in turn, 0.5 and 1 either way, both
+joins, at FreeCAD's tolerance (1e-7): 1792 runs (`probe/`). Each result with the Arc
+join is read by 400 random points in the shape's box: a point is in the
+wall where it is on the right side of the part and nearer than the
+thickness to a face that stays; not read at an edge of the removed face
+its neighbour stands at an angle to, nor beyond the removed face's
+surface unless the nearest kept point is on a tangent edge of it (the
+wall is cut off flush there, but for the tubes' lips). And the shape
+given is compared with itself before and after: every edge of every face
+with its range, tolerance and pcurve's ends, the vertices, validity.
+
+**What was found, with the Arc join** (896 runs): 632 right by the
+points; 2 valid and wrong; 12 invalid; 250 refused. With the Intersection
+join (896): 483 valid, not read (the points' rule is the Arc join's); 27
+invalid; 385 refused; one that did not return. One run left its input
+changed. Four faults are fixed here -- after them 640 right, 2 wrong
+below level 5 and refused from it, 4 invalid, 250 refused with the Arc
+join, 386 with the other -- and the rest is listed below.
+
+**1. A thick solid that did not return** (`cbba4ea216`,
+`IntPatch_Intersection::CheckSingularPoints`). The tube (10 and 6 in
+radius, 12 high, its two top edges filleted at 1) with the inner fillet
+removed 1 inward, the Intersection join. The fillet's offset by its own
+radius is a surface with no derivative across it, and the intersection's
+check for singular points walks each boundary of a face in five points
+until the surface has a derivative, `t += dt`: a boundary of no length in
+its parameter has `dt = 0`, and the loop never ended. It ends after one
+point there. Upstream's code, any client's: refused now, at once.
+
+**2. A refusal that left the shape given invalid** (`d8047fb86e`,
+`BRepAlgo_Loop`, `BRepOffset_MakeLoops::BuildOnContext`). The same tube,
+the outer fillet removed 1 inward with the Intersection join: refused --
+and afterwards the tube had eight vertices for six and two faces
+`BRepCheck_UnorientableShape`, so that every thick solid made of the same
+shape object after it was invalid (the bottom removed 0.5 outward:
+701.8818, invalid). That is a script that keeps its shape; FreeCAD on
+this fork freezes a property's shape value by default
+(`ImmutableShapeValues`), and the suite runs unfrozen to see such
+edits. The loops on a removed face take the face's own edges
+as they are -- the shape's, shared with the faces beside it -- and where
+a vertex of the new edges lay on the vertex of such an edge, the loop put
+the shape's edge on the new vertex, as it does with any edge it stores
+later (`StoreInMVE`): the fillet's two closed edges were on new vertices
+and the seams beside them on the old. An edge of the shape given keeps
+its vertex now and the edges stored on the other one take it
+(`BRepAlgo_LoopInputEdges`, a set for the calling thread, which
+`BuildOnContext` fills with the removed faces' edges).
+
+**3. The box of sec 77 with a side removed outward** (`bef684f080`,
+`BRepAlgo_Loop`). Invalid at 0.5 and at 1, each of the four sides: the
+mitre's tube ends on the removed face there, and its pole's edge, kept
+in the wire that holds its own vertex, went in as its face had it -- the
+other of the two ways sec 77 turned it. One rule for both now.
+
+**4. Two tubes through each other: offset fix level 5** (`7846725cda`,
+`BRepOffset_MakeOffset::ToContext`). The tube with either fillet removed
+1 outward, the Arc join: a valid solid of 6476.7086 (the inner fillet:
+6489.9569) where the whole tube is 2391.1690. The fillet is tangent to
+the faces on both sides, each of its two edges is closed by a tube that
+turns into the fillet, and each tube is cut by the fillet alone. The
+fillet is 1.57 wide: each tube's edge on it lies under the other tube
+(60 deg round the fillet from its own edge, the two together 120 of the
+fillet's 90), and the two tubes pass through each other. Nothing cuts a
+tube by one it meets at no vertex (sec 75, the long blends at 1). From
+level 5 that is refused: a point of a tube's edge on the removed face,
+on that face, nearer than the thickness less a thousandth to another
+tangent edge of the face that has a tube and shares no vertex with this
+one. A point under the tube of an edge that does share a vertex with
+this one is not counted, for that tube cuts this one off there: #613's
+corner blends at 1, 1.81 wide at one end, are made right (sec 76), the
+two long tubes meeting under the end's -- the first form of the test
+refused those eight runs of the corpus. Two tubes that just touch are no
+answer either: the tube's top, 2 wide, removed 1 outward was an invalid
+solid at every level, and is refused from level 5 (the nearness is the
+thickness and a thousandth of it). Below level 5 nothing changes; an
+object a document holds keeps its level.
+
+**The cases** (`run_tests.py`):
+
+| Case | What |
+|------|------|
+| `tube_fillet_inner_in1_join_refused` | refused; it did not return |
+| `tube_fillet_outer_in1_join_input_kept` | the fillet refused, the tube as it was, and its bottom removed 0.5 outward after it: 701.8818, valid |
+| `roundtop_20x30x10_long_side_out0.5`, `_out1` | 979.4700, 2048.0806; invalid before |
+| `roundtop_20x30x10_short_side_out0.5`, `_out1` | 1019.4700, 2128.0806; invalid before |
+| `tube_fillet_outer_out1_refused_level5`, `_inner_` | refused at level 5 |
+| `tube_fillet_outer_out0.5_level5`, `_inner_` | 788.1723, 801.1296 as at every level: the fillet is wide enough |
+| `tube_fillet_top_out1_refused_level5` | the top, 2 wide, removed 1 outward: refused at level 5 (invalid below) |
+| `tube_fillet_top_out0.5_level5` | 791.6257 as at every level |
+
+The four sides are read by 3000 points each: not a point wrong.
+
+![roundtop_20x30x10_long_side_out1](models/pictures/roundtop_20x30x10_long_side_out1.png)
+![tube_fillet_outer_out1_refused_level5](models/pictures/tube_fillet_outer_out1_refused_level5.png)
+
+**What is left of the probe**, the Arc join first:
+
+- *A corner of the removed face where three faces that stay meet*: 136
+  of the 250 refusals are the two chamfered boxes with a side or a
+  chamfer removed (the box with every edge chamfered: all 104). At such
+  a corner the offsets of two faces that share only that vertex must cut
+  each other, and the Arc join intersects faces across an edge only;
+  upstream throws there or gives the part back unhollowed. The fillets
+  of the boxes (`box_top4` 16, `box_all12` 33, `box_round` 9, `hex_top`
+  24) and the pocket's walls (24) are refused likewise; not traced one
+  by one.
+- *Invalid*: the box with its upright edges and its top edges filleted,
+  an upright fillet removed (three runs, several faces unorientable);
+  the tube's top removed 1 outward (BRepCheck's analyzer says invalid,
+  FreeCAD's check names nothing). Not traced.
+- *The Intersection join*: refused where the removed face is tangent to
+  its neighbours along a curved edge or along two edges that meet (sec
+  77, what is left); 27 invalid, 25 of them the box with every edge
+  chamfered. The valid ones are not read: the points' rule is the Arc
+  join's.
+- With a tolerance of 1e-3, as the sweep passes it, one more run did not
+  return in five minutes (the pocket with its floor's edges filleted, a
+  side face removed 1 outward, the Intersection join: the loops' faces
+  are sorted one against every other, `BRepAlgo_FaceRestrictor`). Not at
+  1e-7, where it is refused in a second. Not traced.
+
+**What it moved.** Nothing made before: not a case line of the suites,
+not a line of the corpus or of the sweep, at levels 0 to 4. At level 5
+the suite, the corpus and the sweep are as at level 4 but for the cases
+above.
+
+**Validation** (`7846725cda` against `56dbb35957`, on Linux): thickness
+PASS=825 (813 + these 12) at level 0, at level 3 frozen, at level 4 and
+at level 5, every other case line the same and level 5's lines those of
+level 4; boolean 111, draft 105, fillet 919 + 1 XFAIL at fix levels 0 to
+4, the same line for line; the corpus as its baselines at level 0 and at
+level 4, and at level 5 as at level 4; the sweep 928 of 928 at levels 0,
+4 and 5, the same line for line; the 29 issue models recompute as before;
+FreeCAD's Python suite 4388 OK with new objects at level 5 (`82896672ef`);
+the probe with the four fixes differs from the one before in the runs
+named here and no other. Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 

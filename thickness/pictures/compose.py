@@ -55,6 +55,8 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "mitrebox_x10y0": "box with two adjacent top edges filleted, r2, at the corner x = 10, y = 0",
          "mitrebox_x10y8": "box with two adjacent top edges filleted, r2, at the corner x = 10, y = 8",
          "roundtop": "box with all four top edges filleted, r2",
+         "roundtop20": "box of 20 x 30 x 10 with all four top edges filleted, r2",
+         "tubefillet": "tube with its two top edges filleted, r1",
          "filleteddome": "box under a B-spline dome, the dome's four edges filleted, r3",
          "groove5seam": "cylinder with a groove r5 across its end, the groove's seam on the right bottom",
          "issue363base": "#363's Thickness001 base: a chamfered cylinder with a groove across its end",
@@ -126,7 +128,7 @@ for name in names:
     else:
         faces = "Faces " + ", ".join(str(i) for i in fi)
     if name in REFUSED:
-        expect = "a refusal, no face stays"
+        expect = "a refusal, " + REFUSED[name]
     elif name in INPUT:
         expect = "the input unchanged, %.2f" % ref
     else:

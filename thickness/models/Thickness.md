@@ -3930,6 +3930,28 @@ its wire runs. Worked out by hand, Steiner's formula for the convex box:
 
 ![roundtop_top_out1](pictures/roundtop_top_out1.png)
 
+### Sec 78: plain shapes with blends, a tube and a box
+
+A probe of 22 plain shapes with filleted or chamfered edges, every face
+removed in turn (`../probe/`), found four faults on a tube with its rims
+filleted and on sec 77's box. The inner fillet removed 1 inward with the
+Intersection join did not return: a loop of the intersection's stepped by
+nothing on a surface with no derivative (`cbba4ea216`). The outer fillet
+removed the same way was refused and left the tube itself invalid: the
+loops on a removed face put the shape's own edges on new vertices
+(`d8047fb86e`). The box with a side removed outward was invalid, the pole's
+edge of the mitre's tube the wrong way round in its wire (`bef684f080`):
+
+![roundtop_20x30x10_long_side_out1](pictures/roundtop_20x30x10_long_side_out1.png)
+
+And either fillet of the tube removed 1 outward came back valid at
+6476.7086 where the whole tube is 2391.1690: the fillet is 1.57 wide, the
+two tubes that close its edges pass through each other, and nothing cuts
+one by the other. Refused from the fork's offset fix level 5
+(`7846725cda`); below it nothing changes.
+
+![tube_fillet_outer_out1_refused_level5](pictures/tube_fillet_outer_out1_refused_level5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

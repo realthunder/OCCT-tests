@@ -2550,6 +2550,101 @@ def _roundtop_cases():
 
 _roundtop_cases()
 
+# Sec 78. More of the plain shapes. The box of sec 77 with a side removed
+# outward: the mitre's tube ends on the removed face, its pole's edge was in
+# the wire the wrong way round, and the solid was invalid (two faces
+# BRepCheck_UnorientableShape). Each read by 3000 random points, in the wall
+# where outside the box and nearer than the thickness to a face that stays.
+def _roundtop_side_cases():
+    box = Part.makeBox(20.0, 30.0, 10.0)
+    shape = box.makeFillet(2, [e for e in box.Edges
+                               if abs(e.BoundBox.ZMin - 10) < 1e-9
+                               and abs(e.BoundBox.ZMax - 10) < 1e-9])
+    long_side = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.XMax) < 1e-9][0]
+    short_side = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.YMax) < 1e-9][0]
+    for tag, face, volumes in (("long", long_side, (979.4700, 2048.0806)),
+                               ("short", short_side, (1019.4700, 2128.0806))):
+        for t, volume in zip((0.5, 1.0), volumes):
+            thickness_case("roundtop_20x30x10_%s_side_out%g" % (tag, t), shape, face, t, "pass",
+                           volume)
+
+
+_roundtop_side_cases()
+
+
+# A tube, 10 and 6 in radius and 12 high, its two top edges filleted at 1.
+# Three faults of it. (1) The inner fillet removed 1 inward with the
+# Intersection join did not return: the fillet's offset by its own radius is
+# a surface with no derivative across, and a loop of the intersection's
+# (IntPatch_Intersection::CheckSingularPoints) stepped by nothing along a
+# boundary of no length. Refused now. (2) The outer fillet removed the same
+# way is refused -- and left the tube invalid, two of its closed edges put on
+# vertices of the offset's, so that every thick solid made of the same shape
+# after it was invalid: the bottom removed 0.5 outward, 701.8818, among them.
+# (3) Either fillet removed 1 outward with the Arc join came back valid at
+# 6476.7086 and 6489.9569, the tube being 2391.1690: the two tubes that close
+# the fillet's edges pass through each other, the fillet 1.57 wide. Refused
+# from the fork's offset fix level 5.
+def _tube_fillet():
+    tube = Part.makeCylinder(10, 12).cut(Part.makeCylinder(6, 12))
+    shape = tube.makeFillet(1, [e for e in tube.Edges
+                                if abs(e.BoundBox.ZMin - 12) < 1e-9
+                                and abs(e.BoundBox.ZMax - 12) < 1e-9])
+    fillets = [i + 1 for i, f in enumerate(shape.Faces)
+               if type(f.Surface).__name__ == "Toroid"]
+    outer = [i for i in fillets if shape.Faces[i - 1].BoundBox.XMax > 9.5][0]
+    inner = [i for i in fillets if i != outer][0]
+    bottom = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.ZMax) < 1e-9][0]
+    return shape, outer, inner, bottom
+
+
+def tube_fillet_input_kept(name):
+    """The outer fillet removed 1 inward with the Intersection join, then the bottom 0.5
+    outward of the same shape object."""
+    shape, outer, inner, bottom = _tube_fillet()
+    before = signature(shape)
+    vertices = len(shape.Vertexes)
+    try:
+        shape.makeThickness([shape.Faces[outer - 1]], -1.0, 1e-7, False, False, 0, 2)
+        first = "made"
+    except Exception:
+        first = "refused"
+    problems = input_problems(shape, before)
+    if len(shape.Vertexes) != vertices:
+        problems.append("the shape has %d vertices for %d" % (len(shape.Vertexes), vertices))
+    try:
+        r = shape.makeThickness([shape.Faces[bottom - 1]], 0.5, 1e-7, False, False, 0, 0)
+        if not r.isValid():
+            problems.append("the next thick solid of it is invalid")
+        elif abs(r.Volume - 701.8818) > RELTOL * 701.8818:
+            problems.append("the next thick solid of it is %.4f for 701.8818" % r.Volume)
+    except Exception as e:
+        problems.append("the next thick solid of it is refused")
+    report(name, not problems, False,
+           "; ".join(problems) if problems else "the fillet %s, the shape as it was, 701.8818 after" % first)
+
+
+def _tube_fillet_cases():
+    shape, outer, inner, bottom = _tube_fillet()
+    own_refusal_case("tube_fillet_inner_in1_join_refused", shape, [inner], -1.0, False, 2)
+    tube_fillet_input_kept("tube_fillet_outer_in1_join_input_kept")
+    shape, outer, inner, bottom = _tube_fillet()
+    own_refusal_case("tube_fillet_outer_out1_refused_level5", shape, [outer], 1.0, False, 0, 5)
+    own_refusal_case("tube_fillet_inner_out1_refused_level5", shape, [inner], 1.0, False, 0, 5)
+    thickness_case("tube_fillet_outer_out0.5_level5", shape, outer, 0.5, "pass", 788.1723,
+                   fix_level=5)
+    thickness_case("tube_fillet_inner_out0.5_level5", shape, inner, 0.5, "pass", 801.1296,
+                   fix_level=5)
+    # The top between the two fillets is 2 wide: 1 outward its two tubes just
+    # touch, and the solid was invalid at every level.
+    top = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.ZMin - 12) < 1e-9][0]
+    own_refusal_case("tube_fillet_top_out1_refused_level5", shape, [top], 1.0, False, 0, 5)
+    thickness_case("tube_fillet_top_out0.5_level5", shape, top, 0.5, "pass", 791.6257,
+                   fix_level=5)
+
+
+_tube_fillet_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

@@ -85,6 +85,7 @@ STAGES = {
     "s74": ("1cbcbd7a73", "74"),
     "s75": ("8f37f86b3f", "75"),
     "s77": ("c1f4d9f6df", "77"),
+    "s78": ("d075006c59", "78"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -181,6 +182,22 @@ def _roundtop():
     b = Part.makeBox(10, 8, 6)
     return b.makeFillet(2, [e for e in b.Edges
                             if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9])
+
+
+def _roundtop20():
+    # 20 x 30 x 10 with its four top edges filleted, r2: Face1 is the long
+    # side at x = 0.
+    b = Part.makeBox(20, 30, 10)
+    return b.makeFillet(2, [e for e in b.Edges
+                            if abs(e.BoundBox.ZMin - 10) < 1e-9 and abs(e.BoundBox.ZMax - 10) < 1e-9])
+
+
+def _tubefillet():
+    # A tube, 10 and 6 in radius and 12 high, its two top edges filleted at
+    # 1: Face2 is the outer fillet.
+    t = Part.makeCylinder(10, 12).cut(Part.makeCylinder(6, 12))
+    return t.makeFillet(1, [e for e in t.Edges
+                            if abs(e.BoundBox.ZMin - 12) < 1e-9 and abs(e.BoundBox.ZMax - 12) < 1e-9])
 
 
 def _filleteddome():
@@ -419,6 +436,8 @@ SHAPES = {
     "mitrebox_x10y0": lambda: _mitrebox(10, 0),
     "mitrebox_x10y8": lambda: _mitrebox(10, 8),
     "roundtop": lambda: _roundtop(),
+    "roundtop20": lambda: _roundtop20(),
+    "tubefillet": lambda: _tubefillet(),
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
@@ -732,6 +751,8 @@ CASES = {
     "issue613_blend_f8_out1": ("s75", "issue613", 8, 1, False, 0, 7451.2253),
     "issue613_cylinder_in1": ("s75", "issue613", 3, -1, False, 0, 5941.9975),
     "roundtop_top_out1": ("s77", "roundtop", 8, +1, False, 0, 407.5290),
+    "roundtop_20x30x10_long_side_out1": ("s78", "roundtop20", 1, +1, False, 0, 2048.0806),
+    "tube_fillet_outer_out1_refused_level5": ("s78", "tubefillet", 2, +1, False, 0, None),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
@@ -762,12 +783,15 @@ SOLIDS = {
 INPUT = {
     "sector_outer_arc_input",
 }
-# Cases whose right outcome is a refusal: every face is removed, no face
-# stays to be thickened (sec 15). The panels show the input.
+# Cases whose right outcome is a refusal, and why: every face is removed, no
+# face stays to be thickened (sec 15); or two tubes that close a removed
+# face's tangent edges pass through each other (sec 78, from fix level 5).
+# The panels show the input.
 REFUSED = {
-    "sphere_face_refused_in",
-    "box_all_faces_refused_in",
-    "issue346_dome_removed_in_refused",
+    "sphere_face_refused_in": "no face stays",
+    "box_all_faces_refused_in": "no face stays",
+    "issue346_dome_removed_in_refused": "no face stays",
+    "tube_fillet_outer_out1_refused_level5": "the two tubes cross",
 }
 # Cases made at a fix level of the fork's (BRepOffset_SetFixLevel, 0 unless
 # set): the fix comes at that level only, so that a document saved before
@@ -778,6 +802,7 @@ FIX_LEVEL = {
     "issue346_steep_dimple_shell_apex_thick_out_level3": 3,
     "issue613_fillet_top_bottom_in_level4": 4,
     "issue613_fillet_top_bottom_out_level4": 4,
+    "tube_fillet_outer_out1_refused_level5": 5,
 }
 # The captured user models; upstream 8.0.1 passes them all, so not pictured.
 DOCS = {
