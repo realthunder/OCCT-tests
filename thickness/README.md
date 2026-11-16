@@ -4023,7 +4023,7 @@ other run is as it was.
 **What is left.** The box with all twelve edges chamfered stays refused
 outward (52 runs). At a corner of a removed side the corner's facet
 touches that side in a vertex only and its offset passes through the
-side's plane; the shell is open round it. Not traced further.
+side's plane; the shell is open round it. Sec 81.
 
 **What it moved.** Nothing made before: not a case line of the suites at
 any level, not a line of the corpus (levels 0, 4 and 5) or of the sweep
@@ -4038,6 +4038,79 @@ sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
 issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`82896672ef`); the probe differs from sec 79's in the sixteen runs
 above and no other. Not run: macOS, thickness levels 1 and 2.
+
+## The box with every edge chamfered, outward: a facet beyond the removed face's corner (`f30bae47f5`, 2026-11-16, sec 81)
+
+**Where it was met.** Sec 80's list of what is left: the box with all
+twelve edges chamfered, any face removed outward with the Arc join, 52
+runs of the probe refused.
+
+**What was broken.** At a corner of a removed side the corner's facet --
+a triangle, its normal along the box's diagonal -- touches the side in
+one vertex, and its offset passes through the side's plane: beyond the
+side's own outline, past its corner, 0.29 through at a thickness of 0.5.
+`ContextIntByArc` intersects the offset of every face at a vertex of
+the removed face with that face as it is (`CFV_E_Inter_`), not carried
+on: no section. The tubes on either side of the facet were cut by the
+removed face (sec 80) and the facet's offset was not: its two edges
+with them stood whole beside the tubes' cut ones, and the shell was open
+round it.
+
+**The fix.** Where that intersection finds nothing, the face touches
+the removed one at the vertex alone, both are planes, and the face's
+offset of the vertex lies beyond the removed face's plane, the offset is
+intersected with that plane carried on (`EnLargeFace`), and the section
+that passes the vertex as near as the two planes' line does is taken.
+No fix level: nothing made before changes.
+
+**Why so narrowly.** The first form took any two surfaces and every
+section the enlarged face gave. It made the 52 -- and of the probe's
+other runs with the Arc join 153 that were right came back refused
+(111), wrong by the points (37) or invalid (5), the corpus changed in 18
+lines and the sweep in 32: sections of the removed face's surface with
+offsets far from the vertex. The cases of this section and the booleans'
+volumes passed with either form; the probe, the corpus and the sweep are
+what told them apart.
+
+**The results.** By booleans (`_polyhedron_wall_out`, sec 80):
+
+| Case | By booleans |
+|------|-------------|
+| `chamferbox_all_long_side_out0.5`, `_out1` | 904.2196, 1866.8908 |
+| `chamferbox_all_bottom_out0.5`, `_out1` | 769.7561, 1589.0368 |
+| `chamferbox_all_short_side_out1` | 1944.7447 |
+| `chamferbox_all_chamfer_out0.5` (the chamfer of a long side with the bottom) | 946.7135 |
+| `chamferbox_all_corner_out0.5` | 992.5678 |
+
+On the probe the 52 are right by its points, and every other run is as
+it was. With the Arc join the probe now stands at 744 right, 2 wrong
+below level 5 and refused from it, 4 invalid and 146 refused, for 632,
+2, 12 and 250 at the start of sec 78.
+
+![chamferbox_all_long_side_out0.5](models/pictures/chamferbox_all_long_side_out0.5.png)
+
+**What is left of the probe, with the Arc join.** The 146 refusals:
+blend faces themselves removed (the boxes' fillets and corner spheres,
+the hexagon's and the pocket's fillets, a fillet of the slot shape and
+the countersink at 1: 100), the pocket's walls inward (8), the chamfers
+and corner facets whose opening the skin closes (32), and the tube 1
+inward, the radius of its fillets (6). None is traced. The 4 invalid: an upright
+fillet of the box with all its edges rounded (3) and the tube's top
+removed 1 outward below level 5.
+
+**What it moved.** Nothing made before: not a case line of the suites at
+any level, not a line of the corpus (levels 0, 4 and 5) or of the sweep
+(levels 0, 4 and 5).
+
+**Validation** (`f30bae47f5` against `27e8923907`, on Linux): thickness
+PASS=854 (847 + these 7) at level 0, at level 3 frozen, at level 4 and at
+level 5, every other case line the same; boolean 111, draft 105, fillet
+919 + 1 XFAIL at fix levels 0 to 4, the same line for line; the corpus
+as its baselines at levels 0 and 4, and at level 5 as at level 4; the
+sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`82896672ef`); the probe differs from sec 80's in the 52 runs above and
+no other. Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 

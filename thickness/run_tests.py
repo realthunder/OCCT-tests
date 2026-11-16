@@ -2748,6 +2748,17 @@ def _chamfered_box_cases():
     # A corner's facet is covered whole by the rim of a skin of 0.5: nothing opens.
     corner = find(every, lambda b, f: len(f.Edges) == 3)
     own_refusal_case("chamferbox_all_corner_in0.5_refused", every, [corner], -0.5)
+    # Sec 81. Outward: the facet at a corner touches a removed side at one vertex, and
+    # its offset passes through the side's plane beyond the side's own corner.
+    for tag, face, values in (("long_side", side, (0.5, 1.0)), ("bottom", bottom, (0.5, 1.0)),
+                              ("short_side", find(every, lambda b, f: b.YMax < 1e-9), (1.0,)),
+                              ("chamfer", find(every, lambda b, f: len(f.Edges) == 4
+                                               and b.XMax < 2 + 1e-9 and b.ZMax < 2 + 1e-9
+                                               and b.XLength > 1 and b.ZLength > 1), (0.5,)),
+                              ("corner", corner, (0.5,))):
+        for t in values:
+            thickness_case("chamferbox_all_%s_out%g" % (tag, t), every, face, t, "pass",
+                           _polyhedron_wall_out(every, face, t))
 
 
 _chamfered_box_cases()

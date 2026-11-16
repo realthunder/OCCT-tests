@@ -3984,6 +3984,17 @@ mitre's tube kept the old copy of an edge the tube had made again
 
 ![chamferbox_top4_long_side_out0.5](pictures/chamferbox_top4_long_side_out0.5.png)
 
+### Sec 81: every edge chamfered, outward
+
+The box with all twelve edges chamfered, a face removed outward:
+refused. The facet at a corner touches a removed side in one vertex and
+its offset passes through the side's plane beyond the side's own corner,
+where the side as it is has no section with it. Two planes so placed are
+intersected with the removed face's plane carried on (`f30bae47f5`). By
+booleans, 904.2196:
+
+![chamferbox_all_long_side_out0.5](pictures/chamferbox_all_long_side_out0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

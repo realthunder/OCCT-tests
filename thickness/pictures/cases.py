@@ -88,6 +88,7 @@ STAGES = {
     "s78": ("d075006c59", "78"),
     "s79": ("d3d0956329", "79"),
     "s80": ("ebdea53240", "80"),
+    "s81": ("4ffba34169", "81"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -768,6 +769,7 @@ CASES = {
     "chamferbox_top4_long_side_in0.5": ("s79", "chamferbox_top4", 1, -0.5, False, 0, 882.7938),
     "chamferbox_all_long_side_join_in0.5": ("s79", "chamferbox_all", 1, -0.5, False, 2, 844.9916),
     "chamferbox_top4_long_side_out0.5": ("s80", "chamferbox_top4", 1, +0.5, False, 0, 948.4371),
+    "chamferbox_all_long_side_out0.5": ("s81", "chamferbox_all", 1, +0.5, False, 0, 904.2196),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
