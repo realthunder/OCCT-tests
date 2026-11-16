@@ -2793,6 +2793,29 @@ def _same_join_cases():
 
 _same_join_cases()
 
+
+# Sec 83. A chamfer face removed outward, at thicknesses where two section
+# ends on the removed face fall a hair apart: chamfers of 2 by 1 at 0.5
+# (refused from 0.45 to 0.55, made at 0.4 and 0.6), chamfers of 1 by 3 at
+# 0.05 (refused at 0.04 and 0.05). The neighbours that were made stay as
+# they were.
+def _chamfer_hair_cases():
+    box = Part.makeBox(30.0, 20.0, 10.0)
+    top = [e for e in box.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9
+           and abs(e.BoundBox.ZMax - 10) < 1e-9]
+    for tag, shape, values in (("chamfer2x1", box.makeChamfer(2, 1, top), (0.4, 0.45, 0.5, 0.55)),
+                               ("chamfer1x3", box.makeChamfer(1, 3, top), (0.04, 0.05, 0.06))):
+        chamfers = [i + 1 for i, f in enumerate(shape.Faces)
+                    if f.BoundBox.ZMax > 10 - 1e-9 and f.BoundBox.ZLength > 0.5]
+        by_length = sorted(chamfers, key=lambda i: shape.Faces[i - 1].Area)
+        for side, face in (("short", by_length[0]), ("long", by_length[-1])):
+            for t in values:
+                thickness_case("%s_%s_chamfer_out%g" % (tag, side, t), shape, face, t, "pass",
+                               _polyhedron_wall_out(shape, face, t))
+
+
+_chamfer_hair_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

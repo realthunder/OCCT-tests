@@ -89,6 +89,7 @@ STAGES = {
     "s79": ("d3d0956329", "79"),
     "s80": ("ebdea53240", "80"),
     "s81": ("4ffba34169", "81"),
+    "s83": ("da2e0ec610", "83"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -208,6 +209,14 @@ def _chamferbox(every):
     # Face1 is the long side at x = 0 either way.
     b = Part.makeBox(20, 30, 10)
     return b.makeChamfer(2, b.Edges if every else [
+        e for e in b.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9 and abs(e.BoundBox.ZMax - 10) < 1e-9])
+
+
+def _chamferbox2x1():
+    # 30 x 20 x 10 with its four top edges chamfered 2 by 1: Face3 is the
+    # chamfer over the short side at x = 0.
+    b = Part.makeBox(30, 20, 10)
+    return b.makeChamfer(2, 1, [
         e for e in b.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9 and abs(e.BoundBox.ZMax - 10) < 1e-9])
 
 
@@ -451,6 +460,7 @@ SHAPES = {
     "tubefillet": lambda: _tubefillet(),
     "chamferbox_top4": lambda: _chamferbox(False),
     "chamferbox_all": lambda: _chamferbox(True),
+    "chamferbox2x1": lambda: _chamferbox2x1(),
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
@@ -770,6 +780,7 @@ CASES = {
     "chamferbox_all_long_side_join_in0.5": ("s79", "chamferbox_all", 1, -0.5, False, 2, 844.9916),
     "chamferbox_top4_long_side_out0.5": ("s80", "chamferbox_top4", 1, +0.5, False, 0, 948.4371),
     "chamferbox_all_long_side_out0.5": ("s81", "chamferbox_all", 1, +0.5, False, 0, 904.2196),
+    "chamfer2x1_short_chamfer_out0.5": ("s83", "chamferbox2x1", 3, +0.5, False, 0, 1073.6573),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

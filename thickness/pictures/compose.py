@@ -59,6 +59,7 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "tubefillet": "tube with its two top edges filleted, r1",
          "chamferbox_top4": "box of 20 x 30 x 10 with its four top edges chamfered, 2",
          "chamferbox_all": "box of 20 x 30 x 10 with all twelve edges chamfered, 2",
+         "chamferbox2x1": "box of 30 x 20 x 10 with its four top edges chamfered, 2 by 1",
          "filleteddome": "box under a B-spline dome, the dome's four edges filleted, r3",
          "groove5seam": "cylinder with a groove r5 across its end, the groove's seam on the right bottom",
          "issue363base": "#363's Thickness001 base: a chamfered cylinder with a groove across its end",

@@ -4006,6 +4006,19 @@ booleans, every face, either way, both joins (`../probe/poly.py`): 24
 invalid and 8 refused runs with the Intersection join inward are right
 now.
 
+### Sec 83: two ends a hair apart
+
+A box of 30 x 20 x 10 with chamfers of 2 by 1 on its top edges, the
+chamfer over a short side removed 0.5 outward: refused (from 0.45 to
+0.55; made at 0.4 and 0.6). Two tubes' sections on the removed face end
+1.5e-7 apart there, each vertex good to 1e-7, and the loop took one for
+cut by the other's end (`d8c16903eb`). The same box with chamfers of 1
+by 3 was refused at 0.04 and 0.05: an edge's copy 2e-7 longer than the
+edge was not taken for it (`1617767b34`). The volume, 1073.6573, is the
+one booleans give.
+
+![chamfer2x1_short_chamfer_out0.5](pictures/chamfer2x1_short_chamfer_out0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

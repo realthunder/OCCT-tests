@@ -4191,6 +4191,77 @@ the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
 issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`82896672ef`). Not run: macOS, thickness levels 1 and 2.
 
+## Two ends a hair apart: a chamfer removed outward (`d8c16903eb`, `1617767b34`, 2026-11-16, sec 83)
+
+Found by the bench of sec 82: a box of 30 x 20 x 10 with chamfers of 2
+by 1 on its top edges, a chamfer removed 0.5 outward with the Arc join,
+refused -- and made at 1. A scan of four chamfered boxes (chamfers of
+2 by 1, of 2, of 1 by 3 on the top edges; of 2 on every edge), two
+chamfer faces each removed outward at 30 thicknesses from 0.05 to 1.5,
+had 232 made of 240: chamfers of 2 by 1 refused from 0.45 to 0.55, and
+chamfers of 1 by 3 at 0.05 (by hand: 0.04 too; made at 0.02 and 0.06).
+
+**The first.** The tube round the box's upright edge and the tube round
+the next chamfer's lower edge both end on the removed face, at one
+point; their sections with it have a vertex each there. At 0.4 the two
+are the same point to the last digit. At 0.5 one is 1.5e-7 above the
+other, each vertex good to 1e-7. `BRepAlgo_Loop`, looking for vertices
+of other edges that lie on an edge, passes over one at the edge's own
+end -- by that vertex's tolerance alone, so that this one was not
+passed over, and the section was taken as cut there: its piece (all of
+it but 1.5e-7) put on the other vertex. The tube's other edges stayed
+on its own vertex, and the shell had a free edge up the box's corner.
+The end test now takes both vertices' tolerances (`d8c16903eb`).
+
+**The second.** An edge two faces share, renewed in the loop of one of
+them because a vertex at its end was, is given to the face still
+holding the old one (`BRepOffset_MakeLoops::BuildFaces`, sec 71) --
+where the two have the same curve, the same vertices and the same range
+to 1e-9. The copy ends at the parameter of the vertex it was given,
+which the loop had taken for the old one from 2e-7 away: with chamfers
+of 1 by 3 at 0.05 the tube's upright edge was 9 long and its copy
+9.0000002, the plane beside the tube kept the old edge, and the shell
+was open along it. At 0.06 the faces come the other way round and the
+plane is rebuilt after the tube. The ranges now agree where their ends
+are within the loop's own tolerance for two vertices being one, and
+nearer than half the edge in parameter (`1617767b34`).
+
+No fix level: both make what was refused.
+
+**The cases** (`run_tests.py`, `_chamfer_hair_cases`; each against the
+volume booleans give, `_polyhedron_wall_out`). "Short" and "long" are
+the chamfers over the box's short and long sides.
+
+| Case | Volume | Before |
+|------|--------|--------|
+| `chamfer2x1_short_chamfer_out0.4` | 853.2113 | the same |
+| `chamfer2x1_short_chamfer_out0.45`, `0.5`, `0.55` | 963.0755, 1073.6573, 1184.9579 | refused |
+| `chamfer2x1_long_chamfer_out0.4` | 841.0104 | the same |
+| `chamfer2x1_long_chamfer_out0.45`, `0.5`, `0.55` | 948.8915, 1057.3885, 1166.5025 | refused |
+| `chamfer1x3_short_chamfer_out0.04`, `0.05` | 82.6375, 103.3647 | refused |
+| `chamfer1x3_short_chamfer_out0.06` | 124.1189 | the same |
+| `chamfer1x3_long_chamfer_out0.04`, `0.05` | 81.3334, 101.7222 | refused |
+| `chamfer1x3_long_chamfer_out0.06` | 122.1332 | the same |
+
+![chamfer2x1_short_chamfer_out0.5](models/pictures/chamfer2x1_short_chamfer_out0.5.png)
+
+**What it moved.** Nothing made before: not a case line of the suites
+at any level, not a line of the corpus (levels 0, 4 and 5) or of the
+sweep (levels 0, 4 and 5), not a run of the probe's two sets (3352).
+The scan: 240 made of 240. The bench of sec 82: 964 right of 1088 (960),
+the four runs refused there with the Arc join outward made, each the
+booleans' volume; 90 refused, all inward; 4 invalid and 30 without a
+reference as they were.
+
+**Validation** (`1617767b34` against `e5637b606b`, on Linux): thickness
+PASS=880 (866 + these 14) at level 0, at level 3 frozen, at level 4 and
+at level 5, every other case line the same; boolean 111, draft 105,
+fillet 919 + 1 XFAIL at fix levels 0 to 4, the same line for line; the
+corpus as its baselines at levels 0 and 4, and at level 5 as at level 4;
+the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`82896672ef`). Not run: macOS, thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
