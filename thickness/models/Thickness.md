@@ -3971,6 +3971,19 @@ join: invalid at 4730.3015, three shells; 844.9916 now.
 
 ![chamferbox_all_long_side_join_in0.5](pictures/chamferbox_all_long_side_join_in0.5.png)
 
+### Sec 80: the chamfered box outward
+
+The box of sec 79 with a side removed outward, the Arc join: refused. At
+each upper corner of the removed side two convex edges end on it -- the
+next side's edge with its chamfer, and the mitre of the two chamfers --
+each rounded by a tube, and three places took a vertex of a removed face
+to have one tube: the second was never cut by the removed face, one
+tube's end was replaced by the other's, and the chamfer beside the
+mitre's tube kept the old copy of an edge the tube had made again
+(`27e8923907`). By booleans, 948.4371:
+
+![chamferbox_top4_long_side_out0.5](pictures/chamferbox_top4_long_side_out0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

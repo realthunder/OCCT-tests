@@ -3943,7 +3943,7 @@ volumes; every other run as it was.
 
 **What is left.** With the Arc join 100 runs of the two boxes stay
 refused: the 68 outward, where every pair intersected finds no sound
-answer either (not traced), and 32 inward -- the sixteen chamfers at 1
+answer either (sec 80 makes the first box's sixteen), and 32 inward -- the sixteen chamfers at 1
 and the eight corner facets at 0.5 and at 1, whose opening the skin
 closes. The shapes that
 are not all planes (the fillets of the boxes, the pocket's walls) are as
@@ -3962,6 +3962,82 @@ the sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
 issue models recompute as before; FreeCAD's Python suite 4388 OK
 (`82896672ef`); the probe differs from sec 78's in the 48 runs above and
 no other. Not run: macOS, thickness levels 1 and 2.
+
+## The chamfered box outward: two tubes at one vertex of the removed face (`27e8923907`, 2026-11-16, sec 80)
+
+**Where it was met.** Sec 79's list of what is left: the box with its
+four top edges chamfered, a side or a chamfer removed outward with the
+Arc join -- sixteen runs of the probe, every face but the top and the
+bottom, refused. Upstream throws there (`BRepAlgo_Image::Bind`). Boxes
+whose sides lean (5 and 20 deg) and a wedge are made valid, every face,
+either way, both joins, and seven of those runs read by 1500 points each
+are right: there one convex edge ends at each vertex of the removed
+face, askew, and its tube is cut by that face.
+
+**What was broken.** At each end of the removed side's top edge two
+convex edges of the faces that stay end on the removed face: the next
+side's edge with its chamfer, and the mitre of the two chamfers. Each is
+rounded by a tube, and the vertex has the two tubes' ends for images
+(`BuildOffsetByArc`, "Particular processing if V is at least a free
+border"). Three places took such a vertex to have one image.
+
+- `BRepOffset_Inter3d::ContextIntByArc` gave every tube at the vertex
+  the first image for its trace on the removed face. The second tube's
+  own was not on it, it was passed over, and that tube was never cut by
+  the removed face: its end stood 0.35 beyond it.
+- Where the new edges replace the old (`BuildOffsetByArc`'s tables,
+  `MakeOffsetShape`'s images), every other image of what a new edge came
+  from was replaced by it: for an edge its older states, for a vertex the
+  other tube's end. With the first place mended, the first tube had the
+  second's trace for its end, and the edges' intersection met an edge
+  with no curve on the face it was asked on.
+- The mitre's tube is stretched to the removed face (`ExtentFace`) and
+  has its edge with the chamfer made again, on a vertex of its own. The
+  chamfer's offset touches the removed face in a vertex only, is cut by
+  nothing, and kept the old edge: the two copies in one face each, the
+  shell open along them (`BRepOffset_MakeLoops::BuildFaces` rebuilt a
+  face only where one of its edges had been cut).
+
+**The fix.** Each tube takes the image of the vertex that lies on it; a
+vertex's images are not replaced by each other; a face that is to have
+an edge it was not built with is rebuilt. No fix level: nothing made
+before changes.
+
+**The results.** Worked out by booleans (`run_tests.py`,
+`_polyhedron_wall_out`): the box grown by the thickness -- its faces
+pushed out, a cylinder round every edge, a ball at every vertex -- cut
+off at the removed face's plane, less the box.
+
+| Case | By booleans | Before |
+|------|-------------|--------|
+| `chamferbox_top4_long_side_out0.5`, `_out1` | 948.4371, 1958.5756 | refused |
+| `chamferbox_top4_short_side_out0.5`, `_out1` | 992.6323, 2055.3566 | refused |
+| `chamferbox_top4_long_chamfer_out0.5`, `_out1` | 1030.6271, 2126.3932 | refused |
+| `chamferbox_top4_short_chamfer_out0.5`, `_out1` | 1049.2327, 2172.5315 | refused |
+
+On the probe each of the sixteen is right by its points too, and every
+other run is as it was.
+
+![chamferbox_top4_long_side_out0.5](models/pictures/chamferbox_top4_long_side_out0.5.png)
+
+**What is left.** The box with all twelve edges chamfered stays refused
+outward (52 runs). At a corner of a removed side the corner's facet
+touches that side in a vertex only and its offset passes through the
+side's plane; the shell is open round it. Not traced further.
+
+**What it moved.** Nothing made before: not a case line of the suites at
+any level, not a line of the corpus (levels 0, 4 and 5) or of the sweep
+(levels 0, 4 and 5).
+
+**Validation** (`27e8923907` against `f683997bb8`, on Linux): thickness
+PASS=847 (839 + these 8) at level 0, at level 3 frozen, at level 4 and at
+level 5, every other case line the same; boolean 111, draft 105, fillet
+919 + 1 XFAIL at fix levels 0 to 4, the same line for line; the corpus
+as its baselines at levels 0 and 4, and at level 5 as at level 4; the
+sweep 928 of 928 at levels 0, 4 and 5, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`82896672ef`); the probe differs from sec 79's in the sixteen runs
+above and no other. Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 

@@ -2676,6 +2676,36 @@ def _polyhedron_wall_in(shape, face_index, t):
     return shape.Volume - rest.Volume
 
 
+# Sec 80. The same boxes outward with the Arc join. Two convex edges of the
+# faces that stay end at each upper corner of a removed side -- the next
+# side's edge with its chamfer, and the mitre of the two chamfers -- each
+# rounded by a tube; the vertex has the two tubes' ends for images, and
+# where a vertex was taken to have one, the second tube was never cut by the
+# removed face: refused. Worked out by booleans: the box grown by the
+# thickness (its faces pushed out, a cylinder round every edge, a ball at
+# every vertex), cut off at the removed face's plane, less the box.
+def _polyhedron_wall_out(shape, face_index, t):
+    parts = [f.extrude(f.normalAt(0, 0) * t) for f in shape.Faces]
+    for e in shape.Edges:
+        a, b = e.Vertexes[0].Point, e.Vertexes[1].Point
+        parts.append(Part.makeCylinder(t, (b - a).Length, a, b - a))
+    parts += [Part.makeSphere(t, v.Point) for v in shape.Vertexes]
+    grown = shape.fuse(parts)
+    f = shape.Faces[face_index - 1]
+    n = f.normalAt(0, 0)
+    p = f.CenterOfMass
+    m = shape.BoundBox.DiagonalLength
+    u = n.cross(App.Vector(1, 0, 0))
+    if u.Length < 1e-6:
+        u = n.cross(App.Vector(0, 1, 0))
+    u.normalize()
+    w = n.cross(u)
+    corners = [p + u * (4 * m) + w * (4 * m), p - u * (4 * m) + w * (4 * m),
+               p - u * (4 * m) - w * (4 * m), p + u * (4 * m) - w * (4 * m)]
+    half = Part.Face(Part.makePolygon(corners + [corners[0]])).extrude(n * (-8 * m))
+    return grown.common(half).Volume - shape.Volume
+
+
 def _chamfered_box_cases():
     box = Part.makeBox(20.0, 30.0, 10.0)
     top4 = box.makeChamfer(2, [e for e in box.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9
@@ -2700,6 +2730,10 @@ def _chamfered_box_cases():
                 continue
             thickness_case("chamferbox_top4_%s_in%g" % (tag, t), top4, face, -t, "pass",
                            _polyhedron_wall_in(top4, face, t))
+    for tag, face in faces:
+        for t in (0.5, 1.0):
+            thickness_case("chamferbox_top4_%s_out%g" % (tag, t), top4, face, t, "pass",
+                           _polyhedron_wall_out(top4, face, t))
     bottom = find(every, lambda b, f: b.ZMax < 1e-9)
     for t in (0.5, 1.0):
         want = _polyhedron_wall_in(every, bottom, t)
