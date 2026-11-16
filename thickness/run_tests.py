@@ -2478,6 +2478,78 @@ _bottom = [i + 1 for i, f in enumerate(_roundtop.Faces) if abs(f.BoundBox.ZMax) 
 thickness_case("roundtop_join_in", _roundtop, _bottom, -1.0, "pass", 217.7906, False, 2)
 thickness_case("roundtop_join_out", _roundtop, _bottom, +1.0, "pass", 313.2065, False, 2)
 
+# Sec 77. The same box with its top removed, the Arc join: outward it was an
+# invalid solid at any thickness, of the right volume. The two fillets meet in
+# a mitre, a sharp edge that fades out at the corner of the top, where both
+# fillets' normals are the top's; the tube round it closes to a point there,
+# between the ends of the two fillets' offset edges -- two vertices at one
+# point. Its end was an edge of no length that was not flagged degenerated,
+# the loops dropped it with the vertex they merged away, and the tube's wire
+# stayed open at its pole (BRepCheck_UnorientableShape, four faces). Worked
+# out by hand. The box with its top edges rounded is convex, so the solid
+# grown by t is its volume plus A*t + M*t^2 + 4*pi/3*t^3 (Steiner), A its area
+# and M the integral of its mean curvature: half the angle times the length
+# along each sharp edge -- along a mitre the angle is acos(sin^2), taken
+# numerically -- and the area over 2r on the fillets. Outward the skin is
+# that, less the column of height t over the top, plus the lip the tubes
+# leave round it: the points of the column within t of the top's outline,
+# (a + b)*pi*t^2/2 - 8*t^3/3 on a top of a by b. Inward it is the box less
+# the box shrunk by t (its fillets at r - t), less the same column, plus the
+# same lip.
+def _roundtop_solid(x, y, z, r):
+    return (x * y * (z - r) + (x - 2 * r) * (y - 2 * r) * r
+            + (x + y - 4 * r) * math.pi * r * r / 2 + 8 * r ** 3 / 3)
+
+
+def _roundtop_lip(x, y, r, t):
+    return (x + y - 4 * r) * math.pi * t * t / 2 - 8 * t ** 3 / 3
+
+
+def _mitre_curvature():
+    """The integral of acos(sin(p)^2) * sqrt(1 + sin(p)^2) for p from 0 to pi/2: the
+    angle between two fillets' normals along their mitre, by its length at radius 1.
+    Simpson's rule in q, p = pi/2 - q^2, where the angle goes as a square root."""
+    def g(q):
+        p = math.pi / 2 - q * q
+        return math.acos(min(1.0, math.sin(p) ** 2)) * math.sqrt(1 + math.sin(p) ** 2) * 2 * q
+    n = 20000
+    b = math.sqrt(math.pi / 2)
+    h = b / n
+    return (g(0) + g(b) + sum(g(i * h) * (4 if i % 2 else 2) for i in range(1, n))) * h / 3
+
+
+def _roundtop_top_out(x, y, z, r, t):
+    fillets = math.pi * r * (x + y - 4 * r) + 8 * r * r
+    area = x * y + 2 * (x + y) * (z - r) + (x - 2 * r) * (y - 2 * r) + fillets
+    curvature = (math.pi / 4 * (2 * (x + y) + 4 * (z - r)) + fillets / (2 * r)
+                 + 2 * r * _mitre_curvature())
+    return (area * t + curvature * t * t + 4 * math.pi / 3 * t ** 3
+            - (x - 2 * r) * (y - 2 * r) * t + _roundtop_lip(x, y, r, t))
+
+
+def _roundtop_top_in(x, y, z, r, t):
+    return (_roundtop_solid(x, y, z, r) - _roundtop_solid(x - 2 * t, y - 2 * t, z - 2 * t, r - t)
+            - (x - 2 * r) * (y - 2 * r) * t + _roundtop_lip(x, y, r, t))
+
+
+def _roundtop_cases():
+    for tag, (x, y, z), values in (("", (10.0, 8.0, 6.0), (0.5, 1.0)),
+                                   ("_20x30x10", (20.0, 30.0, 10.0), (1.0, 2.0))):
+        box = Part.makeBox(x, y, z)
+        shape = box.makeFillet(2, [e for e in box.Edges
+                                   if abs(e.BoundBox.ZMin - z) < 1e-9
+                                   and abs(e.BoundBox.ZMax - z) < 1e-9])
+        top = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.ZMin - z) < 1e-9][0]
+        for t in values:
+            thickness_case("roundtop%s_top_out%g" % (tag, t), shape, top, t, "pass",
+                           _roundtop_top_out(x, y, z, 2.0, t))
+            if t < 2.0:
+                thickness_case("roundtop%s_top_in%g" % (tag, t), shape, top, -t, "pass",
+                               _roundtop_top_in(x, y, z, 2.0, t))
+
+
+_roundtop_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

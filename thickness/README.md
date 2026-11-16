@@ -3659,6 +3659,79 @@ and at level 4, the same line for line; the 29 issue models recompute as
 before; FreeCAD's Python suite 4388 OK (`d171a04be6`). Not run: macOS,
 thickness levels 1 and 2.
 
+## A box with its top edges filleted, the top removed: a tube that closes to a point (`56dbb35957`, 2026-11-16, sec 77)
+
+**Where it was met.** A probe of plain shapes beside #613's part: a box
+with its four top edges filleted, a cylinder with its top edge filleted,
+a box with its upright edges and then its top edges filleted, a slot
+shape likewise -- the top removed, 0.5 and 1 either way, both joins. With
+the Arc join fifteen of the sixteen were right; the box with four
+fillets, outward, was not.
+
+**What was broken.** The result was an invalid solid at any thickness
+(four faces `BRepCheck_UnorientableShape`), its volume right. Two fillets
+of the box meet in a mitre, a sharp edge that fades out at the corner of
+the top: there both fillets' normals are the top's. Outward the mitre is
+rounded by a tube, and the tube closes to a point at that corner, between
+the ends of the two fillets' offset edges -- two vertices at one point.
+`BRepOffset_Offset::Init` flags a tube's end degenerated where its two
+edges end in one vertex; with two it built an edge of no length. The
+loops then rebuilt the tube's face with one of the two vertices merged
+into the other, the edge of no length went with it, and the face's wire
+was left open at the pole of its surface: three edges where there are
+four in (u, v).
+
+**The fix.** Three places. `BRepOffset_Offset::Init`: an end the tube is
+given no edge for, whose two vertices are one point, is degenerated as
+the end on one vertex is. `BRepOffset_MakeLoops`: such an edge is not cut
+at the vertex one of its two was rebuilt on; it goes to the loop as it
+is. `BRepAlgo_Loop`: the pole's edge, put on the vertex its wire reaches
+the pole at, takes the way round the wire wants of it where that is plain
+(turned it closes the wire in (u, v), as it is it does not) -- the edge
+has the orientation its face gave it, and the wire may have been walked
+the other way round. No fix level: the result was invalid.
+
+**The results.** Worked out by hand (`run_tests.py`, `_roundtop_top_out`,
+`_roundtop_top_in`). The box with its top edges rounded is convex, so
+grown by t it gains A t + M t^2 + 4 pi t^3 / 3 (Steiner's formula; A its
+area, M the integral of its mean curvature, along a mitre half the angle
+between the fillets' normals, acos(sin^2), by the length). Outward the
+skin is that less the column over the top plus the lip the tubes leave
+round the opening; inward it is the box less the box shrunk by t, less
+the same column, plus the same lip.
+
+| Case | By hand | Before | Upstream 8.0.1 |
+|------|---------|--------|----------------|
+| `roundtop_top_out0.5`, `_out1` (10 x 8 x 6, r 2) | 181.3999, 407.5290 | the same, invalid | 165.2711, 353.0728, valid |
+| `roundtop_top_in0.5`, `_in1` | 142.9159, 254.8319 | the same, valid | 147.3223, 257.7906, invalid |
+| `roundtop_20x30x10_top_out1`, `_out2` | 1947.9537, 4406.1158 | the same, invalid | 1744.1127 at 1, valid |
+| `roundtop_20x30x10_top_in1` | 1551.8938 | the same, valid | 1765.9203, invalid |
+
+![roundtop_top_out1](models/pictures/roundtop_top_out1.png)
+
+**What is left.** The same probe with the Intersection join: refused
+where the top is tangent to its neighbours all round (the box with four
+fillets either way; the box with its upright edges filleted too either
+way; the cylinder and the slot shape inward), made outward on the
+cylinder and the slot shape. Upstream gives the solid back unhollowed
+inward (5917.2271 for the box of 20 x 30 x 10). The closure of a tangent
+edge the Intersection join has (sec 9, `BRepOffset_Analyse::
+TreatTangentCaps`) is made for a straight edge that ends on faces across
+it, not for one that meets another tangent edge at a corner nor for a
+curved one.
+
+**What it moved.** Nothing made before: not a case line of the suites,
+not a line of the corpus or of the sweep.
+
+**Validation** (`56dbb35957` against `544d3a920a`, on Linux): thickness
+PASS=813 (806 + these 7) at level 0, at level 3 frozen and at level 4,
+every other case line the same; boolean 111, draft 105, fillet 919 + 1
+XFAIL at fix levels 0 to 4, the same line for line; the corpus as its
+baselines at level 0 and at level 4; the sweep 928 of 928 at level 0 and
+at level 4, the same line for line; the 29 issue models recompute as
+before; FreeCAD's Python suite 4388 OK (`d171a04be6`). Not run: macOS,
+thickness levels 1 and 2.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

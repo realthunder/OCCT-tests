@@ -3913,6 +3913,23 @@ vertex from up to five thousandths in its last attempt (`544d3a920a`).
 Faces 4, 11 and 14 are made where face 8 was: 8 more runs of the corpus,
 at every level.
 
+### Sec 77: a box with its top edges filleted, the top removed outward
+
+A plain shape, found by a probe of filleted boxes and cylinders: with the
+Arc join the result was an invalid solid at any thickness, its volume
+right. Two fillets of the box meet in a mitre that fades out at the
+corner of the top, where both fillets' normals are the top's; the tube
+that rounds the mitre closes to a point there, between the ends of the
+two fillets' offset edges -- two vertices at one point. The tube's end
+was an edge of no length that was not flagged degenerated, the loops
+dropped it, and the tube's wire stayed open at the pole of its surface.
+It is a degenerated edge now (`56dbb35957`), and the loop turns it the way
+its wire runs. Worked out by hand, Steiner's formula for the convex box:
+407.5290 at 1 on the box of 10 x 8 x 6. Upstream gives a valid solid of
+353.0728.
+
+![roundtop_top_out1](pictures/roundtop_top_out1.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

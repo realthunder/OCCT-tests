@@ -84,6 +84,7 @@ STAGES = {
     "s71": ("39599b9791", "71"),
     "s74": ("1cbcbd7a73", "74"),
     "s75": ("8f37f86b3f", "75"),
+    "s77": ("c1f4d9f6df", "77"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -176,7 +177,7 @@ def _mitrebox(xmax, ymax):
 
 def _roundtop():
     # The box of _mitrebox with all four top edges filleted, r2: its bottom
-    # is Face4.
+    # is Face4, its top Face8.
     b = Part.makeBox(10, 8, 6)
     return b.makeFillet(2, [e for e in b.Edges
                             if abs(e.BoundBox.ZMin - 6) < 1e-9 and abs(e.BoundBox.ZMax - 6) < 1e-9])
@@ -730,6 +731,7 @@ CASES = {
     "issue613_blend_f4_in0.5": ("s75", "issue613", 4, -0.5, False, 0, 3474.7121),
     "issue613_blend_f8_out1": ("s75", "issue613", 8, 1, False, 0, 7451.2253),
     "issue613_cylinder_in1": ("s75", "issue613", 3, -1, False, 0, 5941.9975),
+    "roundtop_top_out1": ("s77", "roundtop", 8, +1, False, 0, 407.5290),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
