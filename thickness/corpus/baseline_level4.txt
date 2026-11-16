@@ -897,12 +897,12 @@ spindle thk f1 -0.5 j1 | not done
 t613 off 1 j0 | done valid 1 faces 31 area 7809.6206
 t613 thk f1 1 j0 | not done
 t613 thk f2 1 j0 | not done
-t613 thk f3 1 j0 | not done
+t613 thk f3 1 j0 | done valid 1 solids 2 vol 6326.8233
 t613 thk f4 1 j0 | not done
 t613 thk f5 1 j0 | not done
 t613 thk f6 1 j0 | not done
 t613 thk f7 1 j0 | done valid 1 solids 1 vol 7225.8664
-t613 thk f8 1 j0 | not done
+t613 thk f8 1 j0 | done valid 1 solids 1 vol 7481.0829
 t613 thk f9 1 j0 | not done
 t613 thk f10 1 j0 | not done
 t613 thk f11 1 j0 | not done
@@ -919,17 +919,17 @@ t613 thk f21 1 j0 | done valid 1 solids 1 vol 6803.5087
 t613 off -1 j0 | done valid 1 faces 21 area 6446.0704
 t613 thk f1 -1 j0 | not done
 t613 thk f2 -1 j0 | not done
-t613 thk f3 -1 j0 | not done
+t613 thk f3 -1 j0 | done valid 1 solids 2 vol 5941.9857
 t613 thk f4 -1 j0 | not done
-t613 thk f5 -1 j0 | not done
+t613 thk f5 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f6 -1 j0 | not done
 t613 thk f7 -1 j0 | done valid 1 solids 1 vol 6706.4326
-t613 thk f8 -1 j0 | not done
-t613 thk f9 -1 j0 | not done
-t613 thk f10 -1 j0 | not done
+t613 thk f8 -1 j0 | done valid 1 solids 1 vol 6799.4308
+t613 thk f9 -1 j0 | done valid 1 solids 1 vol 6799.2378
+t613 thk f10 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f11 -1 j0 | not done
 t613 thk f12 -1 j0 | not done
-t613 thk f13 -1 j0 | not done
+t613 thk f13 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f14 -1 j0 | not done
 t613 thk f15 -1 j0 | done valid 1 solids 1 vol 6121.2553
 t613 thk f16 -1 j0 | done valid 1 solids 1 vol 5348.4622
@@ -940,19 +940,19 @@ t613 thk f20 -1 j0 | not done
 t613 thk f21 -1 j0 | done valid 1 solids 1 vol 6121.2586
 t613 off 0.5 j0 | done valid 1 faces 31 area 7482.7834
 t613 thk f1 0.5 j0 | not done
-t613 thk f2 0.5 j0 | not done
-t613 thk f3 0.5 j0 | not done
-t613 thk f4 0.5 j0 | not done
+t613 thk f2 0.5 j0 | done valid 1 solids 1 vol 3628.3739
+t613 thk f3 0.5 j0 | done valid 1 solids 2 vol 3088.8338
+t613 thk f4 0.5 j0 | done valid 1 solids 1 vol 3658.2869
 t613 thk f5 0.5 j0 | not done
-t613 thk f6 0.5 j0 | not done
+t613 thk f6 0.5 j0 | done valid 1 solids 1 vol 3628.3737
 t613 thk f7 0.5 j0 | done valid 1 solids 1 vol 3550.8838
-t613 thk f8 0.5 j0 | not done
+t613 thk f8 0.5 j0 | done valid 1 solids 1 vol 3658.2869
 t613 thk f9 0.5 j0 | not done
 t613 thk f10 0.5 j0 | not done
-t613 thk f11 0.5 j0 | not done
-t613 thk f12 0.5 j0 | not done
+t613 thk f11 0.5 j0 | done valid 1 solids 1 vol 3658.3075
+t613 thk f12 0.5 j0 | done valid 1 solids 1 vol 3595.8266
 t613 thk f13 0.5 j0 | not done
-t613 thk f14 0.5 j0 | not done
+t613 thk f14 0.5 j0 | done valid 1 solids 1 vol 3658.3075
 t613 thk f15 0.5 j0 | done valid 1 solids 1 vol 3300.3137
 t613 thk f16 0.5 j0 | done valid 1 solids 1 vol 2837.3682
 t613 thk f17 0.5 j0 | done valid 1 solids 1 vol 3644.1299
@@ -962,18 +962,18 @@ t613 thk f20 0.5 j0 | done valid 1 solids 1 vol 3644.1299
 t613 thk f21 0.5 j0 | done valid 1 solids 1 vol 3300.3169
 t613 off -0.5 j0 | done valid 1 faces 21 area 6799.4760
 t613 thk f1 -0.5 j0 | not done
-t613 thk f2 -0.5 j0 | not done
-t613 thk f3 -0.5 j0 | not done
-t613 thk f4 -0.5 j0 | not done
-t613 thk f5 -0.5 j0 | not done
-t613 thk f6 -0.5 j0 | not done
+t613 thk f2 -0.5 j0 | done valid 1 solids 1 vol 3466.2519
+t613 thk f3 -0.5 j0 | done valid 1 solids 2 vol 2993.0177
+t613 thk f4 -0.5 j0 | done valid 1 solids 1 vol 3487.7925
+t613 thk f5 -0.5 j0 | done valid 1 solids 1 vol 3487.4382
+t613 thk f6 -0.5 j0 | done valid 1 solids 1 vol 3466.2519
 t613 thk f7 -0.5 j0 | done valid 1 solids 1 vol 3420.9020
-t613 thk f8 -0.5 j0 | not done
-t613 thk f9 -0.5 j0 | not done
-t613 thk f10 -0.5 j0 | not done
+t613 thk f8 -0.5 j0 | done valid 1 solids 1 vol 3487.7925
+t613 thk f9 -0.5 j0 | done valid 1 solids 1 vol 3487.4385
+t613 thk f10 -0.5 j0 | done valid 1 solids 1 vol 3487.4382
 t613 thk f11 -0.5 j0 | not done
-t613 thk f12 -0.5 j0 | not done
-t613 thk f13 -0.5 j0 | not done
+t613 thk f12 -0.5 j0 | done valid 1 solids 1 vol 3442.4798
+t613 thk f13 -0.5 j0 | done valid 1 solids 1 vol 3487.4385
 t613 thk f14 -0.5 j0 | not done
 t613 thk f15 -0.5 j0 | done valid 1 solids 1 vol 3129.4968
 t613 thk f16 -0.5 j0 | done valid 1 solids 1 vol 2729.5133

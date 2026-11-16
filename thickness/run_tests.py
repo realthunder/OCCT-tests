@@ -903,6 +903,39 @@ for face, value, join in ((11, -0.5, 0), (14, -0.5, 0), (5, -1.0, 2), (12, -0.5,
     own_refusal_case("issue613_blend_f%d_in%g_%s_refused_level4" % (
         face, abs(value), "join" if join else "arc"), issue613, [face], value, False, join,
         fix_level=4)
+# Sec 75: the part's blends removed, each alone, the Arc join. They are
+# B-splines that end where their faces do. The tube round a blend's end edge
+# has its edge on the blend found point by point, by a circle round each
+# point of the end edge, and at the two corners the circle passes 0.02 to
+# 0.05 outside the long edge beside it, off the surface: no edge, no tube,
+# refused. Found now on the surface carried on past its bounds. The volumes
+# are other from level 4, the crease of sec 74 cut.
+for face, value, vol3, vol4 in ((2, 0.5, 3614.0645, 3628.3739), (2, -0.5, 3453.1586, 3466.2519),
+                                (6, 0.5, 3614.0643, 3628.3737), (6, -0.5, 3453.1586, 3466.2519),
+                                (12, 0.5, 3581.5236, 3595.8266), (12, -0.5, 3429.3979, 3442.4798),
+                                (4, 0.5, 3643.9898, 3658.2869), (4, -0.5, 3474.7121, 3487.7925),
+                                (8, 0.5, 3643.9898, 3658.2869), (8, -0.5, 3474.7121, 3487.7925),
+                                (11, 0.5, 3644.0083, 3658.3075), (14, 0.5, 3644.0083, 3658.3075),
+                                (5, -0.5, 3474.3593, 3487.4382), (5, -1.0, 6774.2630, 6799.2378),
+                                (9, -0.5, 3474.3596, 3487.4385), (9, -1.0, 6774.2630, 6799.2378),
+                                (10, -0.5, 3474.3593, 3487.4382), (10, -1.0, 6774.2630, 6799.2378),
+                                (13, -0.5, 3474.3596, 3487.4385), (13, -1.0, 6774.2630, 6799.2378),
+                                # the corner blend next to the long one, at 1: its edge with the
+                                # long blend is 0.9 deg off tangent, a tube in the last attempt
+                                (8, 1.0, 7451.2253, 7481.0829), (8, -1.0, 6774.4527, 6799.4308)):
+    tag = "issue613_blend_f%d_%s%g" % (face, "out" if value > 0 else "in", abs(value))
+    thickness_case(tag, issue613, [face], value, "pass", vol3, loose_ok=0.03 * abs(value),
+                   fix_level=_LEVEL3)
+    thickness_case(tag + "_level4", issue613, [face], value, "pass", vol4, fix_level=4,
+                   max_gap=5e-4)
+# The cylinder under the cone removed: the bottom is left a piece of its own,
+# a disc of the thickness, and the cone's edge with the cylinder, 1.5 deg off
+# tangent, is closed by a tube in the last attempt -- the cone's offset
+# carried on down never comes to the cylinder's surface. The same at every
+# level: the crease is not between two faces that stay.
+for value, upper in ((0.5, 2293.6306), (-0.5, 2197.8106), (1.0, 4736.4219), (-1.0, 4351.5662)):
+    pieces_case("issue613_cylinder_%s%g" % ("out" if value > 0 else "in", abs(value)), issue613,
+                [3], value, [upper, math.pi * 22.5 ** 2 * abs(value)])
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

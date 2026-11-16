@@ -83,6 +83,7 @@ STAGES = {
     "s70": ("7b79d5b639", "70"),
     "s71": ("39599b9791", "71"),
     "s74": ("1cbcbd7a73", "74"),
+    "s75": ("8f37f86b3f", "75"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -721,6 +722,14 @@ CASES = {
     # 0.052 open under a loose edge. The volumes are the ones by hand.
     "issue613_fillet_top_bottom_in_level4": ("s74", "issue613", [7, 16], -2, False, 0, 10240.2303),
     "issue613_fillet_top_bottom_out_level4": ("s74", "issue613", [7, 16], 2, False, 0, 11312.6514),
+    # #613's part, a blend or its cylinder removed (sec 75): the long blend
+    # on the left, a corner blend, the same at 1 (its edge with the long
+    # blend 0.9 deg off tangent), and the cylinder, whose removal leaves the
+    # bottom a piece of its own.
+    "issue613_blend_f12_out0.5": ("s75", "issue613", 12, 0.5, False, 0, 3581.5236),
+    "issue613_blend_f4_in0.5": ("s75", "issue613", 4, -0.5, False, 0, 3474.7121),
+    "issue613_blend_f8_out1": ("s75", "issue613", 8, 1, False, 0, 7451.2253),
+    "issue613_cylinder_in1": ("s75", "issue613", 3, -1, False, 0, 5941.9975),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).
@@ -743,6 +752,7 @@ SOLIDS = {
     "turned_bullet_side_join_out": 2,
     "step_side_out_join": 2,
     "issue363_groove10_side_out_join": 2,
+    "issue613_cylinder_in1": 2,
 }
 # Cases pictured for what the thickness leaves of its input: the panels show
 # the input after the call, and the reference volume is the input's own

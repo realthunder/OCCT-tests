@@ -3367,7 +3367,9 @@ calling thread while the offset is made
 (`BRepOffset_Analyse::SetTangencyOffset`, a static function: the class
 keeps its layout). Below level 4 nothing changes.
 
-The lower bound is where faces that are meant to be tangent end. Over the
+The lower bound is where faces that are tangent by their making end; past
+it are blends that miss tangency (0.006 to 0.016: #962's, and #613's long
+blends against its corner ones, sec 75) and the creases. Over the
 29 issue models and the suites' own shapes, of 1539 edges between two
 faces within 0.2 rad of each other and not both planes:
 
@@ -3454,6 +3456,120 @@ level 4, the same line for line; the 29 issue models recompute as before;
 FreeCAD's Python suite 4388 OK and its C++ test of the level with
 `OCCTOffsetFixLevelLatest` at 4 (`d171a04be6`). Not run: macOS, thickness
 levels 1 and 2.
+
+## #613: the blends and the cylinder removed (`9bdefb1d40`, `e09fe137e3`, 2026-11-16, sec 75)
+
+**Where it was met.** Sec 70's list of what is left of the corpus on
+#613's part: the eleven blends made as B-splines (faces 2, 4 to 6, 8 to
+14), each removed alone with the Arc join, were refused at 0.5 and at 1,
+either way, and so was the cylinder under the cone (face 3).
+
+**What was broken, the blends** (`9bdefb1d40`). A blend is tangent to the
+faces beside it, so the wall is closed by a tube round each of its edges,
+and a tube's edge on the removed face is found point by point: a circle
+round each point of the edge, in its normal plane, met with the face's
+surface (`TangentTubeEdgeOnCap`, sec 34). These blends are B-splines that
+end where their faces do. At the two ends of a blend's end edge, where the
+corner is not square, the circle passes 0.02 to 0.05 outside the long edge
+beside it, off the surface: 19 points of the 21 found, two not, and the
+edge given up -- no tube, the shell open there, refused. The two points
+lie past where the next tube's edge crosses this one, and are cut off in
+the end.
+
+**The fix.** Where the surface is a B-spline or a Bezier that is not
+periodic and the circle meets it nowhere, the point is found on the
+surface carried on past its bounds, by Newton's steps from the point found
+next to it. Carried on by the surface's own last span, not by an extension
+of it (`GeomLib::ExtendSurfByLength` keeps the parameters inside the
+bounds and has others outside): the edge's pcurve then stays one on the
+removed face. No further off the surface than half the radius.
+
+**What was broken, the nearly tangent edges** (`e09fe137e3`). An edge of
+a removed face is closed by a tube where the face and its neighbour are
+tangent within the analysis' tolerance -- the tolerance over half the
+offset: wider for a thin wall than for a thick one. Past it the
+neighbour's offset is carried on to the removed face's surface, which a
+degree off tangent it reaches 57 thicknesses on, if at all. The part's
+long blends meet its corner blends 0.9 deg off (0.0158 rad): tangent by
+that tolerance at 0.5 and not at 1. Its cylinder meets the cone 1.5 deg
+off, and the cone's offset carried on down never comes to the cylinder's
+surface -- sec 70 had it that there is no answer of this kind. There is
+one of the tubes' kind: the wall is what lies within the thickness of the
+faces that stay, and round the crease that is a tube.
+
+**The fix.** `MakeThickSolid`, refused both ways of the loops (sec 60),
+and a removed face having an edge within 0.1 rad of tangent (the
+analysis' weak tangency) that is not within its tolerance: once more with
+such edges closed by a tube, either way of the loops, and the answer taken
+only where it is sound -- valid and nowhere through itself (BOP's check).
+After a refusal only: what had an answer keeps it, at every level.
+
+**The results** (`run_tests.py`; each at the suite's level, 3 at most, and
+at level 4, where the volumes are others for sec 74's crease):
+
+| Case | Removed | Up to level 3 | Level 4 |
+|------|---------|---------------|---------|
+| `issue613_blend_f2_out0.5`, `_in0.5` (and `f6`, its other half) | half the long blend on the right | 3614.0645, 3453.1586 | 3628.3739, 3466.2519 |
+| `issue613_blend_f12_out0.5`, `_in0.5` | the long blend on the left | 3581.5236, 3429.3979 | 3595.8266, 3442.4798 |
+| `issue613_blend_f4_out0.5`, `_in0.5` (and `f8`) | a corner blend | 3643.9898, 3474.7121 | 3658.2869, 3487.7925 |
+| `issue613_blend_f11_out0.5`, `issue613_blend_f14_out0.5` | the corner blends on the other side | 3644.0083 | 3658.3075 |
+| `issue613_blend_f5_in0.5`, `_in1` (and `f9`, `f10`, `f13`) | a blend beside the top | 3474.3593, 6774.2630 | 3487.4382, 6799.2378 |
+| `issue613_blend_f8_out1`, `_in1` | a corner blend at 1, by the last attempt | 7451.2253, 6774.4527 | 7481.0829, 6799.4308 |
+| `issue613_cylinder_out0.5`, `_in0.5`, `_out1`, `_in1` | the cylinder, by the last attempt: two solids, the upper part and the bottom, a disc of pi 22.5^2 by the thickness | 2293.6306, 2197.8106, 4736.4219, 4351.5662 and the disc | the same |
+
+All valid. Each of the 26 is read by points, at level 0 and at level 4
+(the cylinder's are the same solids at both): 1500 at random about the
+removed face, each in the wall exactly where it
+is on the right side of the part and nearer than the thickness to a face
+that stays -- which is the tubes' rule too, a tube being what lies within
+the thickness of an edge. Not a point wrong. (Outward, a point whose
+nearest kept point lies on an edge where the removed face's neighbour
+stands at an angle is not read: there the wall ends flush with the removed
+face's surface. That is the cylinder's edge with the bottom.) The 20 of
+the first fix are read over the whole part as well, in the way of sec 70:
+1200 points each, none wrong. And sec 74's results, the top and the bottom
+removed at level 4, where the blends' 0.9 deg creases are cut too: 3000
+points each over the whole part, at 2 and 0.5 either way, none wrong.
+
+![issue613_blend_f12_out0.5](models/pictures/issue613_blend_f12_out0.5.png)
+![issue613_blend_f4_in0.5](models/pictures/issue613_blend_f4_in0.5.png)
+![issue613_blend_f8_out1](models/pictures/issue613_blend_f8_out1.png)
+![issue613_cylinder_in1](models/pictures/issue613_cylinder_in1.png)
+
+**What is left of the corpus' 168.** 106 refused, none throwing; 62 made
+(36 before).
+
+- *The blends at 1* but for face 8 and, inward, the four beside the top:
+  with the end edges closed by tubes the long blend on the left comes out
+  valid and through itself (BOP's check), and is not taken. Face 4 is
+  face 8's mirror image and is not made; faces 11 and 14 are made at 0.5
+  outward and not inward. Not traced.
+- *The blends beside the top (faces 5, 9, 10, 13), outward.* Their edge
+  with the top stands at a right angle, and where its tube ends the corner
+  between the two tubes and the removed face is a piece of sphere whose arc
+  on the removed face is not found (`TangentCornerNoArc`). Not traced.
+- *The cone (face 1)*: 22 tubes; not looked into.
+- *The Intersection join*: nothing is made but the top, the bottom and
+  (outward) one flat.
+- *One edge.* Face 6 removed, 0.5 inward: the section of two tubes lies
+  6.0e-5 off one of its pcurves under a tolerance of 4.9e-5. BRepCheck
+  takes it, BOP's check names it (`BOPAlgo_InvalidCurveOnSurface`). Its
+  mirror image (face 2) has none, nor have the other 45 results looked at
+  (25 of these 26 and 20 of those made before).
+
+**What it moved.** 26 lines of the corpus at level 0 and the same 26 at
+level 4, from refused to made (`corpus/baseline.txt`,
+`corpus/baseline_level4.txt`). Nothing else: not a case line of the
+suites, not a line of the sweep.
+
+**Validation** (`e09fe137e3` against `313767fc27`, on Linux): thickness
+PASS=792 (744 + these 48) at level 0, at level 3 frozen and at level 4,
+every other case line the same; boolean 111, draft 105, fillet 919 + 1
+XFAIL at fix levels 0 to 4, the same line for line; the corpus as its
+baselines at level 0 and at level 4 but for the 26 lines made here; the
+sweep 928 of 928 at level 0 and at level 4, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`d171a04be6`). Not run: macOS, thickness levels 1 and 2.
 
 ## Determinism cases (intersection mode, Arc join)
 

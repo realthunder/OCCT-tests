@@ -3860,6 +3860,47 @@ section with the plane y = 0 at the crease.
 ![issue613_fillet_top_bottom_out_level4](pictures/issue613_fillet_top_bottom_out_level4.png)
 ![issue613_crease](pictures/issue613_crease.png)
 
+### Sec 75: #613's blends and its cylinder removed
+
+**A tube's edge on a B-spline that ends where its face does, and edges
+nearly tangent** (`BRepOffset_MakeOffset.cxx` `TangentTubeEdgeOnCap`,
+`MakeThickSolid`; `9bdefb1d40`, `e09fe137e3`).
+
+- #613's blends are B-splines bounded by their faces. Removed, each is
+  closed by tubes round its edges, and a tube's edge on the blend is found
+  by a circle round each point of the edge. At the two ends of a blend's
+  end edge the circle passes 0.02 to 0.05 outside the long edge beside it,
+  off the surface: no edge, no tube, refused -- every blend, 0.5 and 1,
+  either way.
+- The point is now found on the surface carried on past its bounds by its
+  own last span, so that the edge's pcurve stays one on the removed face.
+  Those points are cut off in the end: the next tube's edge crosses first.
+- An edge of a removed face gets a tube where the face and its neighbour
+  are tangent within the analysis' tolerance, which narrows as the wall
+  thickens. The long blends meet the corner blends 0.9 deg off, tangent at
+  0.5 and not at 1; the cylinder meets the cone 1.5 deg off, and the
+  cone's offset carried on never comes to it.
+- A thick solid refused both ways is tried once more with the removed
+  faces' edges within 0.1 rad of tangent closed by tubes, and taken only
+  where it is valid and nowhere through itself.
+- 26 runs of the corpus on this part are made, at every level: 20 by the
+  first, 6 by the second (the cylinder at 0.5 and 1 either way, a corner
+  blend at 1). Read by points about the removed face: none wrong.
+
+Regression (`e09fe137e3`, Linux): thickness
+PASS=792 (744 + these 48) at level 0, at level 3 frozen and at level 4,
+every other case line the same; boolean 111, draft 105, fillet 919 + 1
+XFAIL at fix levels 0 to 4, the same line for line; the corpus as its
+baselines at level 0 and at level 4 but for the 26 lines made here; the
+sweep 928 of 928 at level 0 and at level 4, the same line for line; the 29
+issue models recompute as before; FreeCAD's Python suite 4388 OK
+(`d171a04be6`). Not run: macOS, thickness levels 1 and 2.
+
+![issue613_blend_f12_out0.5](pictures/issue613_blend_f12_out0.5.png)
+![issue613_blend_f4_in0.5](pictures/issue613_blend_f4_in0.5.png)
+![issue613_blend_f8_out1](pictures/issue613_blend_f8_out1.png)
+![issue613_cylinder_in1](pictures/issue613_cylinder_in1.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.
