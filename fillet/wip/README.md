@@ -20,3 +20,14 @@ Vetted 2026-10-09 on `../sweep` (edge and vertex, 16163 cases): every result
 the same as without it -- volumes, face counts and tolerances included. It
 is neutral there; what it fixes takes split edges at a stripe's end, which
 none of the sweep's inputs has.
+
+## chamfer-pairs-refused-2026-11-17.txt
+
+The chamfer sweep at every vertex (`sweep/drive.py vertex`, `OP=chamfer`,
+`FILLET_FIX_LEVEL=4`) at OCCT `ede9c6c5c5`: 12242 cases, 9111 made, 3131
+refused. The file lists the 145 pairs of edges refused where each of the
+two alone is chamfered at that size, with the number of edges at the
+vertex and how many of them are sharp or smooth: 103 at a vertex of four
+sharp edges (refused by rule, `3ee86acb22`), 23 at a vertex of three
+sharp edges, 12 at four edges one of them smooth, 7 at five edges. Not
+triaged further.
