@@ -6,6 +6,7 @@
 #   SKIP   "tag;tag": runs to leave out (one that does not return)
 #   SET    2: the shapes of shapes2.py     INTER  1: with every pair of faces intersected
 #   THICK_FIX_LEVEL  the fork's offset fix level the runs are made at (0)
+#   TS     the thicknesses, "0.5 -0.5 1 -1"
 # An Arc result is read by random points in the shape's box: in the wall where
 # on the right side of the part and nearer than the thickness to a face that
 # stays. Not read: at an edge of the removed face its neighbour stands at an
@@ -122,7 +123,7 @@ def read(r, fi, t):
 
 for fi in range(len(s.Faces)):
     for join in joins:
-        for t in (0.5, -0.5, 1.0, -1.0):
+        for t in [float(x) for x in os.environ.get("TS", "0.5 -0.5 1 -1").split()]:
             tag = "%s f%d %+g j%d" % (name, fi + 1, t, join)
             if tag in skip:
                 out.write("%s | %s | HANG (skipped)\n" % (tag, type(s.Faces[fi].Surface).__name__))
