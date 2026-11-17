@@ -3534,6 +3534,19 @@ for _name, _shape, _es, _d, _vol in (
         ("issue962_arm_foot_and_upright", _arm962, [25, 49], 1, 11572.0786)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# An edge with a seam's two pcurves that bounds its face once. #523's post
+# is a cylinder fused onto the box's corner and cut where its seam was: the
+# post's line on the box's side carries both pcurves and is no seam of the
+# three quarters left. Taken for one at a corner, it was given as the next
+# edge round the vertex in place of the post's rim, and the post's line
+# chamfered with either rim was refused at every level.
+for _name, _es, _d, _vol in (
+        ("issue523_post_line_and_foot_rim", [10, 13], 0.3, 1094.2752),
+        ("issue523_post_line_and_foot_rim", [10, 13], 1, 1094.4907),
+        ("issue523_post_line_and_top_rim", [10, 11], 0.3, 1094.2752),
+        ("issue523_post_line_and_top_rim", [10, 11], 1, 1094.4907)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _box523,
+                _es, _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the

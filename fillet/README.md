@@ -7088,6 +7088,54 @@ frozen, the thickness corpus as its baseline, the thickness sweep 928 of
 `OCCTFilletFixLevelLatest` 4: the Python suite 4388 OK. Not run: macOS,
 thickness levels 1 and 2.
 
+## An edge with a seam's pcurves that is no seam (`75aa19c196`, 2026-11-18)
+
+**Where it was met.** The chamfer sweep at every vertex, level 4: 145
+pairs of edges refused where each of the two alone is chamfered
+(`wip/chamfer-pairs-refused-2026-11-17.txt`), 23 of them at a vertex of
+three sharp edges. #523's box with a round post on its corner, the
+post's line on the box's side (E10) with the post's rim at its foot
+(E13) or at its top (E11), at 0.3 and 1: refused at every level, and by
+the corner set back too.
+
+**What was wrong.** The post is a cylinder fused onto the corner, and
+the fuse cut it where its seam was: the post's line carries the two
+pcurves a seam has on the cylinder, and bounds the three quarters of it
+that are left once. `ChFi3d_CoutureOnVertex` asks only for the two
+pcurves; `PerformMoreThreeCorner`, parsing the edges round the vertex,
+then took the post's line for the cylinder's seam there and gave it as
+the next edge in place of the rim -- the line's stripe twice, the rim's
+never -- and stopped at "a fillet ends off the face of the curve to the
+next".
+
+**The fix.** A seam at a vertex is an edge the face has twice.
+
+**The cases** (`run_tests.py`; `bop`: BOP's check clean):
+
+| Case | Volume |
+|------|--------|
+| `issue523_post_line_and_foot_rim_chamfer_e10_e13_0.3`, `_1` | 1094.2752, 1094.4907 (refused) |
+| `issue523_post_line_and_top_rim_chamfer_e10_e11_0.3`, `_1` | the same |
+
+Against the two chamfers alone put together (the line's, which adds, less
+what the rim's takes of the box): 1094.2823 and 1094.7373, the solids
+apart by 0.015 at 0.3 and by 0.36 and 0.48 at 1 -- at the corner, and
+within what the corners of two chamfers were taken at (0.9 of a cube of
+the size). No picture.
+
+**What it moved.** The sweeps at level 4, every edge (3921) and every
+vertex (12242), fillets and chamfers, against the build before: these
+four chamfers made, not another line. 141 pairs are left refused.
+
+**What it costs.** The chamfer sweep at every vertex of three shapes,
+with and without by turns: 95.6, 95.0, 99.5 s and 95.1, 95.5, 100.7 s --
+nothing to measure.
+
+**Validation** (on Linux): fillet PASS=923 (919 + these 4) + 1 XFAIL at
+fix levels 0 to 4; boolean 111, draft 105, thickness 926 at level 0;
+FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: macOS, the 29
+issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
