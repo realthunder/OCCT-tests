@@ -4047,6 +4047,17 @@ give one volume.
 
 ![roundedbox_first_x_fillet_out0.5](pictures/roundedbox_first_x_fillet_out0.5.png)
 
+### Sec 87: a corner blend that starts on its torus' seam
+
+A box with its uprights filleted 4 and its top edge 2, the first of its
+four corner blends removed 0.5 outward: an invalid solid of 100 faces.
+Pieces of the closing tubes' sections lay a period off the blend's
+outline, and the loops were searched for, not walked. The pieces are
+put beside the outline (`aa55f2567b`); the volume, 1048.7017, is the
+one the other three corners had.
+
+![roundeduprights_first_corner_out0.5](pictures/roundeduprights_first_corner_out0.5.png)
+
 ## Where the chase stands (2026-10-04)
 
 It stops here for now, with nothing known broken.

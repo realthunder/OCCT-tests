@@ -92,6 +92,7 @@ STAGES = {
     "s83": ("da2e0ec610", "83"),
     "s84": ("67d87641b5", "84"),
     "s85": ("bb59eaae9a", "85"),
+    "s87": ("ecf4362789", "87"),
 }
 # Upstream: every file the fork has changed in the two packages the fix chain
 # works in, at the fork's base. The packages are named, not the files: it was
@@ -246,6 +247,14 @@ def _roundedbox():
     # the bottom edge along x at y = 0.
     b = Part.makeBox(20, 30, 10)
     return b.makeFillet(2, b.Edges)
+
+
+def _roundeduprights():
+    # 20 x 30 x 10 with its uprights filleted 4 and its top edge 2: Face6 is
+    # the corner blend that starts on its torus' seam.
+    b = Part.makeBox(20, 30, 10)
+    b2 = b.makeFillet(4, [e for e in b.Edges if e.BoundBox.ZLength > 9])
+    return b2.makeFillet(2, [e for e in b2.Edges if abs(e.BoundBox.ZMin - 10) < 1e-9])
 
 
 def _filleteddome():
@@ -492,6 +501,7 @@ SHAPES = {
     "notchbox": lambda: _notchbox(),
     "stadium": lambda: _stadium(),
     "roundedbox": lambda: _roundedbox(),
+    "roundeduprights": lambda: _roundeduprights(),
     "filleteddome": lambda: _filleteddome(),
     "groove5seam": lambda: _groove5seam(),
     "issue363base": lambda: _issue363base(),
@@ -815,6 +825,8 @@ CASES = {
     "notchbox_side_out1.45": ("s84", "notchbox", 2, +1.45, False, 0, 3031.3550),
     "stadium_left_end_fillet_out0.2": ("s85", "stadium", 7, +0.2, False, 0, 215.5817),
     "roundedbox_first_x_fillet_out0.5": ("s85", "roundedbox", 14, +0.5, False, 0, 1018.5897),
+    "roundeduprights_first_corner_out0.5": ("s87", "roundeduprights", 6, +0.5, False, 0,
+                                            1048.7017),
 }
 # Cases whose right result is more than one shell: the holed cone's top, its
 # cavity sealed below the removed face (a skin and a void).

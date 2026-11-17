@@ -2929,6 +2929,29 @@ def _holds_its_shape_cases():
 
 _holds_its_shape_cases()
 
+
+# Sec 87. A box with its uprights filleted 4 and its top edge 2: the four
+# corner blends are patches of tori, and the first starts on its torus'
+# seam. Removed, it was invalid outward and refused inward, pieces of the
+# closing tubes' sections lying a period off its outline; the other three
+# were made, and have the volumes it has now.
+def _rounded_uprights_cases():
+    box = Part.makeBox(20.0, 30.0, 10.0)
+    uprights = box.makeFillet(4, [e for e in box.Edges if e.BoundBox.ZLength > 9])
+    shape = uprights.makeFillet(2, [e for e in uprights.Edges
+                                    if abs(e.BoundBox.ZMin - 10) < 1e-9])
+    corners = [i + 1 for i, f in enumerate(shape.Faces) if "Toroid" in str(f.Surface)]
+    assert len(corners) == 4
+    for which, face in (("first", corners[0]), ("last", corners[-1])):
+        for t, volume in ((0.5, 1048.7017), (-0.5, 958.9712), (1.0, 2190.7156),
+                          (-1.0, 1830.1308)):
+            thickness_case("roundeduprights_%s_corner_%s%g" % (which, "out" if t > 0 else "in",
+                                                                abs(t)),
+                           shape, face, t, "pass", volume)
+
+
+_rounded_uprights_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

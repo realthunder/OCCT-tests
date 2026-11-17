@@ -4472,6 +4472,55 @@ FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: the 29 issue
 models (their comparison logs were lost with the scratch directory),
 macOS.
 
+## A corner blend that starts on its torus' seam (`aa55f2567b`, 2026-11-17, sec 87)
+
+Sec 85 left it: a box of 20 x 30 x 10 with its uprights filleted 4 and
+its top edge 2, one corner blend of the four removed with the Arc join,
+invalid outward at every thickness -- 100 faces -- and refused inward;
+the other three corners made.
+
+The blend is a patch of a torus, a quarter turn by a quarter turn, and
+the first of the four starts on the torus' seam, u = 0. The tubes that
+close its edges have their sections with it carried across that seam
+and cut there; the pieces on the face keep the whole section's pcurve,
+past the seam, at 2 pi to 2 pi + 0.2. `BRepAlgo_Loop` then saw a face
+spanning more than a period, searched its loops where it walks them,
+and made 54 faces of nine regions.
+
+**The fix.** Before a periodic face's loops are made, an edge that lies
+within the box of the face's own outline once moved by whole periods,
+and not before, has its pcurve moved there. No fix level.
+
+**The cases** (`run_tests.py`, `_rounded_uprights_cases`): the first
+corner and the last, each with the volume the last had before.
+
+| Case | Volume | Before, the first corner |
+|------|--------|--------------------------|
+| `roundeduprights_first_corner_out0.5`, `_last_` | 1048.7017 | invalid, 1258.3886 |
+| `roundeduprights_first_corner_in0.5`, `_last_` | 958.9712 | refused |
+| `roundeduprights_first_corner_out1`, `_last_` | 2190.7156 | invalid, 2374.5917 |
+| `roundeduprights_first_corner_in1`, `_last_` | 1830.1308 | refused |
+
+![roundeduprights_first_corner_out0.5](models/pictures/roundeduprights_first_corner_out0.5.png)
+
+**What it moved** (against the build before, `probe/scan.py` at level
+0, 27420 runs): 236 runs made that were invalid (132) or refused (104),
+on this box and on an enclosure with the same corners; none made before
+is different. The probe at levels 0 and 5: 16 runs right at every point
+read that were invalid or refused. The bench of sec 82, the corpus at
+levels 0 and 4 and the sweep at levels 0 and 5 as they were. The scan
+at level 0 now: 24728 made, 2648 refused, 44 invalid.
+
+**What it costs.** The 85 thicknesses of sec 86, with and without by
+turns, three times: 3.28 to 3.55 s and 3.27 to 3.47 s -- nothing to
+measure.
+
+**Validation** (on Linux): thickness PASS=926 (918 + these 8) at level
+0, at level 3 frozen, at level 4 and at level 5, the 918 as they were
+and the four of the first corner failing on the library of before;
+boolean 111, draft 105, fillet 919 + 1 XFAIL; FreeCAD's Python suite
+4388 OK (`82896672ef`). Not run: the 29 issue models, macOS.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

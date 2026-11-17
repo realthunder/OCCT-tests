@@ -63,6 +63,7 @@ NAMES = {"cyl": "cylinder", "ann": "cylinder with a through hole", "ell": "ellip
          "notchbox": "box of 30 x 20 x 10 with a notch across a corner, 6 by 9, 4 deep",
          "stadium": "stadium of 30 x 10 x 8 with its top edge filleted, r1.5",
          "roundedbox": "box of 20 x 30 x 10 with all twelve edges filleted, r2",
+         "roundeduprights": "box of 20 x 30 x 10 with its uprights filleted r4 and its top edge r2",
          "filleteddome": "box under a B-spline dome, the dome's four edges filleted, r3",
          "groove5seam": "cylinder with a groove r5 across its end, the groove's seam on the right bottom",
          "issue363base": "#363's Thickness001 base: a chamfered cylinder with a groove across its end",
