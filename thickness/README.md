@@ -4422,6 +4422,56 @@ levels 0, 4 and 5, the same line for line; the 29 issue models recompute
 as before; FreeCAD's Python suite 4388 OK (`82896672ef`). Not run:
 macOS, thickness levels 1 and 2.
 
+## Valid and no skin: a thick solid that holds its own shape (2026-11-17, sec 86)
+
+The scan's other reading, a volume out of line with its neighbours'.
+A tube with its rim filleted 1, a rim fillet removed outward: from 0.8
+on, one closed valid shell of 6098.8545 and more where the whole tube
+is 2391.1690 -- the skin and the tube with it, the cavity counted as
+material. Sec 78 refused it, from fix level 5, where the two closing
+tubes pass through each other; at 1.45 and 1.5 that test does not see
+it, and level 5 gave 7410.0423 and 7521.4676. The stadium of sec 85 the
+same below level 5: an end fillet 1.15 outward 5798.4033 (1338.6259 at
+1.1), a side fillet 1.4 outward 6157.8056, the stadium being 2194.8516.
+
+**The check.** A skin made outward lies outside the shape it is made
+of. `MakeThickSolid` now reads each answer at points a tenth of the
+thickness behind the faces that stay, inside the shape: where two or
+more of them, and most, are in the result, the answer is dropped like
+one that runs away or is inside out (`HoldsItsShape`), and the other
+attempts go on. At every fix level: nothing is released that a document
+could have been saved with (the user, 2026-11-17).
+
+**The cases** (`run_tests.py`, `_holds_its_shape_cases`): refusals,
+`tube_fillet_outer_out1.5_refused`, `tube_fillet_inner_out1.5_refused`,
+`stadium_end_fillet_out1.15_refused`, `stadium_side_fillet_out1.4_refused`.
+No picture: nothing is made.
+
+**What it moved** (`probe/scan.py` over the probe's two sets and
+`shapes3.py`, 27420 runs, and the probe, at level 0 and at level 5,
+against the same build with the check off). At level 0: 46 runs that
+were made refused -- the tube 40, the stadium 6, every one a volume
+between 5798 and 7521 for a part of 2194.85 or 2391.17 -- and 27
+invalid ones refused (an enclosure's blend 25, 35527 to 41250 for a
+skin; the box with rounded uprights 2); of the probe two wrong runs and
+two invalid ones refused. At level 5: the four tube runs at 1.45 and
+1.5. No run made and right by the probe's points is refused; nothing
+else changes; the corpus at levels 0 and 4 and the sweep at levels 0
+and 5 as they were.
+
+**What it costs.** Every face of eight of the probe's shapes removed
+0.5 outward, 85 runs of which 81 are made, alone on the machine, three
+passes twice over: 3.16 to 3.28 s with the check, 3.07 to 3.19 s with
+it compiled out -- 0.09 s, 3 per cent, a millisecond a thickness.
+
+**Validation** (on Linux): thickness PASS=918 (914 + these 4) at level
+0, at level 3 frozen, at level 4 and at level 5, the 914 as they were;
+boolean 111, draft 105, fillet 919 + 1 XFAIL; the corpus as its
+baselines at levels 0 and 4; the sweep 928 of 928 at levels 0 and 5;
+FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: the 29 issue
+models (their comparison logs were lost with the scratch directory),
+macOS.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

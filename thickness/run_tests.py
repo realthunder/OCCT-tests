@@ -2900,6 +2900,35 @@ def _rounded_box_cases():
 
 _rounded_box_cases()
 
+
+# Sec 86. A thick solid made outward that has the inside of its own shape
+# for material: valid, and no skin. The tube's rim fillets 1.5 outward came
+# back at 7521.4676 and 7511.7005 where the whole tube is 2391.1690 -- past
+# what level 5 refuses; the stadium's end fillet 1.15 outward at 5798.4033
+# and its side fillet 1.4 outward at 6157.8056, the stadium being 2194.8516.
+# Refused at every level.
+def _holds_its_shape_cases():
+    shape, outer, inner, bottom = _tube_fillet()
+    own_refusal_case("tube_fillet_outer_out1.5_refused", shape, [outer], 1.5)
+    own_refusal_case("tube_fillet_inner_out1.5_refused", shape, [inner], 1.5)
+    wire = Part.Wire([
+        Part.makeLine(App.Vector(-10, -5, 0), App.Vector(10, -5, 0)),
+        Part.ArcOfCircle(App.Vector(10, -5, 0), App.Vector(15, 0, 0),
+                         App.Vector(10, 5, 0)).toShape(),
+        Part.makeLine(App.Vector(10, 5, 0), App.Vector(-10, 5, 0)),
+        Part.ArcOfCircle(App.Vector(-10, 5, 0), App.Vector(-15, 0, 0),
+                         App.Vector(-10, -5, 0)).toShape()])
+    solid = Part.Face(wire).extrude(App.Vector(0, 0, 8))
+    stadium = solid.makeFillet(1.5, [e for e in solid.Edges if abs(e.BoundBox.ZMin - 8) < 1e-9])
+    end = [i + 1 for i, f in enumerate(stadium.Faces) if "Toroid" in str(f.Surface)][0]
+    side = [i + 1 for i, f in enumerate(stadium.Faces)
+            if "Cylinder" in str(f.Surface) and f.BoundBox.ZMin > 6][0]
+    own_refusal_case("stadium_end_fillet_out1.15_refused", stadium, [end], 1.15)
+    own_refusal_case("stadium_side_fillet_out1.4_refused", stadium, [side], 1.4)
+
+
+_holds_its_shape_cases()
+
 # Sec 60. A plate with holes, its top removed inward by more than half the
 # wall between two holes or between a hole and the outline: the offsets of the
 # two walls pass each other, and between them lies a strip that is no pocket.

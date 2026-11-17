@@ -5,6 +5,7 @@
 #   N      points an Arc result is read by, 400 (0: not read)
 #   SKIP   "tag;tag": runs to leave out (one that does not return)
 #   SET    2: the shapes of shapes2.py     INTER  1: with every pair of faces intersected
+#   THICK_FIX_LEVEL  the fork's offset fix level the runs are made at (0)
 # An Arc result is read by random points in the shape's box: in the wall where
 # on the right side of the part and nearer than the thickness to a face that
 # stays. Not read: at an edge of the removed face its neighbour stands at an
@@ -13,6 +14,10 @@
 # The shape is made anew for every run and compared with itself after it.
 import FreeCAD, Part, os, random, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from fix_level import from_env as _fix_level_from_env
+
+_fix_level_from_env()  # THICK_FIX_LEVEL=<n>: the fork's offset fix level, 0 unset
 from shapes import SHAPES
 if os.environ.get("SET", "") == "2":
     from shapes2 import SHAPES

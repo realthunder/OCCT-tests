@@ -6,12 +6,17 @@
 #   STEP, COUNT  the thicknesses are STEP, 2 STEP ... COUNT STEP, either way
 #                (0.05 and 30)
 #   JOIN   0 (Arc) or 2 (Intersection)    TOL    the thickness' tolerance, 1e-7
+#   THICK_FIX_LEVEL  the fork's offset fix level the runs are made at (0)
 # A line a run: "<shape> f<face> <thickness>: made <volume>", "invalid
 # <volume>" or "refused". The shape is made anew for every run. islands.py
 # reads the files.
 import FreeCAD, Part, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from fix_level import from_env as _fix_level_from_env
+
+_fix_level_from_env()  # THICK_FIX_LEVEL=<n>: the fork's offset fix level, 0 unset
 from shapes import SHAPES
 
 if os.environ.get("SET", "") == "2":

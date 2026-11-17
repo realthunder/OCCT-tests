@@ -9,7 +9,14 @@
 #     polyhedron -- where no face beside the removed one stands at less than a right
 #     angle to it: there the neighbour's offset is carried on to the removed face's
 #     plane, more than the cylinder's sector, and the run is given no reference (NOREF).
+# THICK_FIX_LEVEL: the fork's offset fix level the runs are made at (0).
 import FreeCAD, Part, os, math
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+from fix_level import from_env as _fix_level_from_env
+
+_fix_level_from_env()  # THICK_FIX_LEVEL=<n>: the fork's offset fix level, 0 unset
 
 V = FreeCAD.Vector
 
