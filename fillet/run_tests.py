@@ -3547,6 +3547,22 @@ for _name, _es, _d, _vol in (
         ("issue523_post_line_and_top_rim", [10, 11], 1, 1094.4907)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _box523,
                 _es, _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# A stripe's end read a period off its face. #273's handle: a line of the
+# hole's wall (a plane) on its bottom with the upright line where that wall
+# meets the hole's cylinder, the third edge at their vertex the cylinder's
+# rim. The upright chamfer's line on the cylinder lies at u + 2 pi, the rim
+# at u, and the corner's curve from one to the other was drawn round the
+# cylinder; it crossed the cork at the bottom line's other end, and the two
+# were refused ("fillets have too big radiuses").
+_h273 = sweep_shape("issue273_Fillet")
+_h273f1 = Part.read(os.path.join(HERE, "sweep", "shapes", "issue273_Fillet001.brep"))
+for _name, _shape, _es, _d, _vol in (
+        ("issue273_wall_foot_and_upright", _h273, [36, 40], 0.3, 8559.8782),
+        ("issue273_wall_foot_and_upright", _h273, [36, 40], 1, 8564.5812),
+        ("issue273_f001_wall_foot_and_upright", _h273f1, [53, 57], 0.3, 8535.5284),
+        ("issue273_f001_wall_foot_and_upright", _h273f1, [53, 57], 1, 8540.3329)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the

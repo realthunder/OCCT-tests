@@ -7136,6 +7136,56 @@ fix levels 0 to 4; boolean 111, draft 105, thickness 926 at level 0;
 FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: macOS, the 29
 issue models.
 
+## A corner's curve drawn round the cylinder (`6d6f77efb3`, 2026-11-18)
+
+**Where it was met.** The list of chamfer pairs still refused, the ones
+at a vertex of three sharp edges: #273's handle, the line of a hole's
+flat wall on its bottom (E36) with the upright line where that wall
+meets the hole's cylinder (E40), the third edge at their vertex the
+cylinder's rim; the same two on its Fillet001 (E53, E57). Refused at 0.3
+and at 1 at every level; each alone is made, and the two filleted are.
+
+**What was wrong.** `PerformMoreThreeCorner` joins the end of a stripe
+to the next edge by a curve on the face between them, from the stripe's
+pcurve at one end to the edge's at the other. The upright chamfer's line
+on the cylinder lies at u + 2 pi and the rim at u, and the curve was
+drawn from one to the other: 6.5 round the cylinder for 0.36. It
+crossed the cork of the corner at the bottom line's other end, where
+`PerformOneCorner` stopped at "fillets have too big radiuses".
+
+**The fix.** On a periodic face with no seam at the vertex, an end
+outside the face's bounds that a whole period brings inside them is
+moved there.
+
+**The cases** (`run_tests.py`):
+
+| Case | Volume |
+|------|--------|
+| `issue273_wall_foot_and_upright_chamfer_e36_e40_0.3`, `_1` | 8559.8782, 8564.5812 (refused) |
+| `issue273_f001_wall_foot_and_upright_chamfer_e53_e57_0.3`, `_1` | 8535.5284, 8540.3329 (refused) |
+
+The handle's two are clean by BOP's check and apart from the two
+chamfers alone put together by 0.011 at 0.3 and 0.46 at 1 (within 0.9 of
+a cube of the size, as before); Fillet001's were not measured so -- its
+input fails BOP's check itself. No picture.
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex, fillets and chamfers, against the build before: these four
+chamfers made, not another line. 137 pairs are left refused. Of the
+others at a vertex of three sharp edges, 15 are a chamfer as large as
+what it is cut from -- an edge 0.15 long chamfered at 0.3; a plate 2
+thick and a rib 1.5 wide chamfered at 1, each made at 0.3 -- and are
+left.
+
+**What it costs.** The chamfer sweep at every vertex of three shapes,
+with and without by turns: 30.3, 30.4, 30.9 s and 30.1, 30.4, 30.7 s --
+nothing to measure.
+
+**Validation** (on Linux): fillet PASS=927 (923 + these 4) + 1 XFAIL at
+fix levels 0 to 4; boolean 111, draft 105; FreeCAD's Python suite 4388
+OK (`82896672ef`). Not run: thickness (TKFillet alone changed), macOS,
+the 29 issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
