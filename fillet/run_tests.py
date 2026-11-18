@@ -3580,6 +3580,19 @@ for _name, _shape, _es, _d, _vol in (
         ("issue962_f_shelf_edges_below_and_above", _arm962f, [36, 56], 1, 11574.3447)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# Two chamfers at a vertex of four edges on no common face, the plate's
+# corner invalid: the opposite corner (each ended as it would be alone) was
+# tried for chamfers only on the input's tolerances, which no chamfer meets,
+# and never kept. Last in the chain, on a twentieth of the chamfer, it is:
+# #962's arm, a tooth's upright edge with the foot of the next face, the
+# two chamfers alone put together to the last digit.
+for _name, _shape, _es, _d, _vol in (
+        ("issue962_tooth_upright_and_foot", _arm962c, [49, 66], 0.3, 11696.6267),
+        ("issue962_tooth_upright_and_foot", _arm962c, [51, 84], 0.3, 11696.6267),
+        ("issue962_f_tooth_upright_and_foot", _arm962f, [52, 74], 0.3, 11582.9343),
+        ("issue962_f_tooth_upright_and_foot", _arm962f, [54, 92], 0.3, 11582.9343)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the

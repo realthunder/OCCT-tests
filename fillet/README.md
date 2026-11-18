@@ -7236,6 +7236,56 @@ fix levels 0 to 4; boolean 111, draft 105, thickness 926 at level 0;
 FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: macOS, the 29
 issue models.
 
+## A chamfers' opposite corner tried last (`88f9b1deef`, 2026-11-18)
+
+**Where it was met.** The 103 chamfer pairs refused at a vertex of four
+sharp edges. Lifting the rule of `3ee86acb22` (tried, not kept) made two
+of them, neither clean: the rule holds nothing good back. But the
+fallbacks that could make them are sized by fillets alone:
+`ComputeOppositeCorners` and the step back keep a result with no edge
+looser than the input's or a twentieth of the smallest radius, and a
+chamfer has none -- its result was held to the input's tolerances, which
+none meets (the builder's edges carry 1e-4).
+
+**Sized by the chamfer, everywhere** (tried, not kept): 63 refused
+chamfers made, and 36 made ones moved -- the step back now keeping
+results ahead of the chamfer's own setback fallback, and the opposite
+corner replacing a valid but loose plate. Most moved a hair closer to
+the two chamfers alone put together; eight on #631's Fillet moved off
+it (E15 with E24 at 1: exact before, 0.27 off after).
+
+**The fix.** Both stay as they were. The chamfers' block that closes the
+chain (above, `810ffba507`), where a result is still invalid after every
+fallback, tries the opposite corner after the straight lines, held to a
+twentieth of the smallest chamfer.
+
+**The cases** (`run_tests.py`; `bop`: BOP's check clean):
+
+| Case | Volume |
+|------|--------|
+| `issue962_tooth_upright_and_foot_chamfer_e49_e66_0.3`, `_e51_e84_0.3` | 11696.6267 (refused) |
+| `issue962_f_tooth_upright_and_foot_chamfer_e52_e74_0.3`, `_e54_e92_0.3` | 11582.9343 (refused) |
+
+Each is the two chamfers alone put together to the last digit, and 600
+random points within three sizes of the vertex classify alike in both.
+No picture.
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex, fillets and chamfers: 8 chamfers made on #962's Chamfer and
+Fillet inputs (the four above and their twins at the next teeth), not
+another line. 125 pairs are left refused, 95 of them at four sharp
+edges.
+
+**What it costs.** As the straight lines alone: every pair of edges at
+the vertices of #962's Chamfer input, three rounds by turns against the
+build before both: the 1278 made 43.4, 43.5, 43.1 s and 43.9, 43.9, 44.1
+s; the 98 refused 38.3, 38.7, 37.6 s and 31.0, 31.8, 31.2 s.
+
+**Validation** (on Linux): fillet PASS=935 (931 + these 4) + 1 XFAIL at
+fix levels 0 to 4; boolean 111, draft 105; FreeCAD's Python suite 4388
+OK (`82896672ef`). Not run: thickness (TKFillet alone changed), macOS,
+the 29 issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
