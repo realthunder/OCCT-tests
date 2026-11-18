@@ -3620,6 +3620,29 @@ for _name, _shape, _es, _d, _vol, _ch in (
 for _lvl, _vol in ((0, 11700.2045), (3, 11700.2045)):
     fillet_case("issue962_tooth_top_and_foot_fillet_e48_e72_1_level%d" % _lvl, _arm962c, [48, 72],
                 1, "pass", _vol, vol_tol=1e-3, fix_level=_lvl)
+# Nothing valid after every fallback: computed once more with no sharp edge
+# stepped back to the common point of a stripe that runs on past its
+# spine's end (fix level 4). #962's tooth, the top's continuation with the
+# foot chamfered at 0.3: the chamfer's line on the wall runs on 3.5 past
+# the vertex to the wall's end, the edge beside it was cut there, and the
+# corner's patch was 23 long, its wire through itself. The stripe is cut
+# at its spine's end where the corner starts (CutAtSpineEnd, level 3); the
+# step back undid that. Only as a last computation: everywhere, it turned
+# the corners the opposite corner makes exact into a plate 0.09 cubes off.
+# Each a plate's corner, 0.36 to 0.74 cubes of the size from the two alone
+# put together.
+for _name, _shape, _es, _d, _vol in (
+        ("issue962_tooth_run_on", _arm962c, [49, 72], 0.3, 11698.1956),
+        ("issue962_tooth_run_on", _arm962c, [49, 72], 1, 11701.7486),
+        ("issue962_tooth_run_on", _arm962c, [48, 66], 0.3, 11696.8875),
+        ("issue962_f_tooth_run_on", _arm962f, [52, 80], 0.3, 11584.5033),
+        ("issue962_f_tooth_run_on", _arm962f, [51, 74], 0.3, 11583.1951),
+        ("issue474_coil_run_on", sweep_shape("issue474_Fillet"), [17, 20], 0.3, 1886.6561),
+        ("issue474_coil_run_on", sweep_shape("issue474_Fillet"), [17, 20], 1, 1883.7136),
+        ("issue474_coil_run_on", sweep_shape("issue474_Fillet"), [5, 20], 0.3, 1874.6669),
+        ("issue474_f003_run_on", sweep_shape("issue474_Fillet003"), [5, 21], 1, 1853.7258)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, fix_level=4)
 # A stripe's end on an arc that does not meet the sharp edge beside it (fix
 # level 4). That arc's parameter was taken as the edge's: #273's handle, two
 # chamfers at 0.3 at a vertex of four edges (E24 with E30), the edge cut 7.86
@@ -3721,8 +3744,10 @@ for _name, _shape, _es, _d, _vol in (
 # size less than the two edges alone put together, up to 13 sizes from the
 # vertex) -- nor at a vertex of four sharp edges (#962, E50 with E51 at 1:
 # 4.4 cubes less, up to 4.9 sizes away; #631, E9 with E16: 2.1, up to 3.5).
-refused_case("issue474_coil_two_plate_corners_chamfer_e17_e20_0.3", sweep_shape("issue474_Fillet"),
-             [17, 20], 0.3, chamfer=True)
+# (#474's is made from level 4, by the plate: the last computation, below)
+if int(os.environ.get("FILLET_FIX_LEVEL", "0") or 0) < 4:
+    refused_case("issue474_coil_two_plate_corners_chamfer_e17_e20_0.3",
+                 sweep_shape("issue474_Fillet"), [17, 20], 0.3, chamfer=True)
 refused_case("issue962_four_sharp_edges_chamfer_e50_e51_1", _arm962c, [50, 51], 1, chamfer=True)
 refused_case("issue631_four_sharp_edges_chamfer_e9_e16_1", sweep_shape("issue631_Fillet"), [9, 16],
              1, chamfer=True)

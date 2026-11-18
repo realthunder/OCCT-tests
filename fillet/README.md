@@ -7454,6 +7454,74 @@ moved at level 4 (the cases above); boolean 111, draft 105; FreeCAD's
 Python suite 4388 OK. Not run: thickness (TKFillet alone changed),
 macOS, the 29 issue models.
 
+## A last computation: no step back to a stripe's end past its spine (`e76988e4c8`, fix level 4, 2026-11-18)
+
+**Where it was met.** #962's tooth again: of the 98 pairs refused, 50
+at its vertices. The top edge's continuation (E49) chamfered at 0.3 with
+the foot (E72): built, invalid, refused. The invalid result's patch runs
+from the vertex 23 along the wall, its wire through itself.
+
+**The bug.** The chamfer's line on the wall runs on past the vertex,
+3.5 to the wall's end: the wall's top is one line in five edges, and the
+walk does not stop at their vertices. Where a corner of several edges
+starts, such a stripe is cut at its spine's end (`CutAtSpineEnd`, level
+3). The step back to the stripes' common points
+(`PerformMoreThreeCorner`) then takes the stripe's end out there again,
+and cuts the sharp edge beside it at that point.
+
+**Applied everywhere** (tried, not kept): 42 refused chamfers made, at
+0.36 to 0.74 cubes of the size from the two alone put together, but the
+24 chamfers and fillets at the tooth that the opposite corner makes
+exact came out a plate 0.09 cubes off, and #474's E5 with E20 at 1 was
+lost.
+
+**The fix.** A last computation (`ChFi3d_CutStepBackAtSpineEnd`), from
+fix level 4, for fillets and chamfers alike: where after every fallback
+nothing is done or the result is invalid, the computation is made once
+more with no sharp edge stepped back to the common point of a stripe
+that runs past its spine's end. Kept on the terms the fallbacks keep a
+result on (valid, written and read, no edge looser than the input's or
+a twentieth of the smallest size, the fillets made, no fold); else what
+there was.
+
+**The cases** (`run_tests.py`, level 4; each refused before):
+
+| Case | Volume |
+|------|--------|
+| `issue962_tooth_run_on_chamfer_e49_e72_0.3`, `_1` | 11698.1956, 11701.7486 |
+| `issue962_tooth_run_on_chamfer_e48_e66_0.3` | 11696.8875 |
+| `issue962_f_tooth_run_on_chamfer_e52_e80_0.3`, `_e51_e74_0.3` | 11584.5033, 11583.1951 |
+| `issue474_coil_run_on_chamfer_e17_e20_0.3`, `_1` | 1886.6561, 1883.7136 |
+| `issue474_coil_run_on_chamfer_e5_e20_0.3` | 1874.6669 |
+| `issue474_f003_run_on_chamfer_e5_e21_1` | 1853.7258 |
+
+`issue474_coil_two_plate_corners_chamfer_e17_e20_0.3`, refused on
+purpose (the corner set back, 5.8 cubes off), is refused below level 4
+and made from it: a plate, 0.47 cubes off, 3 of 600 points.
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex: 41 chamfers made at level 4 (24 at the tooth, 17 on #474's
+coils), 14 of them at level 0 by the retry at the latest level; none
+lost; no made chamfer or fillet moved, no edge. Against the two alone
+put together: 0.36 to 0.74 cubes, #474's Fillet003 0.16 to 0.56. Four
+have no sound reference (BOP's cut failing, or an edge with no chamfer
+alone); by 20000 random points within six sizes of the vertex nothing
+moved beyond 0.29 of the edges at 0.3. Of the 98 pairs refused 39 are
+made: 59 are left (`wip/chamfer-pairs-refused-2026-11-18.txt`).
+
+**What it costs.** Nothing on a result made. A refusal pays one more
+computation; every pair at the vertices, two rounds by turns against
+the build before: #962's 396 refused chamfers 33.6, 33.8 s and 37.4,
+39.0 s; its 304 refused fillets 14.2, 13.7 and 16.2, 15.4 s; #474's 274
+refused chamfers 9.0, 8.7 and 18.3, 18.0 s (the made ones, on a box
+noisier than usual: #962's 2564 chamfers 91.0, 92.2 and 86.1, 89.6 s).
+
+**Validation** (on Linux): fillet PASS=962 (953 + these 9) + 1 XFAIL at
+level 0, 961 + 1 at level 4, the `vol=` lines otherwise as before;
+boolean 111, draft 105; FreeCAD's Python suite 4388 OK. macOS ran the
+commit before (`4b945b4e7e`): as Linux. Not run: thickness, the 29
+issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
