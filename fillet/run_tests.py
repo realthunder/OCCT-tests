@@ -3563,6 +3563,23 @@ for _name, _shape, _es, _d, _vol in (
         ("issue273_f001_wall_foot_and_upright", _h273f1, [53, 57], 1, 8540.3329)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3)
+# Chamfers whose corner the plate made invalid, made again with straight
+# lines joining the chamfers' ends on planes. #962's arm: a vertical edge
+# broken by a shelf, the edge below it (21 deg) and the edge above it (a
+# right angle) chamfered together, at a vertex of five edges (the fifth a
+# split between coplanar pieces of the wall). The batten that joined the
+# two ends on the shelf left each along the sharp edge beside it, 10 deg
+# off the lower chamfer's section, and crossed the section: a corner patch
+# whose wire ran through itself. Straight, the result is the two chamfers
+# alone put together, to the fifth decimal.
+_arm962f = sweep_shape("issue962_Fillet")
+for _name, _shape, _es, _d, _vol in (
+        ("issue962_shelf_edges_below_and_above", _arm962c, [33, 53], 0.3, 11696.9402),
+        ("issue962_shelf_edges_below_and_above", _arm962c, [33, 53], 1, 11688.0370),
+        ("issue962_f_shelf_edges_below_and_above", _arm962f, [36, 56], 0.3, 11583.2478),
+        ("issue962_f_shelf_edges_below_and_above", _arm962f, [36, 56], 1, 11574.3447)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the

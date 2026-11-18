@@ -7186,6 +7186,56 @@ fix levels 0 to 4; boolean 111, draft 105; FreeCAD's Python suite 4388
 OK (`82896672ef`). Not run: thickness (TKFillet alone changed), macOS,
 the 29 issue models.
 
+## A chamfer's corner crossed by its batten, made again straight (`810ffba507`, 2026-11-18)
+
+**Where it was met.** The chamfer pairs still refused, at a vertex of
+four edges one of them smooth or of five: #962's arm, a vertical edge
+broken by a shelf -- the edge below the shelf (21 deg between its
+faces) with the edge above it (a right angle), the fifth edge at the
+vertex a split between coplanar pieces of the wall. Refused at 0.3 and
+at 1 at every level, on the Chamfer input (E33, E53) and the Fillet
+input (E36, E56); each alone is made. Refined, four edges at the
+vertex, it was refused all the same.
+
+**What was wrong.** The plate's corner was built, and BRepCheck refused
+the result: the patch, a triangle on the shelf's plane, had a wire
+through itself. `PerformMoreThreeCorner` joins the two chamfers' ends on
+the shelf by a batten that leaves each end along the sharp edge beside
+it; that edge is 10 deg off the lower chamfer's section, and the batten
+crossed the section, by 0.0008 over its last 0.086.
+
+**The fix.** A chamfer result still invalid after every fallback, where
+a corner was the plate, is made once more with the chamfers' ends joined
+by a straight line on a plane (`ChFi3d_StraightChamferCorner`), kept on
+the terms the plates' step back is kept on, and else put back as it was
+for the refusal. Last in the chain: only a result about to be refused
+pays for it.
+
+**The cases** (`run_tests.py`; `bop`: BOP's check clean):
+
+| Case | Volume |
+|------|--------|
+| `issue962_shelf_edges_below_and_above_chamfer_e33_e53_0.3`, `_1` | 11696.9402, 11688.0370 (refused) |
+| `issue962_f_shelf_edges_below_and_above_chamfer_e36_e56_0.3`, `_1` | 11583.2478, 11574.3447 (refused) |
+
+Each is the two chamfers alone put together to the fifth decimal. No
+picture.
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex, fillets and chamfers: these four made, not another line. 133
+pairs are left refused.
+
+**What it costs.** Every pair of edges at the vertices of #962's
+Chamfer input chamfered, three rounds by turns: the 1274 made 43.3,
+46.1, 42.5 s with it and 43.5, 46.1, 43.5 s without; the 102 refused
+38.1, 40.7, 37.2 s and 33.7, 32.8, 31.2 s. A refusal at an invalid plate
+corner computes once more, about a fifth longer; nothing else pays.
+
+**Validation** (on Linux): fillet PASS=931 (927 + these 4) + 1 XFAIL at
+fix levels 0 to 4; boolean 111, draft 105, thickness 926 at level 0;
+FreeCAD's Python suite 4388 OK (`82896672ef`). Not run: macOS, the 29
+issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
