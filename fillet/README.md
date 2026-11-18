@@ -7286,6 +7286,98 @@ fix levels 0 to 4; boolean 111, draft 105; FreeCAD's Python suite 4388
 OK (`82896672ef`). Not run: thickness (TKFillet alone changed), macOS,
 the 29 issue models.
 
+## A corner's sharp edge taken over by an arc it never reaches (`b84dd6e767`, fix level 4, 2026-11-18)
+
+**Where it was met.** The 95 chamfer pairs refused at four sharp edges:
+64 of them at #962's tooth vertices (V34 to V39 of its Chamfer and
+Fillet inputs), each a vertex of four edges -- the tooth's top edge, the
+edge that carries it on in line, the upright and a foot 0.46 long.
+
+**The bug.** A stripe's end on another arc than the sharp edge beside
+it: the corner (`PerformMoreThreeCorner`) carries the edge on along that
+arc where the two are in line at their common vertex. The angle starts
+as a straight one and is measured only where `ChFi3d_cherche_vertex`
+finds a common vertex; found none, it stays straight, and an arc that
+never reaches the edge takes its place. At the tooth, the top and the
+foot chamfered, the upright two faces down the wall (6 to 23.75 along
+it, at 13.5 from the vertex) became the corner's sharp edge, and the
+chamfers were refused; filleted, they were made with a patch 0.22 off
+the two alone put together at 1.
+
+**The fix.** The arc takes the edge's place only where it has a vertex
+in common with it (`ChFi3d_Builder_CnCrn.cxx`). From fix level 4 only:
+at levels 2 and 3 it makes #474's coil -- whose fillets at two vertices
+level 2 made tighter (1829.5115 to 1829.7069, 1844.9557 to 1845.1766) --
+as level 1 did; level 4 makes them as level 2 does.
+
+**And what it took from #474's coil.** Its four-edge chamfers at 1 (E5,
+E6, E17, E20 and E11, E12, E17, E25; one edge of each tangent) were made
+there by luck: an edge 1.99 away and parallel took the place of the
+tangent one, the corner failed, and the setback fallback made it. Fixed,
+the corner is built, invalid, and no chamfer fallback sets back an
+invalid corner -- the one that does takes fillets only. So the chamfers'
+closing block (`810ffba507`, `88f9b1deef`) now ends by setting back the
+plate's corners, each alone in the order the vertices are kept, then all
+of them -- only at a vertex none of whose edges stays sharp (each
+chamfered, or tangent by `ChFi3d::IsTangentFaces`). Where one stays
+sharp the corner set back is no longer the chamfers' -- tried at every
+corner, it made 80 refused chamfers, #962's tooth among them up to 7
+cubes of the size off the two alone put together, and three that the
+suite refuses on purpose (`issue474_coil_two_plate_corners_*`,
+`*_four_sharp_edges_*`) -- and the invalid corner is refused as before.
+The coil's two come out at the volumes they had.
+
+**Tried, not kept.** (1) A step back to the stripes' common points that
+takes a point on an arc not meeting the edge only where its parameter is
+where its point is on the edge (`isOnSharp`): the tooth's upright gave
+its parameter 23.45 to the top's continuation (3.5 to 6.9). It made 10
+more pairs and moved 60 made ones, 41 nearer the two alone put together
+and 16 further, and with the fix above it turned the tooth's corners --
+planes, exact -- into a B-spline patch 0.0026 off at 0.3 and 0.096 at 1;
+it lost two made ones. (2) The closing block run on every chamfer that
+fails, not only on an invalid one: with the fix above it adds nothing,
+and it costs every refusal.
+
+**The cases** (`run_tests.py`; `bop`: BOP's check clean):
+
+| Case | Volume |
+|------|--------|
+| `issue962_tooth_top_and_foot_chamfer_e48_e72_0.3`, `_1` | 11698.4657, 11704.9864 (refused) |
+| `issue962_f_tooth_top_and_foot_chamfer_e51_e80_0.3`, `_1` | 11584.7733, 11591.2940 (refused) |
+| `issue962_tooth_top_and_foot_fillet_e48_e72_0.3`, `_1` (level 4) | 11698.0625, 11700.4235 (11698.0571, 11700.2045) |
+| `issue962_tooth_top_and_foot_fillet_e48_e72_1_level0`, `_level3` | 11700.2045, as it was |
+| `issue474_coil_upright_and_rim_chamfer_e5_e20_1` | 1752.9626 (refused) |
+
+The tooth's are the two edges alone put together to the fourth decimal,
+and 600 random points within three sizes of the vertex classify alike;
+the coil's within 0.15 (0.15 cubes of the size), 0 of 600 points. The
+coil's four-edge chamfers stay as they were (`issue474_coil_three_
+chamfers_and_smooth_edge_chamfer_*`), as do its fillets at levels 1 and 2.
+Judge the coil by points: BOP finds no common volume between its input
+and a chamfer of it, so a measure by boolean says nothing there.
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex: 22 chamfers made, none lost, none moved -- the 16 at the tooth
+vertices (8 on each input), #474's E5 with E20 at 1 and its four-edge
+corners at 0.3, on both coil inputs (1.8 cubes off the chamfered edges
+alone put together, 8 of 600 points; the ones at 1 the suite has are
+2.4 off, 12 of 600). Fillets at level 4: the tooth's 16, each now the two
+alone put together (0.0054 off at 0.3 and 0.22 at 1 before); at level 0
+none. Of the 125 pairs refused, 18 are made.
+
+**What it costs.** Every pair at the vertices of #962's Chamfer input,
+two rounds by turns against the build before: the 2548 made 74.6, 74.6
+s and 74.4, 74.3 s; the 412 refused 34.0, 35.8 s and 31.0, 31.9 s (the
+tooth's now made at once). #474's coil: the 704 made 9.70 s and 10.27,
+all of it the two four-edge chamfers at 1 (0.64 and 0.40 s before, 0.97
+and 0.70 now: the chain to its end); the 280 refused 8.5, 8.7 s and 12.3,
+12.4 s -- the setback tried at its all-chamfered corners.
+
+**Validation** (on Linux): fillet PASS=944 (935 + these 9) + 1 XFAIL at
+fix levels 0 and 4; boolean 111, draft 105; FreeCAD's Python suite 4388
+OK. Not run: thickness (TKFillet alone changed), macOS, the 29 issue
+models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

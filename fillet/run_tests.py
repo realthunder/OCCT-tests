@@ -3593,6 +3593,33 @@ for _name, _shape, _es, _d, _vol in (
         ("issue962_f_tooth_upright_and_foot", _arm962f, [54, 92], 0.3, 11582.9343)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# A sharp edge at a corner taken over by an arc it never reaches (fix
+# level 4). Where a stripe's end lies on another arc than the sharp edge
+# beside it, the corner carries the edge on along that arc if the two are in
+# line at their common vertex; the angle was a straight one until measured,
+# and measured only where there is a common vertex. #962's tooth, a vertex of
+# four edges, its top edge and the short foot of the next face chamfered (or
+# filleted): the upright two faces down the wall took the top's place, and
+# the chamfers were refused (the fillets made with a patch 0.22 off at 1).
+# Each result here is the two edges alone put together, to the fourth
+# decimal. #474's coil, chamfered at 1 at its block (E5 with E20): refused
+# before, the two alone put together now within 0.15 (a cube of the size).
+for _name, _shape, _es, _d, _vol, _ch in (
+        ("issue962_tooth_top_and_foot", _arm962c, [48, 72], 0.3, 11698.4657, True),
+        ("issue962_tooth_top_and_foot", _arm962c, [48, 72], 1, 11704.9864, True),
+        ("issue962_f_tooth_top_and_foot", _arm962f, [51, 80], 0.3, 11584.7733, True),
+        ("issue962_f_tooth_top_and_foot", _arm962f, [51, 80], 1, 11591.2940, True),
+        ("issue962_tooth_top_and_foot", _arm962c, [48, 72], 0.3, 11698.0625, False),
+        ("issue962_tooth_top_and_foot", _arm962c, [48, 72], 1, 11700.4235, False),
+        ("issue474_coil_upright_and_rim", sweep_shape("issue474_Fillet"), [5, 20], 1, 1752.9626,
+         True)):
+    fillet_case("%s_%s_%s_%g" % (_name, "chamfer" if _ch else "fillet",
+                                 "_".join("e%d" % e for e in _es), _d), _shape, _es, _d, "pass",
+                _vol, chamfer=_ch, vol_tol=1e-3, bop=True, fix_level=None if _ch else 4)
+# The fillets below level 4 as they were: #962's tooth, top and foot at 1
+for _lvl, _vol in ((0, 11700.2045), (3, 11700.2045)):
+    fillet_case("issue962_tooth_top_and_foot_fillet_e48_e72_1_level%d" % _lvl, _arm962c, [48, 72],
+                1, "pass", _vol, vol_tol=1e-3, fix_level=_lvl)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the
