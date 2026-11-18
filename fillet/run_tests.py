@@ -3620,6 +3620,24 @@ for _name, _shape, _es, _d, _vol, _ch in (
 for _lvl, _vol in ((0, 11700.2045), (3, 11700.2045)):
     fillet_case("issue962_tooth_top_and_foot_fillet_e48_e72_1_level%d" % _lvl, _arm962c, [48, 72],
                 1, "pass", _vol, vol_tol=1e-3, fix_level=_lvl)
+# A stripe's end on an arc that does not meet the sharp edge beside it (fix
+# level 4). That arc's parameter was taken as the edge's: #273's handle, two
+# chamfers at 0.3 at a vertex of four edges (E24 with E30), the edge cut 7.86
+# along its 8.03 -- valid, a vertex of 698, 317 of 600 points about the
+# vertex on the wrong side; #309's (E15 with E21, 34 of 600); #962's shelf
+# (E66 with E117 at 1). The point's projection onto the edge is taken, or a
+# cut as far from the vertex as the point where it projects off the edge.
+# Each within 0.6 cubes of the size of the two alone put together, as a
+# plate's corner is.
+for _name, _shape, _es, _d, _vol in (
+        ("issue273_handle_far_arc", sweep_shape("issue273_Fillet"), [24, 30], 0.3, 8559.1135),
+        ("issue309_far_arc", sweep_shape("issue309_shape"), [15, 21], 0.3, 12760.7496),
+        ("issue309_far_arc", sweep_shape("issue309_shape"), [15, 21], 1, 12734.2306),
+        ("issue962_f_shelf_far_arc", _arm962f, [66, 117], 1, 11582.2268),
+        ("issue962_f_shelf_far_arc", _arm962f, [68, 120], 1, 11582.2254),
+        ("issue309_far_arc", sweep_shape("issue309_shape"), [1, 2], 1, 12735.2365)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, fix_level=4)
 # The chamfer's setback fallback. A fillet whose corner fails is made again
 # with that corner set back and closed by one patch (ComputeSetbackFallback);
 # a chamfer was left refused. #273's Fillet001, a rim of the pocket in the
@@ -3686,8 +3704,18 @@ for _name, _shape, _es, _d, _vol in (
         # (refused until now: by the corner of several edges vertices of
         # 0.23, set back 0.007)
         ("mini_slot_split_short_piece", sweep_shape("mini_slot_split"), [9, 16], 1, 1120.7760)):
+    # Three of them are built valid from level 4 (the stripe's end on an
+    # arc that does not meet the sharp edge, below): as they were at level 3
+    _built = {(68, 69): 11698.1914, (76, 77): 11584.4990, (1, 2): 12760.8400}
+    _moved = (_name.startswith("issue962_invalid") or _name.startswith("issue309_invalid")) \
+        and tuple(_es) in _built and _d == 0.3
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
-                _d, "pass", _vol, chamfer=True, vol_tol=0.3 if _es == [48, 64] else 1e-3, bop=True)
+                _d, "pass", _vol, chamfer=True, vol_tol=0.3 if _es == [48, 64] else 1e-3, bop=True,
+                fix_level=3 if _moved else None)
+    if _moved:
+        fillet_case("%s_chamfer_%s_%g_level4" % (_name, "_".join("e%d" % e for e in _es), _d),
+                    _shape, _es, _d, "pass", _built[tuple(_es)], chamfer=True, vol_tol=1e-3,
+                    bop=True, fix_level=4)
 # Not where the plate made two corners -- the sound one is set back with
 # the other (#474's coil, E17 with E20 at 0.3: 5.8 cubes of the chamfer's
 # size less than the two edges alone put together, up to 13 sizes from the

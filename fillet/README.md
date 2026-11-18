@@ -7363,7 +7363,17 @@ corners at 0.3, on both coil inputs (1.8 cubes off the chamfered edges
 alone put together, 8 of 600 points; the ones at 1 the suite has are
 2.4 off, 12 of 600). Fillets at level 4: the tooth's 16, each now the two
 alone put together (0.0054 off at 0.3 and 0.22 at 1 before); at level 0
-none. Of the 125 pairs refused, 18 are made.
+none. Of the 125 pairs refused, 18 are made: 107 are left.
+
+The suite's own lines at level 4 (missed at first -- the cases pin no
+volume, and only the count of failures was compared; found by the macOS
+run): `slot_by_slope_floor_inline_r0.75` to `_r1.2` (six) and
+`issue962_floor_corner_y13.7_floor_inline_r1`, `_y17.1_` moved, each to
+the volume of the same corner on the shape refined, to the fourth
+decimal (938.7758, 938.9531, 939.1421, 939.3429, 939.7800, 940.7970;
+11586.7311, 11586.7246), from 0.10 to 0.38 off it. They are the tooth's
+geometry. After a kernel change the suite's `vol=` lines are compared
+with the build before, not its failures alone.
 
 **What it costs.** Every pair at the vertices of #962's Chamfer input,
 two rounds by turns against the build before: the 2548 made 74.6, 74.6
@@ -7377,6 +7387,72 @@ and 0.70 now: the chain to its end); the 280 refused 8.5, 8.7 s and 12.3,
 fix levels 0 and 4; boolean 111, draft 105; FreeCAD's Python suite 4388
 OK. Not run: thickness (TKFillet alone changed), macOS, the 29 issue
 models.
+
+## A stripe's end on an arc that misses the sharp edge (`09df371ba1`, fix level 4, 2026-11-18)
+
+**Where it was met.** Parked beside the fix above: the tooth's upright
+gave its parameter, 23.45, to an edge of 3.5 to 6.9.
+
+**The bug.** Where the corner cuts a sharp edge back to a stripe's
+common point (`PerformMoreThreeCorner`, "it is attempted to limit the
+edge by a commonpoint"), the point's parameter on its arc is taken as the
+edge's -- whatever arc. On an arc that does not meet the edge it is no
+place on it. #273's handle, E24 with E30 chamfered at 0.3 at a vertex of
+four edges: the edge cut 7.86 along its 8.03, the result valid with a
+vertex of 698, and 317 of 600 random points about the vertex on the
+wrong side. #309's E15 with E21 (34 of 600), #962's shelf E66 and E67
+with E117 and E118 (21, 17, 8) and a split slot (12): valid and wrong.
+
+**The fix.** From fix level 4 such a point gives the edge its
+projection (`ParOnSharp`); where it projects off the edge -- the stripe's
+line ran on past the vertex -- the edge is cut as far from the vertex as
+the point is.
+
+**Tried, not kept.** The point refused: it lost #474's E5 with E20 and
+two of #962's, and turned the tooth's corners, exact, into a plate
+0.096 off at 1. The vertex where it projects off the edge (no cut): the
+corners 0.15 cubes nearer on eight results, and two made chamfers of
+#962 lost (E68 with E120 and with E122 at 1, the old parameter by chance
+a fair cut). The old parameter there: the two back, the wrong ones wrong.
+
+**The cases** (`run_tests.py`, level 4):
+
+| Case | Volume |
+|------|--------|
+| `issue273_handle_far_arc_chamfer_e24_e30_0.3` | 8559.1135 (8549.1913, wrong) |
+| `issue309_far_arc_chamfer_e15_e21_0.3`, `_1` | 12760.7496, 12734.2306 (12669.7739, 12572.1870, wrong) |
+| `issue962_f_shelf_far_arc_chamfer_e66_e117_1` | 11582.2268 (11580.1831, wrong) |
+| `issue962_f_shelf_far_arc_chamfer_e68_e120_1` | 11582.2254 (11582.2346) |
+| `issue309_far_arc_chamfer_e1_e2_1` | 12735.2365 (refused) |
+| `issue962_invalid_corner_set_back_chamfer_e68_e69_0.3_level4`, `_e76_e77_`, `issue309_..._e1_e2_0.3_level4` | 11698.1914, 11584.4990, 12760.8400: built valid now; as they were at level 3 |
+
+**What it moved.** The sweeps at levels 0 and 4, every edge and every
+vertex. Chamfers at level 4: 9 made (#309's five at 1, four of #962's
+shelf at 1), none lost, 70 moved. Against the two alone put together,
+in cubes of the size and by 600 random points: the wrong ones right
+(above); the rest 0.25 to 0.6 before and after, 6 of them 0.05 or more
+further (the furthest #273's E23 with E30, 0.33 to 0.60) and 13 nearer
+(three more have no sound reference: a split slot's, BOP's cut failing).
+Where BOP fails on #962 (a cut of the whole solid), 20000 random points
+within six sizes of the vertex: nothing moved beyond 0.94 of the edges,
+as before. Fillets at level 4: 4 moved, three nearer (0.107 to 0.019)
+and `mini_mini_wall`'s 0.019 to 0.054. Level 0: the 9, made by the
+retry at the latest level; nothing else. Edges: nothing. Of the 107
+pairs refused 9 are made: 98 are left
+(`wip/chamfer-pairs-refused-2026-11-18.txt`).
+
+**What it costs.** Nothing: every pair at the vertices, two rounds by
+turns against the build before -- #962's 2564 made 76.2, 75.7 s and
+74.3, 74.5 s, its 396 refused 28.9, 28.9 and 30.2, 29.4 s; #309's 594
+made 10.0, 10.2 and 9.7, 9.3 s, its 70 refused 3.6, 3.8 and 1.5, 1.5 s;
+#273's 468 made 19.4, 20.0 and 19.5, 19.1 s, its 100 refused 2.8, 2.8
+and 2.9, 2.8 s.
+
+**Validation** (on Linux): fillet PASS=953 (944 + these 9) + 1 XFAIL at
+fix levels 0 and 4, the `vol=` lines of level 0 all as before and three
+moved at level 4 (the cases above); boolean 111, draft 105; FreeCAD's
+Python suite 4388 OK. Not run: thickness (TKFillet alone changed),
+macOS, the 29 issue models.
 
 ## Known broken (XFAIL)
 
