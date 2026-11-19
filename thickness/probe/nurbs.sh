@@ -12,11 +12,13 @@ O=$1
 mkdir -p $O/home
 PRE=""
 [ -n "$LIBN" ] && PRE="$LIBN/libTKOffset.so.8.0.1"
+# macOS has no timeout(1), and its bash no wait -n
+if command -v timeout > /dev/null 2>&1; then LIMIT="timeout 3000"; else LIMIT="perl -e alarm(shift);exec(@ARGV) 3000"; fi
 export FREECAD_USER_HOME=$O/home MALLOC_ARENA_MAX=8 OPENBLAS_NUM_THREADS=1
 for m in shapes shapes2 shapes3; do
     for n in $(python3 -c "import re; print(' '.join(re.findall(r'\"([a-z0-9_]+)\":', open('$HERE/$m.py').read().split('SHAPES = {')[1])))"); do
-        while [ $(jobs -r | wc -l) -ge 8 ]; do wait -n; done
-        ( MOD=$m SHAPE=$n OUT=$O/$m.$n.txt timeout 3000 $RUN env LD_PRELOAD="$PRE" \
+        while [ $(jobs -r | wc -l) -ge 8 ]; do sleep 1; done
+        ( MOD=$m SHAPE=$n OUT=$O/$m.$n.txt $LIMIT $RUN env LD_PRELOAD="$PRE" \
             $FCBUILD/bin/FreeCADCmd $HERE/nurbs.py > $O/$m.$n.log 2>&1 ) &
     done
 done
