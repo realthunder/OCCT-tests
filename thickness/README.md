@@ -4521,6 +4521,119 @@ and the four of the first corner failing on the library of before;
 boolean 111, draft 105, fillet 919 + 1 XFAIL; FreeCAD's Python suite
 4388 OK (`82896672ef`). Not run: the 29 issue models, macOS.
 
+## #613: the long blends at 1, two tubes cut by each other (`800e939eaa`, 2026-11-19, sec 88)
+
+**Where it was met.** Sec 75's list of what is left of the corpus on
+#613's part: the long blends (faces 2, 6 and 12), each removed alone at 1
+with the Arc join, either way, refused.
+
+**What was broken.** A long blend is 3.21 wide at its ends and 1.75 at
+its lowest point. Removed, it is closed by a tube round each of its
+edges, and each tube's edge on the blend runs one thickness inside the
+blend's own edge. At 1, over the middle third of the blend, the two long
+tubes' edges have passed each other: each lies under the other tube. A
+tube is cut by the tubes it meets at a vertex and by the removed face,
+and by nothing else, so the two went through each other. The first
+attempts lost every offset and were refused (the removed face's rims
+alone were left); the last attempt of sec 75 made a solid that is valid
+and through itself, which is not taken. From fix level 5 the two tubes
+are found before anything is built and the thickness refused for that
+(sec 78).
+
+**The fix.** Two tubes of one removed face that share no vertex and pass
+through each other are found at every level now (`ToContext`, the test
+of sec 78: a point of one tube's edge on the removed face, on that face
+and not under a neighbour's tube, nearer than the thickness to the other
+tube's edge). Found, they send a refused thickness to its last attempt,
+and there each is cut by the other (`Intersection3D`, the two tubes'
+faces intersected as two neighbours' are). The rims then close over the
+middle of the blend and the solid opens at its two ends. From level 5
+the last attempt refuses where the two tubes have no section. After a
+refusal only: what had an answer keeps it, at every level.
+
+**Not made: a removed face the rims close over altogether.** The blends
+up to the ridge (faces 17 and 20) are 1.8 wide all along. With their two
+tubes cut by each other the answer at 1 is the part hollow, the removed
+face back whole, with no way in: valid, sound, right at every point read
+(2822 to 2933 points each), and not a thick solid of the face removed.
+The last attempt does not take an answer made with two tubes cut that
+opens through none of the removed faces (`OpensNowhere`, sec 79's test).
+Refused, as before; two cases hold that.
+
+**The results** (`run_tests.py`, `issue613_blend_f<face>_<way>1` at the
+suite's level, 3 at most, and `_level4`):
+
+| Removed | Offset | Up to level 3 | Level 4 |
+|---------|--------|---------------|---------|
+| face 12, the long blend on the left | 1, -1 | 7368.7620, 6744.6532 | 7398.6431, 6769.6442 |
+| face 2, half the long blend on the right | 1, -1 | 7411.4308, 6761.4043 | 7441.3026, 6786.3975 |
+| face 6, its other half | 1, -1 | 7411.4368, 6761.3972 | 7441.3063, 6786.3943 |
+
+All valid, one shell, and nowhere through themselves (BOP's check). Each
+is read by points at level 4: 4000 about the removed face (6000 for face
+12 outward) and, for face 12, 3000 over the whole part, each in the wall
+exactly where it is on the right side of the part and nearer than the
+thickness to a face that stays. Not a point wrong.
+
+**One edge.** Face 2 removed 1 outward: an edge 2.12 long at the blend's
+end, where the corner blend's tubes meet, lies 9.6e-5 off one of its
+pcurves under a tolerance of 2.8e-5, at one end. BRepCheck takes it,
+BOP's check names it (`BOPAlgo_InvalidCurveOnSurface`), as it does one
+edge of face 6 at 0.5 inward (sec 75). Its mirror image (face 6) has
+none, nor have face 12's two. Not an edge of the new section.
+
+**What is left of the corpus' 168 on #613's part.** With the Arc join 16
+of 84 refused:
+
+- *The blends up to the ridge (faces 17, 20) at 1*, either way: the
+  sealed answer above. Four runs.
+- *The blends beside the top (faces 5, 9, 10, 13), outward*, at 0.5 and
+  at 1: eight runs. The corner between a tube and the top's rounded edge
+  is a piece of sphere whose arc on the removed face is not found
+  (`TangentCornerNoArc`). Traced now: the arc runs from the tube's foot
+  up to one thickness above the blend's top edge, and leaves the blend's
+  surface at its 6th to 8th point of 21 -- the B-spline ends there (u
+  from 0 to 4.1151, the face's whole range, and the removed face's image
+  has the same bounds: it is not carried on). It wants the removed
+  face's surface extended by the thickness and the arc built on the
+  extension.
+- *The cone (face 1)*: four runs. Its edge with the top is two arcs
+  0.022 long, at the end of a tongue of the cone 0.022 wide and 3 long
+  between the blends beside the top: the two tubes there pass through
+  each other from end to end. And where a long blend meets a corner
+  blend the cone's boundary turns by 1.32 deg: the two tubes' ends on
+  the cone lie 0.006 apart (0.5 inward), and one of the two tubes comes
+  out a sliver of 0.006. With the tubes of the tongue
+  cut by each other and the ends shared (tried) the cone's own rim still
+  comes out wrong (914.7 for a band of some 85). Not solved.
+
+With the Intersection join 76 of 84, as they were.
+
+**What it moved.** 6 lines of the corpus at level 0 and the same 6 at
+level 4, from refused to made (`corpus/baseline.txt`,
+`corpus/baseline_level4.txt`). At level 5, 12 runs of the scan
+(`probe/scan.py`, the first set): a tube with its rim filleted at 1, a
+fillet removed 1.05 to 1.30 inward, refused there since sec 78 and made
+at level 0 all along -- made now with the volumes of level 0 (1445.6753
+to 1729.6753), and two of them read by 3946 and 3953 points over the
+whole part at both levels, none wrong. The scan's first set at level 5
+now: 11821 made, 1614 refused, 5 invalid. Nothing else: not a case line
+of the suites at levels 0, 3 frozen, 4 and 5, not a line of the sweep
+(levels 0 and 5), of the probe's two sets (levels 0 and 5), of the scan's
+three sets at level 0 or its other two at level 5, of the bench of sec
+82.
+
+**What it costs.** The 85 thicknesses of sec 86, with and without by
+turns, twice, three passes each: 3.70 to 4.15 s without and 3.65 to 4.08
+s with -- nothing to measure.
+
+**Validation** (on Linux): thickness PASS=940 (926 + these 14) at level
+0, at level 3 frozen, at level 4 and at level 5, the 926 as they were
+line for line and the twelve of the long blends failing on the library
+of before; boolean 111, draft 105, fillet 962 + 1 XFAIL, the same line
+for line; FreeCAD's Python suite 4388 OK (`67936c97e3`). Not run: the 29
+issue models, macOS.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

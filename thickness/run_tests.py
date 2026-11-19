@@ -939,6 +939,27 @@ for face, value, vol3, vol4 in ((2, 0.5, 3614.0645, 3628.3739), (2, -0.5, 3453.1
                    fix_level=_LEVEL3)
     thickness_case(tag + "_level4", issue613, [face], value, "pass", vol4, fix_level=4,
                    max_gap=5e-4)
+# Sec 88: the long blends at 1. They are 3.21 wide at their ends and 1.75 in
+# the middle, so that over the middle third the two rims overlap and the two
+# long tubes pass through each other; nothing cut a tube by one that is not
+# its neighbour, and the answer -- valid, through itself -- was not taken
+# (sec 75). In the last attempt such tubes are cut by each other: the rims
+# close over the middle of the blend and the solid opens at its two ends.
+for face, value, vol3, vol4 in ((12, 1.0, 7368.7620, 7398.6431), (12, -1.0, 6744.6532, 6769.6442),
+                                (2, 1.0, 7411.4308, 7441.3026), (2, -1.0, 6761.4043, 6786.3975),
+                                (6, 1.0, 7411.4368, 7441.3063), (6, -1.0, 6761.3972, 6786.3943)):
+    tag = "issue613_blend_f%d_%s%g" % (face, "out" if value > 0 else "in", abs(value))
+    thickness_case(tag, issue613, [face], value, "pass", vol3, loose_ok=0.03 * abs(value),
+                   fix_level=_LEVEL3)
+    thickness_case(tag + "_level4", issue613, [face], value, "pass", vol4, fix_level=4,
+                   max_gap=5e-4)
+# The blends up to the ridge are 1.8 wide all along: at 1 the rims close over
+# the whole of them, and with the tubes cut by each other the answer is the
+# part hollow with no way in -- valid, sound, and not what was asked. Refused
+# still.
+for value in (1.0, -1.0):
+    own_refusal_case("issue613_ridge_blend_f17_%s%g_sealed_refused" % (
+        "out" if value > 0 else "in", abs(value)), issue613, [17], value, False, 0, fix_level=4)
 # The cylinder under the cone removed: the bottom is left a piece of its own,
 # a disc of the thickness, and the cone's edge with the cylinder, 1.5 deg off
 # tangent, is closed by a tube in the last attempt -- the cone's offset

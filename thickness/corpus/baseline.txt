@@ -896,17 +896,17 @@ spindle off -0.5 j1 | done valid 1 faces 1 area 243.8422
 spindle thk f1 -0.5 j1 | not done
 t613 off 1 j0 | done valid 1 faces 30 area 7805.7550
 t613 thk f1 1 j0 | not done
-t613 thk f2 1 j0 | not done
+t613 thk f2 1 j0 | done valid 1 solids 1 vol 7411.4308
 t613 thk f3 1 j0 | done valid 1 solids 2 vol 6326.8233
 t613 thk f4 1 j0 | done valid 1 solids 1 vol 7451.2254
 t613 thk f5 1 j0 | not done
-t613 thk f6 1 j0 | not done
+t613 thk f6 1 j0 | done valid 1 solids 1 vol 7411.4368
 t613 thk f7 1 j0 | done valid 1 solids 1 vol 7195.9901
 t613 thk f8 1 j0 | done valid 1 solids 1 vol 7451.2253
 t613 thk f9 1 j0 | not done
 t613 thk f10 1 j0 | not done
 t613 thk f11 1 j0 | done valid 1 solids 1 vol 7451.2691
-t613 thk f12 1 j0 | not done
+t613 thk f12 1 j0 | done valid 1 solids 1 vol 7368.7620
 t613 thk f13 1 j0 | not done
 t613 thk f14 1 j0 | done valid 1 solids 1 vol 7451.2691
 t613 thk f15 1 j0 | done valid 1 solids 1 vol 6773.6378
@@ -918,17 +918,17 @@ t613 thk f20 1 j0 | not done
 t613 thk f21 1 j0 | done valid 1 solids 1 vol 6773.6496
 t613 off -1 j0 | done valid 1 faces 21 area 6449.6072
 t613 thk f1 -1 j0 | not done
-t613 thk f2 -1 j0 | not done
+t613 thk f2 -1 j0 | done valid 1 solids 1 vol 6761.4043
 t613 thk f3 -1 j0 | done valid 1 solids 2 vol 5941.9857
 t613 thk f4 -1 j0 | done valid 1 solids 1 vol 6774.4527
 t613 thk f5 -1 j0 | done valid 1 solids 1 vol 6774.2630
-t613 thk f6 -1 j0 | not done
+t613 thk f6 -1 j0 | done valid 1 solids 1 vol 6761.3972
 t613 thk f7 -1 j0 | done valid 1 solids 1 vol 6681.4497
 t613 thk f8 -1 j0 | done valid 1 solids 1 vol 6774.4527
 t613 thk f9 -1 j0 | done valid 1 solids 1 vol 6774.2630
 t613 thk f10 -1 j0 | done valid 1 solids 1 vol 6774.2630
 t613 thk f11 -1 j0 | done valid 1 solids 1 vol 6774.4680
-t613 thk f12 -1 j0 | not done
+t613 thk f12 -1 j0 | done valid 1 solids 1 vol 6744.6532
 t613 thk f13 -1 j0 | done valid 1 solids 1 vol 6774.2630
 t613 thk f14 -1 j0 | done valid 1 solids 1 vol 6774.4680
 t613 thk f15 -1 j0 | done valid 1 solids 1 vol 6096.2692
