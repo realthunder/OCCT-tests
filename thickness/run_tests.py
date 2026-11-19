@@ -968,6 +968,30 @@ for value in (1.0, -1.0):
 for value, upper in ((0.5, 2293.6306), (-0.5, 2197.8106), (1.0, 4736.4219), (-1.0, 4351.5662)):
     pieces_case("issue613_cylinder_%s%g" % ("out" if value > 0 else "in", abs(value)), issue613,
                 [3], value, [upper, math.pi * 22.5 ** 2 * abs(value)])
+# Sec 89: the same solids as B-splines (Shape.toNurbs). Refused, each of
+# them, where the solid in analytic form is made: the thick solid is asked
+# of the analytic twin after a refusal (BRepOffset_Tool::AnalyticTwin). The
+# volumes are those of the analytic shapes.
+sys.path.insert(0, os.path.join(HERE, "probe"))
+import shapes as _probe1  # noqa: E402
+import shapes3 as _probe3  # noqa: E402
+for _mod, _name, _face, _value, _vol in (
+        (_probe3, "chamfer_2x2", 1, 0.5, 992.6323), (_probe3, "chamfer_2x2", 1, -0.5, 918.0083),
+        (_probe1, "stadium", 2, 0.5, 523.8603), (_probe1, "stadium", 2, -0.5, 464.2097),
+        (_probe1, "stadium", 7, 0.5, 561.5438), (_probe1, "stadium", 7, -0.5, 495.9301),
+        (_probe1, "box_all12", 6, 0.5, 1037.1089), (_probe1, "box_all12", 6, -0.5, 950.1744),
+        (_probe1, "capsule", 2, 0.5, 250.1816), (_probe1, "capsule", 2, -0.5, 216.6554)):
+    thickness_case("nurbs_%s_f%d_%s%g" % (_name, _face, "out" if _value > 0 else "in", abs(_value)),
+                   _mod.SHAPES[_name]().toNurbs(), _face, _value, "pass", _vol)
+# A flat side of a box with its uprights filleted, as B-splines, removed
+# outward: invalid with the right volume, the side's edge with the top cut
+# in three on the rim and whole on the top -- which is offset through a
+# plane (IsPlanar) and has its rebuilt image under that.
+_nurbs_filletbox = Part.makeBox(10, 8, 6)
+_nurbs_filletbox = _nurbs_filletbox.makeFillet(
+    1.5, [_nurbs_filletbox.Edges[i] for i in (0, 2, 4, 6)]).toNurbs()
+thickness_case("nurbs_filletbox_side_out", _nurbs_filletbox, 1, 0.5, "pass", 182.3593)
+thickness_case("nurbs_filletbox_top_out", _nurbs_filletbox, 6, 0.5, "pass", 175.5739)
 filletbox25 = Part.makeBox(10, 8, 6)
 filletbox25 = filletbox25.makeFillet(2.5, [filletbox25.Edges[i] for i in (0, 2, 4, 6)])
 thickness_case("filletbox25_fillet_join_in",  filletbox25, 3, -1.0, "pass", 258.4221, False, 2)

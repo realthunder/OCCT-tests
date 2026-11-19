@@ -4634,6 +4634,111 @@ of before; boolean 111, draft 105, fillet 962 + 1 XFAIL, the same line
 for line; FreeCAD's Python suite 4388 OK (`67936c97e3`). Not run: the 29
 issue models, macOS.
 
+## The same solid as B-splines: its analytic twin (`39fe3506da`, `cd3a8ab47e`, 2026-11-19, sec 89)
+
+**Where it was met.** A box of 10 x 8 x 6 with its uprights filleted,
+turned to B-splines (`Shape.toNurbs`), a flat side removed 0.5 outward
+with the Arc join: invalid, where the box as it is comes out right. The
+same solid, the same thick solid -- and a solid comes to be B-splines
+easily: scaled unevenly, transformed, or read from a file written so.
+
+**A bench** (`probe/nurbs.py`, `probe/nurbs.sh`): the 47 shapes of the
+probe (`shapes.py`, `shapes2.py`, `shapes3.py`) turned to B-splines,
+every face removed 0.5 either way with the Arc join, each run held
+against the same run on the shape as it is. 914 runs; in 67 the analytic
+run is no reference. Of the other 847, at level 0: 388 the same volume,
+457 refused and 2 invalid, with the first fix here in. Most shapes with
+a cylinder are refused whole, and polyhedra too: a box with its top
+edges chamfered has 16 runs of 20 refused.
+
+**What was broken, the invalid ones** (`39fe3506da`). A face whose
+B-spline surface is a plane is offset through a twin on that plane
+(`IsPlanar`, upstream's), and where an edge it shares with a removed
+face is cut -- by the ends of the tubes round the removed face's other
+edges -- the face rebuilt with the pieces is the twin's image. The thick
+solid is put together of the shape's faces and their images, the image
+looked up under the face itself: the B-spline face went in as it was,
+its edge whole beside the rim's three pieces, and the solid had free
+edges. The image is looked up under the twin.
+
+**What was broken, the refused ones.** Not one thing. A tube round an
+edge whose line is a B-spline is swept along it and comes out a B-spline
+(`GeomFill_Pipe`), not a cylinder, and its sections with the offsets
+beside it are found by approximation. The one traced: the box with its
+top edges chamfered, a side removed 0.5 outward -- the tube between two
+chamfers that ends at the removed side has three edges free, the two
+chamfers' offsets have the same edges as others, free too, and every
+offset is dropped. The paths a B-spline takes through the offset are
+made for surfaces that are no plane or cylinder; the same solid in
+analytic form takes the others.
+
+**The fix** (`cd3a8ab47e`). `BRepOffset_Tool::AnalyticTwin` makes the
+solid again in analytic form: each face whose B-spline or Bezier surface
+is a plane, a cylinder, a cone, a torus or a sphere to 1e-7 on that
+surface, each edge between such faces whose curve is a line or a circle
+on that curve, the pcurves made anew. A cylinder's, cone's, torus' or
+sphere's seam is put where the face has its seam edge, or away from the
+face where it has none; a sphere's axis through the pole the face has a
+degenerated edge at; a torus only for a face within one turn round its
+tube. The twin is taken where it is valid and has the solid's volume and
+area to 1e-6 of them. No face to convert, no twin.
+
+`MakeThickSolid` makes the thick solid of the shape as given
+(`MakeThickSolidAsGiven`, what it was), and, refused or invalid, of the
+twin; the twin's answer is taken where it is valid and nowhere through
+itself, its images given back under the faces and edges of the shape
+given (`TakeThickSolidOf`, what a solid split or joined was taken by
+already). After a refusal or an invalid answer only: what had a
+valid answer keeps it, at every level. The faces of such an answer that
+stay are the twin's, analytic.
+
+**The bench now**, at level 0 and at level 5 alike: 845 the same volume
+as the analytic run, 2 refused, none invalid, none of another volume.
+The two: a wedge with a fillet, its slope removed outward, and the
+enclosure of sec 87, one of its upright fillets removed outward -- the
+twin is made, and its own thick solid is refused (the wedge's) or not sound
+(the enclosure's), where the shape as modelled is right.
+A twin has its seams and axes where the conversion puts them. Not
+traced.
+
+**The cases** (`run_tests.py`; `nurbs_<shape>_f<face>_<way><value>`, the
+probe's shapes as B-splines, each with the analytic shape's volume):
+
+| Case | Volume | Before |
+|------|--------|--------|
+| `nurbs_chamfer_2x2_f1_out0.5`, `_in0.5` (all planes) | 992.6323, 918.0083 | refused |
+| `nurbs_stadium_f2_out0.5`, `_in0.5` (a cylinder removed) | 523.8603, 464.2097 | refused |
+| `nurbs_stadium_f7_out0.5`, `_in0.5` (a torus removed) | 561.5438, 495.9301 | refused |
+| `nurbs_box_all12_f6_out0.5`, `_in0.5` (a corner's sphere removed) | 1037.1089, 950.1744 | refused |
+| `nurbs_capsule_f2_out0.5`, `_in0.5` (half a sphere removed) | 250.1816, 216.6554 | refused |
+| `nurbs_filletbox_side_out`, `nurbs_filletbox_top_out` (the first fix) | 182.3593, 175.5739 | invalid, the same volume |
+
+No picture: each is its analytic twin's solid.
+
+**What it moved.** Nothing made before: not a case line of the suites
+at levels 0, 3 frozen, 4 and 5, not a line of the corpus (levels 0 and
+4), of the sweep (levels 0 and 5), of the probe's two sets, of the
+scan's three (levels 0 and 5), of the bench of sec 82 -- with either
+commit. #613's part has B-spline faces that are analytic, and so a twin;
+its refusals stay refusals.
+
+**What it costs.** The 85 thicknesses of sec 86, with and without by
+turns, twice, three passes each: 3.42 to 4.30 s without and 3.67 to 4.25
+s with -- nothing to measure, 81 of them being made. A refusal of a
+shape that has a twin is asked a second time: #613's part, each of its
+21 faces removed 1 outward with the Intersection join (19 refused), with
+and without by turns, twice, two passes each: 17.04 to 17.72 s without
+and 26.83 to 27.34 s with. Making the twin is 0.035 s of each.
+
+**Validation** (on Linux): thickness PASS=952 (940 + these 12) at level
+0, at level 3 frozen, at level 4 and at level 5, the 940 as they were
+line for line; the ten twin cases failing with the first fix alone, and
+the two of the box with its uprights filleted too on the library before
+it. Boolean 111, draft 105, fillet 962 + 1 XFAIL, the same line for
+line; FreeCAD's Python suite 4388 OK (`67936c97e3`). The first fix was
+gated on its own, the same gate, nothing moved. Not run: the 29 issue
+models, macOS.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
