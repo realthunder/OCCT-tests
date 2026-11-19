@@ -906,7 +906,7 @@ t613 thk f8 1 j0 | done valid 1 solids 1 vol 7481.0829
 t613 thk f9 1 j0 | not done
 t613 thk f10 1 j0 | not done
 t613 thk f11 1 j0 | done valid 1 solids 1 vol 7481.1316
-t613 thk f12 1 j0 | done valid 1 solids 1 vol 7398.6431
+t613 thk f12 1 j0 | done valid 1 solids 1 vol 7399.3349
 t613 thk f13 1 j0 | not done
 t613 thk f14 1 j0 | done valid 1 solids 1 vol 7481.1316
 t613 thk f15 1 j0 | done valid 1 solids 1 vol 6803.5011
@@ -928,7 +928,7 @@ t613 thk f8 -1 j0 | done valid 1 solids 1 vol 6799.4308
 t613 thk f9 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f10 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f11 -1 j0 | done valid 1 solids 1 vol 6799.4462
-t613 thk f12 -1 j0 | done valid 1 solids 1 vol 6769.6442
+t613 thk f12 -1 j0 | done valid 1 solids 1 vol 6772.1238
 t613 thk f13 -1 j0 | done valid 1 solids 1 vol 6799.2378
 t613 thk f14 -1 j0 | done valid 1 solids 1 vol 6799.4462
 t613 thk f15 -1 j0 | done valid 1 solids 1 vol 6121.2553

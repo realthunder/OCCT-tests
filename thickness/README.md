@@ -4565,7 +4565,7 @@ suite's level, 3 at most, and `_level4`):
 
 | Removed | Offset | Up to level 3 | Level 4 |
 |---------|--------|---------------|---------|
-| face 12, the long blend on the left | 1, -1 | 7368.7620, 6744.6532 | 7398.6431, 6769.6442 |
+| face 12, the long blend on the left | 1, -1 | 7369.4553, 6747.1344 | 7399.3349, 6772.1238 |
 | face 2, half the long blend on the right | 1, -1 | 7411.4308, 6761.4043 | 7441.3026, 6786.3975 |
 | face 6, its other half | 1, -1 | 7411.4368, 6761.3972 | 7441.3063, 6786.3943 |
 
@@ -4574,6 +4574,29 @@ is read by points at level 4: 4000 about the removed face (6000 for face
 12 outward) and, for face 12, 3000 over the whole part, each in the wall
 exactly where it is on the right side of the part and nearer than the
 thickness to a face that stays. Not a point wrong.
+
+**Face 12 was wrong as first pushed** (`c7ac0b7073`, the same day). The
+two tubes were cut by each other and the loops left to choose the
+pieces. They keep them all: every edge of a piece within the other tube
+is shared, the section by the four pieces of the two tubes, and no face
+of the rim is made between the tubes' two edges on the removed face.
+The solid was valid, nowhere through itself by BOP's check, and had a
+groove along the middle of its rim down to the section, the section on
+four faces: 7368.7620 and 6744.6532 (7398.6431 and 6769.6442 at level
+4), short of the wall by the groove. The 6000 points of the first
+reading did not meet it; read by points within 0.7 of the removed face,
+4 of 541 were wrong inward. It was seen in the picture, where an edge
+not used once each way is drawn red. Now, after the faces are made, a
+piece of one tube with a point nearer than the thickness to the other
+tube's edge is dropped and the rim closed between the edges the dropped
+pieces had on the removed face (left as it was where that face cannot
+be made). The volumes in the table are the new ones; every edge is on
+two faces (`issue613_blend_f12_out1_two_faces_an_edge`, `_in1_`,
+failing before), and 541 and 394 points about the removed face read
+right. Faces 2 and 6, where the tubes cross once at the blend's end,
+had no such edge and are as they were.
+
+![issue613_blend_f12_out1](models/pictures/issue613_blend_f12_out1.png)
 
 **One edge.** Face 2 removed 1 outward: an edge 2.12 long at the blend's
 end, where the corner blend's tubes meet, lies 9.6e-5 off one of its
@@ -4714,6 +4737,17 @@ A case holds the shaft refused
 frozen, 4 and 5 before the case, every line as it was. The gate was not
 run again whole: with the twin it had not a line of another outcome, and
 this only takes answers of the twin's away.
+
+**The twin's faces had no history** (`b22f42a9d3`, the same day). The
+faces and edges of the twin that stay are in the result for the shape's
+own, and `Modified()` said nothing of them: FreeCAD, which names a
+result's faces by that history, left them unnamed -- a stadium as
+B-splines, a side removed, 9 faces of 32 with no name and 101 names for
+the analytic shape's 134. They are now bound under the shape's own
+faces and edges (`myImageOffset`, which `Modified()` reads), and the
+names are the analytic shape's, 134 of them. `Modified()` also looks a
+face made planar up under its plane, so that a B-spline plane rebuilt
+for a cut edge is named as its face modified, as a plane is.
 
 **The bench now**, at level 0 and at level 5 alike: 845 the same volume
 as the analytic run, 2 refused, none invalid, none of another volume.

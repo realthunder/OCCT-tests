@@ -945,7 +945,7 @@ for face, value, vol3, vol4 in ((2, 0.5, 3614.0645, 3628.3739), (2, -0.5, 3453.1
 # its neighbour, and the answer -- valid, through itself -- was not taken
 # (sec 75). In the last attempt such tubes are cut by each other: the rims
 # close over the middle of the blend and the solid opens at its two ends.
-for face, value, vol3, vol4 in ((12, 1.0, 7368.7620, 7398.6431), (12, -1.0, 6744.6532, 6769.6442),
+for face, value, vol3, vol4 in ((12, 1.0, 7369.4553, 7399.3349), (12, -1.0, 6747.1344, 6772.1238),
                                 (2, 1.0, 7411.4308, 7441.3026), (2, -1.0, 6761.4043, 6786.3975),
                                 (6, 1.0, 7411.4368, 7441.3063), (6, -1.0, 6761.3972, 6786.3943)):
     tag = "issue613_blend_f%d_%s%g" % (face, "out" if value > 0 else "in", abs(value))
@@ -953,6 +953,34 @@ for face, value, vol3, vol4 in ((12, 1.0, 7368.7620, 7398.6431), (12, -1.0, 6744
                    fix_level=_LEVEL3)
     thickness_case(tag + "_level4", issue613, [face], value, "pass", vol4, fix_level=4,
                    max_gap=5e-4)
+# The long blend in one face has the two tubes' section whole in its middle.
+# What of each tube lies within the other is no face of the wall, and the
+# removed face between the tubes' two edges on it is rim: with the pieces
+# kept and no rim there the solid was valid, with a groove along the rim
+# down to the section and the section on four faces (7398.6431 and
+# 6769.6442 at level 4, short of the wall by the groove). Every edge on two
+# faces.
+def _two_faces_an_edge_case(name, shape, face, value, fix_level):
+    previous = set_offset_fix_level(fix_level)
+    try:
+        r = shape.makeThickness([shape.Faces[face - 1]], value, 1e-7, False, False, 0, 0)
+        uses = {}
+        for f in r.Faces:
+            for e in f.Edges:
+                if not e.Degenerated and not e.isSeam(f):
+                    uses[e.hashCode()] = uses.get(e.hashCode(), 0) + 1
+        others = sorted(n for n in uses.values() if n != 2)
+        report(name, r.isValid() and not others, False,
+               "every edge on two faces" if not others else "edges on %s faces" % others)
+    except Exception as e:
+        report(name, False, False, "EXCEPTION " + str(e).strip().splitlines()[-1][:80])
+    finally:
+        set_offset_fix_level(previous)
+
+
+for value in (1.0, -1.0):
+    _two_faces_an_edge_case("issue613_blend_f12_%s1_two_faces_an_edge" % (
+        "out" if value > 0 else "in"), issue613, 12, value, 4)
 # The blends up to the ridge are 1.8 wide all along: at 1 the rims close over
 # the whole of them, and with the tubes cut by each other the answer is the
 # part hollow with no way in -- valid, sound, and not what was asked. Refused
