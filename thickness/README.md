@@ -4828,6 +4828,66 @@ line; FreeCAD's Python suite 4388 OK (`67936c97e3`). The first fix was
 gated on its own, the same gate, nothing moved. Not run: the 29 issue
 models, macOS.
 
+## An edge on more than two faces: no solid (`7ca358fa78`, level 5, 2026-11-19, sec 90)
+
+**Where it was met.** #613's long blend (sec 88) came back with an edge
+on four faces that 6000 points and BRepCheck had passed, seen in its
+picture. So every result of the probe's 47 shapes was asked: each face
+removed 0.5 and 1 either way, both joins, level 0 -- 2955 made, 2947
+with every edge on two faces, 5 invalid ones of the Intersection join,
+and 3 valid with an edge on four:
+
+- a cylinder with its top chamfered, the chamfer removed 1 inward, with
+  either join: 988.5545;
+- a shaft in two steps with a fillet between them, its end removed 1
+  inward, with the Arc join: 1424.3925.
+
+Both are of two shells, the cavity closed -- it reaches no removed face
+-- and touching the skin along a circle, the edge the four faces share.
+Two sheets of the boundary touch along such an edge and what they bound
+is no solid; BRepCheck does not ask.
+
+![edge_on_four_faces](models/pictures/edge_on_four_faces.png)
+
+**The decision** (the user's, 2026-11-19): such an answer is refused. A
+cavity closed below the removed face (sec 10) stays an answer where it
+is a solid: its two shells apart, every edge on two faces --
+`conehole_top_in_sealed_*`, as they were at every level.
+
+**The fix** (`7ca358fa78`). From level 5 `MakeThickSolid` refuses an
+answer with an edge on more than two faces, a seam counted twice on its
+face (`HasEdgeOnMoreThanTwoFaces`); one of the shape as given is first
+asked of its analytic twin (sec 89) where it has one. Below level 5
+nothing changes.
+
+**The cases**: `cyl_chamfer_top_f2_in1_edge_on_four_faces_refused`,
+`stepped_shaft_fillet_f1_in1_edge_on_four_faces_refused` (level 5; both
+answered on the build before).
+
+**What it moved.** At level 5: the probe's three results above, and of
+the scan five runs from made to refused -- the cylinder's chamfer at
+-1.00, the shaft's end at -1.00, and a cylinder chamfered at both ends,
+either chamfer at -0.75 (844.6243). Nothing else: not a case line of the
+suites at levels 0, 3 frozen, 4 and 5 but the two new ones (thickness
+959, boolean 111, draft 105, fillet 962 and 1 XFAIL), not a line of the
+corpus (levels 0 and 4), of the sweep (levels 0 and 5), of the probe and
+the scan at level 0, of the bench of sec 82; the bench of sec 89 as it
+was (846 and 1 at level 5; 1646 and 10 at level 0).
+
+**What it costs.** The bench of sec 89 on three shapes at level 5, with
+and without by turns, three times: the box with every edge filleted
+30.00 to 31.35 s without and 30.11 to 31.38 s with, the enclosure 32.01
+to 33.59 and 32.05 to 33.20 s, the stadium 6.78 to 7.24 and 6.75 to 7.15
+s. Nothing to measure.
+
+**Open, found by the same kind of audit.** Of 1658 results of the Arc
+join at level 0, 64 are valid, every edge on two faces, and named by
+BOP's check of a shape against itself: the box with every edge filleted
+26, the hexagon with its top filleted 12, the enclosure 9, the rounded
+box 6, the stadium 6, three others 5. One is traced (sec 89, the
+enclosure: a section ending in a hook where two tubes are tangent); the
+others are not looked at.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

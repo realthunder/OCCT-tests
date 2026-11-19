@@ -1020,6 +1020,15 @@ for _mod, _name, _face, _value, _vol in (
 import shapes2 as _probe2  # noqa: E402
 own_refusal_case("nurbs_stepped_shaft_fillet_f1_in1_dent_refused",
                  _probe2.SHAPES["stepped_shaft_fillet"]().toNurbs(), [1], -1.0, False, 0)
+# An edge on four faces: valid by BRepCheck and no solid, two sheets of the
+# boundary touching along the edge. A cylinder with its top chamfered, the
+# chamfer removed 1 inward (988.5545, the cavity closed and touching the
+# skin along a circle), and the shaft above as modelled, its end removed 1
+# inward (1424.3925). Refused from level 5.
+own_refusal_case("cyl_chamfer_top_f2_in1_edge_on_four_faces_refused",
+                 _probe1.SHAPES["cyl_chamfer_top"](), [2], -1.0, False, 0, fix_level=5)
+own_refusal_case("stepped_shaft_fillet_f1_in1_edge_on_four_faces_refused",
+                 _probe2.SHAPES["stepped_shaft_fillet"](), [1], -1.0, False, 0, fix_level=5)
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
