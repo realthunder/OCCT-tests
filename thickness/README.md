@@ -4867,7 +4867,12 @@ answered on the build before).
 **What it moved.** At level 5: the probe's three results above, and of
 the scan five runs from made to refused -- the cylinder's chamfer at
 -1.00, the shaft's end at -1.00, and a cylinder chamfered at both ends,
-either chamfer at -0.75 (844.6243). Nothing else: not a case line of the
+either chamfer at -0.75 (844.6243); and of the corpus at level 5 (not
+run then; found on macOS, the same on Linux) six runs from made to
+refused -- `chg10` and `t001`, face 2 removed 0.5 inward with either
+join, valid and two solids touching along a circle (3240.416), and
+`cslot`, face 4 removed 1 and 0.5 inward with the Arc join, invalid
+before. Nothing else: not a case line of the
 suites at levels 0, 3 frozen, 4 and 5 but the two new ones (thickness
 959, boolean 111, draft 105, fillet 962 and 1 XFAIL), not a line of the
 corpus (levels 0 and 4), of the sweep (levels 0 and 5), of the probe and
@@ -4918,7 +4923,8 @@ Below level 5 nothing changes.
 
 **The 64 at level 5:** 49 of the 50 clean. One stays named: the
 enclosure, a fillet along its floor (face 14) removed 1 outward, named
-twice still -- by the bound, further off than 1e-6; not measured. The 12
+twice still -- further off than 1e-6: a section 2.12 long, 4.8e-6 off
+its pcurve near one end (measured at 2001 points, 2026-11-20). The 12
 and the 2 as they were; not looked at.
 
 **The cases** (`<shape>_f<face>_<way><value>_bop_clean`, level 5: the
@@ -4997,7 +5003,9 @@ refused, the two at -1.00 with the Intersection join too (2518.1827 and
 2494.6529), and of the scan a box with two of its edges chamfered
 (`chamfer_2x1`), faces 1, 2, 5 and 6 removed 1.15 to 1.50 outward, 32
 runs from invalid to refused -- which face of those is caught not
-traced. Nothing else: not a case line of the suites at levels 0, 3
+traced; and of the corpus at level 5 two runs from invalid to refused,
+`i521` with face 3 or 5 removed 1 inward and the Intersection join.
+Nothing else: not a case line of the suites at levels 0, 3
 frozen, 4 and 5 but the two new ones (thickness 967, boolean 111, draft
 105, fillet 962 and 1 XFAIL), not a line of the corpus (levels 0 and 4),
 of the sweep (levels 0 and 5), of the probe and the scan at level 0, of
