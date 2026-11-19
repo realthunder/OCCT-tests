@@ -4945,6 +4945,84 @@ to 7.12 s -- some 2 s of 31 on the box, under 1 s of 32 on the
 enclosure, 0.1 s of 7 on the stadium (sec 90's test alone: nothing to
 measure).
 
+## A face's offset on the wrong side of it (`5a30bcf665`, level 5, 2026-11-19, sec 92)
+
+**Where it was met.** The two results of sec 91's table that BOP's check
+names for an edge through a face: a cup turned of a wall 1.955 thick (the
+probe's `revolve_cup`), its bottom (face 1) or its floor (face 5) removed
+1 inward. Both valid, every edge on two faces, 2509.0262 and 2494.6529.
+
+**What is wrong.** The thickness is more than half the wall, and the
+offsets of the wall's two sides pass each other inside it without
+meeting. Both are kept: a slit up the wall, bounded by the two offsets
+and closed under the rim by a ring that faces up, the wall's material
+between them counted inside out. By the definition -- the points of the
+cup within 1 of a face that stays -- the bottom removed leaves the cup
+less a pocket in its bottom, 2438.3 worked out by hand; the result has
+70.7 more. Read by random points over the cup's box (within 0.02 of a
+boundary not read, nor those nearest to an edge of the removed face,
+where an offset ends flush):
+
+| Run | Result | Points wrong |
+|-----|--------|--------------|
+| face 1, -1.00 | 2509.0262 | 199 of 2940 |
+| face 1, -1.05 | 2627.7023 | 206 of 2938 |
+| face 1, -1.10 | 2745.7524 | 188 of 2939 |
+| face 5, -1.00 | 2494.6529 | 254 of 2920 |
+| face 5, -1.05 | 2606.3191 | 250 of 2922 |
+| face 5, -1.10 | 2716.7631 | 225 of 2921 |
+| face 1, -0.90 (the wall wide enough) | 2269.7849 | 0 of 2916 |
+| face 5, -0.90 (the same) | 2267.6413 | 4 of 2901 |
+
+![the cup's wall in section](models/pictures/cup_wall_slit.png)
+
+**The fix** (`5a30bcf665`). The wall between a face and its offset lies
+behind the offset: the face is one thickness back along the offset's
+normal. From level 5 `MakeThickSolid` takes a point of each face of its
+answer that is the image of a face that stays (`Generated`), and where
+the face that stays lies one thickness in front of it (to a thousandth
+of the thickness) and not behind (further than half the thickness), the
+answer is refused. Below level 5 nothing changes.
+
+A refusal, not the answer: the right one has the wall solid and a pocket
+in the bottom, and needs the offsets that passed each other dropped --
+the thickness-over-half-a-wall problem of sec 86, open.
+
+**The cases**: `revolve_cup_f1_in1_offset_on_the_wrong_side_refused`,
+`revolve_cup_f5_in1_offset_on_the_wrong_side_refused` (level 5; both
+answered on the build before).
+
+**What it moved.** At level 5: the six runs of the table from made to
+refused, the two at -1.00 with the Intersection join too (2518.1827 and
+2494.6529), and of the scan a box with two of its edges chamfered
+(`chamfer_2x1`), faces 1, 2, 5 and 6 removed 1.15 to 1.50 outward, 32
+runs from invalid to refused -- which face of those is caught not
+traced. Nothing else: not a case line of the suites at levels 0, 3
+frozen, 4 and 5 but the two new ones (thickness 967, boolean 111, draft
+105, fillet 962 and 1 XFAIL), not a line of the corpus (levels 0 and 4),
+of the sweep (levels 0 and 5), of the probe and the scan at level 0, of
+the bench of sec 82; the bench of sec 89 as it was (846 and 1 at level
+5; 1646 and 10 at level 0). No right answer is refused that these hold.
+
+**What it costs.** A point of each offset face projected on the face it
+is the offset of, and a second time only where the first finds the face
+in front. The bench of sec 89 on three shapes at level 5, the build
+before and this one by turns, three times: the box with every edge
+filleted 31.18 to 31.38 s before and 32.01 to 32.18 s now, the enclosure
+31.69 to 31.96 and 31.78 to 32.01 s, the stadium 6.44 to 6.62 and 6.49
+to 6.71 s -- some 0.8 s of 31 on the box as B-splines (52 runs, a
+projection on a B-spline surface each face), nothing to measure on the
+others.
+
+The four points of the table's last line lie just under the floor's
+plane beside the wall's foot (r 10.87 to 10.98, z 1.93 to 1.98), nearer
+to the wall than to the floor's edge by 0.0002 to 0.006: the wedge
+between the removed face's plane, where the result's wall ends, and the
+normals at the wall's foot, where the measure's does. The measure's, not
+the result's.
+
+**Open.** The hexagon's 12 results with edges too small (sec 91): not looked at.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

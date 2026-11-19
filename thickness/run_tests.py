@@ -1029,6 +1029,16 @@ own_refusal_case("cyl_chamfer_top_f2_in1_edge_on_four_faces_refused",
                  _probe1.SHAPES["cyl_chamfer_top"](), [2], -1.0, False, 0, fix_level=5)
 own_refusal_case("stepped_shaft_fillet_f1_in1_edge_on_four_faces_refused",
                  _probe2.SHAPES["stepped_shaft_fillet"](), [1], -1.0, False, 0, fix_level=5)
+# Sec 92: a face's offset on the wrong side of it. A revolved cup with a
+# wall 1.955 thick, its bottom (face 1) or its floor (face 5) removed 1
+# inward: the offsets of the wall's two sides pass each other and both are
+# kept, a slit up the wall counted inside out -- valid, 2509.0262 and
+# 2494.6529, 199 and 254 of some 2930 random points wrong. Refused from
+# level 5.
+own_refusal_case("revolve_cup_f1_in1_offset_on_the_wrong_side_refused",
+                 _probe2.SHAPES["revolve_cup"](), [1], -1.0, False, 0, fix_level=5)
+own_refusal_case("revolve_cup_f5_in1_offset_on_the_wrong_side_refused",
+                 _probe2.SHAPES["revolve_cup"](), [5], -1.0, False, 0, fix_level=5)
 
 
 # Sec 91: an edge off one of its pcurves by a hair more than its tolerance
