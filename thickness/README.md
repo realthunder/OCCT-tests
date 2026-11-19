@@ -4692,6 +4692,29 @@ already). After a refusal or an invalid answer only: what had a
 valid answer keeps it, at every level. The faces of such an answer that
 stay are the twin's, analytic.
 
+**A twin's answer that was wrong** (`24df802bf9`, the same day). The bench at
+a thickness of 1 (`TS="1 -1"`): a shaft in two steps with a fillet
+between them, its end removed 1 inward, came back from its twin valid,
+nowhere through itself and 4131.4075 where the analytic shape gives
+1424.3925 -- the shaft with a dent, every offset dropped and the rim's
+faces left; refused before there was a twin. The twin's answer is now
+also to open through the faces removed (`OpensNowhere`, as sec 88's)
+and to have in it the offset of a face that stays. At 0.5 and 1 either
+way, 1828 runs: 1643 the analytic volume, 13 refused, none of another
+volume, 172 with no reference. Of the 13: the two below, and two more
+on the wedge at 1; this shaft; three of a revolved cup at 1 inward, two
+of them a face of its bottom, where the analytic shape answers with a
+solid through itself (2509.0262 for a wall of 2433.39, BOP's check);
+and five where the twin's answer opens nowhere -- a chamfer's cone or a
+fillet's torus narrower than twice the thickness, which the analytic
+shape as given still answers sealed (two of the five looked at).
+A case holds the shaft refused
+(`nurbs_stepped_shaft_fillet_f1_in1_dent_refused`, failing on
+`cd3a8ab47e`); thickness PASS=953 at level 0, and 952 at levels 0, 3
+frozen, 4 and 5 before the case, every line as it was. The gate was not
+run again whole: with the twin it had not a line of another outcome, and
+this only takes answers of the twin's away.
+
 **The bench now**, at level 0 and at level 5 alike: 845 the same volume
 as the analytic run, 2 refused, none invalid, none of another volume.
 The two: a wedge with a fillet, its slope removed outward, and the

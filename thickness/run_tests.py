@@ -983,6 +983,13 @@ for _mod, _name, _face, _value, _vol in (
         (_probe1, "capsule", 2, 0.5, 250.1816), (_probe1, "capsule", 2, -0.5, 216.6554)):
     thickness_case("nurbs_%s_f%d_%s%g" % (_name, _face, "out" if _value > 0 else "in", abs(_value)),
                    _mod.SHAPES[_name]().toNurbs(), _face, _value, "pass", _vol)
+# A twin's thick solid that opens nowhere is none: a shaft in two steps with
+# a fillet between them, its end removed 1 inward, came back from its twin
+# valid, sound and 4131.4075 for a skin of 1424.3925 -- the shaft with a
+# dent. Refused, as it was before there was a twin.
+import shapes2 as _probe2  # noqa: E402
+own_refusal_case("nurbs_stepped_shaft_fillet_f1_in1_dent_refused",
+                 _probe2.SHAPES["stepped_shaft_fillet"]().toNurbs(), [1], -1.0, False, 0)
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
