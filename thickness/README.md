@@ -4755,8 +4755,40 @@ The two: a wedge with a fillet, its slope removed outward, and the
 enclosure of sec 87, one of its upright fillets removed outward -- the
 twin is made, and its own thick solid is refused (the wedge's) or not sound
 (the enclosure's), where the shape as modelled is right.
-A twin has its seams and axes where the conversion puts them. Not
-traced.
+
+**The two, traced** (`e06b98c1ff`). The wedge: its twin had the slope left
+a B-spline. The slope is a plane, its four poles 4e-15 off one, and
+neither conversion took it for one at 1e-7: `GeomLib_IsPlanarSurface`
+holds the root of the least moment of inertia of its sample points
+against the tolerance, and that root is 6e-8 for the four poles by
+rounding alone on a face 27 long. The twin now asks the poles themselves
+(`planeOfPoles`: each within 1e-7 of the plane through their centre),
+after the other two have declined; the wedge is made, 669.1214 at 0.5 and
+1403.7863 at 1 as the analytic one (`nurbs_wedge_fillet_f1_out0.5`,
+`_out1`, refused before).
+
+The enclosure: the twin's thick solid is valid and of the right volume,
+2121.4539, and not sound. The section of the tube round the removed
+fillet's edge with the offset of the torus under it ends at the vertex
+five edges meet at (40.5, 5, 2) with a hook: its last thousandth runs
+0.0002 along the edge beside it, and the two edges are found through each
+other. On the analytic shape the same curve ends straight -- and with the
+shape turned half round an axis it has the hook too (valid, the same
+volume, not sound; it is no refusal there, a first answer is not asked
+for soundness). Where the seams of the twin's cylinders and tori are put
+changes nothing. Open: the end of that section.
+
+Validation of `e06b98c1ff` against `c7ac0b7073` (on Linux): thickness 957
+at levels 0, 3 frozen, 4 and 5, the two new lines the only ones moved;
+boolean 111, draft 105, fillet 962 and 1 XFAIL; not a line of the corpus
+(levels 0 and 4), the sweep (levels 0 and 5), the probe's two sets, the
+scan's three (levels 0 and 5) or the bench of sec 82. The bench of this
+section: at 0.5, level 5, 846 the same and 1 refused; at 0.5 and 1,
+level 0, 1646 the same, 10 refused, none of another volume. Cost: the
+bench of three shapes, with and without by turns, three times: the wedge
+5.28 to 5.32 s without and 5.19 to 5.21 s with, the box chamfered 2 by 2
+14.23 to 14.27 and 14.18 to 14.40 s, the stadium 6.55 to 6.59 and 6.57 to
+6.59 s.
 
 **The cases** (`run_tests.py`; `nurbs_<shape>_f<face>_<way><value>`, the
 probe's shapes as B-splines, each with the analytic shape's volume):

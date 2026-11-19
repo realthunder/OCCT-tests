@@ -1008,7 +1008,9 @@ for _mod, _name, _face, _value, _vol in (
         (_probe1, "stadium", 2, 0.5, 523.8603), (_probe1, "stadium", 2, -0.5, 464.2097),
         (_probe1, "stadium", 7, 0.5, 561.5438), (_probe1, "stadium", 7, -0.5, 495.9301),
         (_probe1, "box_all12", 6, 0.5, 1037.1089), (_probe1, "box_all12", 6, -0.5, 950.1744),
-        (_probe1, "capsule", 2, 0.5, 250.1816), (_probe1, "capsule", 2, -0.5, 216.6554)):
+        (_probe1, "capsule", 2, 0.5, 250.1816), (_probe1, "capsule", 2, -0.5, 216.6554),
+        # the slope of a wedge: a plane no test but its poles' took for one
+        (_probe1, "wedge_fillet", 1, 0.5, 669.1214), (_probe1, "wedge_fillet", 1, 1.0, 1403.7863)):
     thickness_case("nurbs_%s_f%d_%s%g" % (_name, _face, "out" if _value > 0 else "in", abs(_value)),
                    _mod.SHAPES[_name]().toNurbs(), _face, _value, "pass", _vol)
 # A twin's thick solid that opens nowhere is none: a shaft in two steps with
