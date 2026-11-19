@@ -1029,6 +1029,40 @@ own_refusal_case("cyl_chamfer_top_f2_in1_edge_on_four_faces_refused",
                  _probe1.SHAPES["cyl_chamfer_top"](), [2], -1.0, False, 0, fix_level=5)
 own_refusal_case("stepped_shaft_fillet_f1_in1_edge_on_four_faces_refused",
                  _probe2.SHAPES["stepped_shaft_fillet"](), [1], -1.0, False, 0, fix_level=5)
+
+
+# Sec 91: an edge off one of its pcurves by a hair more than its tolerance
+# (1.4e-7 under 1.4e-7), which BRepCheck takes and BOP's check of a shape
+# names (BOPAlgo_InvalidCurveOnSurface) -- 50 of 1658 results of the probe.
+# From level 5 the edge has the tolerance it needs and the check is clean
+# (Shape.check(True)).
+def _bop_clean_case(name, shape, face, value, volume):
+    previous = set_offset_fix_level(5)
+    try:
+        r = shape.makeThickness([shape.Faces[face - 1]], value, 1e-7, False, False, 0, 0)
+        problems = [] if r.isValid() else ["invalid"]
+        if abs(r.Volume - volume) > RELTOL * volume:
+            problems.append("volume %.4f != %.4f" % (r.Volume, volume))
+        try:
+            r.check(True)
+        except Exception as e:
+            problems.append("; ".join(sorted(set(
+                ln.strip() for ln in str(e).splitlines() if ln.startswith("Error in"))))[:80])
+        report(name, not problems, False,
+               "; ".join(problems) if problems else "vol=%.4f, BOP's check clean" % r.Volume)
+    except Exception as e:
+        report(name, False, False, "EXCEPTION " + str(e).strip().splitlines()[-1][:80])
+    finally:
+        set_offset_fix_level(previous)
+
+
+for _mod, _name, _face, _value, _vol in (
+        (_probe1, "box_all12", 2, 1.0, 2159.4971), (_probe1, "box_all12", 6, -0.5, 950.1744),
+        (_probe1, "box_top1", 3, 0.5, 1091.8779), (_probe1, "stadium", 2, 1.0, 1118.2745),
+        (_probe2, "enclosure", 3, 1.0, 4427.1741), (_probe1, "box_round", 9, -1.0, 1830.1308)):
+    _bop_clean_case("%s_f%d_%s%g_bop_clean" % (_name, _face, "out" if _value > 0 else "in",
+                                               abs(_value)),
+                    _mod.SHAPES[_name](), _face, _value, _vol)
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a

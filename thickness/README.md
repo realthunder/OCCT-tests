@@ -4888,6 +4888,63 @@ box 6, the stadium 6, three others 5. One is traced (sec 89, the
 enclosure: a section ending in a hook where two tubes are tangent); the
 others are not looked at.
 
+## An edge a hair off its pcurve: the tolerance it has (`df9e5429e1`, level 5, 2026-11-19, sec 91)
+
+**Where it was met.** The audit sec 90 ends with: of 1658 results of the
+probe's shapes with the Arc join at level 0, 64 valid, every edge on two
+faces, and named by BOP's check of a shape (`Shape.check(True)`). By
+what it names:
+
+| Named for | Results |
+|-----------|---------|
+| an edge off one of its pcurves by more than its tolerance (`BOPAlgo_InvalidCurveOnSurface`) | 50 |
+| edges too small (the hexagon with its top filleted, four in each) | 12 |
+| an edge through a face (`BOPAlgo_SelfIntersect`: the revolved cup, faces 1 and 5 removed 1 inward) | 2 |
+
+**The 50.** The edges are sections, B-splines 0.8 to 2.4 long, and lie
+off the pcurve by a hair more than the tolerance: 1.4e-7 under 1.4e-7,
+1.2e-7 under 1.1e-7. A section's tolerance is what its curve and pcurves
+part by at the points they were fitted or compared at, and between those
+they part by a little more. BRepCheck takes them; BOP's check measures
+finer (`BOPTools_AlgoTools::ComputeTolerance`).
+
+**The fix** (`df9e5429e1`). From level 5 `MakeThickSolid` gives each edge
+of its answer that is not the given shape's, and lies off a pcurve by
+more than its tolerance and by no more than 1e-6 -- by the check's own
+measure -- that distance and 5 per cent for its tolerance, and its
+vertices' no less (`SettleEdgeTolerances`). Nothing of the geometry
+changes. An edge further off than 1e-6 is no rounding and is left named.
+Below level 5 nothing changes.
+
+**The 64 at level 5:** 49 of the 50 clean. One stays named: the
+enclosure, a fillet along its floor (face 14) removed 1 outward, named
+twice still -- by the bound, further off than 1e-6; not measured. The 12
+and the 2 as they were; not looked at.
+
+**The cases** (`<shape>_f<face>_<way><value>_bop_clean`, level 5: the
+volume and BOP's check clean; each named for
+`BOPAlgo_InvalidCurveOnSurface` on the build before):
+`box_all12_f2_out1` 2159.4971, `box_all12_f6_in0.5` 950.1744,
+`box_top1_f3_out0.5` 1091.8779, `stadium_f2_out1` 1118.2745,
+`enclosure_f3_out1` 4427.1741, `box_round_f9_in1` 1830.1308.
+
+No picture: not a point of any result moves.
+
+**What it moved.** Nothing but the six new lines: thickness 965 at
+levels 0, 3 frozen, 4 and 5, boolean 111, draft 105, fillet 962 and 1
+XFAIL; not a line of the corpus (levels 0 and 4), of the sweep (levels 0
+and 5), of the probe's two sets and the scan's three (levels 0 and 5),
+of the bench of sec 82; the bench of sec 89 as it was.
+
+**What it costs.** Every edge of the answer is measured on each of its
+faces. The bench of sec 89 on three shapes at level 5, the build before
+sec 90 and this one by turns, three times: the box with every edge
+filleted 30.67 to 30.68 s before and 32.70 to 33.04 s now, the enclosure
+31.75 to 32.78 and 32.49 to 33.68 s, the stadium 6.67 to 7.04 and 6.79
+to 7.12 s -- some 2 s of 31 on the box, under 1 s of 32 on the
+enclosure, 0.1 s of 7 on the stadium (sec 90's test alone: nothing to
+measure).
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
