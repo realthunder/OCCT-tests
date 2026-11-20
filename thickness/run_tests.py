@@ -988,6 +988,36 @@ for value in (1.0, -1.0):
 for value in (1.0, -1.0):
     own_refusal_case("issue613_ridge_blend_f17_%s%g_sealed_refused" % (
         "out" if value > 0 else "in", abs(value)), issue613, [17], value, False, 0, fix_level=4)
+# From level 5 it is the answer (sec 94): a valid solid of two closed shells
+# apart, the part's skin whole and its offset, no edge on more than two
+# faces -- a manifold, which the user's rule of 2026-11-19 keeps.
+
+
+def _sealed_at_level5_case(name, shape, face, value, shell_volumes):
+    previous = set_offset_fix_level(5)
+    try:
+        r = shape.makeThickness([shape.Faces[face - 1]], value, 1e-7, False, False, 0, 0)
+        problems = [] if r.isValid() and r.ShapeType == "Solid" else ["invalid or no solid"]
+        vols = sorted(abs(Part.Solid(sh).Volume) for sh in r.Shells)
+        if len(vols) != 2 or not all(sh.isClosed() for sh in r.Shells):
+            problems.append("shells=%s" % ["%.4f" % v for v in vols])
+        else:
+            for got, want in zip(vols, sorted(shell_volumes)):
+                if abs(got - want) > RELTOL * want:
+                    problems.append("shell %.4f != %.4f" % (got, want))
+        report(name, not problems, False,
+               "; ".join(problems) if problems else "vol=%.4f, two shells" % r.Volume)
+    except Exception as e:
+        report(name, False, False, "EXCEPTION " + str(e).strip().splitlines()[-1][:80])
+    finally:
+        set_offset_fix_level(previous)
+
+
+for _face in (17, 20):
+    _sealed_at_level5_case("issue613_ridge_blend_f%d_out1_sealed" % _face, issue613, _face, 1.0,
+                           (43667.1290, 51146.3764))
+    _sealed_at_level5_case("issue613_ridge_blend_f%d_in1_sealed" % _face, issue613, _face, -1.0,
+                           (43667.1290, 36887.2032))
 # The cylinder under the cone removed: the bottom is left a piece of its own,
 # a disc of the thickness, and the cone's edge with the cylinder, 1.5 deg off
 # tangent, is closed by a tube in the last attempt -- the cone's offset

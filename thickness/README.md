@@ -5113,6 +5113,62 @@ to 32.17 s, the stadium 6.45 to 6.49 and 6.60 to 6.79 s -- some 3.3 s of
 30.5 on the box as B-splines for the two tests together (sec 92's alone
 0.8), 0.5 s on the enclosure.
 
+## #613: the blends up to the ridge at 1, sealed (`51f25cc685`, level 5, 2026-11-20, sec 94)
+
+**Where it stood.** Sec 88 cuts two tubes of one removed face by each
+other, and refuses the answer where it opens through none of the faces
+removed: the blends up to the ridge (faces 17 and 20), 1.8 wide all
+along, at 1 either way -- the two rims close over the whole face and the
+part is hollow with no way in. Four of the 16 runs the Arc join still
+refused on #613's part.
+
+**What it is.** A valid solid of two closed shells apart, the part's
+skin whole (43667.1290) and its offset (51146.3764 outward, 36887.2032
+inward), no edge on more than two faces: a manifold, and by the
+definition the answer -- no point within the thickness of a face that
+stays is left out, none further is in (5956 random points each of the
+four, none wrong). The user's rule of 2026-11-19 keeps a sealed answer
+where it is a valid manifold (sec 90).
+
+**The change** (`51f25cc685`). From level 5 it is the answer. Below
+level 5 refused as before.
+
+| Run | Volume |
+|-----|--------|
+| face 17 or 20, 1 outward | 7479.2419 |
+| face 17 or 20, 1 inward | 6779.9264 |
+
+![the ridge blend removed 1 either way, in section](models/pictures/t613_ridge_sealed.png)
+
+**The cases** (level 5): `issue613_ridge_blend_f17_out1_sealed`,
+`_in1_sealed`, `issue613_ridge_blend_f20_out1_sealed`, `_in1_sealed`
+(two closed shells of those volumes);
+`issue613_ridge_blend_f17_out1_sealed_refused` and `_in1_` stay, at
+level 4.
+
+**What it moved.** At level 5: the corpus' four lines from refused to
+made, and of the scan 20 runs from refused to made, each read by some
+2850 random points with none wrong where read -- the stadium's end
+fillets (faces 3 and 10) at -1.20 to -1.45 (1090.2771 to 1268.7550; read
+at -1.20, -1.30, -1.45) and the tube's rim fillets (faces 2 and 6) at
+-0.80 to -0.95 (1136.6662 to 1325.0666; read at -0.80 and -0.95).
+Nothing else: not a case line of the suites at levels 0, 3 frozen, 4 and
+5 but the four new ones (thickness 974, boolean 111, draft 105, fillet
+962 and 1 XFAIL), not a line of the corpus at levels 0 and 4, of the
+sweep (levels 0 and 5), of the probe (levels 0 and 5), of the scan at
+level 0, of the bench of sec 82; the bench of sec 89 as it was.
+
+**What it costs.** Nothing: a test less.
+
+**What is left of #613's 84 with the Arc join: 12.** The blends beside
+the top (faces 5, 9, 10, 13) outward, eight runs: the corner arc on the
+removed face runs past the face's B-spline (sec 88). Tried here: the
+surface carried on by twice the thickness (`GeomLib::ExtendSurfByLength`)
+gives the arc all its 21 points, but the arc then has no pcurve on the
+removed face's surface, which everything after expects -- a crash. It
+wants the removed face's image rebuilt on the extended surface. And the
+cone (face 1), four runs, as in sec 88.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
