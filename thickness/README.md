@@ -5340,6 +5340,76 @@ hexagon 6.25 to 7.42 for 6.33 to 7.68 (16 for 14).
 corners for curved tangent edges are not made. The stadium's face 8
 turned.
 
+## A polyhedron hollow with no way in (`e236d4c4fb`, level 5, 2026-11-21, sec 97)
+
+**Where it was met.** The probe's refusals with the Arc join at level 5,
+161: 28 of them the box with every edge chamfered, a chamfer or a corner
+facet removed inward. They are one case. A chamfer is 2.83 wide, and the
+walls of the two faces beside it reach 1.41 a unit of thickness into it
+each: at 1 they touch along its middle, beyond 1 they pass each other
+and the chamfer is covered whole. A corner facet is covered from 0.47.
+Nothing opens: the part is hollow with no way in.
+
+**Traced.** On a shape of planes alone the last attempt intersects every
+pair of faces (sec 79). It builds that solid -- with the caller's
+Intersection on, the same thick solid comes back, two shells, valid --
+and took an answer only where it opens through the faces removed.
+
+**The change** (`BRepOffset_MakeOffset::MakeThickSolidAsGiven`). From
+level 5 that attempt takes a solid that opens nowhere too, where it is
+sound and weighs no more than a skin can. By the rule that a sealed
+solid is an answer where it is a valid manifold (sec 94; said again on
+2026-11-20). The walls touching along a line (the chamfers at 1 exactly)
+stay refused.
+
+![a facet and a chamfer covered whole, and a chamfer that still opens](models/pictures/chamferbox_sealed.png)
+
+From outside such an answer is the part as given: the removed face is
+whole again.
+
+**The cases.** `chamferbox_all_corner_in0.5_refused` holds below level 5
+(asked at level 4 now). At level 5, each two closed shells, the part's
+skin and the faces that stay moved in, by the half spaces:
+`chamferbox_all_corner_in0.5_sealed` (908.4755),
+`chamferbox_all_corner_in1_sealed` (1730.7592),
+`chamferbox_all_chamfer_in1.1_sealed` (1881.1957) -- each refused on the
+library before the change; and `chamferbox_all_chamfer_in1_refused`,
+before and now.
+
+**What it moved.** At level 5 only. The probe: the eight corner facets
+of the box with every edge chamfered at 0.5 and 1 inward, 16 runs of the
+Arc join (908.4755 and 1730.7592; 400 points read each, none wrong) and
+the same 16 of the Intersection join, from refused to made. The Arc
+join's refusals: 145 of 1676 (161). The scan: 508 runs from refused to
+made -- the box with every edge chamfered 288, the box with its top
+edges chamfered 40, the scan's boxes `chamfer_1x3`, `chamfer_2x1` and
+`chamfer_2x2` 68, 72 and 40 -- each against the part less the half spaces of the faces
+that stay, moved in: none differs by more than the scan's four decimals.
+The same check on the box with every edge chamfered, every face at 0.47,
+0.5, 1, 1.1 and 1.4 inward: 118 made, none wrong. The bench of sec 89 at
+level 5: eight runs that had nothing to compare now have, and differ:
+the box as B-splines stays refused where its analytic form is answered
+(below). Nothing else: the suites at levels 0, 3 frozen, 4 and 5 but the
+case above and the four new ones (thickness 989, boolean 111, draft 105,
+fillet 962 and 1 XFAIL), the corpus (levels 0, 4 and 5), the sweep
+(levels 0 and 5), the probe and the scan at level 0, the bench of sec
+82, the bench of sec 89 at level 0. The probe with every shape turned
+(sec 95), level 5, both joins: as on the shapes as made, but the
+stadium's run of sec 96.
+
+**What it costs.** Nothing measured: the library before and after by
+turns, three times each, level 5, the Arc join, every face at 0.5 and 1
+either way -- the box with every edge filleted 8.26 to 8.32 s for 8.22
+to 8.27, the enclosure 4.36 to 4.38 for 4.32 to 4.36, the stadium 1.98
+to 2.01 for 1.97 to 1.98, the hexagon 12.69 to 12.70 for 12.59 to 12.71,
+the box with every edge chamfered 12.40 to 12.45 for 12.29 to 12.35 (92
+answers for 76).
+
+**Left.** A shape of B-spline planes is answered on its analytic twin
+(sec 89), and the twin's answer is taken only where it opens: a twin's
+thick solid that opened nowhere was once the part with a dent (sec 89),
+and that test is left as it is. The chamfers at 1 exactly.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

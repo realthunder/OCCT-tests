@@ -2956,8 +2956,25 @@ def _chamfered_box_cases():
     thickness_case("chamferbox_all_long_side_join_in0.5", every, side, -0.5, "pass",
                    _polyhedron_wall_in(every, side, 0.5), False, 2)
     # A corner's facet is covered whole by the rim of a skin of 0.5: nothing opens.
+    # Refused below level 5.
     corner = find(every, lambda b, f: len(f.Edges) == 3)
-    own_refusal_case("chamferbox_all_corner_in0.5_refused", every, [corner], -0.5)
+    own_refusal_case("chamferbox_all_corner_in0.5_refused", every, [corner], -0.5, False, 0,
+                     fix_level=4)
+    # Sec 97. From level 5 the part hollow with no way in is the answer (the
+    # user's rule of 2026-11-20: a sealed solid is accepted where it is a
+    # valid manifold): two closed shells, the part's skin whole and the
+    # faces that stay moved in, by the half spaces. So is a chamfer 2.83
+    # wide at 1.1, the rims of its two neighbours 1.56 each; at 1 they touch
+    # along a line, and that stays refused.
+    chamfer = find(every, lambda b, f: len(f.Edges) == 4 and abs(f.normalAt(0, 0).z) < 1e-9
+                   and abs(abs(f.normalAt(0, 0).x) - 0.5 ** 0.5) < 1e-9)
+    for tag, face, t in (("corner_in0.5", corner, 0.5), ("corner_in1", corner, 1.0),
+                         ("chamfer_in1.1", chamfer, 1.1)):
+        _sealed_at_level5_case("chamferbox_all_%s_sealed" % tag, every, face, -t,
+                               (every.Volume,
+                                every.Volume - _polyhedron_wall_in(every, face, t)))
+    own_refusal_case("chamferbox_all_chamfer_in1_refused", every, [chamfer], -1.0, False, 0,
+                     fix_level=5)
     # Sec 81. Outward: the facet at a corner touches a removed side at one vertex, and
     # its offset passes through the side's plane beyond the side's own corner.
     for tag, face, values in (("long_side", side, (0.5, 1.0)), ("bottom", bottom, (0.5, 1.0)),
