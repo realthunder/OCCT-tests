@@ -5410,6 +5410,83 @@ answers for 76).
 thick solid that opened nowhere was once the part with a dent (sec 89),
 and that test is left as it is. The chamfers at 1 exactly.
 
+## Every pair of faces, on analytic shapes (`1dd1dce51c`, level 5, 2026-11-21, sec 98)
+
+**Where it was met.** The probe's refusals with the Arc join at level 5,
+145 after sec 97: none of them a matter of the thickness -- a face
+refused at 1 is refused at 0.05. Sixteen are the flat faces of a box
+with its bottom edges filleted and its top edges chamfered, removed
+inward: at a top corner of the removed face three faces that stay meet
+(the next side, its chamfer, the removed side's own chamfer), and the
+offsets of two that share only that vertex must cut each other. The Arc
+join intersects faces across an edge only. Sec 79 gave shapes of planes
+alone a last attempt with every pair of faces intersected; this box has
+four fillets.
+
+**The change** (`BRepOffset_MakeOffset::MakeThickSolidAsGiven`). From
+level 5 that last attempt is made for the Arc join on any shape whose
+faces lie on planes, cylinders, cones, spheres and tori. Its answer is
+taken as before: sound, no heavier than a skin can be.
+
+**Two bounds, both measured.** Made on any shape: #613's part (B-spline
+blends) gained no answer, and the corpus' 198 refusals took 545 s for
+266, one of #613's 308 s for 1.5. Made for the Intersection join too:
+21 of the probe's runs came back valid with volumes unlike the Arc
+join's (a fillet removed inward: the rounded box 962.0784 for 958.9712,
+the stadium 501.5376 for 495.9301), with nothing to read them by.
+
+![a side, a longer side and a chamfer removed inward](models/pictures/filletbox_chamfertop_sides.png)
+
+**The cases** (level 5; each refused on the library before the change,
+and at level 4 now, which the `_refused_level4` cases hold):
+`filletbox_chamfertop_f1_in0.5` (909.2060),
+`filletbox_chamfertop_f2_in1` (1699.6035),
+`filletbox_chamfertop_f3_in0.5` (952.3278).
+
+**What it moved.** At level 5 only. The probe: the sixteen runs, from
+refused to made, 400 points read each, none wrong (the Arc join's
+refusals: 129 of 1676); the same sixteen with the Intersection join,
+which takes the Arc join's answer there (sec 96), the same volumes. The
+scan: 296 runs from refused to made -- that box 232, the rounded box 16,
+the box with every edge filleted 13, the enclosure 11, the countersink
+10, the tube with a fillet 10, the stadium 4. Each read by random
+points (400): none wrong in 294; in two, the box's long side at 1.35
+and 1.4 inward, one point each, and one of 6000. At 1.35 it lies 0.157
+inside the removed face, 1.551 from the nearest face that stays and
+1.286 from the plane of the removed side's chamfer, whose offset runs on
+to the removed face: wall, by the planes; the reading takes the nearest
+face and misses it. The bench of sec 89 at level 5: 855 the same (847),
+the eight new ones that box as B-splines. Nothing else: the suites at
+levels 0, 3 frozen, 4 and 5 but the six new cases (thickness 995,
+boolean 111, draft 105, fillet 962 and 1 XFAIL), the corpus (levels 0, 4
+and 5; its refusals at level 5 263 s for 267), the sweep (levels 0 and
+5), the probe and the scan at level 0, the bench of sec 82, the bench of
+sec 89 at level 0. The probe with every shape turned (sec 95), level 5,
+both joins: as on the shapes as made, but the stadium's run of sec 96.
+
+**What it costs.** A refusal on such a shape, with the Arc join, takes
+half as long again; an answer nothing. The library before and after by
+turns, three times each, level 5, every face at 0.5 and 1 either way.
+The Arc join: the box with every edge filleted (none refused) 7.85 to
+8.03 s for 7.91 to 8.04, the enclosure (none) 4.15 to 4.20 for 4.08 to
+4.22, the stadium (none) 1.87 to 1.94 for 1.85 to 1.91; the hexagon with
+its top filleted (24 of 56 refused) 18.98 to 19.24 for 12.22 to 12.37,
+the box with its top edges filleted (16 of 40) 2.53 to 2.60 for 1.52 to
+1.57, the pocket with a filleted floor (24 of 60) 4.28 to 4.36 for 2.74
+to 2.83, the box of this section (16 refused of 56 now, 32 before) 4.80
+to 4.93 for 2.66 to 2.74. The Intersection join: nothing measured on six of
+the seven (the enclosure 17.30 to 17.47 s for 17.21 to 17.56, the
+stadium 2.80 to 2.86 for 2.76 to 2.78); that box 6.62 to 6.75 for 5.57
+to 5.71 (20 answers for 4).
+
+**Left.** The probe's 129: a fillet removed beside the fillets it
+mitres with (the hexagon 24, the box with its top edges filleted 16, the
+pocket's floor fillets 16, this box 16), where the offset comes apart
+and only the rim's faces are left at every attempt; the two pockets'
+walls inward (24); a chamfer at 1, its neighbours' walls touching (16,
+sec 97); the tube with a fillet (9), the plate's slot (4), four more.
+Not traced further.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

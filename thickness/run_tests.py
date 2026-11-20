@@ -1148,6 +1148,20 @@ for _name, _shape, _face, _value, _volume in (
 own_refusal_case("tube_fillet_f3_in1_join_refused", _probe1.SHAPES["tube_fillet"](), [3], -1.0,
                  False, 2, fix_level=5)
 
+# Sec 98: a box with its bottom edges filleted and its top edges chamfered,
+# a side or a chamfer removed inward. At a top corner of the removed face
+# three faces that stay meet, and the offsets of two of them that share only
+# that vertex must cut each other: the last attempt, every pair of faces
+# intersected, did it for shapes of planes alone. From level 5 it is made for
+# the Arc join on any shape of planes, cylinders, cones, spheres and tori.
+for _face, _value, _volume in ((1, -0.5, 909.2060), (2, -1.0, 1699.6035), (3, -0.5, 952.3278)):
+    thickness_case("filletbox_chamfertop_f%d_in%g" % (_face, abs(_value)),
+                   _probe2.SHAPES["box_fillet_bottom_chamfer_top"](), _face, _value, "pass",
+                   _volume, fix_level=5)
+    own_refusal_case("filletbox_chamfertop_f%d_in%g_refused_level4" % (_face, abs(_value)),
+                     _probe2.SHAPES["box_fillet_bottom_chamfer_top"](), [_face], _value, False, 0,
+                     fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
