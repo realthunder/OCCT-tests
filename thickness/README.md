@@ -5263,6 +5263,83 @@ the 8.2 of one in the build tree: compare two built the same way.)
 at such an end is not traced; the walked line is taken in its place. The
 B-spline tubes are left as they were.
 
+## The Intersection join where it differs nowhere from the Arc join (`4b1c61c106`, level 5, 2026-11-20, sec 96)
+
+**Where it was met.** The probe at level 5, 1676 runs a join: the Arc
+join refuses 161, the Intersection join 523 and makes 2 invalid. The
+bulk of them has one cause: a removed face tangent to the face beside it
+along a curved edge. The fork closes such a rim with a square corner
+made for straight edges only; a curved edge, or a corner where
+several meet, is refused.
+
+**The change** (`BRepOffset_MakeOffset::MakeThickSolid`). From level 5,
+where the Intersection join has no valid answer and has nothing of its
+own to build, the thick solid is made with the Arc join, and refused
+where that is not valid. Nothing of its own, read on the shape given
+(`JoinsDifferNowhere`): no edge between two kept faces that would have a
+tube (none convex outward, none concave inward, none of a type not
+read), and beside each tangent edge of a removed face a kept face whose
+offset, carried on, never comes to the removed face -- across the edge
+no more convex than the removed face outward, no less inward, by the
+normal curvature of the two surfaces square to the edge at its middle.
+
+**What the answer is, and is not.** The Arc join's: the wall ends flush
+at the tangent edge. Where the edge is straight the fork's Intersection
+join adds its square corner (a box with one edge filleted: 927.75 for
+the Arc join's 926.19), so the answer is a sound thick solid and not
+what square corners made for curved edges would give. Chosen over
+refusing by the rule that a valid manifold solid is an answer.
+
+![four of the runs answered: the face removed, the result, cut open](models/pictures/intersection_join_as_arc.png)
+
+**The cases** (level 5, the Intersection join; each refused before, run
+on the library before the change): `box_all12_f1_in0.5_join_as_arc`
+(885.5000), `box_all12_f10_out0.5_join_as_arc` (1037.1089),
+`cyl_both_f4_in1_join_as_arc` (862.7796), `stadium_f8_in1_join_as_arc`
+(804.8242), `cone_fillet_f4_in1_join_as_arc` (764.8528),
+`tube_fillet_f4_in0.5_join_as_arc` (707.2754),
+`enclosure_f8_in0.5_join_as_arc` (1596.9152); and
+`tube_fillet_f3_in1_join_refused`, an invalid solid of 161.2666 before,
+which the Arc join refuses too.
+
+**What it moved.** At level 5 only, the Intersection join only. The
+probe: 1151 valid, 2 invalid and 523 refused before; 1244 valid and 432
+refused now. 93 from refused to valid, each with the volume of the Arc
+join's answer for the same face and thickness, which random points read
+right (box with every edge filleted 28, the enclosure 10, the cylinder
+with both rims filleted 10, the rounded box 10, the stadium 6, eleven
+other shapes 2 to 4 each); the tube's fillet faces 3 and 5 at 1 inward
+from invalid to refused. Not an Arc run moved. The corpus: six of #613's
+runs from not done to valid, faces 3, 17 and 20 at 0.5 and 1 inward,
+each with the Arc join's volume (2993.0177, 3466.6297, 3466.6297,
+5941.9857, 6779.9264, 6779.9264). Nothing else: not a case line of the
+suites at levels 0, 3 frozen, 4 and 5 but the eight new ones (thickness
+985, boolean 111, draft 105, fillet 962 and 1 XFAIL), not a line of the
+corpus at levels 0 and 4, of the sweep (levels 0 and 5), of the probe at
+level 0, of the scan (levels 0 and 5), of the bench of sec 82, of the
+bench of sec 89 (levels 0 and 5).
+The probe with every shape turned (`TURN=1`, sec 95), level 5, both
+joins: every run as on the shapes as made but one, the stadium's face 8
+at 1 outward with the Intersection join, valid (1089.8837) as made and
+refused turned -- so too on the library before this change. Not traced.
+
+**What it costs.** With the Arc join nothing measured; with the
+Intersection join the Arc join's attempt where the first failed. The
+library before the change and after by turns, three times each, twice
+over, at level 5, on a machine with other work running: every face of
+the box with every edge filleted, the enclosure, the stadium and the
+hexagon with its top filleted at 0.5 and 1 either way. The Arc join:
+8.05 to 10.02 s for 8.02 to 9.51, 4.20 to 5.20 for 4.09 to 4.99, 1.92 to
+2.12 for 1.87 to 2.23, 12.51 to 14.44 for 12.11 to 14.40. The
+Intersection join: the box 12.95 to 15.95 s for 10.12 to 11.53 (28
+answers for none), the enclosure 19.21 to 25.96 for 19.46 to 23.03 (14
+for 4), the stadium 3.14 to 3.87 for 2.96 to 3.70 (12 for 6), the
+hexagon 6.25 to 7.42 for 6.33 to 7.68 (16 for 14).
+
+**Left.** 432 of the probe's runs with the Intersection join: square
+corners for curved tangent edges are not made. The stadium's face 8
+turned.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

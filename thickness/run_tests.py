@@ -1128,6 +1128,26 @@ _bop_clean_case("enclosure_f14_out1_bop_clean", _probe2.SHAPES["enclosure"](), 1
                 4405.2895)
 thickness_case("nurbs_enclosure_f11_out0.5", _probe2.SHAPES["enclosure"]().toNurbs(), 11, 0.5,
                "pass", 2121.4539, fix_level=5)
+# Sec 96: the Intersection join refused where a tangent edge has no tube to
+# lean on, though the Arc join would build none either: no edge between two
+# kept faces convex outward or concave inward, and the kept face beside a
+# tangent edge of the removed one never coming to it when carried on. From
+# level 5 such a run is given the Arc join's answer. And a tube's fillet
+# removed inward at 1, invalid with the Intersection join, is refused.
+for _name, _shape, _face, _value, _volume in (
+        ("box_all12", _probe1.SHAPES["box_all12"], 1, -0.5, 885.5000),
+        ("box_all12", _probe1.SHAPES["box_all12"], 10, 0.5, 1037.1089),
+        ("cyl_both", _probe1.SHAPES["cyl_both"], 4, -1.0, 862.7796),
+        ("stadium", _probe1.SHAPES["stadium"], 8, -1.0, 804.8242),
+        ("cone_fillet", _probe1.SHAPES["cone_fillet"], 4, -1.0, 764.8528),
+        ("tube_fillet", _probe1.SHAPES["tube_fillet"], 4, -0.5, 707.2754),
+        ("enclosure", _probe2.SHAPES["enclosure"], 8, -0.5, 1596.9152)):
+    thickness_case("%s_f%d_%s%g_join_as_arc" % (_name, _face, "out" if _value > 0 else "in",
+                                                abs(_value)),
+                   _shape(), _face, _value, "pass", _volume, join=2, fix_level=5)
+own_refusal_case("tube_fillet_f3_in1_join_refused", _probe1.SHAPES["tube_fillet"](), [3], -1.0,
+                 False, 2, fix_level=5)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
