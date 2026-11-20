@@ -4994,7 +4994,8 @@ A refusal, not the answer: the right one has the wall solid and a pocket
 in the bottom, and needs the offsets that passed each other dropped --
 the thickness-over-half-a-wall problem of sec 86, open.
 
-**The cases**: `revolve_cup_f1_in1_offset_on_the_wrong_side_refused`,
+**The cases**: `revolve_cup_f1_in1_offset_on_the_wrong_side_refused`
+(gone with sec 93, which makes that run),
 `revolve_cup_f5_in1_offset_on_the_wrong_side_refused` (level 5; both
 answered on the build before).
 
@@ -5030,6 +5031,87 @@ normals at the wall's foot, where the measure's does. The measure's, not
 the result's.
 
 **Open.** The hexagon's 12 results with edges too small (sec 91): not looked at.
+
+## Two walls nearer than twice the thickness: every pair of faces (`413b17c600`, level 5, 2026-11-20, sec 93)
+
+**Where it was met.** Sec 92 refuses the cup's bottom or floor removed 1
+inward, and leaves two things: the right answer, and the same runs at
+0.95 -- valid, 2389.7212 and 2381.7613, and not caught. The wall is 1.887
+thick at its foot and 1.955 at the rim: at 0.95 the two offsets cross by
+0.014 near the foot and are apart at the rim, and no face lies wholly
+on the wrong side.
+
+**A second test** (`HasVertexInAWall`). A vertex of the answer inside the
+wall of a face that stays: nearer to the face than its thickness (by a
+thousandth of it, or ten times the vertex' tolerance), on the wall's
+side, the foot of its normal within the face -- on the face's seam is
+within it. The wall is material, and no boundary passes through it. Not
+a vertex on a removed face's surface with every edge it has: the walls
+end there, and where two have closed over the removed face the rim is
+all there is (the cup's rim removed 1 inward: the cup whole with a void
+at the foot, 2819.3897, right by 2932 points -- its rim vertices lie in
+the outer wall).
+
+**The answer.** The offsets of two walls that pass each other share no
+edge, and only faces across an edge are intersected. An answer either
+test names is made again with every pair of faces intersected (the
+caller's Intersection, not asked for), and taken where it is valid, has
+no edge on more than two faces and passes both tests; refused
+otherwise. From level 5; below it nothing changes.
+
+| Run | Before | Now | Points wrong |
+|-----|--------|-----|--------------|
+| bottom, -0.95 | 2389.7212, valid, 48 of 2929 wrong | 2388.3108 | 0 of 2929 |
+| bottom, -1.00 | refused (sec 92; 2509.0262 before it) | 2433.3864 | 0 of 2940 |
+| bottom, -1.05 | refused (2627.7023) | 2458.0166 | 0 of 2938 |
+| bottom, -1.10 | refused (2745.7524) | 2481.7323 | 0 of 2939 |
+| bottom, -1.00, Intersection join | refused (2518.1827) | 2438.2885 | 1 of 2940 (read for the Arc join) |
+| floor, -0.95 | 2381.7613, valid, 53 of 2910 wrong | refused | |
+| floor, -1.00 to -1.10 | refused (sec 92) | refused | |
+
+The three Arc results of the bottom at -0.95, -1.00 and -1.10 are clean
+by BOP's check of a shape too.
+
+![the cup's bottom removed 1 inward, before and now](models/pictures/cup_bottom_in1.png)
+
+**Not solved: the floor.** With the floor removed the two offsets of the
+wall meet nowhere -- one lies wholly beyond the other from the removed
+face's plane up -- and intersecting them cuts nothing: the same wrong
+solid, refused. The right answer needs the buried offset dropped. Nor
+the bottom at -1.2: refused before either test is asked (right with the
+caller's Intersection, 2527.0493, 0 of 2942 points).
+
+**The cases** (level 5): `revolve_cup_f1_in0.95_bop_clean`,
+`revolve_cup_f1_in1_bop_clean`, `revolve_cup_f1_in1.1_bop_clean` (the
+volume and BOP's check), `revolve_cup_f5_in0.95_vertex_in_a_wall_refused`;
+sec 92's `revolve_cup_f1_in1_offset_on_the_wrong_side_refused` is gone,
+that run being made.
+
+**What it moved.** At level 5 the cup's runs of the table: of the probe
+the bottom at -1 with either join from refused to made, of the scan the
+bottom at -0.95 from 2389.7212 to 2388.3108 and at -1.00, -1.05 and
+-1.10 from refused to made, the floor at -0.95 from made to refused.
+Nothing else: not a case line of the suites at levels 0, 3 frozen, 4 and
+5 but those above (thickness 970, boolean 111, draft 105, fillet 962 and
+1 XFAIL), not a line of the corpus (levels 0, 4 and 5), of the sweep
+(levels 0 and 5), of the probe and the scan at level 0, of the bench of
+sec 82; the bench of sec 89 as it was (846 and 1 at level 5; 1646 and 10
+at level 0). The second test alone, refusing, moved the two runs at
+-0.95 and nothing else.
+
+**What it costs.** One projector a face, not one a point, for both
+tests. The probe's shapes as modelled, every face of four of them
+removed 0.5 and 1 either way, twice (992 thicknesses), the build before
+sec 92 and this one by turns, three times: the box with every edge
+filleted 16.31 to 16.55 s before and 16.36 to 16.76 s now, the enclosure
+8.51 to 8.69 and 8.58 to 8.65 s, the stadium 3.88 to 3.96 and 3.89 to
+3.93 s, the hexagon 25.07 to 25.43 and 25.08 to 25.15 s -- nothing to
+measure. On B-spline surfaces a projection is dear: the bench of sec 89
+on three shapes, the same two builds, twice: the box 30.19 to 30.66 s
+before and 33.86 to 33.96 s now, the enclosure 31.11 to 31.73 and 31.61
+to 32.17 s, the stadium 6.45 to 6.49 and 6.60 to 6.79 s -- some 3.3 s of
+30.5 on the box as B-splines for the two tests together (sec 92's alone
+0.8), 0.5 s on the enclosure.
 
 ## Determinism cases (intersection mode, Arc join)
 
