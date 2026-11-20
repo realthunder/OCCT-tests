@@ -4,9 +4,11 @@
 #   JOINS  "0 2" (Arc, Intersection)   TOL    the thickness' tolerance, 1e-7
 #   N      points an Arc result is read by, 400 (0: not read)
 #   SKIP   "tag;tag": runs to leave out (one that does not return)
+#   ONLY   "tag;tag": the runs to make, and no other ("box_all12 f20 +0.15 j0")
 #   SET    2: the shapes of shapes2.py     INTER  1: with every pair of faces intersected
 #   THICK_FIX_LEVEL  the fork's offset fix level the runs are made at (0)
 #   TS     the thicknesses, "0.5 -0.5 1 -1"
+#   TURN   1: every shape turned half round an axis and moved (a location on it)
 # An Arc result is read by random points in the shape's box: in the wall where
 # on the right side of the part and nearer than the thickness to a face that
 # stays. Not read: at an edge of the removed face its neighbour stands at an
@@ -23,6 +25,16 @@ from shapes import SHAPES
 if os.environ.get("SET", "") == "2":
     from shapes2 import SHAPES
 V = FreeCAD.Vector
+if os.environ.get("TURN", "") == "1":
+    # every shape turned half round and moved: a shape with a location
+    def _turned(make):
+        def made():
+            s = make()
+            s.rotate(V(0, 0, 0), V(0, 1, 0), 180)
+            s.translate(V(1.3, -2.7, 0.9))
+            return s
+        return made
+    SHAPES = {k: _turned(f) for k, f in SHAPES.items()}
 
 
 def beyond(face, p):
@@ -63,6 +75,7 @@ def deep(s):
 
 
 skip = set(x.strip() for x in os.environ.get("SKIP", "").split(";") if x.strip())
+only = set(x.strip() for x in os.environ.get("ONLY", "").split(";") if x.strip())
 out = open(os.environ["OUT"], "w")
 out.write("# %s faces %d valid %s vol %.4f\n" % (name, len(s.Faces), s.isValid(), s.Volume))
 out.flush()
@@ -125,6 +138,8 @@ for fi in range(len(s.Faces)):
     for join in joins:
         for t in [float(x) for x in os.environ.get("TS", "0.5 -0.5 1 -1").split()]:
             tag = "%s f%d %+g j%d" % (name, fi + 1, t, join)
+            if only and tag not in only:
+                continue
             if tag in skip:
                 out.write("%s | %s | HANG (skipped)\n" % (tag, type(s.Faces[fi].Surface).__name__))
                 out.flush()

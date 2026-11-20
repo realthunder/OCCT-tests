@@ -4,7 +4,7 @@
 # env: FCBUILD  a FreeCAD build linked against this OCCT tree
 #      RUN      the wrapper that runs a command in the build's environment
 #      LIBN     a directory whose TKGeomAlgo, TKBool and TKOffset are preloaded
-#      N, TOL, JOINS, SKIP, SET, INTER  as probe.py
+#      N, TOL, JOINS, SKIP, SET, INTER, TURN  as probe.py
 HERE=$(cd $(dirname $0) && pwd)
 RUN=${RUN:-$HOME/works/sw/fcad/.conda/run.sh}
 FCBUILD=${FCBUILD:-$HOME/works/sw/fcad/build/conda-relwithdebinfo-801}

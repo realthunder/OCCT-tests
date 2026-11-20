@@ -1112,6 +1112,22 @@ for _mod, _name, _face, _value, _vol in (
     _bop_clean_case("%s_f%d_%s%g_bop_clean" % (_name, _face, "out" if _value > 0 else "in",
                                                abs(_value)),
                     _mod.SHAPES[_name](), _face, _value, _vol)
+# Sec 95: the section of two tubes that touch at a vertex, where the walk
+# of it ended a hair beside the vertex (7.2e-5) and the fitted curve came
+# to the vertex with a hook, along the edge beside it: the edge off its
+# pcurve by more than its tolerance, named by BOP's check; the same solid
+# as B-splines refused, its twin's answer not sound. From level 5 the
+# section is fitted to the walked points, ending on the vertex. And a shape
+# with a location: the test of sec 92 moved a normal by the face's location
+# twice, and the enclosure turned half round was refused.
+_enclosure_turned = _probe2.SHAPES["enclosure"]()
+_enclosure_turned.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 180)
+_enclosure_turned.translate(App.Vector(1.3, -2.7, 0.9))
+_bop_clean_case("enclosure_turned_f11_out0.5_bop_clean", _enclosure_turned, 11, 0.5, 2121.4539)
+_bop_clean_case("enclosure_f14_out1_bop_clean", _probe2.SHAPES["enclosure"](), 14, 1.0,
+                4405.2895)
+thickness_case("nurbs_enclosure_f11_out0.5", _probe2.SHAPES["enclosure"]().toNurbs(), 11, 0.5,
+               "pass", 2121.4539, fix_level=5)
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a

@@ -5169,6 +5169,100 @@ removed face's surface, which everything after expects -- a crash. It
 wants the removed face's image rebuilt on the extended surface. And the
 cone (face 1), four runs, as in sec 88.
 
+## The section of two tubes that touch, and a shape with a location (`4282092ecd`, `d55d67ebd4`, level 5, 2026-11-20, sec 95)
+
+**Where it was met.** Sec 89 left one of the bench's solids refused as
+B-splines, the enclosure with an upright fillet (face 11) removed 0.5
+outward: its twin's thick solid valid, 2121.4539, and not sound, a
+section "ending in a hook where two tubes are tangent". The same solid
+in analytic form turned half round an axis has the hook too; and the
+enclosure's face 14 at 1 outward has an edge 4.8e-6 off a pcurve (sec
+92).
+
+**The hook, traced.** The tubes round the fillet's straight edge (a
+cylinder) and its round edge (a torus) touch at the vertex the two edges
+meet at, (40.5, 5, 2) on the shape as made: there they have one tangent
+plane, and their section runs through the point. The walk of the section
+ends 7.2e-5 beside the vertex, on the bound of a tube, and a second line
+7.2e-5 long joins the two; every walked point but the last lies on a
+straight course to the vertex. The curve the intersection fits to the
+walk leaves the walked points before its end -- 2.5e-4 off them 5e-4
+from the end, and 1.1e-6 off the torus where it was asked for 1e-7 --
+and `PipeInter` puts its end pole on the vertex: the last 1e-4
+of the edge lies 37 deg off the rest, along the round edge's tube
+beside it.
+
+**The change** (`d55d67ebd4`, `BRepOffset_Tool::PipeInter`). From level
+5, between tubes that are cylinders and tori: a section with an end
+snapped onto a vertex the two tubes share, off the tubes by more than
+`Precision::Confusion()` (read at 16 points along it and six within the
+last 3 hundredths at such an end), is fitted to the walked points of the
+same line, its end points on the vertices, and taken where that lies
+nearer the tubes. Two bounds, both measured: fitted so whatever the
+curve, a stadium's end fillets at 1.25 to 1.45 inward (sec 94) were
+refused again, their section 1.7e-8 off the tubes with an end 1.2e-7 off
+the vertex -- where it helped the curve was 1.5e-6 to 4.1e-6 off; and
+between the B-spline tubes of #613's blends it lost 18 of the corpus'
+answers, which the moved end pole has.
+
+![the section's end at the vertex, before and from level 5](models/pictures/enclosure_section_hook.png)
+
+**A shape with a location** (`4282092ecd`). Found by the turned
+enclosure: at level 5 it was refused before the hook was looked at, by
+the test of sec 92 -- which took the offset's normal from the surface
+`BRep_Tool::Surface(face)` gives, already where the face is, and moved
+it by the face's location again. Every case, the corpus, the sweep, the
+probe and the scan run shapes with no location, and none showed it. The
+probe has a switch for it now (`TURN=1`: every shape turned half round
+an axis and moved). With the Arc join at level 5, 1676 runs:
+
+| | right | wrong | refused |
+|-|-------|-------|---------|
+| the shapes as made, before and now | 1513 | 2 | 161 |
+| turned, before (`e7be9451ca`) | 416 | 1 | 1259 |
+| turned, now | 1513 | 2 | 161 |
+
+1098 runs refused for the location alone, none made that is refused
+now. The fault was in the fork from `5a30bcf665` (2026-11-20), at level
+5 only.
+
+**The cases** (level 5): `enclosure_turned_f11_out0.5_bop_clean`
+(2121.4539; refused before), `enclosure_f14_out1_bop_clean` (4405.2895;
+named by BOP's check before), `nurbs_enclosure_f11_out0.5` (2121.4539;
+refused before).
+
+**What it moved.** At level 5 only. The scan: 12 runs, 8 from invalid at the same volume to valid and 4
+from refused to made --
+the box with every edge filleted: face 14 at +0.65 (1343.5896), face 21
+at +0.05 and +0.35 (98.9945, 712.5930) valid now; face 20 at +0.15
+(290.7175), face 21 at +0.30, -0.05 and -0.10 (607.9767, 98.1379,
+195.4911) made; the enclosure: face 2 at +0.85 (3685.7849), face 3 at
++1.10 and +1.35 (4900.9382, 6110.6536), face 12 at +0.45 and -0.45
+(1903.3528, 1802.9654) valid now. Each of the twelve read by random
+points (547 to 3000 read, `ONLY=` of the probe): none wrong.
+The bench of sec 89 at level 5: 847 the same, none refused (846 and 1).
+Nothing else: not a case line of the suites at levels 0, 3 frozen, 4 and
+5 but the three new ones (thickness 977, boolean 111, draft 105, fillet
+962 and 1 XFAIL), not a line of the corpus (levels 0, 4 and 5), of the
+sweep (levels 0 and 5), of the probe (levels 0 and 5), of the scan at
+level 0, of the bench of sec 82, of the bench of sec 89 at level 0.
+
+**What it costs.** Nothing measured. Against `e7be9451ca` built the same
+way, with and without by turns, three times each, at level 5: every face
+of the box with every edge filleted, the enclosure, the stadium and the
+hexagon with its top filleted at 0.5 and 1 either way, 8.16 to 8.30 s
+for 8.15 to 8.17, 4.29 to 4.38 for 4.32, 1.96 to 1.97 for 1.95 to 1.96,
+12.53 to 12.70 for 12.51 to 12.60; the bench of sec 89 on the first
+three as B-splines, 33.74 to 33.89 s for 33.77 to 33.89, 31.55 to 32.11
+for 31.63 to 32.18, 6.62 to 6.69 for 6.67 to 6.72. In the first bench
+the walked line is asked for once (0.002 s) and fitted once (0.003 s).
+(A library copied out of the install tree runs that bench in 6.7 s for
+the 8.2 of one in the build tree: compare two built the same way.)
+
+**Left.** Why the intersection's fitted curve leaves the walked points
+at such an end is not traced; the walked line is taken in its place. The
+B-spline tubes are left as they were.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
