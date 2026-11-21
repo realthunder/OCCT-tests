@@ -1223,6 +1223,31 @@ for _value, _volume in ((0.5, 1228.5358), (-0.5, 1078.2841), (1.0, 2595.8041),
     own_refusal_case(_tag + "_refused_level4", _probe2.SHAPES["plate_slot"](), [10], _value,
                      False, 0, fix_level=4)
 
+# Sec 102: a fillet removed that mitres with the fillets beside it, where the
+# next fillet's offset passes over the removed face (a box's or a hexagon's
+# top fillet outward, a pocket's floor fillet inward). The mitre fades out at
+# the vertex where both fillets run into the top: along the removed face's
+# tangent edge the rim is the tube round it, along the mitre it is the next
+# fillet's offset carried on to the removed face's surface, and the two only
+# touched in a point -- refused. From level 5 two flat faces close the rim
+# there: the tube's end, and the next fillet's wall cut in the plane through
+# the removed face's tangent line. At the mitre's other end, where the two
+# fillets are not square to each other (the hexagon), the corner sphere ends
+# on the removed face's other tangent line and a flat face goes on from
+# there. The volumes are those of the wall built with booleans
+# (probe/mitre_exact.py), each the same solid as the kernel's.
+for _name, _shape, _face, _value, _volume in (
+        ("box_top4", _probe1.SHAPES["box_top4"], 3, 0.5, 1062.0422),
+        ("box_top4", _probe1.SHAPES["box_top4"], 10, 1.0, 2230.9308),
+        ("hex_top", _probe1.SHAPES["hex_top"], 3, 0.5, 499.2644),
+        ("hex_top", _probe1.SHAPES["hex_top"], 3, 1.0, 1062.8165),
+        ("pocket_fillet", _probe1.SHAPES["pocket_fillet"], 3, -0.5, 1572.9441),
+        ("filletbox_chamfertop", _probe2.SHAPES["box_fillet_bottom_chamfer_top"], 8, 0.5,
+         1015.2484)):
+    _tag = "%s_f%d_%s%g_mitre_fade" % (_name, _face, "out" if _value > 0 else "in", abs(_value))
+    thickness_case(_tag, _shape(), _face, _value, "pass", _volume, fix_level=5)
+    own_refusal_case(_tag + "_refused_level4", _shape(), [_face], _value, False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a

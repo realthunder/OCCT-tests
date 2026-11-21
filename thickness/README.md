@@ -5698,6 +5698,127 @@ of sec 89: the end at 0.5 either way, the same. Gated with sec 100.
 
 **What it costs.** Nothing: no check is added.
 
+## The vertex where a removed fillet's mitre fades out (`ae974e62e1`, level 5, 2026-11-22, sec 102)
+
+**Where it was met.** The 42 runs sec 100 left: a fillet removed that
+mitres with the fillets beside it, where the next fillet's offset passes
+over the removed one -- the box with four top fillets, the box with
+fillets below and chamfers above and the hexagon outward, the pocket's
+floor fillets inward.
+
+**What was broken.** As in sec 100: at the vertex where the mitre fades
+out, every face tangent, the tube round the removed fillet's tangent
+edge ends, the next fillet's offset carried on to the removed fillet
+begins, and the two only touch, in the offset of the vertex. Sec 100's
+retry without the tubes does not make these: the next fillet's offset
+passes over the removed face, and carried on alone it leaves a gap at
+that vertex.
+
+**The change** (`ToContext`: `MitreFadePatches`,
+`CornerPastTangentLine`). From level 5, the Arc join. What is between
+the tube and the next fillet's wall is flat, two faces at the vertex V
+with its offset V':
+- the tube's end, in the plane square to the tangent edge at V: between
+  the tube's end arc, the removed face and the line from V to V';
+- the end of the next fillet's wall, in the plane through V, V' and the
+  removed face's tangent line at V (a cylinder's ruling): between the
+  line from V to V', the removed face and the next fillet's offset. The
+  wall is cut by the removed face's surface as far as that surface goes,
+  to the tangent line, and by this plane from there.
+
+`ExtentFace` has already joined V' to the section of the next fillet's
+offset with the removed face by a step, and where the two fillets are
+square to each other that step is the second face's third edge as it
+is. Where they are not (the hexagon, 120 deg) the step ends at the
+section's nearest point, short of the tangent line, and is no plane
+curve: the section is taken on to the line (`SectionEndIntoPlane`) and
+the step replaced by the plane's cut of the offset (`StepIntoPlane`).
+At the mitre's other, sharp end the hexagon has the same trouble in the
+corner sphere of the tube: the section ends 1.155 thicknesses from the vertex, off the
+sphere, and the sphere was built through it all the same, with an edge
+of tolerance 0.16 at a thickness of 1. There the sphere now ends on the
+removed face's tangent line, at the thickness from the vertex, and a
+flat face in the plane of the line and the step goes on to the
+section's end.
+
+![fillets removed that mitre with their neighbours: tube end and flat faces](models/pictures/mitre_fade.png)
+
+With it:
+- `ContextIntByArc` stores the edges of every face made at a vertex of
+  the removed face; it took one.
+- `HasVertexInAWall` (sec 93) refused these results, valid and equal to
+  the reference: the tube's end on the removed face, carried on beyond
+  the mitre, lies inside the next fillet's wall by distance alone. A rim
+  edge at the thickness from an edge of the removed face now counts as
+  one of the rim.
+- `UpdateTolerance` measured anew the tolerance of an input vertex a new
+  edge ends on (2.78e-7 to 2.02e-7: the probe's "input changed", 12
+  runs at the first gate); at level 5 the removed faces' vertices are
+  left as given. And the second face's plane is put through its three
+  corners: the section's end is a computed point 2e-7 off the plane
+  through the tangent line, the line to it had its tolerance raised to
+  that and the input vertex's with it (6 runs at the second gate).
+
+**How it was judged.** `probe/mitre_exact.py` builds the solid with
+booleans: the closed offset less the part (inward the part less the
+offset), cut off beyond the removed cylinder between its two tangent
+lines, but for the tubes round its tangent edges and the balls at their
+sharp ends. 72 runs -- four fillets of each box, the hexagon's six, the
+pocket's four, at 0.25, 0.5, 0.75 and 1 -- every one valid and the
+same: both differences of volume 0.000000. And every scan run that
+changed (662, below) read by the probe's random points: none wrong.
+
+**The cases** (level 5; each refused on the library before the change
+and at level 4 now, `_refused_level4`): `box_top4_f3_out0.5_mitre_fade`
+(1062.0422), `box_top4_f10_out1_mitre_fade` (2230.9308),
+`hex_top_f3_out0.5_mitre_fade` (499.2644), `hex_top_f3_out1_mitre_fade`
+(1062.8165), `pocket_fillet_f3_in0.5_mitre_fade` (1572.9441),
+`filletbox_chamfertop_f8_out0.5_mitre_fade` (1015.2484); the volumes are
+the reference's.
+
+**What it moved.** At level 5 only. The probe: 36 runs from refused to
+made, none wrong (the box with four top fillets 8, the hexagon 12, the
+pocket 8, the box with fillets below 8); the Arc join's refusals 34 of
+1676 for 70. The scan: 482 runs from refused to made (782 to 416 of
+13440 and 164 to 48 of 11700), none refused or invalid that was made.
+And 180 more changed in the fifth digit, the hexagon's sides removed
+outward (474.4709 to 474.4667 at 0.5, 1005.0768 to 1005.0599 at 1):
+the corner sphere above. The old result had edges of tolerance 0.08
+and 0.16 there and errors of the boolean checker (too small an edge);
+the new one has none, 1e-5, and the two are the same solid by cuts
+either way at 1. The bench of sec 89 at level 5: 899 the same (881), 14
+refused as B-splines, 1 with no reference (19). Nothing else: the
+suites at levels 0, 3 frozen, 4 and 5 but the new cases, the corpus
+(levels 0, 4 and 5), the sweep (levels 0 and 5), the probe and the scan
+at level 0, the bench of sec 82, the bench of sec 89 at level 0. The
+probe with every shape turned (sec 95), level 5: the same 36 runs, no
+input changed.
+
+**What it costs.** No check is added to a run without such a vertex.
+The library before and now by turns, three times each, level 5, the Arc
+join, every face at 0.5 and 1 either way; the shapes it makes are
+quicker, the attempts that refused no longer run: the hexagon (50 made
+for 38) 5.13 to 5.25 s for 20.59 to 21.22, the box with its top edges
+filleted (40 for 32) 2.55 to 2.61 for 3.23 to 3.35, the pocket with a
+filleted floor (60 for 52) 4.40 to 4.58 for 5.43 to 5.67, the box with
+fillets below (56 for 48) 4.90 to 5.02 for 5.54 to 6.13; the others the
+same: the box with every edge filleted 7.79 to 8.47 for 7.99 to 8.15,
+the enclosure 4.12 to 4.43 for 4.17 to 4.25, the stadium 1.91 to 2.16
+for 1.90 to 1.95, the pocket with rounded corners 2.20 to 2.25 for 2.19
+to 2.36, the tube with a fillet 0.81 to 0.82 for 0.80 to 0.84, the
+plate with a slot 1.39 to 1.41 for 1.37 to 1.44. The Intersection join,
+twice each, the same: the hexagon 5.45 and 5.53 for 5.44 and 5.46, the
+box with every edge filleted 11.90 and 12.08 for 11.86 and 12.04, the
+enclosure 17.41 and 17.46 for 17.21 and 17.47, the others within 0.2.
+The corpus at level 5, its 198 refusals timed, twice each by turns:
+246.7 and 257.5 s in all for 245.3 and 246.4; #613's part at 1 inward
+the same.
+
+**What is left.** Of the probe's 34 Arc refusals: the hexagon's six
+fillets at 1 inward (the attempt without the tubes throws; not
+traced), the tube with a fillet 8, the chamfered boxes 16, rightly, four
+single runs.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
