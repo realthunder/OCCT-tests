@@ -5487,6 +5487,71 @@ walls inward (24); a chamfer at 1, its neighbours' walls touching (16,
 sec 97); the tube with a fillet (9), the plate's slot (4), four more.
 Not traced further.
 
+## The corner between two tubes, inward (`f626894b0f`, level 5, 2026-11-21, sec 99)
+
+**Where it was met.** The probe's refusals with the Arc join at level 5,
+129 after sec 98: 24 are the walls of two pockets removed inward -- the
+pocket with rounded corners (its four flat walls and its four corners,
+16) and the pocket with a filleted floor (its four walls, 8). A plain
+pocket's wall is made, at every level. Refused are the faces with a tangent edge and a concave edge meeting at
+a vertex: the flat wall is tangent to the rounded corner along an
+upright line and meets the floor in a concave edge, and at the foot of
+the line the corner meets the floor in a concave arc.
+
+**What was broken.** Inward, the two faces that stay at a concave edge
+move apart and a tube closes the gap. So a tube round the corner's arc
+with the floor ends at that vertex, and so does the tube round the
+tangent edge. Between the two ends and the removed face a
+piece is missing: the points nearer than the thickness to the vertex
+itself. Outward the same corner, between the tangent edge's tube and
+the tube round a convex edge, has been a piece of sphere since the
+tubes were made; inward it was left out, the rim stayed open there, the
+removed face was not joined to the rest and the thick solid refused.
+
+**The change** (`BRepOffset_MakeOffset::ToContext`). From level 5 the
+corner is made inward as well.
+
+![a flat wall, a rounded corner and a wall above a filleted floor removed inward](models/pictures/pocket_wall_tube_corner.png)
+
+**The cases** (level 5; each refused on the library before the change,
+and at level 4 now, which the `_refused_level4` cases hold):
+`pocket_round_f8_in0.5_tube_corner` (1983.5855),
+`pocket_round_f7_in1_tube_corner` (3893.5055),
+`pocket_fillet_f1_in1_tube_corner` (3015.8343).
+
+**How it was read.** The probe's points (400 a run) leave out a point
+whose nearest kept point lies on a sharp edge of the removed face, and
+every point of the new corner is one. So the corner was read apart, on
+three runs (the flat wall at 0.5, the corner at 1, the wall above the
+filleted floor at 0.5): of the points in the part round each such
+vertex whose nearest kept point is on the sharp edge alone and whose
+nearest point of the tangent edge is its end, those nearer than the
+thickness to the vertex are all in the result (41 to 61 a vertex),
+those farther all out of it (339 to 359).
+
+**What it moved.** At level 5 only. The probe: the 24 runs, from refused
+to made, 400 points read each, none wrong (the Arc join's refusals: 105
+of 1676). The scan: 360 runs from refused to made, the pocket with
+rounded corners 240 and the other 120, each read by 400 points, none
+wrong. The bench of sec 89 at level 5: 867 the same (855), the twelve
+new ones the pockets' walls as B-splines. Nothing else: the suites at
+levels 0, 3 frozen, 4 and 5 but the six new cases (thickness 1001,
+boolean 111, draft 105, fillet 962 and 1 XFAIL), the corpus (levels 0, 4
+and 5), the sweep (levels 0 and 5), the probe and the scan at level 0,
+the bench of sec 82, the bench of sec 89 at level 0. The probe with
+every shape turned (sec 95), level 5: the same 24.
+
+**What it costs.** Nothing measured. The library before and after by
+turns, three times each, level 5, the Arc join, every face at 0.5 and 1
+either way: the box with every edge filleted 7.93 to 7.98 s for 7.80 to
+7.97, the enclosure 4.08 to 4.22 for 4.07 to 4.19, the stadium 1.88 to
+1.92 for 1.86 to 1.92, the hexagon with its top filleted 18.75 to 18.91
+for 18.80 to 19.04, the box with its top edges filleted 2.53 to 2.59
+for 2.53 to 2.54, the tube with a fillet 0.59 for 0.58 to 0.60, the
+plate with a slot 1.85 to 1.91 for 1.82 to 1.86; the pocket with a
+filleted floor (44 made for 36) 4.15 to 4.29 for 4.25 to 4.34, the
+pocket with rounded corners (60 for 44) 2.23 to 2.28 for 2.73 to 2.80.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

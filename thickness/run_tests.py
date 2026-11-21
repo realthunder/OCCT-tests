@@ -1162,6 +1162,21 @@ for _face, _value, _volume in ((1, -0.5, 909.2060), (2, -1.0, 1699.6035), (3, -0
                      _probe2.SHAPES["box_fillet_bottom_chamfer_top"](), [_face], _value, False, 0,
                      fix_level=4)
 
+# Sec 99: a pocket's wall removed inward where it is tangent to a rounded
+# corner of the pocket (or to the fillet of its floor) and meets the floor (or
+# the next wall) in a concave edge. The tube round the tangent edge and the
+# tube round the concave edge between the two faces that stay end at one
+# vertex; the corner between them, a piece of sphere, was made outward only.
+# From level 5 it is made inward too.
+for _name, _shape, _face, _value, _volume in (
+        ("pocket_round", _probe2.SHAPES["pocket_round"], 8, -0.5, 1983.5855),
+        ("pocket_round", _probe2.SHAPES["pocket_round"], 7, -1.0, 3893.5055),
+        ("pocket_fillet", _probe1.SHAPES["pocket_fillet"], 1, -1.0, 3015.8343)):
+    thickness_case("%s_f%d_in%g_tube_corner" % (_name, _face, abs(_value)),
+                   _shape(), _face, _value, "pass", _volume, fix_level=5)
+    own_refusal_case("%s_f%d_in%g_tube_corner_refused_level4" % (_name, _face, abs(_value)),
+                     _shape(), [_face], _value, False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
