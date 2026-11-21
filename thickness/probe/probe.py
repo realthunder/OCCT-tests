@@ -14,6 +14,13 @@
 # stays. Not read: at an edge of the removed face its neighbour stands at an
 # angle to (the wall ends flush there), and beyond the removed face's surface
 # unless the nearest kept point is on a tangent edge of it (the tubes' lips).
+# A run with wrong points says how many of them are off the lips ("off-lip"):
+# their nearest kept point not on a tangent edge of the removed face, and the
+# surface of the face beside such an edge, carried on, not within the
+# thickness (at a mitre the nearest kept point is on the next fillet). A thick
+# solid made without the tubes (README.md sec 100: the neighbour's offset
+# carried on to the removed face, the wall cut off flush) differs from the
+# reading at the lips alone, off-lip 0.
 # The shape is made anew for every run and compared with itself after it.
 import FreeCAD, Part, os, random, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -86,6 +93,7 @@ def read(r, fi, t):
     rem = s.Faces[fi]
     kept = Part.Compound([f for i, f in enumerate(s.Faces) if i != fi])
     sharp = []
+    beside = []
     for e in rem.Edges:
         for k, g in enumerate(s.Faces):
             if k == fi or not any(x.isSame(e) for x in g.Edges):
@@ -97,6 +105,8 @@ def read(r, fi, t):
                 n2 = g.normalAt(*g.Surface.parameter(q))
                 if n1.getAngle(n2) > 0.2:
                     sharp.append(e)
+                else:
+                    beside.append(g.Surface)
             except Exception:
                 pass
     smooth = [e for e in rem.Edges if not any(e.isSame(x) for x in sharp)]
@@ -105,7 +115,7 @@ def read(r, fi, t):
     bb = s.BoundBox
     m = abs(t) + 0.5
     random.seed(11)
-    bad = used = tries = 0
+    bad = used = tries = offlip = 0
     first = ""
     rsols = r.Solids
     while used < n and tries < 60 * n:
@@ -129,9 +139,14 @@ def read(r, fi, t):
         used += 1
         if want != got:
             bad += 1
+            # at a lip: the nearest kept point on a tangent edge, or nearer than the thickness
+            # to the surface, carried on, of the face beside one
+            if not on_lip and not any(
+                    p.distanceToPoint(g.value(*g.parameter(p))) < abs(t) for g in beside):
+                offlip += 1
             if not first:
                 first = " first (%.3f %.3f %.3f) kept %.3f want %s" % (p.x, p.y, p.z, d, want)
-    return "points %d wrong %d%s" % (used, bad, first)
+    return "points %d wrong %d%s%s" % (used, bad, " off-lip %d" % offlip if bad else "", first)
 
 
 for fi in range(len(s.Faces)):

@@ -1177,6 +1177,52 @@ for _name, _shape, _face, _value, _volume in (
     own_refusal_case("%s_f%d_in%g_tube_corner_refused_level4" % (_name, _face, abs(_value)),
                      _shape(), [_face], _value, False, 0, fix_level=4)
 
+# Sec 100: a fillet removed that mitres with the fillets beside it (a box's
+# or a hexagon's top fillet inward, a pocket's floor fillet outward), and a
+# tube's flat end between two fillets outward. The tubes round the removed
+# face's tangent edges leave the rim open or pass through each other, at
+# every attempt. From level 5 the last attempt builds no tube: the offset of
+# the face beside a tangent edge is carried on to the removed face's surface
+# and the wall cut off flush there. The volumes are those of the part less
+# the kept faces' offsets carried on, built with booleans.
+for _name, _shape, _face, _value, _volume in (
+        ("box_top4", _probe1.SHAPES["box_top4"], 3, -0.5, 990.3334),
+        ("pocket_fillet", _probe1.SHAPES["pocket_fillet"], 3, 0.5, 1707.6374)):
+    _tag = "%s_f%d_%s%g_flush_rim" % (_name, _face, "out" if _value > 0 else "in", abs(_value))
+    thickness_case(_tag, _shape(), _face, _value, "pass", _volume, fix_level=5)
+    own_refusal_case(_tag + "_refused_level4", _shape(), [_face], _value, False, 0, fix_level=4)
+# The wall as thick as the offsets of the faces beside the fillet reach
+# before they come to it: the part hollow with no way in, two closed shells
+# (sec 97).
+for _name, _shape, _face, _value, _volume in (
+        ("box_top4", _probe1.SHAPES["box_top4"], 3, -1.0, 1898.7699),
+        ("hex_top", _probe1.SHAPES["hex_top"], 3, -0.5, 445.8396)):
+    _tag = "%s_f%d_in%g_flush_rim_sealed" % (_name, _face, abs(_value))
+    _sealed_at_level5_case(_tag, _shape(), _face, _value,
+                           (_shape().Volume, _shape().Volume - _volume))
+    own_refusal_case(_tag + "_refused_level4", _shape(), [_face], _value, False, 0, fix_level=4)
+# The tube's flat end, 2 wide, at 1: its two tubes just touch. Invalid below
+# level 5.
+thickness_case("tube_fillet_f4_out1_flush_rim", _probe1.SHAPES["tube_fillet"](), 4, 1.0, "pass",
+               1499.2407, fix_level=5)
+
+# Sec 101: a plate with a slot, the rounded end of the slot removed. The end
+# is half a cylinder, and the one that lies across the cylinder's seam runs
+# from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
+# tubes round its two tangent edges have their edges on the removed face
+# beyond its ends, and the pcurves of those, projected, came in the
+# cylinder's own period from 0 on: the one beyond -pi/2 a period off. The
+# rim's wires were taken wrong and the thickness refused, where the slot's
+# other end, from pi/2 to 3pi/2, was made. From level 5 the pcurve is moved
+# into the removed face's period. The volumes are the other end's.
+for _value, _volume in ((0.5, 1228.5358), (-0.5, 1078.2841), (1.0, 2595.8041),
+                        (-1.0, 1994.1625)):
+    _tag = "plate_slot_seam_end_%s%g" % ("out" if _value > 0 else "in", abs(_value))
+    thickness_case(_tag, _probe2.SHAPES["plate_slot"](), 10, _value, "pass", _volume, fix_level=5)
+    thickness_case(_tag + "_other_end", _probe2.SHAPES["plate_slot"](), 9, _value, "pass", _volume)
+    own_refusal_case(_tag + "_refused_level4", _probe2.SHAPES["plate_slot"](), [10], _value,
+                     False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
@@ -2875,9 +2921,9 @@ def _tube_fillet_cases():
     thickness_case("tube_fillet_inner_out0.5_level5", shape, inner, 0.5, "pass", 801.1296,
                    fix_level=5)
     # The top between the two fillets is 2 wide: 1 outward its two tubes just
-    # touch, and the solid was invalid at every level.
+    # touch, and the solid was invalid at every level; refused at level 5
+    # until sec 100, which makes it without the tubes.
     top = [i + 1 for i, f in enumerate(shape.Faces) if abs(f.BoundBox.ZMin - 12) < 1e-9][0]
-    own_refusal_case("tube_fillet_top_out1_refused_level5", shape, [top], 1.0, False, 0, 5)
     thickness_case("tube_fillet_top_out0.5_level5", shape, top, 0.5, "pass", 791.6257,
                    fix_level=5)
 

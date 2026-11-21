@@ -5552,6 +5552,152 @@ plate with a slot 1.85 to 1.91 for 1.82 to 1.86; the pocket with a
 filleted floor (44 made for 36) 4.15 to 4.29 for 4.25 to 4.34, the
 pocket with rounded corners (60 for 44) 2.23 to 2.28 for 2.73 to 2.80.
 
+## A fillet that mitres with its neighbours, without the tubes (`ed6d80b701`, level 5, 2026-11-21, sec 100)
+
+**Where it was met.** The probe's refusals with the Arc join at level 5,
+105 after sec 99: 72 are fillets removed that mitre with the fillets
+beside them (a box with its four top edges filleted, a hexagon with its
+top edges filleted, a box with fillets below and chamfers above, a
+pocket with a filleted floor).
+
+**What was broken.** The removed fillet is tangent to the flat it rounds
+along one edge and to the side along the other, and a tube closes
+each. At the vertex where the mitre fades out the tube ends, the
+next fillet's offset carried on to the removed one begins, and the two
+only touch: the rim stays open there at every attempt.
+
+**The change** (`BRepOffset_MakeOffset::MakeThickSolidAsGiven`,
+`ToContext`). From level 5, after every other attempt has refused, the
+Arc join, a removed face with a tangent edge, a shape of planes,
+cylinders, cones, spheres and tori: once more with no tube. The offset of
+the face beside a tangent edge is carried on to the removed face's
+surface, as at any other edge, and the wall is cut off flush there; with
+every pair of faces intersected (sec 98). The two ways of the loops
+without the pairs were tried first and dropped: they made none of the
+416 scan runs below, and cost #613's part 8.6 s on a refusal of 14.1.
+
+![fillets removed that mitre with their neighbours, and a tube's flat end](models/pictures/flush_rims.png)
+
+**It is another answer at the tangent edges.** With the tubes the wall
+is the points nearer than the thickness to a face that stays; without
+them, beside a tangent edge, it is what lies beyond the neighbour's
+offset carried on: inward thicker than the thickness there, outward
+without the lip the tube leaves on the removed face. Away from the
+tangent edges the two are the same. Where a face is made with the tubes
+at one thickness and without at the next the volume steps: the box with
+one top edge filleted, the fillet removed inward, 2601.2845 at 1.4 with
+the tubes, 2684.0368 at 1.45 and 2761.2478 at 1.5 without (82.16 from
+1.35 to 1.4, then 82.75 and 77.21); the tube's flat end, 2 wide, outward, 1605.3510 at
+0.95 with its two lips nearly closed over it and 1499.2407 at 1 without
+them.
+
+**The cases** (level 5; each refused on the library before the change,
+and at level 4 now but the last, invalid there as it was):
+`box_top4_f3_in0.5_flush_rim` (990.3334),
+`pocket_fillet_f3_out0.5_flush_rim` (1707.6374),
+`box_top4_f3_in1_flush_rim_sealed` and
+`hex_top_f3_in0.5_flush_rim_sealed` (two closed shells, sec 97: the
+offsets of the two faces beside the fillet meet before they come to it;
+1898.7699 and 445.8396), `tube_fillet_f4_out1_flush_rim` (1499.2407,
+which was `tube_fillet_top_out1_refused_level5`). The volumes are those
+of the part less the kept faces' offsets carried on, built with
+booleans.
+
+**How it was read.** The probe's points take the wall with the tubes for
+right, so a run made without them has wrong points at the lips. The
+probe now counts, of a run's wrong points, those off the lips: the
+nearest kept point not on a tangent edge of the removed face, and no
+face beside such an edge with its surface, carried on, within the
+thickness. Every run made here has none.
+
+**What it moved.** At level 5 only. The probe: 31 runs from refused to
+made (the box with four top fillets 8, the hexagon 6, the pocket's floor
+fillets outward 8, the box with fillets below 8, the tube's flat end at
+1), 10 of them with wrong points, all at the lips. The scan: 416 runs
+from refused to made (108, 72, 108, 108, 11, and 9 on three boxes with
+fillets), 117 with wrong points, all at the lips. The bench of sec 89 at
+level 5: 881 the same (867) with sec 101's two, 14 refused as B-splines
+and made as they are (8): the hexagon's six fillets at 0.5 inward.
+Nothing else: the suites at levels 0, 3 frozen, 4 and 5 but the new
+cases, the corpus (levels 0, 4 and 5), the sweep (levels 0 and 5), the
+probe and the scan at level 0, the bench of sec 82, the bench of sec 89
+at level 0. The probe with every shape turned (sec 95), level 5: the
+same runs.
+
+**What it costs.** A refusal on a face with a tangent edge, on a shape of
+planes, cylinders, cones, spheres and tori, takes one attempt more,
+whether it then is made or not. The library before (before sec 99 and after
+it) and now by turns, three times each, level 5, the Arc join, every face at 0.5
+and 1 either way: the hexagon with its top filleted (38 made for 32)
+21.12 to 21.20 s for 18.85 to 19.76, the box with its top edges filleted
+(32 for 24) 3.39 to 3.46 for 2.51 to 2.75, the pocket with a filleted
+floor (52 for 44) 5.67 to 5.76 for 4.19 to 4.48, the box with fillets
+below (48 for 40) 5.78 to 6.05 for 4.84 to 5.21, the tube with a fillet
+(16 for 15) 0.80 to 0.86 for 0.60 to 0.63; with no such refusal the same:
+the box with every edge filleted 8.06 to 8.33 for 7.81 to 8.29, the
+enclosure 4.22 to 4.38 for 4.13 to 4.36, the stadium 1.93 to 1.99 for
+1.89 to 1.99, the pocket with rounded corners 2.20 to 2.37 for 2.29 to
+2.40; the plate with a slot, with sec 101 (40 for 36), 1.36 to 1.45 for
+1.81 to 1.95. The Intersection join, where it
+takes the Arc join's answer, twice each: the tube with a fillet 0.54 to
+0.57 for 0.35 to 0.36, the hexagon 5.54 to 5.79 for 5.38 to 5.54, the
+box with its top edges filleted 4.12 to 4.26 for 4.10 to 4.13, the
+pocket with a filleted floor 5.31 to 5.48 for 5.26 to 5.29, the box with
+fillets below 6.76 to 7.13 for 6.67 to 6.70, the box with every edge
+filleted 11.78 to 11.84 for 11.88 to 11.97, the enclosure 17.53 to 17.65
+for 17.25 to 17.49, the stadium 2.82 to 2.97 for 2.82 to 2.86, the
+pocket with rounded corners 1.89 to 2.01 for 1.87 to 1.88, the plate
+with a slot 1.06 to 1.11 for 1.05 (the higher of each pair now with the
+machine no longer quiet; a third pass on a busy machine told nothing).
+The corpus at level 5, its 198 refusals timed: 252.0 s in all for 252.4,
+#613's part at 1 inward 14.1 s for 14.1.
+
+**What is left.** Of the 72, 42: the fillets of the box with four top
+fillets and of the box with fillets below outward (16), the pocket's
+floor fillets inward (8), the hexagon's outward and at 1 inward (18 --
+at 1 the part less the offsets carried on is 833.3323). There the offset
+of the flat runs away from the fillet's surface or the offsets carried
+on leave a gap at the vertex where the mitre fades: a piece to close it
+is not built.
+
+## A tube's edge on a cap across the seam (`6399a3d04d`, level 5, 2026-11-21, sec 101)
+
+**Where it was met.** Sec 100's first gate: a plate with a slot, the
+slot's rounded end removed outward at 0.5, came back 1233.5735 made
+without the tubes and 1228.5358 as B-splines -- and 1228.5358 is what
+the slot's other end, its mirror image, has always made. One end was
+refused at every thickness and level, the other made.
+
+**What was broken.** The slot's end is half a cylinder. The one that
+lies across the cylinder's seam is cut in two by it when the slot is
+made and put together again (`removeSplitter`) as one face from -pi/2
+to pi/2. The tubes round its two tangent edges have their edges on the
+removed face beyond its ends (`TangentTubeEdgeOnCap`), and those edges'
+pcurves, projected onto the cylinder, come in the cylinder's own period,
+from 0 on: the one beyond -pi/2 lay at 3pi/2, a period off the face.
+The wires of the rim were taken wrong -- the removed face's own area
+came back as a face of the rim -- every offset face hung from there and
+was dropped, and the thickness was refused.
+
+**The change** (`IntoCapPeriod`). From level 5 a pcurve projected onto a
+periodic removed face, the tube's edge and the corner's arc (sec 99), is
+moved by whole periods to where its middle is nearest the middle of the
+face.
+
+![the slot's end across the seam removed outward and inward](models/pictures/slot_seam_end.png)
+
+**The cases** (level 5; refused on the library before the change, and
+at level 4 now): `plate_slot_seam_end_out0.5` (1228.5358), `_in0.5`
+(1078.2841), `_out1` (2595.8041), `_in1` (1994.1625), each with
+`_other_end`, the mirror image at the same volume at every level.
+
+**What it moved.** At level 5 only. The probe: the 4 runs, from refused
+to made, none wrong (the Arc join's refusals: 70 of 1676 with sec
+100's). The scan: 60 runs from refused to made, none wrong. The bench
+of sec 89: the end at 0.5 either way, the same. Gated with sec 100.
+
+**What it costs.** Nothing: no check is added.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

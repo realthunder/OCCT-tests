@@ -25,10 +25,10 @@ done
 wait
 for f in $O/*.txt; do
     a() { grep " j0 " $f | grep -c "$1"; }; b() { grep " j2 " $f | grep -c "$1"; }
-    F="%-18s Arc: right %3d wrong %2d invalid %2d refused %3d |"
+    F="%-18s Arc: right %3d wrong %2d (at the lips alone %2d) invalid %2d refused %3d |"
     F="$F Intersection: valid %3d invalid %2d refused %3d | input changed %d%s\n"
     printf "$F" \
-        $(basename $f .txt) $(a "wrong 0$") $(a "wrong [1-9]") $(a INVALID) $(a REFUSED) \
+        $(basename $f .txt) $(a "wrong 0$") $(a "wrong [1-9]") $(a "off-lip 0 ") $(a INVALID) $(a REFUSED) \
         $(b "| valid") $(b INVALID) $(b REFUSED) $(grep -c INPUT-CHANGED $f) \
         "$(grep -q '# done' $f || echo ' NOT FINISHED')"
 done
