@@ -5819,6 +5819,85 @@ fillets at 1 inward (the attempt without the tubes throws; not
 traced), the tube with a fillet 8, the chamfered boxes 16, rightly, four
 single runs.
 
+## The piece of a section on the far side of a seam (`ffa6d8cf03`, level 5, 2026-11-22, sec 103)
+
+![the hexagon's top fillet removed inward](models/pictures/seam_piece.png)
+
+The hexagon of sec 100 (circumradius 10, height 8, its six top edges
+filleted 1.5), one fillet removed inward at 0.8 and more: refused, where
+0.5 gave the sealed answer of sec 100.
+
+**The cause, traced.** The attempt without the tubes stretches the
+offset of each face beside the removed one up to the removed face's
+surface (`BRepOffset_Tool::ExtentFace`): for each edge of the offset
+face it takes the section of the stretched face with the stop face and
+rebuilds the edge on it. The next fillet's offset is a cylinder, 0.5 in
+radius at 1, and the removed fillet's surface cuts it in two pieces
+parted at the cylinder's seam (z = 6.5), where the edge begins. Of
+several pieces `SelectEdge` took the one whose ends lie nearest the
+edge's, by the sum of the two distances and nothing else -- and here
+that was the short piece below the seam, nearer by 2.24 to 2.38, which
+shares nothing of the edge's span round the cylinder. The edge's vertex
+(5.767, 7.16, 7) then had no parameter on the rebuilt edge,
+`BRep_Tool::Parameter` threw and the thickness was refused. At 0.5 the
+other piece is the nearer one.
+
+**The fix.** From level 5, where the section has more than one piece
+and the stretched face is periodic, the span of the edge round the face
+(by its pcurve) is compared with each piece's, a whole number of
+periods apart at most: a chosen piece that shares none of it (less than
+1e-6 of a period) gives way to the piece that shares most. Where the
+chosen piece shares any, or no other does, nothing changes.
+
+**The results.** Each of the six fillets, at 0.5, 0.9, 1, 1.1 and 1.25
+inward: valid, two closed shells, 445.8396, 760.6321, 833.3323,
+903.7034 and 1004.9703 -- the part less the inset prism with five of
+its top edges filleted 1.5 less the thickness, built with booleans:
+three of the faces at the five thicknesses, 15 runs, each the same
+solid as the kernel's, both differences 0.000000.
+
+**Cases.** `hex_top_f3_in1_seam_piece_sealed`, `..f12_in1..` and
+`..f3_in1.25..`, each with `_refused_level4`: 1039 at levels 0, 3
+frozen, 4 and 5. The three fail on the library before the fix
+(refused).
+
+**The gate.** The probe at level 5: the hexagon's six refusals made,
+none wrong off the lips (the Arc join's refusals 28 of 1676 for 34),
+no input changed. The scan: 84 runs from refused to made (416 to 332
+of 13440), the hexagon's six fillets from 0.8 to 1.45 inward; read
+again by random points, 77 right and 7 with points wrong at the lips
+alone (the flush convention of sec 100). Nothing else changed: the
+suites at levels 0, 3 frozen, 4 and 5 but the new cases, the boolean,
+draft and fillet suites, the corpus (levels 0, 4 and 5), the sweep
+(levels 0 and 5), the probe and the scan at level 0, the second and
+third scan sets at level 5, the bench of sec 82, the bench of sec 89 at
+levels 0 and 5, the probe with every shape turned but the same six
+runs.
+
+**What it costs.** The check runs only where a section has several
+pieces on a periodic face: nine points on a pcurve for each. The
+library before and now by turns, three times each, level 5, the Arc
+join, every face at 0.5 and 1 either way: the hexagon (56 made for 50)
+4.69 to 4.80 s for 4.98 to 5.24; the others the same: the box with
+every edge filleted 7.85 to 8.05 for 7.87 to 8.26, the enclosure 4.04
+to 4.27 for 4.14 to 4.22, the stadium 1.83 to 1.87 for 1.89 to 1.91,
+the box with its top edges filleted 2.55 to 2.58 for 2.51 to 2.59, the
+pocket with a filleted floor 4.41 to 4.53 for 4.42 to 4.52, the box
+with fillets below 4.91 to 5.05 for 5.03 to 5.04, the pocket with
+rounded corners 2.16 to 2.26 for 2.18 to 2.26, the tube with a fillet
+0.80 to 0.82 for 0.81 to 0.84, the plate with a slot 1.34 to 1.39 for
+1.39 to 1.45. The Intersection join, twice each, the same: the hexagon
+5.35 and 5.50 for 5.34 and 5.44, the box with every edge filleted 11.50
+and 11.57 for 11.75 and 11.89, the enclosure 16.98 and 17.21 for 17.11
+and 17.32, the others within 0.25.
+The corpus at level 5, its 198 refusals timed, twice each by turns:
+245.3 and 250.4 s in all for 245.0 and 248.0, and the same results.
+
+**What is left.** Of the probe's 28 Arc refusals: the tube with a
+fillet 8, the chamfered boxes 16, rightly, four single runs (the cup's
+f5, the countersink's f2, the stepped shaft's f1 at 1 inward, the
+cylinder with a chamfered top), none traced.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

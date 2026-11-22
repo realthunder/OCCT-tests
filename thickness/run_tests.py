@@ -1248,6 +1248,24 @@ for _name, _shape, _face, _value, _volume in (
     thickness_case(_tag, _shape(), _face, _value, "pass", _volume, fix_level=5)
     own_refusal_case(_tag + "_refused_level4", _shape(), [_face], _value, False, 0, fix_level=4)
 
+# Sec 103: the hexagon's top fillet removed inward at 0.8 and more, the
+# sealed answer of sec 100. The next fillet's offset is a cylinder of radius
+# 0.7 or less, and the removed fillet's surface cuts it in two pieces parted
+# at the cylinder's seam. Of the two, the piece to rebuild the offset face's
+# edge with was chosen by the distances between ends alone, and from 0.8 on
+# that was the short piece on the far side of the seam, sharing nothing of
+# the edge's span round the cylinder: a vertex of the edge had no parameter
+# on it and the thickness was refused. From level 5 a piece that shares none
+# of the edge's span round a periodic surface gives way to the one sharing
+# most. The volumes are those of the part less the inset prism with its top
+# edges filleted, built with booleans.
+for _face, _value, _volume in ((3, -1.0, 833.3323), (12, -1.0, 833.3323),
+                               (3, -1.25, 1004.9703)):
+    _tag = "hex_top_f%d_in%g_seam_piece_sealed" % (_face, abs(_value))
+    _hex = _probe1.SHAPES["hex_top"]()
+    _sealed_at_level5_case(_tag, _hex, _face, _value, (_hex.Volume, _hex.Volume - _volume))
+    own_refusal_case(_tag + "_refused_level4", _hex, [_face], _value, False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
