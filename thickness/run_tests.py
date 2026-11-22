@@ -1266,6 +1266,23 @@ for _face, _value, _volume in ((3, -1.0, 833.3323), (12, -1.0, 833.3323),
     _sealed_at_level5_case(_tag, _hex, _face, _value, (_hex.Volume, _hex.Volume - _volume))
     own_refusal_case(_tag + "_refused_level4", _hex, [_face], _value, False, 0, fix_level=4)
 
+# Sec 104: the tube's top fillet (radius 1, a quarter) removed outward at 0.8
+# and more. The tubes round its two tangent edges are wider than the fillet
+# is across and cut each other before they come to it: nothing of the rim
+# ends on the removed face, the offset is one closed shell round the part,
+# and the thick solid is the sealed one -- which was only put together
+# inward (sec 94), so that outward the part's skin stayed open where the
+# fillet was and the result was refused. From level 5 outward too. And the
+# flat top between the fillets, 2 wide, removed outward past 1: the same
+# answer, where sec 100's flush one came before (1577.9361 at 1.05). The
+# volumes are those of the wall built with booleans, the same solids.
+for _name, _face, _value, _volume in (("outer", 2, 0.8, 1316.3208), ("inner", 6, 0.8, 1331.6908),
+                                      ("top", 4, 1.05, 1798.1287), ("top", 4, 1.5, 2691.2589)):
+    _tube = _probe1.SHAPES["tube_fillet"]()
+    _tag = "tube_fillet_%s_out%g_sealed" % (_name, _value)
+    _sealed_at_level5_case(_tag, _tube, _face, _value, (_tube.Volume, _tube.Volume + _volume))
+    own_refusal_case(_tag + "_refused_level4", _tube, [_face], _value, False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
@@ -2957,8 +2974,12 @@ def _tube_fillet_cases():
     own_refusal_case("tube_fillet_inner_in1_join_refused", shape, [inner], -1.0, False, 2)
     tube_fillet_input_kept("tube_fillet_outer_in1_join_input_kept")
     shape, outer, inner, bottom = _tube_fillet()
-    own_refusal_case("tube_fillet_outer_out1_refused_level5", shape, [outer], 1.0, False, 0, 5)
-    own_refusal_case("tube_fillet_inner_out1_refused_level5", shape, [inner], 1.0, False, 0, 5)
+    # (Refused at level 5 until sec 104: the two tubes close over the fillet,
+    # and the answer is the sealed one.)
+    _sealed_at_level5_case("tube_fillet_outer_out1_sealed", shape, outer, 1.0,
+                           (shape.Volume, shape.Volume + 1686.4931))
+    _sealed_at_level5_case("tube_fillet_inner_out1_sealed", shape, inner, 1.0,
+                           (shape.Volume, shape.Volume + 1702.6459))
     thickness_case("tube_fillet_outer_out0.5_level5", shape, outer, 0.5, "pass", 788.1723,
                    fix_level=5)
     thickness_case("tube_fillet_inner_out0.5_level5", shape, inner, 0.5, "pass", 801.1296,
@@ -3251,11 +3272,19 @@ _rounded_box_cases()
 # back at 7521.4676 and 7511.7005 where the whole tube is 2391.1690 -- past
 # what level 5 refuses; the stadium's end fillet 1.15 outward at 5798.4033
 # and its side fillet 1.4 outward at 6157.8056, the stadium being 2194.8516.
-# Refused at every level.
+# Refused at every level -- the tube's up to level 4: from level 5 they have
+# the sealed answer of sec 104.
 def _holds_its_shape_cases():
     shape, outer, inner, bottom = _tube_fillet()
-    own_refusal_case("tube_fillet_outer_out1.5_refused", shape, [outer], 1.5)
-    own_refusal_case("tube_fillet_inner_out1.5_refused", shape, [inner], 1.5)
+    for _level in (0, 4):
+        own_refusal_case("tube_fillet_outer_out1.5_refused_level%d" % _level, shape, [outer], 1.5,
+                         False, 0, _level)
+        own_refusal_case("tube_fillet_inner_out1.5_refused_level%d" % _level, shape, [inner], 1.5,
+                         False, 0, _level)
+    _sealed_at_level5_case("tube_fillet_outer_out1.5_sealed", shape, outer, 1.5,
+                           (shape.Volume, shape.Volume + 2663.1977))
+    _sealed_at_level5_case("tube_fillet_inner_out1.5_sealed", shape, inner, 1.5,
+                           (shape.Volume, shape.Volume + 2682.9667))
     wire = Part.Wire([
         Part.makeLine(App.Vector(-10, -5, 0), App.Vector(10, -5, 0)),
         Part.ArcOfCircle(App.Vector(10, -5, 0), App.Vector(15, 0, 0),

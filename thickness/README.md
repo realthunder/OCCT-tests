@@ -5898,6 +5898,93 @@ fillet 8, the chamfered boxes 16, rightly, four single runs (the cup's
 f5, the countersink's f2, the stepped shaft's f1 at 1 inward, the
 cylinder with a chamfered top), none traced.
 
+## The sealed thick solid, outward (`9af0016de1`, level 5, 2026-11-22, sec 104)
+
+![the tube's top fillet removed outward](models/pictures/sealed_out.png)
+
+The tube of sec 78 (10 and 6 in radius, 12 high, its two top edges
+filleted 1), a top fillet removed outward at 0.8 and more: refused.
+
+**The cause, traced.** The fillet is a quarter, 0.7654 from either
+tangent edge to its middle. The tubes round the two tangent edges,
+wider than that, cut each other before they come to the fillet
+(`theTubePairs`, sec 88): nothing of the rim ends on the removed face,
+and the offset is one closed shell round the part. The answer is the
+sealed one of sec 94 -- the part's skin whole, the removed face in it,
+and the offset -- but `MakeSealedThickSolid` put that together inward
+only. Outward the skin was glued without the removed face: a solid of
+two shells, one open (12 edges on one face), which the soundness test
+refused.
+
+**The fix.** From level 5 the outward case is put together as well:
+where every offset face is in one closed shell, no face that stays has
+an image, and the skin with the removed faces closes, the solid is the
+offset's shell outside and the skin for a void.
+
+**The results.** The outer and the inner fillet at 0.8, 1 and 1.5:
+1316.3208, 1686.4931, 2663.1977 and 1331.6908, 1702.6459, 2682.9667,
+each the same solid as the wall built with booleans (the part's closed
+offset less the part, less what lies beyond the removed fillet outside
+the two tubes): both differences 0.000000. The flat top between the
+fillets, 2 wide, removed outward past 1 comes to the same answer, where
+the attempt without the tubes (sec 100) answered before: 1798.1287 at
+1.05 for 1577.9361, 2691.2589 at 1.5 for 2303.5044 -- the new ones the
+same solids as the wall with the tubes built with booleans, so that the
+volume goes on from 1510.1997 at 0.9 where it stepped down. At 1
+exactly, the two tubes touching, it is still sec 100's 1499.2407 (the
+wall with the tubes would be 1701.6867).
+
+**Cases.** `tube_fillet_outer_out0.8_sealed`, `..inner_out0.8..`,
+`..top_out1.05..`, `..top_out1.5..`, each with `_refused_level4`. And
+four that said refused: `tube_fillet_outer_out1_refused_level5` and
+`..inner..` (sec 78) are `..out1_sealed` now, and
+`tube_fillet_outer_out1.5_refused` and `..inner..` (sec 86: the result
+that had the inside of the tube for material, 7521.4676, refused at
+every level) are refused at levels 0 and 4 and `..out1.5_sealed` at 5.
+1051 at levels 0, 3 frozen, 4 and 5. The eight sealed cases fail on the
+library before the fix.
+
+**The gate.** The probe at level 5: the tube's two fillets at 1 made
+and right (the Arc join's refusals 26 of 1676 for 28), no input changed.
+The scan: 30 runs from refused to made (332 to 302 of 13440), the two
+fillets from 0.8 to 1.5, and 10 changed, the top from 1.05 to 1.5; the
+40 read again by random points, none wrong. Nothing else changed: the
+suites but these cases, the boolean, draft and fillet suites, the
+corpus (levels 0, 4 and 5), the sweep (levels 0 and 5), the probe and
+the scan at level 0, the second and third scan sets at level 5, the
+bench of sec 82, the bench of sec 89 at levels 0 and 5, the probe with
+every shape turned but the same two runs.
+
+**What it costs.** Outward, the offset's faces are glued once more to
+see whether they close. The library before and now by turns, level 5,
+every face at 0.5 and 1 either way. The Arc join, three times each: the
+tube (18 made for 16) 0.77 to 0.83 s for 0.81 to 0.87; the others the
+same: the box with every edge filleted 8.08 to 8.40 for 8.24 to 8.29,
+the enclosure 4.18 to 4.38 for 4.24 to 4.49, the stadium 1.90 to 2.01
+for 1.96 to 2.02, the hexagon 4.85 to 5.19 for 4.85 to 5.22, the box
+with its top edges filleted 2.56 to 2.78 for 2.53 to 2.75, the pocket
+with a filleted floor 4.49 to 4.86 for 4.56 to 4.80, the box with
+fillets below 4.99 to 5.36 for 5.10 to 5.34, the pocket with rounded
+corners 2.26 to 2.41 for 2.25 to 2.40, the plate with a slot 1.39 to
+1.48 for 1.39 to 1.46. The Intersection join, four times each, the
+same: the box with every edge filleted 11.74 to 12.14 for 11.69 to
+11.96, the enclosure 17.39 to 17.65 for 17.18 to 17.68, the hexagon
+5.42 to 5.61 for 5.51 to 5.55, the others within 0.1. The corpus at
+level 5, its 198 refusals timed, twice each by turns: 255.0 and 245.6 s
+in all for 244.0 and 247.2, and the same results.
+
+**What is left.** Of the probe's 26 Arc refusals: the chamfered boxes
+16, rightly; the tube 6, every face at 1 inward -- the fillets' offsets
+are circles there (radius 1 less 1), and past 1 a face beside a fillet
+(the sides, the top) is refused where the bottom is made (1345.3957 at
+1.05, the fillets gone): the fillet tangent to the removed face has no
+offset to carry on to it, and the face beyond it is not carried on in
+its place -- a construction not there; and four single runs, three of
+them at 1 exactly and nowhere else in the scan (the cylinder with a
+chamfered top, the countersink, the stepped shaft with a fillet), the
+fourth the cup's flat from 0.95 inward, about half its wall (2 thick).
+None of these traced further.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
