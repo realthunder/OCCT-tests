@@ -6088,7 +6088,9 @@ offsets circles); and the four single runs of sec 104. One random
 point of 20000 read outside the top's result at 1.5 where the boolean
 wall has it inside -- (5.8447, -6.8010, 11.8800), a box of 0.02 round
 it all material and the same point inside in turned copies: the point
-classifier's, not the result's; not traced.
+classifier's, not the result's -- traced and fixed after this section
+(`2fa004b0b5`; boolean/README.md, "A line that crosses a face nearer its
+border than the facets' sag").
 
 ## Determinism cases (intersection mode, Arc join)
 

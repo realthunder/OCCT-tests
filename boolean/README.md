@@ -1456,3 +1456,67 @@ fillet suite PASS=919 XFAIL=1 at fix levels 0 to 4, every other case line
 the same; the thickness corpus as its baseline; the thickness sweep 928
 of 928; the 29 issue models as before. FreeCAD (`763d0acadb`): the Python
 suite 4388 OK. Not run: macOS, thickness levels 1 and 2.
+
+## A line that crosses a face nearer its border than the facets' sag (`2fa004b0b5`, 2026-11-23)
+
+**Where it was met.** Thickness sec 105 measures its results by random
+points against a wall made by booleans. One point of 20000 read outside
+the tube's result with its top removed 1.5 inward where the wall has it
+inside: (5.8447, -6.8010, 11.8800), a box of 0.02 round it all material.
+The result is `models/tube_sealed_cavity.brep`: a solid with a sealed
+void, the void's faces strips of tubes that are B-splines.
+
+**What was broken.** The classifier casts a line from the point and
+takes the first crossing of the solid's skin along it.
+`IntCurvesFace_Intersector` looks for the crossings with a face that is
+no quadric on a polyhedron of the face, 20 to 40 samples each way, and
+the polyhedron was sampled over exactly the face's bounds. Its facets
+lie off the surface by their sag, so a line that crosses the face nearer
+to its border than the sag crosses the facets' planes beyond the last
+facet: nothing is found on the polyhedron, the exact crossing is never
+looked for, and the line goes on to the next face. Here the face is a
+strip 0.58 wide of a tube of radius 8; 20 samples round the tube give a
+sag of 0.1, the rows across are 0.03 apart, and the lines lost crossed
+the strip 0.003 to 0.03 from its edge. Each face intersected on its own
+against the exact crossings showed the one crossing missing; with it the
+count of crossings is odd, the point inside.
+
+**The fix.** In the intersector's constructor the polyhedron goes on
+past the face's bounds, where the surface does, by the sag counted in
+rows: the sag (of a chord along u plus one along v) and the length of a
+row are measured on nine cells, the rows added are their quotient
+rounded up, eight at most, and no further than the surface's own bounds
+or, on a periodic surface, half of what the face leaves free of the
+period. The crossing itself is computed on the surface and classified
+on the face as before, so a crossing found on the added rows and off the
+face is dropped as it was. One row more, tried first, put the first
+point right and not the second: the reach has to be the sag.
+
+**The case.** `tube_cavity_points` in `run_tests.py`: nine points in
+the material above the void, all inside (all nine said outside before).
+No picture: no shape changes, only what is said of a point.
+
+**Audit.** Points in a ring round the void: 2 of 3000 said outside
+before, none now. Points sampled in the material above it: 7 of 36735
+before, none now. The 22 probe shapes of the thickness suite that turn
+into B-splines of the same volume, 1500 points near the skin of each,
+the B-spline's answer against the analytic shape's: none differs of
+33000, before and now. The classifier as it was against this one on
+20000 random points in the box of each of the 56 valid solids of the
+suites' models (1120000 points): no point changes.
+
+**The cost**, old and new by turns on a box busy with another job: the
+33000 points above classified in 57.3, 69.8, 63.9 s before and 60.6,
+60.9, 59.8 s now; the thickness bench of the probe shapes 53.9, 56.3,
+58.2 s before and 58.1, 54.6, 56.1 s now; the thickness corpus at level
+5 459.6, 457.1 s before and 449.1, 467.1 s now, at level 4 427.7, 418.0 s
+and 421.4, 451.6 s. Nothing beyond the noise of the turns.
+
+**Validation** (against `26a5df35b0`, on Linux): boolean 112 (111 + this
+one), draft 105, the fillet suite PASS=962 XFAIL=1, thickness PASS=1064
+at levels 0, 3 frozen, 4 and 5, every other case line the same; the
+thickness corpus at levels 0, 4 and 5, the sweep at levels 0 and 5, the
+probe (both halves, levels 0 and 5, and turned), the scan and the NURBS
+bench all line for line as before. With the STEP writer fix merged in
+(`6d28f1d1a9`): boolean 112 again, FreeCAD's Python suite 4388 OK in 31
+modules. Not run: macOS.

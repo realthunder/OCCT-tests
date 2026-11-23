@@ -641,6 +641,32 @@ def issue631_chamfer_classify():
 guarded(issue631_chamfer_classify)
 
 
+# The filleted tube's top removed 1.5 inward (thickness sec 105): the wall
+# with a sealed cavity, the cavity's roof two tubes as B-splines, each a
+# strip 0.58 wide of a surface 50 round. Points in the material above the
+# cavity said outside: the line from the point crossed a strip 0.03 from its
+# edge, and the polyhedron IntCurvesFace_Intersector looks for crossings on
+# -- 20 samples either way, its facets 0.1 off the surface round, its rows
+# 0.03 across -- ended at the face's bounds, so the line passed its last
+# facet by. The polyhedron reaches past the bounds by its sag now
+# (README.md, "A line that crosses a face nearer its border than the
+# facets' sag").
+def tube_cavity_classify():
+    solid = Part.read(os.path.join(HERE, "models", "tube_sealed_cavity.brep"))
+    points = [(5.844742553333418, -6.800981997991345, 11.879971117546765),
+              (-8.787711054101528, 1.142866258707752, 11.936822531014494),
+              (-8.120154, -0.688250, 11.153003), (5.685867, -6.660454, 11.609178),
+              (-8.606669, 0.391817, 11.826856), (5.929184, -6.700331, 11.823056),
+              (-8.332290, 0.007389, 11.397841), (-8.210914, -0.601261, 11.322987),
+              (-8.789280, 1.259816, 11.916995)]
+    said = [q for q in points if not solid.isInside(V(*q), 1e-7, True)]
+    report("tube_cavity_points", not said,
+           "%d of %d points inside the solid said outside (want 0)" % (len(said), len(points)))
+
+
+guarded(tube_cavity_classify)
+
+
 # A solid made of a compsolid (BRepLib_MakeSolid): the faces met once, in
 # the order they are met. They came out of a map keyed by the shape, in the
 # order of the addresses the faces happened to have -- another from one run
