@@ -5985,6 +5985,111 @@ chamfered top, the countersink, the stepped shaft with a fillet), the
 fourth the cup's flat from 0.95 inward, about half its wall (2 thick).
 None of these traced further.
 
+## A face beside a fillet, removed inward past the fillet's radius (`0cd1f3f871`, `26a5df35b0`, level 5, 2026-11-23, sec 105)
+
+![the tube's walls and top removed 1.5 inward](models/pictures/tube_fillet_past.png)
+
+The tube of sec 78 (10 and 6 in radius, 12 high, its two top edges
+filleted 1), a face beside a fillet -- the outer wall, the top, the
+inner wall -- removed inward by more than 1: refused, where the bottom
+was made (sec 104, what is left).
+
+**The causes, traced.** Past its radius a fillet's offset is turned
+inside out and not kept, and the removed face's rim there is the tube
+round its tangent edge, built from the edge of that offset.
+
+1. `Geom_OffsetSurface::Surface()` gives the "equivalent surface" its
+   points are taken from. For a cylinder offset past its axis, a sphere
+   past its centre and a torus past the centre of its tube it gave the
+   surface of the opposite radius with its X axis reversed -- that
+   surface mirrored, so that the point of (u, v) was not on the normal
+   of the basis surface at (u, v): up to 0.09 off for a cylinder of
+   radius 1 at 1.05, and the fillet's offset in the opposite quarter of
+   its tube. The tube was built from an edge 0.1 off, and every attempt
+   failed. (The branch for the torus is new in OCCT 8; the mirror is
+   upstream's.)
+2. With that right, the wall's tube has still to be cut by the offsets
+   of the faces beyond the vanished fillet (the top for a wall, the
+   walls for the top), which share no edge with it: nothing asked for
+   those sections.
+3. Cut by two closed sections, a tube has three bands; the loop builder
+   gave each closed edge to the first band it found alone, and the band
+   between the two was never made.
+4. The top removed, its two tubes (2 apart, wider than 1) pass through
+   each other in a circle and each is cut by its wall in another: the
+   rim between them is a ring between two closed edges, where the tube
+   pairs' lens (sec 88) made one wire of all the edges.
+5. And the first attempt, without the tubes, answered the top with a
+   valid solid not hollowed at all (2390.0910 for the part's 2391.1690).
+
+**The fix.** (1) at every level: the cylinder's frame is turned half
+round its axis, the sphere's has its three directions reversed, which
+give the point at the same parameters; the torus past its tube's
+centre has no equivalent surface and is evaluated as an offset. No
+result of the suites, the corpus, the sweep, the probe or the scan
+changed with it at level 0 or 4. The rest from level 5: a tube beside a
+face that stays and has no offset is intersected with the offsets of
+the faces beyond that face; when that gives edges, every band of a
+periodic face between closed edges is made (`BRepAlgo_LoopEverySeamBand`),
+and the bands left with an edge no other piece uses are dropped; the
+rim between two tubes whose edges are each closed is a face with a wire
+an edge; and the attempt with the tubes cut by each other is taken only
+when the result weighs no more than a skin can (sec 79's bound).
+
+**The results.** The outer wall at 1.05, 1.2, 1.5 and 1.9: 875.6851,
+992.0264, 1215.2986, 1492.7581; the inner wall 1052.4201, 1177.7218,
+1408.7679, 1678.2275; the top 1426.0916, 1603.2132, 1928.1325,
+2306.1712, two shells: the two tubes close the cavity under the top,
+and the answer is the sealed one of sec 94. Each is the part less the
+cavity revolved from its profile, built with booleans
+(`probe/tube_exact.py`): the same volume to 1e-4 and no random point of
+4000 on the other side, for every one of the scan's 30 runs from 1.05
+to 1.5. These are the Arc join's own answers, the lip round the
+tangent edge a quarter tube -- not sec 100's flush convention. At 1
+exactly, the fillet's offset a circle, the three are refused as before.
+
+**Cases.** `offset_surface_past_centre` (the point of an offset surface
+of a cylinder, a sphere and a torus is on the basis surface's normal,
+0.5 and 1.05 inward of radius 1),
+`tube_fillet_outer_wall_in1.05_past_fillet`, `..in1.5..`,
+`tube_fillet_inner_wall_in1.05_past_fillet`, `..in1.5..`,
+`tube_fillet_top_in1.05_sealed`, `..in1.5..`, the six each with
+`_refused_level4`. 1064 at levels 0, 3 frozen, 4 and 5. The seven fail
+on the library before the fix: the surface 0.0296, 0.0932 and 0.0272
+off in its first three points, the six refused.
+
+**The gate.** The scan at level 5: 30 runs from refused to made (302 to
+272 of 13440), the tube's faces 1, 4 and 5 from 1.05 to 1.5 inward,
+all read against the boolean wall as above; three islands more, the
+three faces refused at 1 alone now. Nothing else changed: the suites
+but these cases, the boolean (111), draft (105) and fillet (962 and 1)
+suites, the corpus (levels 0, 4 and 5), the sweep (levels 0 and 5), the
+probe (levels 0 and 5: the Arc join's refusals still 26), the scan at
+level 0, its second and third sets at level 5, the bench of sec 82, the
+bench of sec 89 at levels 0 and 5, the probe with every shape turned;
+no input changed. FreeCAD's Python tests pass (31 modules).
+
+**What it costs.** The library before and now by turns, level 5. Every
+face of the probe's first set at 0.5 and 1 either way, the Arc join,
+three times each: 49.54, 52.03 and 48.89 s before, 49.22, 49.84 and
+49.23 now, the same 872 made and 24 refused. The tube's nine runs at
+1.05, 1.2 and 1.5, three times each: refused in 0.02 to 2.64 s before
+(the top at 1.2 the longest, 2.63 to 2.64), made in 0.32 to 0.46 now.
+The corpus, its refusals timed, twice each by turns with another
+session's tests running beside: level 5 (198 refusals) 255.0 and 250.0
+s before, 253.2 and 296.7 now -- the second run slower by a third on
+every one of its last, longest lines against the first run of the same
+library; level 4 (200) 362.3 and 249.7 before, 347.8 and 253.3 now. The
+same results in all.
+
+**What is left.** Of the probe's 26 Arc refusals: the chamfered boxes
+16, rightly; the tube 6, every face at 1 inward exactly (the fillets'
+offsets circles); and the four single runs of sec 104. One random
+point of 20000 read outside the top's result at 1.5 where the boolean
+wall has it inside -- (5.8447, -6.8010, 11.8800), a box of 0.02 round
+it all material and the same point inside in turned copies: the point
+classifier's, not the result's; not traced.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

@@ -1283,6 +1283,56 @@ for _name, _face, _value, _volume in (("outer", 2, 0.8, 1316.3208), ("inner", 6,
     _sealed_at_level5_case(_tag, _tube, _face, _value, (_tube.Volume, _tube.Volume + _volume))
     own_refusal_case(_tag + "_refused_level4", _tube, [_face], _value, False, 0, fix_level=4)
 
+# Sec 105: a face of the tube beside a fillet (radius 1) removed inward by
+# more than the fillet's radius. The fillet's offset is turned inside out
+# and not kept, and the tube round the removed face's tangent edge starts
+# at that offset's edge. (1) The offset surface of a torus past the centre of
+# its tube was evaluated at the wrong place -- Geom_OffsetSurface took the
+# torus of the opposite minor radius with its X axis reversed for it, which
+# gives the point of (u, v) mirrored and at v + pi -- so the tube was built
+# from an edge 0.1 off and everything was refused. (2) With the top removed
+# the two tubes pass through each other, and each has to be cut by the wall
+# beyond its fillet too: no edge joins them. From level 5 the tube meets the
+# offsets of the faces beyond a face with no offset, every band of a face
+# cut by two closed edges is made, and the rim between two closed edges is a
+# ring. The volumes are those of the part less the cavity revolved from its
+# profile (probe/tube_exact.py), the same solids by random points.
+def _offset_surface_past_centre():
+    """The point of an offset surface is the basis surface's, moved along its normal."""
+    bad = []
+    for _name, _surface in (("cylinder", Part.Cylinder()), ("sphere", Part.Sphere()),
+                            ("torus", Part.Toroid())):
+        if _name == "torus":
+            _surface.MajorRadius = 9
+            _surface.MinorRadius = 1
+        else:
+            _surface.Radius = 1
+        for _offset in (-0.5, -1.05):
+            _off = Part.OffsetSurface(_surface, _offset)
+            for _u, _v in ((0.3, 0.4), (1.2, 1.0)):
+                _want = _surface.value(_u, _v) + _surface.normal(_u, _v) * _offset
+                _gap = (_off.value(_u, _v) - _want).Length
+                if _gap > 1e-9:
+                    bad.append("%s %g (%g, %g): %.4f off" % (_name, _offset, _u, _v, _gap))
+    report("offset_surface_past_centre", not bad, False,
+           "; ".join(bad[:3]) if bad else "cylinder, sphere and torus, 0.5 and 1.05 inward of 1")
+
+
+_offset_surface_past_centre()
+for _name, _face, _value, _volume in (("outer_wall", 1, -1.05, 875.6851),
+                                      ("outer_wall", 1, -1.5, 1215.2986),
+                                      ("inner_wall", 5, -1.05, 1052.4201),
+                                      ("inner_wall", 5, -1.5, 1408.7679)):
+    _tube = _probe1.SHAPES["tube_fillet"]()
+    _tag = "tube_fillet_%s_in%g_past_fillet" % (_name, abs(_value))
+    thickness_case(_tag, _tube, _face, _value, "pass", _volume, fix_level=5)
+    own_refusal_case(_tag + "_refused_level4", _tube, [_face], _value, False, 0, fix_level=4)
+for _value, _volume in ((-1.05, 1426.0916), (-1.5, 1928.1325)):
+    _tube = _probe1.SHAPES["tube_fillet"]()
+    _tag = "tube_fillet_top_in%g_sealed" % abs(_value)
+    _sealed_at_level5_case(_tag, _tube, 4, _value, (_tube.Volume, _tube.Volume - _volume))
+    own_refusal_case(_tag + "_refused_level4", _tube, [4], _value, False, 0, fix_level=4)
+
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
 # in three on the rim and whole on the top -- which is offset through a
