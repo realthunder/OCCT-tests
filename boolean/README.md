@@ -1520,3 +1520,64 @@ probe (both halves, levels 0 and 5, and turned), the scan and the NURBS
 bench all line for line as before. With the STEP writer fix merged in
 (`6d28f1d1a9`): boolean 112 again, FreeCAD's Python suite 4388 OK in 31
 modules. Not run: macOS.
+
+## A line that passes the last facet within the facets' deflection (`3d1e94036d`, 2026-11-24)
+
+**Where it was met.** One point of 20000 on another side of the kernel's
+thick solid than of the wall made by booleans, the tube's inner wall
+removed 1.002 inward (thickness sec 105's measure):
+(-7.2975, 0.6406, 11.6804), 0.32 from the skin of either, in the
+material under the top. Not the shape: the two agree all over a map of
+the section through the point, and of 40000 points in that material 4
+are said outside. `models/tube_inner_wall_in.brep`.
+
+**The cause, traced.** The classifier's first line from the point
+crosses three faces, and `IntCurvesFace_Intersector` finds two: the
+crossing with the rim round the wall's tangent edge is lost, the count
+is even, the point OUT. The rim is a tube as a B-spline; its polyhedron
+has 20 samples round it, the facets 0.09 inside the tube (the
+polyhedron's own deflection, 0.0925). The line meets the surface 8.4
+degrees off its tangent plane, 0.37 from the tube's end -- which is the
+end of the surface too, so the section above's rows past the face's
+bounds are none here -- and meets the facets' planes beyond the last
+facet.
+
+`Intf_InterferencePolygonPolyhedron` has two ways of a segment against
+the facets. Without a grid, it moves the segment's ends by the
+polyhedron's deflection along each facet's normal, either way, and a
+segment that passes a facet within the deflection is met. Through a
+grid of the facets' boxes (`Bnd_BoundSortBox`, the way the intersector
+takes), it lengthens the first and the last segment and looks for a
+crossing of the facet as it is. The same line against the same
+polyhedron: one point found without the grid, none through it; with 40
+samples round the tube, one either way.
+
+**The fix.** Through the grid, a facet on which the segment as it is
+finds nothing is tried with the ends moved as the other way moves them.
+What a segment finds on a facet it crosses is as before.
+
+**The case.** `tube_rim_points` in `run_tests.py`: five points in the
+material, all inside (all five said outside before). No picture: no
+shape changes.
+
+**Audit.** The 40000 points in the material: 4 said outside before,
+none now. The classifier as it was against this one on 20000 random
+points in the box of each of the 56 valid solids of the suites' models:
+no point changes. The 22 probe shapes that turn into B-splines of the
+same volume, 1500 points near the skin of each against the analytic
+shape: none differs of 33000, before and now.
+
+**The cost**, old and new by turns: those 33000 points classified in
+48.26, 51.88, 49.01 s before and 48.16, 49.15, 48.44 s now; the 40000
+points of the tube 99.26 s and 99.70 s; the thickness bench of the
+probe shapes 47.97, 48.43, 48.22 s and 48.48, 48.01, 46.99 s; the
+thickness corpus at level 5 441.9, 442.9 s and 441.0, 444.9 s, at level
+4 416.6, 413.4 s and 416.1, 417.2 s. Nothing to measure.
+
+**Validation** (against `8667c6b468` merged with `e1939cfd40`, on
+Linux): boolean 113 (112 + this one), draft 105, the fillet suite
+PASS=962 XFAIL=1, thickness PASS=1088 at levels 0, 3 frozen, 4 and 5,
+every other case line the same; the thickness corpus at levels 0, 4 and
+5, the sweep at levels 0 and 5, the probe (both halves, levels 0 and 5,
+and turned), the scans and the NURBS bench all line for line as before.
+FreeCAD's Python suite 4388 OK in 31 modules. Not run: macOS.

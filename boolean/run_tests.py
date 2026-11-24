@@ -667,6 +667,29 @@ def tube_cavity_classify():
 guarded(tube_cavity_classify)
 
 
+# The tube with its top edges filleted, its inner wall removed 1.002 inward
+# (thickness sec 105): the rim round the wall's tangent edge is a tube as a
+# B-spline, 20 samples round it, the facets of its polyhedron 0.09 inside
+# it. A line 8 degrees off that surface, crossing it 0.37 from the tube's
+# end, crosses the facets' planes beyond the last facet, where the surface
+# ends and no facet can be added: the interference of a segment with the
+# facets through a grid of their boxes looked for a crossing of the facet
+# alone, where the one without a grid allows the facets' deflection. Five
+# points in the material under the top, said outside (README.md, "A line
+# that passes the last facet within the facets' deflection").
+def tube_rim_classify():
+    solid = Part.read(os.path.join(HERE, "models", "tube_inner_wall_in.brep"))
+    points = [(-7.297521750703828, 0.6405514836882666, 11.680413377932933),
+              (-7.124092, -0.079036, 11.338356), (-7.127454, -0.117618, 11.346981),
+              (-7.368267, 0.906140, 11.793830), (-7.251724, 0.493717, 11.594139)]
+    said = [q for q in points if not solid.isInside(V(*q), 1e-7, True)]
+    report("tube_rim_points", not said,
+           "%d of %d points inside the solid said outside (want 0)" % (len(said), len(points)))
+
+
+guarded(tube_rim_classify)
+
+
 # A solid made of a compsolid (BRepLib_MakeSolid): the faces met once, in
 # the order they are met. They came out of a map keyed by the shape, in the
 # order of the addresses the faces happened to have -- another from one run
