@@ -6092,6 +6092,88 @@ classifier's, not the result's -- traced and fixed after this section
 (`2fa004b0b5`; boolean/README.md, "A line that crosses a face nearer its
 border than the facets' sag").
 
+## A fillet offset inward by exactly its radius (`f1d5ff86ab`, level 5, 2026-11-24, sec 106)
+
+![the tube's outer wall, bottom and outer fillet removed 1 inward](models/pictures/tube_fillet_at_radius.png)
+
+The tube of sec 78, its two top edges filleted 1, any face removed 1
+inward: refused, six runs of the probe (sec 105, what is left). And not
+at 1 alone: the outer wall is made at 0.99999 and at 1.002 and refused
+between, the top from 0.9999.
+
+**The cause, traced.** `BRepOffset::Surface` offsets a torus by its minor
+radius: within 1e-7 of nothing left it gives no surface and the status
+`BRepOffset_Degenerated`, and `BuildOffsetByArc` keeps no offset face
+for the fillet -- there is none, its offset is the circle at radius 9
+(or 7) and height 11. The faces either side of the fillet meet on that
+circle. Each makes the image of its own edge with the fillet
+(`BRepOffset_Offset`), the same circle twice, and a tangent edge's image
+is shared only between the two faces of that edge (`ShapeTgt` in
+`MakeOffsetFaces`): nothing joined the wall's circle to the top's, the
+shell stayed open along it, and every attempt after that was refused.
+
+**The fix.** In `MakeOffsetFaces`, from fix level 5: a torus or cylinder
+face whose offset is degenerated, with two long edges (no seam, not
+degenerated), has them for twins, and the image made for one is bound
+for the other too, with its vertices. Only where the two run alike: the
+same range, and at five parameters the same point once moved by the
+offset along the face's normal.
+
+**What it makes.** At the tube, 1 inward: the outer wall 836.2104, the
+inner wall 1009.1555, the bottom 1285.3284, either fillet 1385.8594 --
+the fillet removed, the cavity under it does not reach it (the material
+under the fillet is within 1 of the wall and the top) and is a void, as
+it is at 0.999 already. The walls against `probe/tube_exact.py` (the
+part less the cavity revolved from its profile), the bottom and the
+fillets against the part less the ring between radius 7 and 9 from 0 or
+1 up to 11: the same volume to four decimals, the same shells, and none
+of 20000 random points on another side. With the Intersection join the
+bottom is 1285.3284 too (`tube_fillet_f3_in1_join_as_arc`, a refusal
+case before).
+
+The scan (13440 runs) refuses 255 for 272: these five, and twelve the
+same way on fillets of 1.5 at 1.5 -- the boss with both its edges
+filleted, nine of its ten faces, and the filleted cone, three of four.
+Each is valid and read right by 4000 points of the probe; those that
+are two solids (the boss' f1, f3, f5, the cone's f1) are two solids at
+1.49 and 1.51 as well, the volumes in line.
+
+**The top is refused still, and rightly.** The tubes round its two
+edges, 2 apart, are 1 in radius: at 1 they touch along the circle at
+radius 8 on the top itself, and the void under them would meet the
+outside along a line. `tube_fillet_top_in1_rims_touch_refused`.
+
+**The cases** (19): `tube_fillet_{outer_wall,inner_wall,bottom}_in1_at_fillet_radius`,
+`tube_fillet_{outer,inner}_fillet_in1_sealed`,
+`cone_fillet_f{3,4}_in1.5_at_fillet_radius`,
+`boss_fillet_both_f{4,10}_in1.5_at_fillet_radius`, each with its
+`_refused_level4`; the top's refusal. On the libraries before the fix
+all six faces of the tube are refused at 1 at level 5.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 48.94, 49.18, 49.23 s before and 49.67, 49.44, 48.55 s now (877
+made for 872); the corpus at level 5 449.2, 516.5 s before and 454.4,
+536.1 s now, at level 4 504.5, 426.9 s and 484.2, 439.6 s, on a box
+that was not quiet. Nothing beyond the noise of the turns.
+
+**Validation** (against `2fa004b0b5`, on Linux): thickness PASS=1083
+(1064 + 19) at levels 0, 4 and 5 (level 3 frozen not run with the
+new cases; 1064 there in the gate but the one case below); boolean 112, draft 105, the fillet
+suite PASS=962 XFAIL=1, every other case line the same but the one
+refusal case that is an answer now; the corpus at levels 0, 4 and 5 and
+the sweep at 0 and 5 line for line as before; the probe at level 0 the
+same, at level 5 the tube's Arc runs 22 right and 1 refused for 17 and
+6, turned the same, no input changed; the NURBS bench the same.
+FreeCAD's Python suite 4388 OK in 31 modules. Not run: macOS.
+
+**What is left.** Of the probe's 21 Arc refusals: the chamfered boxes
+16, rightly; the tube's top at 1, rightly; and the four single runs of
+sec 104. Either side of a fillet's radius, where its offset is a hair
+of a torus or the step past it a hair high, the refusals were not gone
+into: before the fix the tube's outer wall was refused at 0.9999999 and
+at 1.0005 as at 1, and made at 0.99999 and 1.002; after it 0.999, 1 and
+1.002 were run, and made.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

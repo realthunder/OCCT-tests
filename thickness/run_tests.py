@@ -1141,12 +1141,13 @@ for _name, _shape, _face, _value, _volume in (
         ("stadium", _probe1.SHAPES["stadium"], 8, -1.0, 804.8242),
         ("cone_fillet", _probe1.SHAPES["cone_fillet"], 4, -1.0, 764.8528),
         ("tube_fillet", _probe1.SHAPES["tube_fillet"], 4, -0.5, 707.2754),
+        ("tube_fillet", _probe1.SHAPES["tube_fillet"], 3, -1.0, 1285.3284),
         ("enclosure", _probe2.SHAPES["enclosure"], 8, -0.5, 1596.9152)):
     thickness_case("%s_f%d_%s%g_join_as_arc" % (_name, _face, "out" if _value > 0 else "in",
                                                 abs(_value)),
                    _shape(), _face, _value, "pass", _volume, join=2, fix_level=5)
-own_refusal_case("tube_fillet_f3_in1_join_refused", _probe1.SHAPES["tube_fillet"](), [3], -1.0,
-                 False, 2, fix_level=5)
+# (tube_fillet f3 at 1 inward was refused until sec 106: the fillets' offsets
+# are circles there.)
 
 # Sec 98: a box with its bottom edges filleted and its top edges chamfered,
 # a side or a chamfer removed inward. At a top corner of the removed face
@@ -1332,6 +1333,40 @@ for _value, _volume in ((-1.05, 1426.0916), (-1.5, 1928.1325)):
     _tag = "tube_fillet_top_in%g_sealed" % abs(_value)
     _sealed_at_level5_case(_tag, _tube, 4, _value, (_tube.Volume, _tube.Volume - _volume))
     own_refusal_case(_tag + "_refused_level4", _tube, [4], _value, False, 0, fix_level=4)
+
+# Sec 106: a fillet offset inward by exactly its radius. Its offset is no
+# surface but a circle and it has no offset face; the faces either side of
+# it meet on that circle, and each made the circle's edge for itself, the
+# two never joined: every face of the tube with its top edges filleted at
+# 1, removed 1 inward, was refused, and so the boss and the cone with
+# fillets of 1.5 at 1.5. From fix level 5 the two share the edge made first
+# (MakeOffsetFaces). The tube's volumes are those of the part less the
+# cavity made by booleans (probe/tube_exact.py for the walls; the bottom and
+# the fillets: the ring between radius 7 and 9 up to 11), the same solids
+# by 20000 random points; the cone's and the boss' read right by 4000 points
+# of the probe. A fillet removed, the cavity does not reach it: a void.
+# The top is refused still, and rightly: the tubes round its two edges, 2
+# apart, touch along a circle on the top itself.
+for _name, _face, _volume in (("outer_wall", 1, 836.2104), ("inner_wall", 5, 1009.1555),
+                              ("bottom", 3, 1285.3284)):
+    _tube = _probe1.SHAPES["tube_fillet"]()
+    _tag = "tube_fillet_%s_in1_at_fillet_radius" % _name
+    thickness_case(_tag, _tube, _face, -1.0, "pass", _volume, fix_level=5)
+    own_refusal_case(_tag + "_refused_level4", _tube, [_face], -1.0, False, 0, fix_level=4)
+for _name, _face in (("outer_fillet", 2), ("inner_fillet", 6)):
+    _tube = _probe1.SHAPES["tube_fillet"]()
+    _tag = "tube_fillet_%s_in1_sealed" % _name
+    _sealed_at_level5_case(_tag, _tube, _face, -1.0, (_tube.Volume, _tube.Volume - 1385.8594))
+    own_refusal_case(_tag + "_refused_level4", _tube, [_face], -1.0, False, 0, fix_level=4)
+own_refusal_case("tube_fillet_top_in1_rims_touch_refused", _probe1.SHAPES["tube_fillet"](), [4],
+                 -1.0, False, 0, fix_level=5)
+for _shape, _face, _volume in (("cone_fillet", 3, 826.8299), ("cone_fillet", 4, 1066.1623),
+                               ("boss_fillet_both", 4, 3315.6521),
+                               ("boss_fillet_both", 10, 2274.6817)):
+    _part = _probe1.SHAPES[_shape]()
+    _tag = "%s_f%d_in1.5_at_fillet_radius" % (_shape, _face)
+    thickness_case(_tag, _part, _face, -1.5, "pass", _volume, fix_level=5)
+    own_refusal_case(_tag + "_refused_level4", _part, [_face], -1.5, False, 0, fix_level=4)
 
 # A flat side of a box with its uprights filleted, as B-splines, removed
 # outward: invalid with the right volume, the side's edge with the top cut
