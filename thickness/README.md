@@ -6281,7 +6281,61 @@ suite 4388 OK in 31 modules. Not run: macOS.
 
 **What is left.** Of the probe's 20 Arc refusals: the chamfered boxes
 16, the tube's top at 1 and the three runs above, all rightly. The
-cup's floor and bottom from 1.2 inward.
+cup's floor and bottom from 1.2 inward (sec 108).
+
+## A part thinner than twice the thickness stays solid (`8667c6b468`, level 5, 2026-11-24, sec 108)
+
+Sec 107 left the cup's floor refused from 1.2 inward, and sec 93 its
+bottom: "before either test is asked".
+
+**The cause, traced.** Both are refused both ways of the loops and come
+to the last attempt, every pair of faces intersected (sec 80, sec 98).
+That attempt makes them, and right: 2513.7533 for the floor at 1.2 and
+2639.6807 at 1.5, 2527.0493 for the bottom at 1.2, the volumes of the
+walls made by booleans. It then weighs its answer -- no more than half
+the thickness times its area (sec 80: a wall between a surface and its
+offset) -- and throws it away. The bound is that of a part hollowed all
+over. Where the part is thinner than twice the thickness the walls of
+its two sides fill it, and it stays solid, up to twice a wall thick: the
+cup's wall is 1.9, and at 1.2 the cup is whole but for the pocket in its
+bottom, 2513.7533 of 2824.2918.
+
+**The fix.** From fix level 5 the answer of that attempt may weigh the
+thickness times its area. What is through a wall, on the wrong side of
+an offset or holds its shape is refused after it as before (secs 86, 92,
+93).
+
+**What it makes.** Of the scans at level 5 sixteen runs, refused to
+made, and nothing else: the cup's bottom and its floor from 1.15 to 1.5
+inward in steps of 0.05. Each against the wall made by booleans
+(`probe/cup_exact.py` for the floor, `probe/cup_bottom_exact.py`, new,
+for the bottom -- the same as the kernel at 0.5 and 0.9, where nothing
+changed): the same volume to four decimals and no point of 10000 or
+20000 on another side. The same again at 1.7, 1.9 and, the floor, 1.95.
+Every face of the cup from 0.5 to 1.5 inward in steps of 0.05 is made
+now, 105 runs of 105.
+
+**The cases** (level 5, the exact volume and BOP's check):
+`revolve_cup_f5_in1.2_bop_clean`, `_in1.5_`, `revolve_cup_f1_in1.2_bop_clean`,
+`_in1.5_`.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 47.85, 48.61, 47.79 s before and 47.38, 48.19, 47.51 s now; the
+cup's 105 runs 1.74, 1.74, 1.75 s and 1.54, 1.54, 1.55 s; the corpus at
+level 5 442.1, 441.2 s and 441.1, 441.7 s, at level 4 414.7, 417.2 s
+and 415.7, 413.0 s. Nothing to measure, the cup the quicker for being
+made.
+
+**Validation** (against `c5ff5854d8`, on Linux): thickness PASS=1088
+(1084 + 4) at levels 0, 3 frozen, 4 and 5; boolean 112, draft 105, the
+fillet suite PASS=962 XFAIL=1, every other case line the same; the
+corpus at levels 0, 4 and 5, the sweep at 0 and 5, the probe at levels 0
+and 5 and turned, the NURBS bench all line for line as before; of the
+scans at level 5 the sixteen runs above (28 refused for 44 of 11700)
+and nothing else. FreeCAD's Python suite 4388 OK in 31 modules. Not
+run: macOS.
+
+**What is left.** The probe's 20 Arc refusals, all rightly (sec 107).
 
 ## Determinism cases (intersection mode, Arc join)
 

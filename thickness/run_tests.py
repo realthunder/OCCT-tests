@@ -1115,7 +1115,13 @@ for _mod, _name, _face, _value, _vol in (
         # made by booleans (probe/cup_exact.py), the same solids by 20000
         # random points; at 0.95 the wall keeps a void above the pocket.
         (_probe2, "revolve_cup", 5, -0.95, 2380.6611), (_probe2, "revolve_cup", 5, -1.0, 2423.2202),
-        (_probe2, "revolve_cup", 5, -1.1, 2469.1555)):
+        (_probe2, "revolve_cup", 5, -1.1, 2469.1555),
+        # sec 108: the cup from 1.15 inward, the bottom or the floor: whole
+        # but for a pocket, and heavier than half the thickness times its
+        # area -- an answer of every pair of faces was held to that. The
+        # volumes of probe/cup_exact.py and probe/cup_bottom_exact.py.
+        (_probe2, "revolve_cup", 5, -1.2, 2513.7533), (_probe2, "revolve_cup", 5, -1.5, 2639.6807),
+        (_probe2, "revolve_cup", 1, -1.2, 2527.0493), (_probe2, "revolve_cup", 1, -1.5, 2650.4626)):
     _bop_clean_case("%s_f%d_%s%g_bop_clean" % (_name, _face, "out" if _value > 0 else "in",
                                                abs(_value)),
                     _mod.SHAPES[_name](), _face, _value, _vol)
