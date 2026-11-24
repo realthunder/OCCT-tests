@@ -6174,6 +6174,115 @@ into: before the fix the tube's outer wall was refused at 0.9999999 and
 at 1.0005 as at 1, and made at 0.99999 and 1.002; after it 0.999, 1 and
 1.002 were run, and made.
 
+## Two walls nearer than twice the thickness: the floor (`c5ff5854d8`, level 5, 2026-11-24, sec 107)
+
+![the cup's floor removed 0.9, 0.95 and 1 inward](models/pictures/cup_floor_in1.png)
+
+Sec 93 left the cup's floor (face 5) unsolved: removed 0.95 inward or
+more it is refused, where the bottom is made. It is the one refusal of
+sec 106's list that is no touching shape.
+
+**The right answer** first, by booleans (`probe/cup_exact.py`): the part
+less the cavity revolved from its profile -- deeper than the thickness
+from the bottom and the outer side, and either under the floor's plane,
+where the inner side's wall ends cut off flush, or deeper than the
+thickness from the inner side and the top. It is the kernel's answer at
+0.5 and 0.9 to four decimals and by 20000 random points, so it is the
+convention the kernel has; and it gives 2380.6611 at 0.95 (the wall
+keeps a void above the pocket), 2423.2202 at 1, 2639.6807 at 1.5.
+
+**The cause, traced.** From the floor's plane up the two offsets of the
+wall meet nowhere at 1 (11.521 and 11.406 in radius on the plane, 13.813
+and 13.763 at the top's offset), so intersecting every pair of offset
+faces (sec 93) cuts nothing. The pocket under the floor is bounded by
+the outer side's offset, and its roof beside the floor is the floor's
+plane from the floor's edge (10.5) out to that offset (11.406): the end
+of the inner side's wall, cut off flush. A removed face is intersected
+with the offsets of its neighbours only (`ContextIntByArc`), so the
+plane was never cut by the outer side's offset: the rim on it ran to
+the inner side's own offset, 11.521, inside the outer wall, and the
+inner offset, the ring under the top and the whole of the outer offset
+stood as a slit up the wall -- 2494.6529, valid, through a wall, refused
+(sec 92).
+
+**The fix.** From fix level 5, with the Arc join, where every pair of
+offset faces is intersected (`Intersection3D`):
+
+- a removed face is intersected with the offset of every face that is
+  no neighbour of it, its surface carried on
+  (`BRepOffset_Inter3d::ContextInter`). The section is kept where it
+  lies within the wall of a neighbour of the removed face (five points
+  nearer to that face than the thickness): there it cuts that wall's
+  end off. Elsewhere it lies in the void and is left out -- at 0.9 the
+  outer side's offset crosses the plane at 11.508, beyond the inner
+  side's at 11.419 (by the cones' angles), and the answer is as it was;
+- with one kept, a section of the removed face with a neighbour's
+  offset that lies within the wall of that face further off is left out
+  of the removed face's loops. The neighbour's offset then hangs and
+  goes, as a piece with a free edge does.
+
+And `HasVertexInAWall` (sec 93): a vertex on a removed face's surface is
+in no wall of a face beside that removed face -- such a wall ends
+there. The new rim's outer circle is 0.887 from the inner side at 1 and
+was named by it.
+
+Tried first and not enough: the plane cut by the outer offset alone.
+The loops then pair three circles about one centre by how they nest --
+the ring between the two offsets and the floor's own disc -- and the
+whole offset came apart (the rims alone left, refused).
+
+**What it makes.** The floor against `probe/cup_exact.py`, 20000 points
+a run: 0.5, 0.9 and 0.94 as before; 0.95 and 0.96 (two shells), 0.98,
+1, 1.05, 1.1 and 1.9 made now, each the exact volume to four decimals
+with no point on another side. Refused still: 1.2 and 1.5 (2513.7533
+and 2639.6807), before this is reached -- with the caller's
+Intersection 1.5 is made, of the exact volume; not traced, as the
+bottom at 1.2 in sec 93.
+
+The probe reads the run at 1 by distance and names 8 of 6000 points,
+all just under the floor's plane beside the inner side: nearer than the
+thickness to that side, and in the pocket, its wall ending flush on the
+plane. It names 4 and 6 of 6000 the same way at 0.5 and 0.9, before and
+after: the convention at a sharp edge of the removed face, not this
+change.
+
+**The three runs at 1 alone** (sec 104, what is left) were gone into
+too, and are rightly refused -- the shape there is two pieces or a
+piece and a void that touch along a circle. The gap between the
+result's two shells either side of 1: the cylinder with its top
+chamfered 2, the chamfer removed, 0.00283 at 0.999 and 0.00141 at
+1.001; the shaft's shoulder 0.00200 and 0.06325; the countersink one
+shell below 1 and 0.00141 at 1.001, 0.00707 at 1.005. All in line to
+nothing at 1.
+
+**The cases**: `revolve_cup_f5_in0.95_bop_clean`, `_in1_`, `_in1.1_`
+(the exact volume and BOP's check); gone, being answers now,
+`revolve_cup_f5_in1_offset_on_the_wrong_side_refused` and
+`revolve_cup_f5_in0.95_vertex_in_a_wall_refused`. On the libraries
+before the fix the three are refused at level 5.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 49.31, 48.69, 48.27 s before and 48.49, 48.35, 48.56 s now; the
+cup, every face from 0.5 to 1.5 inward in steps of 0.05 (105 runs),
+1.77, 1.78, 1.79 s and 1.84, 1.76, 1.82 s (89 made for 85); the corpus
+at level 5 452.5, 448.2 s and 449.3, 449.8 s, at level 4 420.8, 413.3 s
+and 413.9, 415.3 s. Nothing to measure.
+
+**Validation** (against `f1d5ff86ab`, on Linux): thickness PASS=1084
+(1083, less the two refusals, and these 3) at levels 0, 3 frozen, 4 and
+5; boolean 112, draft 105, the fillet suite PASS=962 XFAIL=1, every
+other case line the same; the corpus at levels 0, 4 and 5 and the sweep
+at 0 and 5 line for line as before; the probe at level 0 the same, at
+level 5 the cup's floor at 1 from refused to made and nothing else,
+turned the same, no input changed; of the scans at level 5 the cup's
+floor at 0.95, 1, 1.05 and 1.1 from refused to made (44 refused for 48
+of 11700) and nothing else; the NURBS bench the same. FreeCAD's Python
+suite 4388 OK in 31 modules. Not run: macOS.
+
+**What is left.** Of the probe's 20 Arc refusals: the chamfered boxes
+16, the tube's top at 1 and the three runs above, all rightly. The
+cup's floor and bottom from 1.2 inward.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

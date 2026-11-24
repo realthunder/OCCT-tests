@@ -1064,17 +1064,14 @@ own_refusal_case("stepped_shaft_fillet_f1_in1_edge_on_four_faces_refused",
 # inward: the offsets of the wall's two sides pass each other and both are
 # kept, a slit up the wall counted inside out -- valid, 2509.0262 and
 # 2494.6529, 199 and 254 of some 2930 random points wrong. Refused from
-# level 5; since sec 93 the bottom's is made (below).
-own_refusal_case("revolve_cup_f5_in1_offset_on_the_wrong_side_refused",
-                 _probe2.SHAPES["revolve_cup"](), [5], -1.0, False, 0, fix_level=5)
+# level 5; since sec 93 the bottom's is made, since sec 107 the floor's
+# (both below).
 # Sec 93: a vertex of the answer inside the wall of a face that stays, the
 # two offsets crossing by a hair (0.95 inward: valid, 2389.7212 and
 # 2381.7613, the wall 1.887 thick at its foot) -- and such an answer, or
 # one of sec 92, made again with every pair of faces intersected: the
 # bottom's is right (the wall solid, a pocket in the bottom), the floor's
-# refused. Level 5.
-own_refusal_case("revolve_cup_f5_in0.95_vertex_in_a_wall_refused",
-                 _probe2.SHAPES["revolve_cup"](), [5], -0.95, False, 0, fix_level=5)
+# was refused until sec 107. Level 5.
 
 
 # Sec 91: an edge off one of its pcurves by a hair more than its tolerance
@@ -1108,7 +1105,17 @@ for _mod, _name, _face, _value, _vol in (
         (_probe2, "enclosure", 3, 1.0, 4427.1741), (_probe1, "box_round", 9, -1.0, 1830.1308),
         # sec 93: the cup's bottom, made with every pair of faces intersected
         (_probe2, "revolve_cup", 1, -0.95, 2388.3108), (_probe2, "revolve_cup", 1, -1.0, 2433.3864),
-        (_probe2, "revolve_cup", 1, -1.1, 2481.7323)):
+        (_probe2, "revolve_cup", 1, -1.1, 2481.7323),
+        # sec 107: the cup's floor. The two offsets of the wall pass each
+        # other without meeting from the floor's plane up, and the rim on
+        # that plane ends on the outer side's offset: the floor's plane is
+        # cut by the offsets of faces that are no neighbours of it too, and
+        # the section with the neighbour's offset, buried in the other
+        # wall, left out. The volumes are those of the part less the cavity
+        # made by booleans (probe/cup_exact.py), the same solids by 20000
+        # random points; at 0.95 the wall keeps a void above the pocket.
+        (_probe2, "revolve_cup", 5, -0.95, 2380.6611), (_probe2, "revolve_cup", 5, -1.0, 2423.2202),
+        (_probe2, "revolve_cup", 5, -1.1, 2469.1555)):
     _bop_clean_case("%s_f%d_%s%g_bop_clean" % (_name, _face, "out" if _value > 0 else "in",
                                                abs(_value)),
                     _mod.SHAPES[_name](), _face, _value, _vol)
