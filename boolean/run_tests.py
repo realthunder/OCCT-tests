@@ -690,6 +690,28 @@ def tube_rim_classify():
 guarded(tube_rim_classify)
 
 
+# #617's revolution, a solid of one face: the classifier's lines from a
+# point are aimed at points of the faces, one a face, and here there is one
+# face. From seven points outside the solid that line touches the face
+# 0.00 to 0.03 degrees off its tangent plane, its two crossings 0.002 to
+# 0.02 apart; one is found, and the point was IN. A grazing first crossing
+# was settled by the next line, and there was none. Now the classifier
+# takes lines of its own then (README.md, "A solid of one face: a grazing
+# line with none to settle it").
+def revolution_grazing_classify():
+    solid = Part.read(os.path.join(HERE, "models", "issue617_revolution.brep"))
+    points = [(8.147271, -49.760056, -43.372026), (18.149499, -42.189966, -44.058360),
+              (39.847692, -27.005943, -35.422112), (22.841670, -40.121910, -32.318908),
+              (-0.512306, -55.940896, -45.477254), (8.61304, -51.56203, -25.43012),
+              (38.39618, -28.03468, -36.27586)]
+    said = [q for q in points if solid.isInside(V(*q), 1e-7, True)]
+    report("issue617_revolution_grazing_points", not said,
+           "%d of %d points outside the solid said inside (want 0)" % (len(said), len(points)))
+
+
+guarded(revolution_grazing_classify)
+
+
 # A solid made of a compsolid (BRepLib_MakeSolid): the faces met once, in
 # the order they are met. They came out of a map keyed by the shape, in the
 # order of the addresses the faces happened to have -- another from one run

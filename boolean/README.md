@@ -1581,3 +1581,63 @@ every other case line the same; the thickness corpus at levels 0, 4 and
 5, the sweep at levels 0 and 5, the probe (both halves, levels 0 and 5,
 and turned), the scans and the NURBS bench all line for line as before.
 FreeCAD's Python suite 4388 OK in 31 modules. Not run: macOS.
+
+## A solid of one face: a grazing line with none to settle it (`9b0597ba14`, 2026-11-25)
+
+**Where it was met.** The parity audit of the section "A line that
+grazes a face" left three points wrong, one of them on #617's
+revolution (`models/issue617_revolution.brep`); run again with 60000
+points, 5 there, all outside and said inside, before the two fixes
+above and after them alike. The audit of the classifier as it was
+against itself found two more there.
+
+**The cause, traced.** The solid is one face, a surface of revolution
+of a closed profile. The solid explorer gives a line a face, aimed at a
+point of the face, so it gives one. From each of the seven points that
+line touches the face 0.00 to 0.03 degrees off its tangent plane: it
+crosses the surface twice, 0.002 to 0.02 apart, the intersector finds
+one of the two, going in, and the point is IN. That crossing grazes,
+and since "A line that grazes a face" a grazing first crossing is not
+believed alone -- but the next line settles it, and there is no next
+line: where the lines run out the first is trusted.
+
+**The fix.** In `BRepClass3d_SClassifier::Perform`: where the explorer's
+lines run out with a grazing answer unsettled, up to six lines of the
+classifier's own, in fixed directions, each as long as the solid's box,
+judged as the explorer's are. A line that crosses nothing says OUT --
+the state was the last line's before, and the first of the new lines,
+crossing nothing from a point outside, kept the grazing line's IN. Where
+those run out too, the first line is trusted as before.
+
+**The case.** `issue617_revolution_grazing_points` in `run_tests.py`:
+seven points outside the solid, the parity audit's five and the
+self-audit's two, all said outside (all seven said inside before). The
+self-audit's two, (8.613, -51.562, -25.430) and (38.396, -28.035,
+-36.276), lie 20.24 and 4.35 outside the skin, and on none of seven
+lines through each cut with the solid by booleans is the point on the
+solid's part. No picture: no shape changes.
+
+**Audit.** The parity audit of every model of this suite, 20000 points
+a solid: 2 points wrong before, none now. The classifier as it was
+against this one on 20000 random points in the box of each of the 57
+valid solids of the suites' models: two points change, the two above,
+inside to outside. The 22 probe shapes as B-splines, 1500 points near
+the skin of each against the analytic shape: none differs of 33000,
+before and now.
+
+**The cost**, old and new by turns: the 33000 points classified in
+48.47, 47.81, 49.05 s before and 49.52, 48.94, 48.78 s now; the
+thickness bench of the probe shapes 47.86, 47.85, 47.39 s and 48.23,
+47.50, 47.68 s; the thickness corpus at level 5 440.1, 443.4 s and
+443.4, 444.6 s, at level 4 413.8, 414.9 s and 414.9, 419.4 s. The corpus
+ran slower with the new library in each of its four turns, by 1.2 to
+4.5 s of 440 (under 1%); two turns do not tell that from the noise. The
+new lines are taken only where a grazing answer is left unsettled.
+
+**Validation** (against `3d1e94036d`, on Linux): boolean 114 (113 + this
+one), draft 105, the fillet suite PASS=962 XFAIL=1, thickness PASS=1088
+at levels 0, 3 frozen, 4 and 5, every other case line the same; the
+thickness corpus at levels 0, 4 and 5, the sweep at levels 0 and 5, the
+probe (both halves, levels 0 and 5, and turned), the scans and the
+NURBS bench all line for line as before. FreeCAD's Python suite 4388 OK
+in 31 modules. Not run: macOS.
