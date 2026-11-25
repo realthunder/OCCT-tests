@@ -3706,6 +3706,29 @@ thickness_case("frozen_box_all12_f6_in0.5", frozen_in_place(_probe1.SHAPES["box_
 # vertex (0.0003 here, 0.00008 at 1.49995), under the vertex's tolerance.
 thickness_case("hex_top_side_in1.4998_no_slivers", _probe1.SHAPES["hex_top"](), 1, -1.4998,
                "pass", 1119.8150, loose_ok=4e-4, fix_level=5)
+# Sec 110: the shape given, unfrozen, is frozen while the thick solid is
+# made at fix level 5, and thawed after. A failed attempt changed it: the
+# hexagon's fillet removed 1.5 inward, refused, and a vertex of the hexagon
+# moved 1.5 down with a tolerance of 1.5 (own_refusal_case checks the shape
+# given after). Frozen, a vertex the loops widen is widened as a thawed copy
+# put in its place (BRepOffset_MakeLoops): the cylinder with both ends
+# chamfered 2, a chamfer removed 1.5 inward, was refused frozen and made
+# unfrozen, 1602.8449, a sealed void beside the wall.
+own_refusal_case("hex_top_fillet_in1.5_input_kept", _probe1.SHAPES["hex_top"](), [3], -1.5,
+                 fix_level=5)
+for _face in (2, 3):
+    previous = set_offset_fix_level(5)
+    try:
+        _cc = frozen_in_place(_probe2.SHAPES["cyl_chamfer_both"]())
+        _r = _cc.makeThickness([_cc.Faces[_face - 1]], -1.5, 1e-7, False, False, 0, 0)
+        _ok = _r.isValid() and len(_r.Shells) == 2 and abs(_r.Volume - 1602.8449) < RELTOL * 1602.8449
+        report("frozen_cyl_chamfer_both_f%d_in1.5" % _face, _ok, False,
+               "vol=%.4f valid=%s shells=%d" % (_r.Volume, _r.isValid(), len(_r.Shells)))
+    except Exception as e:
+        report("frozen_cyl_chamfer_both_f%d_in1.5" % _face, False, False,
+               "EXCEPTION " + str(e).strip().splitlines()[-1][:80])
+    finally:
+        set_offset_fix_level(previous)
 
 
 counts = {}

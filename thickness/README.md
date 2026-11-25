@@ -6435,16 +6435,60 @@ level 5 455.3, 443.0 s and 470.6, 441.6 s, at level 4 415.9, 414.9 s and
 and on closed shells.
 
 **What is left.** The hexagon's fillet removed 1.5 inward changes the
-shape given, unfrozen. Freezing the shape given while the thick solid
-is made (tried: thawed after) keeps it, and makes every unfrozen run
-the frozen one -- and four runs were then refused where they were made:
-the cylinder with both ends chamfered 2, a chamfer removed 1.5 inward,
-and #613's corpus `chg10` and `t001`, face 2 at 1 inward. Frozen, these
-are refused before and after: `BRepOffset_MakeLoops::BuildFaces`
-substitutes an input vertex for an offset vertex and widens its
-tolerance, which a frozen vertex refuses. Not yet fixed. And from a
-fillet's radius up to at least a thousandth above it most faces of the
-filleted shapes are refused; not gone into.
+shape given, unfrozen, and four runs are refused frozen: sec 110. And
+from a fillet's radius up to at least a thousandth above it most faces
+of the filleted shapes are refused; not gone into.
+
+## The shape given frozen while the thick solid is made (`eb943cf260`, `6a5642778f`, level 5, 2026-11-25, sec 110)
+
+Sec 109 left two things, one behind the other.
+
+**A vertex the loops widen, frozen.** Where an offset edge takes a
+vertex of another in its place (`BRepOffset_MakeLoops::Build`,
+`BuildFaces`), the vertex it takes is widened to the other's tolerance
+and takes its parameters. When that vertex is one of the shape given
+and the shape is frozen, the widening throws and the thickness is
+refused. Four runs, refused frozen and made unfrozen: the cylinder with
+both ends chamfered 2 (`cyl_chamfer_both`), either chamfer removed 1.5
+inward, 1602.8449 with a sealed void beside the wall; and #613's
+corpus `chg10` and `t001`, face 2 at 1 inward. Now a frozen vertex has
+a thawed copy widened in its place (`BRepLib_ThawedVertex`), and the
+copies are put in the shells once they are made (`BRepLib_PutThawed`,
+as `ChFi3d_Builder` does for the fillets):
+`eb943cf260`, every level, frozen shapes only. The copies are kept in a
+list behind a free function (`BRepOffset_MakeLoops_ThawedVertices`):
+no class changes its layout.
+
+**The shape given changed.** The hexagon with its top edges filleted
+1.5, a fillet removed 1.5 inward: refused, and a vertex of the hexagon
+moved 1.5 down with a tolerance of 1.5 (sec 109). From fix level 5
+`MakeThickSolid` freezes every sub-shape of the shape given not frozen
+already and thaws them after (`6a5642778f`): what would change one
+changes a copy, the shape given is as it was, and an unfrozen shape is
+made by the frozen path a document's takes. Tried in sec 109 before the
+fix above, it cost the four runs; with it, nothing.
+
+**The cases** (level 5): `hex_top_fillet_in1.5_input_kept` (refused,
+the hexagon as it was), `frozen_cyl_chamfer_both_f2_in1.5` and `_f3_`
+(the shape frozen in place, 1602.8449, two shells). All three fail on
+the libraries before.
+
+**Validation** (against `4b608e389d`, on Linux): thickness PASS=1095
+(1092 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen; boolean 114, draft 105, the fillet suite PASS=962
+XFAIL=1, each the same frozen; every other case line the same; the
+corpus at levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5
+and turned, the scans and the NURBS bench line for line as before.
+FreeCAD's Python suite 4388 OK in 31 modules. Not run: macOS.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 47.86, 48.18, 47.66 s before and 48.36, 47.12, 47.82 s now; the
+cup's 105 runs 1.59, 1.58, 1.59 s and 1.60, 1.60, 1.61 s; the corpus at
+level 5 440.7, 442.9 s and 447.0, 450.2 s, slower in both turns by 6 to
+7 s (1.5%); at level 4, where nothing changed, 425.1 and 483.2 s
+before, 575.0 and 507.7 s now -- turns that far apart cannot tell 1.5%
+from the noise. Freezing the shape given walks its sub-shapes once to
+freeze them and once to thaw them, a thick solid.
 
 ## Determinism cases (intersection mode, Arc join)
 
