@@ -6530,10 +6530,9 @@ radius t round the removed wall's edge at (10, 11) -- integrates to
 random points that are inside where they are in the tube and within the
 thickness of a face kept: none differs.
 
-**What is left.** Within 1e-5 of the radius, refused still. The inner
-wall removed, refused to 1.0013 and made from 1.0016, for another cause:
-the tube round the removed wall's edge keeps its end circle as a wire
-of its own and comes out with a negative area.
+**What is left.** Within 1e-5 of the radius, refused still. (The inner
+wall removed was refused to 1.0013 for another cause: see the follow-up
+below.)
 
 **The cases** (level 5): `tube_fillet_f1_in1.0005_hair_over_radius`,
 `_f3_in1.0005_`, `_f1_in1.0001_` and
@@ -6553,6 +6552,42 @@ shapes 47.98, 48.16, 48.16 s before and 47.96, 47.20, 47.45 s now; the
 cup's 105 runs 1.58, 1.58, 1.58 s and 1.60, 1.59, 1.55 s; the corpus at
 level 5 449.6, 446.2 s and 447.3, 447.7 s; at level 4, where nothing
 changed, 417.6, 414.6 s and 414.4, 416.3 s.
+
+**The inner wall removed (`27246fdeae`, the follow-up).** Refused still
+to 1.0013 and made from 1.0016. `BRepAlgo_Loop::CutEdge` has a second
+fixed 0.001 of its own: a piece of a cut edge whose two ends are within
+it in the face's (u, v) is dropped. The tube round the removed wall's
+edge is cut that close to its end, the piece of its seam between the cut
+and the end was dropped, and the tube's end circle was left a wire of
+its own. That limit is the smaller of 0.001 and the loop's distance now,
+so it moves only where `SetTolConf` lowered it, in the retry above; and
+the retry's precondition reaches 0.002 over the radius for 0.001, the
+(u, v) limit reaching further in space. Every face of the tube (1, 2,
+3, 5, 6) is made from 1.0001 to 1.002 without a gap. The inner wall at
+1.0005 is 1009.5920 and at 1.0013 1010.2901; the tube less its cavity
+revolved integrates to 1009.59195 and 1010.29004 (1009.59201 and
+1010.29010 made). Five results, each held to 1500 random points: none
+differs.
+
+The cases (level 5): `tube_fillet_f5_in1.0005_hair_over_radius` and
+`tube_fillet_f5_in1.0013_hair_over_radius`, both refused on the
+libraries before; `tube_fillet_f6_in1.0005_hair_over_radius_sealed`, a
+guard -- the inner fillet removed was sealed so by the libraries before
+too.
+
+Validation (against the gate above, on Linux): thickness PASS=1102
+(1099 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen; boolean 114, draft 105, the fillet suite PASS=962
+XFAIL=1, each the same frozen; every other case line the same; the
+corpus at levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5
+and turned, the scans and the NURBS bench as before. FreeCAD's Python
+suite 4388 OK in 31 modules. Not run: macOS.
+
+The cost, old and new by turns: the thickness bench 48.13, 48.77,
+47.80 s before and 48.33, 47.76, 48.01 s now; the cup's 105 runs 1.57,
+1.59, 1.59 s and 1.62, 1.59, 1.58 s; the corpus at level 5 444.9,
+447.2 s and 447.9, 448.5 s; at level 4 415.2, 418.6 s and 415.2,
+417.3 s.
 
 ## Determinism cases (intersection mode, Arc join)
 

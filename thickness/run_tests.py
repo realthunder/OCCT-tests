@@ -3746,6 +3746,18 @@ for _face, _t, _vol in ((1, -1.0005, 836.6068), (3, -1.0005, 1285.9316), (1, -1.
 _tube = _probe1.SHAPES["tube_fillet"]()
 _sealed_at_level5_case("tube_fillet_f2_in1.0005_hair_over_radius_sealed", _tube, 2, -1.0005,
                        (_tube.Volume, _tube.Volume - 1386.4625))
+# The inner wall removed was refused still, to 0.0013 over the radius: the
+# tube round the wall's edge, cut that hair from its end, lost the piece of
+# its seam between the two (BRepAlgo_Loop::CutEdge drops a piece with its
+# ends within 0.001 in (u, v); held to the loops' smaller distance now), and
+# its end circle was left a wire of its own. 1009.5920 and 1010.2901 are the
+# tube's less the cavity revolved, too.
+for _t, _vol in ((-1.0005, 1009.5920), (-1.0013, 1010.2901)):
+    thickness_case("tube_fillet_f5_in%g_hair_over_radius" % -_t, _probe1.SHAPES["tube_fillet"](), 5,
+                   _t, "pass", _vol, fix_level=5)
+_tube = _probe1.SHAPES["tube_fillet"]()
+_sealed_at_level5_case("tube_fillet_f6_in1.0005_hair_over_radius_sealed", _tube, 6, -1.0005,
+                       (_tube.Volume, _tube.Volume - 1386.4625))
 
 
 counts = {}
