@@ -6490,6 +6490,70 @@ before, 575.0 and 507.7 s now -- turns that far apart cannot tell 1.5%
 from the noise. Freezing the shape given walks its sub-shapes once to
 freeze them and once to thaw them, a thick solid.
 
+## A hair over a fillet's radius (`533b1c1163`, level 5, 2026-11-26, sec 111)
+
+Sec 106 made a fillet offset by exactly its radius. Just over it the
+thickness was refused: the tube with its top edges filleted 1
+(`tube_fillet`), its outer wall, its outer fillet or its bottom removed
+inward, from 1.0000001 to 1.001, and made again from 1.0013.
+
+**The cause.** Past its radius a fillet's offset turns inside out and
+is dropped (`BRepOffset_Reversed`), and the offsets of the faces beside
+it meet each other. With the outer wall removed 1.0005 inward, the
+offset of the top cuts the offset of the inner wall at z = 10.9995,
+0.0005 below the edge at z = 11 where the fillet's offset had ended
+that wall. The two vertices on the wall's seam are 0.0005 apart, and
+`BRepAlgo_Loop` takes two vertices within 0.001 for one (`myTolConf`,
+set in its constructor and by nothing else, upstream's too): the wall
+was never cut back, the top's offset kept slivers, the shells did not
+close and every attempt ended with nothing but the removed face's rim.
+
+**The fix.** That distance smaller for every loop is no answer: at
+1e-4 the suite's `dome_join_in_2` came out with a loose end 0.000656,
+`dome_join_out_2` was refused and #474's coil lost its offset -- the
+loops need it elsewhere. From fix level 5 `MakeThickSolid`, refused,
+is made once more with the distance at 100 x `Precision::Confusion()`
+(`BRepOffset_MakeLoops_TolConf`, a thread's value behind a free
+function: no class changes its layout), and only where a face kept is
+a cylinder, a torus or a sphere whose offset turns inside out by less
+than 0.001. An attempt with an answer, valid or not, keeps it. Tried
+for every refusal first, the corpus at level 5 took 1089 s for 882 s
+and 665 s for 510 s, old and new by turns.
+
+**What is made.** The outer wall and the bottom removed from 1.0001 to
+1.001; the outer fillet removed, where the cavity is sealed as it is at
+the radius itself (sec 104's answer: the skin and a void). The outer
+wall at 1.0005 is 836.6068; the tube less its cavity revolved -- the
+rectangle from R = 6 + t to 10 and z = t to 12 - t, less the disc of
+radius t round the removed wall's edge at (10, 11) -- integrates to
+836.6068 too (836.60683 for 836.60675). Six results, each held to 1500
+random points that are inside where they are in the tube and within the
+thickness of a face kept: none differs.
+
+**What is left.** Within 1e-5 of the radius, refused still. The inner
+wall removed, refused to 1.0013 and made from 1.0016, for another cause:
+the tube round the removed wall's edge keeps its end circle as a wire
+of its own and comes out with a negative area.
+
+**The cases** (level 5): `tube_fillet_f1_in1.0005_hair_over_radius`,
+`_f3_in1.0005_`, `_f1_in1.0001_` and
+`tube_fillet_f2_in1.0005_hair_over_radius_sealed`. All four fail on the
+libraries before.
+
+**Validation** (against sec 110's gate, on Linux): thickness PASS=1099
+(1095 + 4) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen; boolean 114, draft 105, the fillet suite PASS=962
+XFAIL=1, each the same frozen; every other case line the same; the
+corpus at levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5
+and turned, the scans and the NURBS bench as before. FreeCAD's Python
+suite 4388 OK in 31 modules. Not run: macOS.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 47.98, 48.16, 48.16 s before and 47.96, 47.20, 47.45 s now; the
+cup's 105 runs 1.58, 1.58, 1.58 s and 1.60, 1.59, 1.55 s; the corpus at
+level 5 449.6, 446.2 s and 447.3, 447.7 s; at level 4, where nothing
+changed, 417.6, 414.6 s and 414.4, 416.3 s.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

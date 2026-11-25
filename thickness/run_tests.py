@@ -3730,6 +3730,23 @@ for _face in (2, 3):
     finally:
         set_offset_fix_level(previous)
 
+# Sec 111: a hair over a fillet's radius. The tube with its top edges
+# filleted 1, a face removed inward by 1.0001 to 1.001: the offset of the
+# top cuts the offset of the inner wall less than 0.001 below where the
+# fillet's offset ended it, the loops took the two vertices on the wall's
+# seam for one (BRepAlgo_Loop's own 0.001), the wall was never cut and every
+# attempt was refused. From fix level 5 an attempt with no answer is made
+# again with the loops' distance at 100 x Precision::Confusion(). Each
+# agrees with 1500 random points held to their distance from the faces kept;
+# f1's volume is the input's less its cavity revolved (README sec 111). The
+# outer fillet removed, the cavity is sealed, as at the radius itself.
+for _face, _t, _vol in ((1, -1.0005, 836.6068), (3, -1.0005, 1285.9316), (1, -1.0001, 836.2896)):
+    thickness_case("tube_fillet_f%d_in%s_hair_over_radius" % (_face, ("%g" % -_t)),
+                   _probe1.SHAPES["tube_fillet"](), _face, _t, "pass", _vol, fix_level=5)
+_tube = _probe1.SHAPES["tube_fillet"]()
+_sealed_at_level5_case("tube_fillet_f2_in1.0005_hair_over_radius_sealed", _tube, 2, -1.0005,
+                       (_tube.Volume, _tube.Volume - 1386.4625))
+
 
 counts = {}
 for _, verdict, _ in results:
