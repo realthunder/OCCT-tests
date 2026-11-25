@@ -6337,6 +6337,108 @@ run: macOS.
 
 **What is left.** The probe's 20 Arc refusals, all rightly (sec 107).
 
+## A shape frozen as a document's value is; slivers at a fillet's radius (`3976decf4c`, `eb83ca026f`, `fc3d21a682`, 2026-11-25, sec 109)
+
+**Where it was met.** A scan of the filleted probe shapes, every face,
+a hair either side of the fillets' radius. The hexagon with its top
+edges filleted 1.5 (`hex_top`), a side removed 1.4998 or 1.49995
+inward: an invalid solid -- the right shell, 28 faces, and six closed
+shells of two faces round one edge, 0.0004 across, of no volume, at the
+top corners, where the fillets' offsets are tubes of the hair.
+
+And a fillet of it removed exactly 1.5 inward: refused, and a vertex of
+the shape given moved 1.5 down with a tolerance of 1.5. A loop's wire
+(`BRepLib_MakeWire`, from `BRepAlgo_Loop`) merged it with an offset
+vertex it found within the other's tolerance. The shape was broken for
+the next operation on it: a scan that reused it went on refusing every
+face and stopped without a word a few runs later. On the libraries of
+sec 105 and since, at fix level 5 only.
+
+**What that showed.** FreeCAD freezes a shape stored in a document
+(Part's ImmutableShapeValues, on with this fork; the TKBRep Immutable
+flag): what would change it changes a copy, and the hexagon frozen came
+through untouched. The suites build their shapes in Python and never
+store them, so they ran unfrozen -- THICK_FREEZE=1 turns the preference
+on, and freezes nothing the suite makes. Run with every input frozen
+in place (`frozen_run.py` of the gate: a Part::Feature takes each shape
+before its thickness, fillet, chamfer or boolean), the libraries as
+pushed (`3426496ae7`) failed 24 of 1088 thickness cases at level 5,
+where they pass unfrozen: the lune ball (18 -- its spheres, one or both,
+and its flat with the Intersection join, refused but for one flat
+inward, 88.5482 for 89.0272), the rounded box's corners (4), the box
+with every edge filleted (2). The boolean, draft and fillet suites ran
+frozen as they run unfrozen. A document's user got the refusals; the
+gates measured the answers.
+
+**The causes, traced.** Three, each a change refused on a frozen shape
+(`TopoDS_LockedShape`), the thickness refused with it:
+
+- `BRep_Builder`: the check of a change to a frozen shape compared the
+  tolerance an edge holds, raw, with the one asked for. Under 1e-7 it
+  is reported as 1e-7 by `BRep_Tool`, so a caller handing back what it
+  was told was refused. The sphere turned off its pole (sec 78) gave
+  each edge of its face a pcurve on the turned sphere with that
+  tolerance: the boxes with a corner ball. The held tolerance is read
+  as reported (`3976decf4c`, TKBRep, every level).
+- `BRepLib::BuildCurve3d` brings an edge's pcurves to one range before
+  it builds the edge a 3d curve, and a degenerated edge gets none: a
+  sphere's pole, the lune ball's one sphere removed. A frozen
+  degenerated edge is left as it is (`eb83ca026f`, TKTopAlgo, every
+  level).
+- `MakeThickSolidOfSplit` (level 5) merges a sphere's pieces with
+  `ShapeUpgrade_UnifySameDomain`, which writes on the edges it is given:
+  the lune ball's two spheres. A frozen shape is merged as a copy, the
+  copy's history before the merge's (`fc3d21a682`).
+
+And the slivers: `MakeSolid` drops a closed shell smaller than a
+thousandth of the thickness, or within its vertices' tolerance, where
+another stays (`fc3d21a682`, level 5). The hexagon's side at 1.4998 is
+the one shell, 1119.8150, as at 1.49 (1113.8843) and 1.499; every face
+of the hexagon at 1.49, 1.4998 and 1.49995 is one valid shell, read
+right by 4000 points of the probe, or refused. The corner keeps an edge
+ending about 1.5 hairs from its vertex (0.0003 at 1.4998, 0.00008 at
+1.49995; none at 1.499), under the vertex's tolerance.
+
+**The cases** (level 5): `frozen_luneball_spheres_out`,
+`frozen_luneball_sphere1_out`, `frozen_box_all12_f6_in0.5`, their
+shapes frozen in place (`../freeze.py` `frozen_in_place`: a copy frozen,
+as `frozen_copy` makes, hid all three), and
+`hex_top_side_in1.4998_no_slivers`. All four fail on the libraries
+before.
+
+**The gate** runs the thickness suite at level 5, the boolean, draft
+and fillet suites a second time with every input frozen (`thick5fz`,
+`boolfz`, `draftfz`, `filletfz`), and compares each with its plain run.
+
+**Validation** (against `3426496ae7`, on Linux): thickness PASS=1092
+(1088 + 4) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen; boolean 114, draft 105, the fillet suite PASS=962 XFAIL=1,
+each the same frozen; every other case line the same; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5 and
+turned, the scans and the NURBS bench line for line as before. Frozen
+and plain differ in one line: `issue613_blend_f2_in1` 6761.4042 for
+6761.4043. FreeCAD's Python suite 4388 OK in 31 modules. Not run:
+macOS.
+
+**The cost**, old and new by turns: the thickness bench of the probe
+shapes 48.94, 49.03, 49.66 s before and 48.84, 49.14, 51.26 s now; the
+cup's 105 runs 1.71, 1.70, 1.73 s and 1.70, 1.70, 1.70 s; the corpus at
+level 5 455.3, 443.0 s and 470.6, 441.6 s, at level 4 415.9, 414.9 s and
+419.2, 415.1 s. Nothing to measure; the changes run on frozen shapes
+and on closed shells.
+
+**What is left.** The hexagon's fillet removed 1.5 inward changes the
+shape given, unfrozen. Freezing the shape given while the thick solid
+is made (tried: thawed after) keeps it, and makes every unfrozen run
+the frozen one -- and four runs were then refused where they were made:
+the cylinder with both ends chamfered 2, a chamfer removed 1.5 inward,
+and #613's corpus `chg10` and `t001`, face 2 at 1 inward. Frozen, these
+are refused before and after: `BRepOffset_MakeLoops::BuildFaces`
+substitutes an input vertex for an offset vertex and widens its
+tolerance, which a frozen vertex refuses. Not yet fixed. And from a
+fillet's radius up to at least a thousandth above it most faces of the
+filleted shapes are refused; not gone into.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

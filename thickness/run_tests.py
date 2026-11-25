@@ -47,7 +47,7 @@ RELTOL = 1e-3
 # unfrozen by default, the way any other build of FreeCAD runs it, so an edit
 # of the input shows (THICK_FREEZE=1 for the frozen path). The user's own
 # value is back when the run ends (../freeze.py).
-from freeze import set_for_run  # noqa: E402
+from freeze import frozen_in_place, set_for_run  # noqa: E402
 set_for_run(os.environ.get("THICK_FREEZE", "0") != "0")
 
 # THICK_FIX_LEVEL=<n> runs the suite at the fork's offset fix level n
@@ -3674,6 +3674,39 @@ def issue474_coil_offset_vertex():
 
 
 issue474_coil_offset_vertex()
+
+# Sec 109: a shape frozen, as a FreeCAD document's value is (the TKBRep
+# Immutable flag): every case of the suite runs so in the gate too
+# (frozen_run.py). Three causes made a frozen shape refused where the same
+# shape unfrozen was made, at fix level 5: the check of a frozen edge read
+# its raw tolerance, not the 1e-7 BRep_Tool reports, and refused the
+# tolerance it had been told (BRep_Builder, the sphere turned off its pole:
+# the boxes with a corner ball); the merge of split faces wrote on the
+# shape's edges (MakeThickSolidOfSplit: the lune ball's two spheres); the
+# offset faces' 3d curves set the range of a pole's pcurves (BRepLib::
+# BuildCurve3d: the lune ball's one sphere). Each now made, as unfrozen. The
+# shapes are frozen where they are: a copy frozen hid all three.
+previous = set_offset_fix_level(5)
+try:
+    pieces_case("frozen_luneball_spheres_out",
+                frozen_in_place(_halfball.generalFuse([_meridian])[0].Solids[0]), [1, 2], +0.5,
+                [39.1390])
+finally:
+    set_offset_fix_level(previous)
+thickness_case("frozen_luneball_sphere1_out",
+               frozen_in_place(_halfball.generalFuse([_meridian])[0].Solids[0]), 1, +0.5, "pass", 89.1638,
+               fix_level=5)
+thickness_case("frozen_box_all12_f6_in0.5", frozen_in_place(_probe1.SHAPES["box_all12"]()), 6, -0.5,
+               "pass", 950.1744, fix_level=5)
+# The hexagon with its top edges filleted 1.5, a side removed a hair less
+# than the fillets' radius: six closed shells of no volume came beside the
+# right one, two faces round one edge at each corner, where the fillets'
+# offsets are tubes of that hair -- dropped from fix level 5 (MakeSolid), the
+# shell alone left. The corner keeps an edge ending about 1.5 hairs from its
+# vertex (0.0003 here, 0.00008 at 1.49995), under the vertex's tolerance.
+thickness_case("hex_top_side_in1.4998_no_slivers", _probe1.SHAPES["hex_top"](), 1, -1.4998,
+               "pass", 1119.8150, loose_ok=4e-4, fix_level=5)
+
 
 counts = {}
 for _, verdict, _ in results:

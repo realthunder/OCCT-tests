@@ -45,6 +45,30 @@ def set_for_run(frozen):
     grp.SetBool(_NAME, bool(frozen))
 
 
+def frozen_in_place(shape):
+    """shape itself, frozen as a feature's Shape is: set as a Part::Feature's
+    Shape with ImmutableShapeValues on, which freezes its TShapes where they
+    are -- not a copy, which may come out other than the shape: three cases
+    of the thickness suite refused frozen in place were made frozen as a copy
+    (sec 109). The preference is back as it was after, and the feature gone;
+    the shape stays frozen."""
+    grp = App.ParamGet(_GROUP)
+    had = _NAME in grp.GetBools()
+    old = grp.GetBool(_NAME)
+    grp.SetBool(_NAME, True)
+    try:
+        doc = App.listDocuments().get(_DOC) or App.newDocument(_DOC, hidden=True, temp=True)
+        feature = doc.addObject("Part::Feature", "Frozen")
+        feature.Shape = shape
+        doc.removeObject(feature.Name)
+        return shape
+    finally:
+        if had:
+            grp.SetBool(_NAME, old)
+        else:
+            grp.RemBool(_NAME)
+
+
 def frozen_copy(shape):
     """A copy of shape, frozen as a feature's Shape is: set as a Part::Feature's
     Shape with ImmutableShapeValues on, which freezes its TShapes in place. The
