@@ -6360,8 +6360,8 @@ flag): what would change it changes a copy, and the hexagon frozen came
 through untouched. The suites build their shapes in Python and never
 store them, so they ran unfrozen -- THICK_FREEZE=1 turns the preference
 on, and freezes nothing the suite makes. Run with every input frozen
-in place (`frozen_run.py` of the gate: a Part::Feature takes each shape
-before its thickness, fillet, chamfer or boolean), the libraries as
+in place (`../frozen_run.py`: a Part::Feature takes each shape before
+its thickness, fillet, chamfer or boolean), the libraries as
 pushed (`3426496ae7`) failed 24 of 1088 thickness cases at level 5,
 where they pass unfrozen: the lune ball (18 -- its spheres, one or both,
 and its flat with the Intersection join, refused but for one flat
@@ -6408,7 +6408,14 @@ before.
 
 **The gate** runs the thickness suite at level 5, the boolean, draft
 and fillet suites a second time with every input frozen (`thick5fz`,
-`boolfz`, `draftfz`, `filletfz`), and compares each with its plain run.
+`boolfz`, `draftfz`, `filletfz`), and compares each with its plain run. The
+thickness suite at level 5 frozen, from the OCCT source root:
+
+    SUITE=tests/fork/thickness/run_tests.py THICK_FIX_LEVEL=5 THICK_FREEZE=1 \
+      FreeCADCmd tests/fork/frozen_run.py
+
+and likewise `FILLET_FREEZE=1` for the fillet suite, `DRAFT_FREEZE=1` for
+the draft suite, nothing more for the boolean suite.
 
 **Validation** (against `3426496ae7`, on Linux): thickness PASS=1092
 (1088 + 4) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
