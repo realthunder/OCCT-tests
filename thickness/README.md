@@ -6683,6 +6683,52 @@ modules. Not run: macOS.
 Level 4, where nothing changed, was timed beside another session's
 tests and is not given.
 
+## A walked section between a cylinder tube and a corner tube (`8105130994`, level 5, 2026-11-26, sec 113)
+
+The scan had two invalid results, both on the box with its upright and
+top edges rounded (`box_round`): a top fillet, face 15 or 18, removed
+outward by the scan's `17 * 0.05`, which is 0.8500000000000001. At
+0.85 both are valid with the same volumes, and it is so at every fix
+level.
+
+**The cause.** The tube round the fillet's straight edge is a cylinder
+and the tube round its end, at the box's corner, is a B-spline
+surface; they are tangent where they meet at the shared vertex. The
+intersection's walk ended 9.5e-6 beside that vertex, and the curve
+fitted to the walked points, its end then snapped to the vertex, lay
+5.7e-5 off the two tubes there. It crossed the end of the cylinder
+tube, and that face's wire crossed itself.
+
+**The fix.** From level 5 a walked line whose fitted curve strays
+from the tubes near a snapped end is fitted again from the plain
+walk (sec 95). That was done where both tubes are a cylinder or a
+torus; it is now done where either is. The curve fitted again lies
+3.3e-8 off the tubes. Two B-spline tubes are left out as before.
+
+**What is made.** 1825.6254 (face 15) and 1805.6246 (face 18), valid,
+the volumes the invalid results had and those at 0.85.
+
+**The cases** (level 5): `box_round_f15_out17x0.05_walked_section` and
+`box_round_f18_out17x0.05_walked_section`. Both are invalid on the
+libraries before.
+
+**Validation** (against sec 112's gate, on Linux): thickness PASS=1109
+(1107 + 2) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen, every other case line the same; boolean 114, draft 105,
+the fillet suite PASS=962 XFAIL=1, each the same frozen; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5 and
+turned and the NURBS bench as before, no line differing; the scan at
+level 5 has the two runs made and nothing else differing (made 13185,
+refused 255, invalid none; islands 43 for 45), the scan at level 0 as
+before. FreeCAD's Python suite 4388 OK in 31 modules. Not run: macOS.
+
+**The cost**, old and new by turns, the box otherwise idle: the
+thickness bench 48.25, 47.83, 48.15 s before and 48.49, 48.39, 48.40 s
+now; the cup's 105 runs 1.58, 1.60, 1.55 s and 1.59, 1.56, 1.60 s; the
+corpus at level 5 445.6, 450.6 s and 446.2, 444.6 s, at level 4 415.4,
+414.5 s and 413.6, 416.4 s. The bench is slower by 0.2 to 0.6 s in
+each turn, about half a percent.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

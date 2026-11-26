@@ -1232,6 +1232,19 @@ for _value, _volume in ((0.9999, 1701.4929), (0.99999, 1701.6673)):
                    _probe1.SHAPES["tube_fillet"](), 4, _value, "pass", _volume,
                    loose_ok=2.5 * (1.0 - _value), fix_level=5)
 
+# Sec 113: the box with its upright and its top edges rounded, a top fillet
+# removed 17 x 0.05 outward -- 0.8500000000000001, the value the scan steps
+# to, and not 0.85. The tube round the fillet's straight edge, a cylinder, and
+# the one round its end, a B-spline surface, are tangent at the vertex they
+# share; the walk of their section ended 9.5e-6 beside it and the curve
+# fitted to it lay 5.7e-5 off the tubes there, across the cylinder's end: a
+# wire through itself, the result invalid at every level. From fix level 5
+# the walked line is fitted anew where one of the two tubes is a cylinder or
+# a torus (it was: both).
+for _face, _volume in ((15, 1825.6254), (18, 1805.6246)):
+    thickness_case("box_round_f%d_out17x0.05_walked_section" % _face,
+                   _probe1.SHAPES["box_round"](), _face, 17 * 0.05, "pass", _volume, fix_level=5)
+
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs
 # from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
