@@ -6729,6 +6729,82 @@ corpus at level 5 445.6, 450.6 s and 446.2, 444.6 s, at level 4 415.4,
 414.5 s and 413.6, 416.4 s. The bench is slower by 0.2 to 0.6 s in
 each turn, about half a percent.
 
+## A sphere of a far corner rising past the removed face (`1f91d49e20`, level 5, 2026-11-27, sec 114)
+
+The scan's one invalid result left: the box chamfered 1 down and 3
+across (`chamfer_1x3`), its top, face 8, removed outward by
+`21 * 0.05`. A scan in finer steps had the result invalid from 1.028
+to 1.05 and refused from 1.054. The exact wall, made by booleans (the
+offset of the whole shape, cut off below the top's plane, less the
+shape), is valid all the way, with 43 faces up to 1.027 and 47 from
+1.028.
+
+**The cause.** The chamfers' lower corners are 1 below the top. Past
+1.027 the sphere round such a corner rises above the top's plane,
+where the tube between two chamfers ends on it. A removed face was
+intersected with its neighbours' offsets and with the tubes that end
+on it, not with a tube or sphere round a neighbour's far edge or
+vertex: the tube's face kept the whole of its end, an arc, and the
+whole of its section with the plane, an ellipse, and the two cross
+twice. Two more things were in the way once the sphere was cut: of
+the two crossings one lay 5e-7 in parameter from the arc's end, and
+was dropped by the rule that a crossing at an end takes the others
+with it (1.04); at 1.03 the 2D intersection missed one, and the
+fallback by extrema skipped a touch closer than 1e-7.
+
+**The fix.** From level 5 a thick solid made with the Arc join that
+is not valid is asked once more, with (a) each removed face's surface
+intersected with the tubes and spheres round its neighbours' edges
+and vertices that are not on it, a section kept where five points of
+it lie at the thickness from the shape, and (b) in the intersection
+of two edges on a face, a crossing within 10 x confusion of an end
+in 3D taken as at that end, and the touch at the other end allowed
+in the fallback. Not valid so too, the first answer is made again as
+it was. The validity is looked at only where a far edge or vertex is
+within the thickness of a removed face's surface, the only place a
+far tube or sphere can reach it.
+
+Both parts stay inside the retry for a reason the first gate showed.
+With (a) on in every run #613's cylinder under a cone 1.5 deg off it,
+removed 1 outward, was refused: the cylinder carried on runs within
+the cone's wall to a tube 30 above the removed face, and its section
+there is no border of the rim. With (b) on in every run about 20
+valid scan results moved in the seventh digit of the volume, no
+nearer to the exact wall than before.
+
+**What is made.** Equal to the exact wall in volume to four decimals
+and in the count of faces, 47, from 1.028 to 1.05: 1883.7287 at 1.03,
+1902.4221 at 1.04, 1921.1213 at 1.05.
+
+**Left.** From 1.054 it is refused as before: there the tubes round
+the upright and chamfer edges cross the top's plane too and the
+chamfers' offsets lie wholly above it; the exact wall has 39 and then
+35 faces.
+
+**The cases** (level 5): `chamfer_1x3_f8_out1.03_sphere_past_the_cap`,
+`..._out1.04_...` and `..._out21x0.05_...`. All three are invalid on
+the libraries before.
+
+**Validation** (against sec 113's gate, on Linux): thickness PASS=1112
+(1109 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen, every other case line the same; boolean 114, draft 105,
+the fillet suite PASS=962 XFAIL=1, each the same frozen; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5 and
+turned and the NURBS bench as before, no line differing; the scan at
+level 5 has the one run made and nothing else differing, the scan at
+level 0 as before. FreeCAD's Python suite 4388 OK in 31 modules. Not
+run: macOS.
+
+**The cost**, old and new by turns, the box otherwise idle. With the
+validity looked at after every thick solid made at level 5 the
+thickness bench took 50.28, 50.72, 50.41 s for 48.06, 47.75, 48.78 s
+before, about 5 percent more; that is why it is looked at only where a
+far edge is within reach. So: the bench 48.30, 47.60, 48.46 s before
+and 49.03, 48.16, 48.12 s now; the cup's 105 runs 1.62, 1.60, 1.62 s
+and 1.61, 1.60, 1.60 s; the corpus at level 5 448.8, 446.5 s and
+448.4, 447.9 s, at level 4 418.5, 414.2 s and
+415.2, 415.9 s.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

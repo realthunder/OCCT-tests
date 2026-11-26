@@ -1245,6 +1245,16 @@ for _face, _volume in ((15, 1825.6254), (18, 1805.6246)):
     thickness_case("box_round_f%d_out17x0.05_walked_section" % _face,
                    _probe1.SHAPES["box_round"](), _face, 17 * 0.05, "pass", _volume, fix_level=5)
 
+# Sec 114: a box with its top's edges chamfered 1 down and 3 across, the top
+# removed outward by more than 1.027: the spheres round the chamfers' lower
+# corners rise above the top's plane and were not cut by it; invalid from
+# 1.03 to 1.05 (21 x 0.05 is the scan's value). The volumes are those of the
+# whole offset cut at the plane, less the part.
+for _name, _value, _volume in (("1.03", 1.03, 1883.7287), ("1.04", 1.04, 1902.4221),
+                               ("21x0.05", 21 * 0.05, 1921.1213)):
+    thickness_case("chamfer_1x3_f8_out%s_sphere_past_the_cap" % _name,
+                   _probe3.SHAPES["chamfer_1x3"](), 8, _value, "pass", _volume, fix_level=5)
+
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs
 # from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
