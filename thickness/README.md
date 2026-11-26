@@ -6665,10 +6665,12 @@ ends its two rims are, 0.0002 apart. Both have the volume without
 tubes on the libraries before.
 
 **Validation** (against sec 111's last gate, on Linux): thickness
-PASS=1107 (1105 + 2) at level 5; at levels 0, 3 frozen, 4 and at 5
-frozen the gate ran before the first case allowed its loose ends,
-PASS=1106 and that case failing by them, every other case line the
-same; boolean 114, draft 105, the fillet suite PASS=962 XFAIL=1, each
+PASS=1107 (1105 + 2) at levels 0, 3 frozen, 4 and 5, and at level 5
+with every input frozen, every other case line the same (the gate ran
+before the first case allowed its loose ends, PASS=1106 and that case
+failing by them; the suites again after it, on the build merged with
+the other sessions' work);
+boolean 114, draft 105, the fillet suite PASS=962 XFAIL=1, each
 the same frozen; the corpus at levels 0, 4 and 5, the sweep at 0 and 5,
 the probe at 0 and 5 and turned, the scans and the NURBS bench as
 before, no line differing. FreeCAD's Python suite 4388 OK in 31
