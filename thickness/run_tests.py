@@ -1219,6 +1219,18 @@ for _name, _shape, _face, _value, _volume in (
 # level 5.
 thickness_case("tube_fillet_f4_out1_flush_rim", _probe1.SHAPES["tube_fillet"](), 4, 1.0, "pass",
                1499.2407, fix_level=5)
+# Just under it the two tubes are apart, by 0.0002 and by 0.00002, and each
+# ends on the removed face: the answer with the tubes, as at every level
+# before 5. Level 5 took two tubes within a thousandth of the thickness for
+# touching, refused them and answered without tubes (1499.0837, 1499.2250);
+# within ten times the tolerance now. 1701.4929 is on the line of 1699.7484
+# at 0.999 and 1700.7175 at 0.9995.
+# (The two rims on the removed face are that far apart: the check for loose
+# ends allows it.)
+for _value, _volume in ((0.9999, 1701.4929), (0.99999, 1701.6673)):
+    thickness_case("tube_fillet_f4_out%s_tubes_apart" % repr(_value),
+                   _probe1.SHAPES["tube_fillet"](), 4, _value, "pass", _volume,
+                   loose_ok=2.5 * (1.0 - _value), fix_level=5)
 
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs

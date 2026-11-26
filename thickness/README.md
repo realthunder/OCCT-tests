@@ -6625,6 +6625,62 @@ the thickness bench 48.14, 47.83, 48.44, 47.93, 47.90 s before and
 1.71 s and 1.69, 1.68, 1.71 s; the corpus at level 5 448.0, 444.9 s and
 446.9, 446.4 s; at level 4 415.3, 415.5 s and 417.0, 414.4 s.
 
+## Tubes that are apart are not tubes that touch (`ac48b359aa`, level 5, 2026-11-26, sec 112)
+
+The scan's list of volumes out of line has the tube's flat top between
+its fillets, 2 wide, removed outward (`tube_fillet`, face 4): 1605.3510
+at 0.95, 1499.2407 at 1, 1798.1287 at 1.05. At 1 the tubes round the
+top's two edges touch, and the answer is the one without tubes (sec
+100, sec 104). But it was that answer from 0.9999 on, where level 4
+has the one with the tubes: 1499.0837 for 1701.4929 at 0.9999,
+1499.2250 for 1701.6673 at 0.99999.
+
+**The cause.** From fix level 5 two tubes of one removed face that pass
+through each other or just touch are refused (sec 78), and the thick
+solid is made another way. They were taken for touching where a point
+of one's edge on the face is nearer than the thickness and a thousandth
+of it to the other's edge. At 0.9999 the two tubes are 0.0002 apart,
+each ends on the face, and nothing is wrong with the answer.
+
+**The fix.** From level 5 the margin is ten times the tolerance.
+Below it nothing is refused and the margin, which finds the pairs to
+cut by each other in the last attempt, is as it was.
+
+**What is made.** 1701.4929, 1701.6673 and 1701.6848 at 0.9999,
+0.99999 and 0.999999, on the line of 1699.7484 at 0.999 and 1700.7175
+at 0.9995 and the same as level 4's.
+
+**What is left.** At 1 exactly, and to 1.0001, the answer without
+tubes still (1499.2407 to 1499.3977); with the tubes it is from 1.0005
+(1702.6550, sealed). At 1 there is no sound solid with the tubes: they
+meet on the removed face along a circle, the closed offset touches the
+part's skin there, and the wall is of no thickness along it (tried:
+the two tubes' ends made one edge and the offset closed, valid, and
+through itself by `IsSoundSolid`). At 1.0001 the last attempt cuts each
+tube by the other and the solid is not sound; not looked into.
+
+**The cases** (level 5): `tube_fillet_f4_out0.9999_tubes_apart` and
+`tube_fillet_f4_out0.99999_tubes_apart`; the first allows the loose
+ends its two rims are, 0.0002 apart. Both have the volume without
+tubes on the libraries before.
+
+**Validation** (against sec 111's last gate, on Linux): thickness
+PASS=1107 (1105 + 2) at level 5; at levels 0, 3 frozen, 4 and at 5
+frozen the gate ran before the first case allowed its loose ends,
+PASS=1106 and that case failing by them, every other case line the
+same; boolean 114, draft 105, the fillet suite PASS=962 XFAIL=1, each
+the same frozen; the corpus at levels 0, 4 and 5, the sweep at 0 and 5,
+the probe at 0 and 5 and turned, the scans and the NURBS bench as
+before, no line differing. FreeCAD's Python suite 4388 OK in 31
+modules. Not run: macOS.
+
+**The cost**, old and new by turns: the thickness bench 48.12, 48.12,
+48.24 s before and 48.21, 47.71, 48.22 s now; the cup's 105 runs 1.58,
+1.61, 1.58 s and 1.60, 1.61, 1.59 s; the corpus at level 5 448.7,
+447.8 s and 446.0, 450.3 s, the box otherwise idle.
+Level 4, where nothing changed, was timed beside another session's
+tests and is not given.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
