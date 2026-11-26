@@ -6530,9 +6530,9 @@ radius t round the removed wall's edge at (10, 11) -- integrates to
 random points that are inside where they are in the tube and within the
 thickness of a face kept: none differs.
 
-**What is left.** Within 1e-5 of the radius, refused still. (The inner
-wall removed was refused to 1.0013 for another cause: see the follow-up
-below.)
+**What is left.** Within 1e-5 of the radius, refused still: see the
+second follow-up below. (The inner wall removed was refused to 1.0013
+for another cause: the first follow-up.)
 
 **The cases** (level 5): `tube_fillet_f1_in1.0005_hair_over_radius`,
 `_f3_in1.0005_`, `_f1_in1.0001_` and
@@ -6588,6 +6588,42 @@ The cost, old and new by turns: the thickness bench 48.13, 48.77,
 1.59, 1.59 s and 1.62, 1.59, 1.58 s; the corpus at level 5 444.9,
 447.2 s and 447.9, 448.5 s; at level 4 415.2, 418.6 s and 415.2,
 417.3 s.
+
+**Within 1e-5 of the radius (`d017e4459f`, the second follow-up).** The
+retry's distance is 1e-5, and within 1e-5 of the radius the two vertices
+it must tell apart are closer than that. Refused so, the attempt is made
+a third time with the loops' distance at `Precision::Confusion()`; what
+the first distance made stays as it was made. The tube's bottom and its
+two fillets removed (faces 3, 2, 6) are made at 1e-5 and 1e-6 over the
+radius: the bottom 1285.3405 and 1285.3296, on the line of 1285.3284 at
+the radius and 1285.4491 at 1.0001; the fillets 1385.8714 and 1385.8606,
+sealed. Six results, each held to 1500 random points: none differs.
+
+Left: every face at 1e-7 over the radius, and the walls removed (faces
+1 and 5) within 1e-5. Their cause is not found: every attempt ends with
+the removed face's rim alone, at any distance of the loops, and
+`BRepOffset_Inter2d`'s least tolerance of 1e-5 made smaller changed
+nothing.
+
+The cases (level 5): `tube_fillet_f3_in1.00001_hair_over_radius`,
+`tube_fillet_f3_in1.000001_hair_over_radius` and
+`tube_fillet_f2_in1.00001_hair_over_radius_sealed`. All three are
+refused on the libraries before.
+
+Validation (against the first follow-up's gate, on Linux): thickness
+PASS=1105 (1102 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5
+with every input frozen; boolean 114, draft 105, the fillet suite
+PASS=962 XFAIL=1, each the same frozen; every other case line the same;
+the corpus at levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0
+and 5 and turned, the scans and the NURBS bench as before. FreeCAD's
+Python suite 4388 OK in 31 modules. Not run: macOS.
+
+The cost, old and new by turns, the box otherwise idle (a first run
+beside another session's tests scattered by 10 s and is not counted):
+the thickness bench 48.14, 47.83, 48.44, 47.93, 47.90 s before and
+48.02, 47.21, 48.34, 47.87, 47.90 s now; the cup's 105 runs 1.68, 1.68,
+1.71 s and 1.69, 1.68, 1.71 s; the corpus at level 5 448.0, 444.9 s and
+446.9, 446.4 s; at level 4 415.3, 415.5 s and 417.0, 414.4 s.
 
 ## Determinism cases (intersection mode, Arc join)
 

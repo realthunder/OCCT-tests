@@ -3758,6 +3758,16 @@ for _t, _vol in ((-1.0005, 1009.5920), (-1.0013, 1010.2901)):
 _tube = _probe1.SHAPES["tube_fillet"]()
 _sealed_at_level5_case("tube_fillet_f6_in1.0005_hair_over_radius_sealed", _tube, 6, -1.0005,
                        (_tube.Volume, _tube.Volume - 1386.4625))
+# Within 1e-5 of the radius the two vertices are closer than that retry's
+# distance: refused so, the attempt is made a third time with the loops'
+# distance at Precision::Confusion(). The bottom and the fillets removed are
+# made to 1e-6 over the radius (the walls removed are refused there still).
+for _name, _t, _vol in (("1.00001", -1.00001, 1285.3405), ("1.000001", -1.000001, 1285.3296)):
+    thickness_case("tube_fillet_f3_in%s_hair_over_radius" % _name, _probe1.SHAPES["tube_fillet"](), 3,
+                   _t, "pass", _vol, fix_level=5)
+_tube = _probe1.SHAPES["tube_fillet"]()
+_sealed_at_level5_case("tube_fillet_f2_in1.00001_hair_over_radius_sealed", _tube, 2, -1.00001,
+                       (_tube.Volume, _tube.Volume - 1385.8714))
 
 
 counts = {}
