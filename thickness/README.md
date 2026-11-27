@@ -6976,6 +6976,74 @@ about one percent. With the validity looked at before the far edges
 (`a268ede697` alone) it was 51.50, 51.29, 50.01 s for 49.25, 49.44,
 48.81 s: 0.002 to 0.013 s more on every run made.
 
+## The skin of a hollow part with a pit in the removed face (`81f04cfd7f`, level 5, 2026-11-28, sec 117)
+
+The box with all twelve edges filleted 2 (`box_all12`) has eight
+corners alike, each a piece of a sphere between three fillets. In
+the scan a corner removed 1.35 inward was 2375.4048 at three corners,
+2375.2525 at four and refused at one; outward 3014.0137 at one and
+3013.9983 at seven.
+
+**What happens there.** The corner is tangent to all three fillets
+round it, so the wall ends in the tubes round its three edges. Its
+middle is 1.21 from each edge: from that thickness the tubes cover
+the corner whole, the walls close over it, and the answer is the part
+hollow with no way in, the corner left whole.
+
+**The cause.** The three tubes cut each other and the corner into
+pieces, and which pieces the loops keep is another at one corner than
+at the next -- all eight answer in the first attempt, by the same
+way. Where the corner's pieces came out a shell of their own they
+were dropped and the skin was the part; where they stayed joined to
+the tubes the skin had a pit in the corner between the three, 0.1523
+of the part gone inward and 0.0153 added outward. The hollow was the
+same and right at all of them (3429.2913 at 1.35 inward: by 1195
+points in its corner none wrong).
+
+Two rules that refuse such an answer were tried first and dropped:
+one by the distance of the answer's faces from the faces that stay
+(it refused about a thousand answers of the scan that are right --
+in a sealed or pocketed answer not every face of the hollow is at
+the thickness), one by the tubes covering the removed face (the
+attempts that follow a refusal made nothing better of it).
+
+**The fix.** From level 5, with the Arc join and one face removed:
+where the answer has two shells, the one with the part's faces in it
+is not of the part's volume, every edge of the removed face is
+tangent to the face across it, and every point of the removed face
+(a grid of 9 by 9) is nearer than the thickness, less a hundredth,
+to one of its edges -- the shell with the part's faces is replaced by
+the part's own shell. The hollow stays as it was made.
+
+**What it changes**, all of it in the scan at level 5: 26 runs of
+`box_all12`, corners at 1.3 (2), 1.35 (4) and 1.4 (3) inward and at
+1.35 (7), 1.4 (2) and 1.5 (8) outward. After it the eight corners agree at every thickness
+of the scan from 1.3 to 1.5 either way, but for those refused (one
+at 1.35 inward, two each at 1.3, 1.4 and 1.45 outward).
+
+**The cases** (level 5): `box_all12_f10_in1.35_skin_is_the_part`,
+`box_all12_f26_in1.35_...` and `box_all12_f6_out1.35_...`. On the
+libraries before the three have the pit.
+
+**Validation** (against sec 116's gate, on Linux): thickness PASS=1124
+(1121 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen, every other case line the same; boolean 114, draft 105,
+the fillet suite PASS=962 XFAIL=1, each the same frozen; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5 and
+turned and the NURBS bench as before, no line differing; the scan at
+level 5 has the 26 runs and nothing else differing, the scan at level
+0 as before. FreeCAD's Python suite 4388 OK in 31 modules. Not run:
+macOS.
+
+**The cost**, old and new by turns, the box otherwise idle: the
+thickness bench 48.73, 49.00, 49.36 s before and 48.23, 49.15, 48.92 s
+now, and by the time of each of its 896 runs 48.65 s before and
+48.27 s now, no run more than 0.009 s apart. Not measured idle: the
+cup's 105 runs and the corpus, taken while other work loaded the box
+(the corpus at level 5 657, 533 s before and 537, 547 s now, at level
+4 441, 438 s and 434, 430 s); the change adds two volumes to an
+answer of two shells and nothing to any other.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

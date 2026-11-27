@@ -1289,6 +1289,19 @@ for _name, _set, _shape, _face, _value, _volume in (
     _sealed_at_level5_case("%s_walls_closed_no_scrap" % _name, _solid, _face, _value,
                            (_solid.Volume, _solid.Volume - _volume))
 
+# Sec 117: the box with all twelve edges filleted 2, a corner removed 1.35.
+# The tubes round the corner's three edges cover it whole, and the answer is
+# the part hollow with no way in -- but the skin had a pit in the corner at
+# four of the eight corners inward (0.1523 short of the part) and at seven
+# outward (0.0153 over). The skin is the part's own shell now.
+for _name, _face, _value, _volume in (("f10_in1.35", 10, -27 * 0.05, 2375.4048),
+                                      ("f26_in1.35", 26, -27 * 0.05, 2375.4048),
+                                      ("f6_out1.35", 6, 27 * 0.05, 3014.0137)):
+    _solid = _probe1.SHAPES["box_all12"]()
+    _sealed_at_level5_case("box_all12_%s_skin_is_the_part" % _name, _solid, _face, _value,
+                           (_solid.Volume, _solid.Volume - _volume if _value < 0
+                            else _solid.Volume + _volume))
+
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs
 # from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
