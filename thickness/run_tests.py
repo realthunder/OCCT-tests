@@ -1255,6 +1255,15 @@ for _name, _value, _volume in (("1.03", 1.03, 1883.7287), ("1.04", 1.04, 1902.42
     thickness_case("chamfer_1x3_f8_out%s_sphere_past_the_cap" % _name,
                    _probe3.SHAPES["chamfer_1x3"](), 8, _value, "pass", _volume, fix_level=5)
 
+# Sec 116: the same further out. From 1.054 the chamfers' offsets are wholly
+# above the top's plane: the wall ends in the tubes round the chamfers' lower
+# edges, cut by the plane, and the chamfers' offsets are gone. Refused before.
+# The volumes are those of the whole offset cut at the plane, less the part.
+for _name, _value, _volume in (("1.06", 1.06, 1939.8264), ("1.1", 1.1, 2014.7361),
+                               ("1.4", 1.4, 2585.1720)):
+    thickness_case("chamfer_1x3_f8_out%s_tubes_cut_by_the_cap" % _name,
+                   _probe3.SHAPES["chamfer_1x3"](), 8, _value, "pass", _volume, fix_level=5)
+
 # Sec 115: the stadium with its top edge filleted 1.5, a straight fillet
 # removed inward by a little more than 1.148, where the tubes round its two
 # long edges first cover the whole of it: the walls close over the fillet and

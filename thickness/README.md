@@ -6894,6 +6894,88 @@ corpus at level 5 446.1, 447.2 s and 449.5, 448.8 s, at level 4 416.5,
 3.5 s in each turn, under one percent; level 4, which the change does
 not reach, differs by as much one way and the other.
 
+## Far tubes cut by the removed face where the neighbours' offsets pass beyond it (`0ac835bd98`, `a268ede697`, `9463d82efd`, level 5, 2026-11-27, sec 116)
+
+What sec 114 left: the box chamfered 1 down and 3 across
+(`chamfer_1x3`), its top removed outward, refused from 1.054. The
+exact wall by booleans has 47 faces to 1.05, 39 at 1.054 and 35 from
+1.055.
+
+**What happens there.** A chamfer's lower edge is 1 below the top and
+0.316 of the thickness out from it, 0.949 up: from 1.054 the offset
+of the chamfer lies wholly above the top's plane. The wall then ends
+in the tube round the chamfer's lower edge, where the top's plane
+cuts it, and in the spheres at its ends; the chamfer's offset is no
+part of it.
+
+**The cause**, in the retry of sec 114 once it was tried after a
+refusal (it ran after an invalid answer only): the section of the
+plane with such a tube was oriented as the section of two offset
+faces across an edge is, and of the tube the part above the plane was
+kept, the part below, from the side's offset up to the plane, left
+out. And the plane's section with the chamfer's offset, a line
+outside the tube's, stayed among the rim's edges: the rim was the
+strip between the two lines and the opening's own border hung.
+
+**The fix.** From level 5 the retry runs after a refusal too, where
+a far edge or vertex is within the thickness of a removed face's
+surface, as before, and the offset of a face beside a removed face,
+a plane, lies wholly beyond that plane (each vertex of the
+neighbour, moved by the offset along the neighbour's normal, on the
+far side). In it
+
+- the section keeps, of a far tube or sphere, the part on the
+  solid's side of the removed face;
+- a section of the removed face with a neighbour's offset of which
+  no point (of nine) is at the thickness from the shape is
+  forgotten, in the removed face and in the neighbour's offset.
+
+Refused so too, the refusal stands as it was. The second condition
+is for the cost: after every refusal with a far edge in reach, two
+refusals of #613's part in the corpus took 30.6 and 31.3 s for 12.9
+and 13.9 s, and nothing was made there.
+
+**What is made.** The top of `chamfer_1x3` from 1.06 outward, and in
+the scan 41 runs that were refused: that top at 1.1 to 1.5 (9), and
+four sides of the box chamfered 2 down and 1 across (`chamfer_2x1`,
+faces 1, 2, 5 and 6) at 1.15 to 1.5 (32). Each of the 41 against the
+whole offset cut at the removed face's plane, less the part: the
+same volume to four decimals, the same count of faces, and the two
+solids differing by 0.000009 at most.
+
+**Left.** 1.054 and 1.055 are refused: at 1.054 the chamfer's offset
+dips 0.00005 under the plane, a sliver the exact wall has 4 more
+faces for.
+
+**The cases** (level 5): `chamfer_1x3_f8_out1.06_...`, `..._out1.1_...`
+and `chamfer_1x3_f8_out1.4_tubes_cut_by_the_cap`. All three are
+refused on the libraries before.
+
+**Validation** (against sec 115's gate, on Linux): thickness PASS=1121
+(1118 + 3) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen, every other case line the same; boolean 114, draft 105,
+the fillet suite PASS=962 XFAIL=1, each the same frozen; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at 0 and 5 and
+turned and the NURBS bench as before, no line differing; the scan at
+level 5 has the 41 runs and nothing else differing (its third set
+made 2242, refused 38, for 2201 and 79), the scan at level 0 as
+before. The 41 again against the exact wall, the thickness suite at
+levels 0 and 5 and the cost on the last build. FreeCAD's Python suite
+4388 OK in 31 modules (run on the merge with the DE commits of
+`160593461e`, before the two later commits, which change no answer).
+Not run: macOS.
+
+**The cost**, old and new by turns, the box otherwise idle: the
+thickness bench 49.23, 48.24, 48.66 s before and 49.54, 48.52, 49.39 s
+now; the cup's 105 runs 1.67, 1.65, 1.66 s and 1.68, 1.70, 1.73 s; the
+corpus at level 5 479.6, 470.0 s and 463.2, 451.5 s, at level 4 414.8,
+415.5 s and 415.0, 418.1 s (the cup and the corpus before the last
+commit, which only takes work away; the box was not idle during the
+level 5 turns). The bench is slower by 0.3 to 0.7 s in each turn,
+about one percent. With the validity looked at before the far edges
+(`a268ede697` alone) it was 51.50, 51.29, 50.01 s for 49.25, 49.44,
+48.81 s: 0.002 to 0.013 s more on every run made.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
