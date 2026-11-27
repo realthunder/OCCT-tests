@@ -1255,6 +1255,31 @@ for _name, _value, _volume in (("1.03", 1.03, 1883.7287), ("1.04", 1.04, 1902.42
     thickness_case("chamfer_1x3_f8_out%s_sphere_past_the_cap" % _name,
                    _probe3.SHAPES["chamfer_1x3"](), 8, _value, "pass", _volume, fix_level=5)
 
+# Sec 115: the stadium with its top edge filleted 1.5, a straight fillet
+# removed inward by a little more than 1.148, where the tubes round its two
+# long edges first cover the whole of it: the walls close over the fillet and
+# the part is hollow with no way in. Refused from 1.148 to 1.155, where three
+# scraps of the tube round the fillet's end stayed on the hollow's shell; made
+# from 1.1555. The results agree with the distance to the faces that stay at
+# 2600 random points each.
+for _name, _face, _value, _volume in (("f3_in1.15", 3, -1.15, 1052.4618),
+                                      ("f10_in23x0.05", 10, -23 * 0.05, 1052.4618),
+                                      ("f3_in1.154", 3, -1.154, 1055.5149)):
+    _stadium = _probe1.SHAPES["stadium"]()
+    _sealed_at_level5_case("stadium_%s_walls_closed_over_the_fillet" % _name, _stadium, _face,
+                           _value, (_stadium.Volume, _stadium.Volume - _volume))
+# So is the box with all twelve edges filleted 1.5, a side removed 1.25
+# inward (refused from 1.25 to 1.3 before), and the box with its four top
+# edges filleted, a top fillet removed 1.5 inward: that one was made, with a
+# scrap of a tube left in the hollow (2761.2478; a point 1.531 from the faces
+# that stay read as wall).
+for _name, _set, _shape, _face, _value, _volume in (
+        ("box_all12_f10_in1.25", _probe1, "box_all12", 10, -1.25, 2220.0542),
+        ("box_top1_f3_in1.5", _probe1, "box_top1", 3, -1.5, 2760.1575)):
+    _solid = _set.SHAPES[_shape]()
+    _sealed_at_level5_case("%s_walls_closed_no_scrap" % _name, _solid, _face, _value,
+                           (_solid.Volume, _solid.Volume - _volume))
+
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs
 # from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
@@ -3104,7 +3129,24 @@ def tube_fillet_input_kept(name):
 
 def _tube_fillet_cases():
     shape, outer, inner, bottom = _tube_fillet()
-    own_refusal_case("tube_fillet_inner_in1_join_refused", shape, [inner], -1.0, False, 2)
+    # (Refused with the Intersection join until sec 115; from level 5 it is
+    # the Arc join's sealed answer, 1385.8594.)
+    own_refusal_case("tube_fillet_inner_in1_join_refused", shape, [inner], -1.0, False, 2,
+                     fix_level=4)
+    shape, outer, inner, bottom = _tube_fillet()
+    previous = set_offset_fix_level(5)
+    try:
+        r = shape.makeThickness([shape.Faces[inner - 1]], -1.0, 1e-7, False, False, 0, 2)
+        problems = [] if r.isValid() and len(r.Shells) == 2 else ["invalid or not two shells"]
+        if abs(r.Volume - 1385.8594) > RELTOL * 1385.8594:
+            problems.append("vol=%.4f" % r.Volume)
+        report("tube_fillet_inner_in1_join_sealed_level5", not problems, False,
+               "; ".join(problems) if problems else "vol=%.4f, two shells" % r.Volume)
+    except Exception as e:
+        report("tube_fillet_inner_in1_join_sealed_level5", False, False,
+               "EXCEPTION " + str(e).strip().splitlines()[-1][:80])
+    finally:
+        set_offset_fix_level(previous)
     tube_fillet_input_kept("tube_fillet_outer_in1_join_input_kept")
     shape, outer, inner, bottom = _tube_fillet()
     # (Refused at level 5 until sec 104: the two tubes close over the fillet,

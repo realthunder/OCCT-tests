@@ -6805,6 +6805,95 @@ and 1.61, 1.60, 1.60 s; the corpus at level 5 448.8, 446.5 s and
 448.4, 447.9 s, at level 4 418.5, 414.2 s and
 415.2, 415.9 s.
 
+## Scraps of a tube on the shell of a hollow (`366971678f`, level 5, 2026-11-27, sec 115)
+
+The scan refused the stadium with its top edge filleted 1.5
+(`stadium`), a straight fillet, face 3 or 10, removed 1.15 inward,
+between results at 1.1 and at 1.2. In finer steps: made to 1.146 with
+32 faces, refused from 1.148 to 1.155, made from 1.1555 with 23.
+
+**What happens there.** The fillet is tangent to both its
+neighbours, so the wall beside it ends in the tubes round its two
+long edges. The middle of the fillet is 1.14805 from either edge:
+past that the two tubes cover the whole fillet, the walls close over
+it, and the answer is the part hollow with no way in, the removed
+face left whole (sec 104). That answer is put together with every
+pair of faces intersected.
+
+**The cause.** A shell is cleared of the faces that hang on it by an
+edge no other face has, but only as long as it keeps a piece of a
+removed face, its rim; otherwise it is left as it came. The hollow's
+shell has no such piece. From 1.148 to 1.155 the tubes cover the
+fillet by less than 0.02, the lines they cut in it reach the tube
+round the fillet's end, and three scraps of that tube stayed on the
+closed shell of the hollow, which was then refused. From 1.1555 the
+scraps are apart from the shell and it was made.
+
+**The fix.** From level 5 a shell that had no piece of a removed
+face to begin with is cleared of its hanging faces too, as long as
+any face is left.
+
+**What it changes**, all of it in the scan at level 5: 94 runs. 81
+refused are made: 16 of the stadium (the two straight fillets at
+1.15 inward, and the end fillets at 1.2 to 1.5 either way), 61 of the
+box with all twelve edges filleted (`box_all12`), 4 of `enclosure`.
+13 runs that were made changed their volume: 6 of the box with one or
+two top edges filleted, a fillet removed 1.45 or 1.5 inward (2684.0368
+is 2682.3697 and so on), and 7 of `box_all12`. Every one of the 94 is
+valid, of two closed shells, and read by the probe's random points
+(in the wall where nearer than the thickness to a face that stays)
+has no point wrong. The 13 by what they were before:
+
+- `box_all12`, a corner removed 1.35 inward (three runs) or outward
+  (one): the shell that should be the part's skin was not the part,
+  0.1523 short of it inward and 0.0153 over outward. It is the part
+  now. The four other corners at 1.35 inward are as they were, with
+  that dent, and seven outward.
+- `box_all12`, a corner removed 1.25, 1.45 and 1.5 inward: one corner
+  of the eight was made and the others refused; all eight are made
+  and equal now, the one's hollow larger by 0.0255 at 1.25.
+- the top fillets at 1.45 and 1.5: the hollow is larger by 1.09 at 1.5
+  (3214.0903 for 3213.0000). Two of these runs had a point wrong
+  before -- 1.531 from the faces that stay and read as wall -- and
+  they were among the scan's volumes out of line, which are 9 for 12.
+
+In several of these the removed face, left whole, comes in two to
+four pieces (the skin of `box_all12` 28 or 30 faces for the part's
+26): the lines the tubes cut in it stay. `tube_fillet`'s inner fillet
+1 inward with the Intersection join, refused, is the Arc join's
+answer now, 1385.8594.
+
+**Left.** At 1.1481, a hair past where the walls close, the stadium
+is made valid and right by points with 26 faces, an edge of it
+ending 0.000108 past its vertex; no other of the runs has a loose
+end, the widest tolerance in them 6e-5.
+
+**The cases** (level 5): `stadium_f3_in1.15_...`,
+`stadium_f10_in23x0.05_...` and `stadium_f3_in1.154_walls_closed_over_the_fillet`,
+`box_all12_f10_in1.25_walls_closed_no_scrap` (all refused on the
+libraries before), `box_top1_f3_in1.5_walls_closed_no_scrap` (the
+hollow 1.09 smaller before) and `tube_fillet_inner_in1_join_sealed_level5`;
+`tube_fillet_inner_in1_join_refused` is held at level 4.
+
+**Validation** (against sec 114's gate, on Linux): thickness PASS=1118
+(1112 + 6) at levels 0, 3 frozen, 4 and 5, and at level 5 with every
+input frozen, every other case line the same; boolean 114, draft 105,
+the fillet suite PASS=962 XFAIL=1, each the same frozen; the corpus at
+levels 0, 4 and 5, the sweep at 0 and 5, the probe at level 0 and
+the NURBS bench as before, no line differing; the probe at level 5,
+plain and turned, has the one `tube_fillet` line; the scan at level 5 has the 94
+runs (made 13262, 11676 and 2201, refused 178, 24 and 79 in its three
+sets, for 255, 28 and 79), the scan at level 0 as before. FreeCAD's
+Python suite 4388 OK in 31 modules. Not run: macOS.
+
+**The cost**, old and new by turns, the box otherwise idle: the
+thickness bench 49.14, 48.13, 48.63 s before and 48.88, 49.11, 48.96 s
+now; the cup's 105 runs 1.56, 1.56, 1.56 s and 1.55, 1.56, 1.60 s; the
+corpus at level 5 446.1, 447.2 s and 449.5, 448.8 s, at level 4 416.5,
+416.9 s and 418.2, 415.0 s. The corpus at level 5 is slower by 1.6 to
+3.5 s in each turn, under one percent; level 4, which the change does
+not reach, differs by as much one way and the other.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,
