@@ -7044,6 +7044,69 @@ cup's 105 runs and the corpus, taken while other work loaded the box
 4 441, 438 s and 434, 430 s); the change adds two volumes to an
 answer of two shells and nothing to any other.
 
+## A hollow that faces the wrong way (level 5, 2026-11-28, sec 118)
+
+The box with all twelve edges filleted 2, a corner removed: from 1.2
+inward and 1.25 outward the tubes round the corner's three edges cover it
+and the answer is a skin and a hollow, two closed shells that share no
+edge. The scan had seven such runs refused among the made ones (f10 at
++1.3, +1.4, +1.45; f12 at -1.35, +1.3, +1.4, +1.45), and a thickness 1e-9
+from a made one was refused as often as not (f10 +1.40 made, +1.400000001
+refused; f12 the other way round).
+
+**The cause.** The solid is glued of the part's faces and the offset's
+(`BRepTools_Quilt`), and the quilt orients each shell by the faces it met
+first: two shells that share no edge each come out one way or the other,
+whatever the other is. With the hollow the same way round as the skin the
+solid counts it as material -- 9233.8 for 2375.4 inward, the part and the
+hollow -- which is invalid, and every later attempt fails too. Which faces
+the quilt meets first follows the loops, and those a comparison below any
+tolerance (a piece of a section against its edge's span, 5e-9 apart in
+parameter): hence the 1e-9. Found by running a made and a refused
+thickness 1e-9 apart side by side and looking for the first difference:
+the loops differ in one wire of one face, the glued solids are the same
+two shells with the same areas, one of them turned.
+
+**The fix.** From fix level 5, where the glued result is several closed
+shells, the largest is the outside and each of the others is turned to
+face the other way from it. One shell, or an open one: nothing is looked
+at.
+
+**What was tried on the way and dropped.** The hollow built another way --
+the part less the whole part's offset, or less the offset of the part with
+the removed face defeatured -- is not the answer the kernel gives beside
+these values (0.04 to 0.05 off inward, 2.7 to 10 outward): either would
+step. And the loops' comparison made tolerant, either way, only moves the
+luck: the flag it sets was not the fault.
+
+**Results.** The scan at level 5: the seven refused runs made, each on the
+line of the values beside it (+1.3 2890.1453 between 2767.2345 and
+3014.0137; -1.35 2375.4048 as the other corners), and one made run moved,
+f12 at +1.25 from 2767.2341 to 2767.2345, the value f10 has. Nothing else
+of the scans differs. Left refused in the scan of this class: the
+stadium's nine islands, another fault -- there the hollow stays joined to
+scraps of the removed fillet by an edge of more than two faces, before any
+orienting.
+
+**Validation** (on Linux, with the first version, which measured a single
+shell too): thickness PASS=1124 at levels 0, 3 frozen, 4 and 5 and at 5
+with every input frozen, before the six cases added here, every case line
+the same as before; boolean 114, draft 105, fillet 984 + 1 XFAIL, each the
+same frozen; the corpus at levels 0, 4 and 5, the sweep at 0 and 5, the
+probe at 0 and 5 and turned, the bench and the NURBS bench: no line
+differing; the scans at level 0 as before, at level 5 the 16 lines above.
+With the version here: thickness PASS=1130 at levels 0, 4 and 5 and at 5
+frozen; on the libraries before, the six new cases fail (refused) and
+nothing else differs; the scan of the box and the stadium at level 5 line
+for line as the first version's; FreeCAD's Python suite 4388 OK (FreeCAD
+branch OcctFix at 67936c97e3, not main). Not run: macOS.
+
+**The cost**, old and new by turns, the thickness bench of 896 runs at
+level 5: 48.56, 49.39, 49.61 s before and 50.04, 49.27, 49.03 s now (load
+1 to 2.5 from other jobs). The first version measured the volume of a
+single shell too and cost 4 % (49.17, 49.45, 49.10 before; 51.64, 51.42,
+50.85): two volumes now where the result is two shells, nothing else.
+
 ## Determinism cases (intersection mode, Arc join)
 
 `arc_inter_boss_same_every_run`, `arc_inter_lbox_same_every_run`,

@@ -1302,6 +1302,24 @@ for _name, _face, _value, _volume in (("f10_in1.35", 10, -27 * 0.05, 2375.4048),
                            (_solid.Volume, _solid.Volume - _volume if _value < 0
                             else _solid.Volume + _volume))
 
+# Sec 118: the same box, a corner removed, where the walls close over it: a
+# skin and a hollow that share no edge. The quilt oriented each by the faces
+# it met first, and the hollow faced in or out by their order -- a thickness
+# 1e-9 away went the other way: the hollow counted as material, 9233.8 for
+# 2375.4, invalid and refused. The largest shell is the outside now, the
+# others turned the other way. Refused before; the volumes lie on the line of
+# the values beside them.
+for _name, _face, _value, _volume in (("f12_in1.35", 12, -27 * 0.05, 2375.4048),
+                                      ("f10_out1.3", 10, 26 * 0.05, 2890.1453),
+                                      ("f10_out1.4+1e-9", 10, 1.400000001, 3138.8433),
+                                      ("f12_out1.4", 12, 28 * 0.05, 3138.8433),
+                                      ("f10_out1.45", 10, 29 * 0.05, 3264.6377),
+                                      ("f12_out1.45", 12, 29 * 0.05, 3264.6377)):
+    _solid = _probe1.SHAPES["box_all12"]()
+    _sealed_at_level5_case("box_all12_%s_hollow_faces_in" % _name, _solid, _face, _value,
+                           (_solid.Volume, _solid.Volume - _volume if _value < 0
+                            else _solid.Volume + _volume))
+
 # Sec 101: a plate with a slot, the rounded end of the slot removed. The end
 # is half a cylinder, and the one that lies across the cylinder's seam runs
 # from -pi/2 to pi/2 once the two halves the seam cut are one face again. The
