@@ -3777,9 +3777,43 @@ for _es in ([2, 5], [7, 21]):
 # (#474's is made by level 4, by the plate: the last computation, below --
 # and at every level under it since 2026-11-28, when the levels that made
 # nothing began going on to it: issue474_coil_run_on_chamfer_e17_e20_0.3)
-refused_case("issue962_four_sharp_edges_chamfer_e50_e51_1", _arm962c, [50, 51], 1, chamfer=True)
-refused_case("issue631_four_sharp_edges_chamfer_e9_e16_1", sweep_shape("issue631_Fillet"), [9, 16],
-             1, chamfer=True)
+# (the set back is not tried there still; the two are made one after the
+# other since 2026-11-28, below)
+# Two chamfers the builder refuses at a vertex of four sharp edges, made
+# one after the other (BRepFilletAPI_MakeChamfer, 2026-11-28): each on what
+# the other left of its edges, in the order given and in the reverse, as
+# two chamfer features in a row. #962's tooth (its top, its upright, the
+# slope's edge and the short foot of the next face), #631's wedge, #474's
+# coil at its end. Refused before at every level. Against the two edges
+# chamfered by themselves each result changes no more, and no farther from
+# the edges: where the two meet, each ends on the other.
+for _name, _shape, _es, _d, _vol in (
+        ("issue962_tooth_top_and_upright", _arm962c, [48, 49], 1, 11697.3697),
+        ("issue962_tooth_top_and_slope", _arm962c, [48, 66], 1, 11688.3784),
+        ("issue962_tooth_upright_and_slope", _arm962c, [49, 66], 1, 11684.7052),
+        ("issue962_four_sharp_edges", _arm962c, [50, 51], 1, 11697.2637),
+        ("issue962_f_tooth_upright_and_slope", _arm962f, [52, 74], 1, 11571.0129),
+        ("issue631_four_sharp_edges", sweep_shape("issue631_Fillet"), [9, 16], 0.3, 41870.9440),
+        ("issue631_four_sharp_edges", sweep_shape("issue631_Fillet"), [9, 16], 1, 41873.6999),
+        ("issue631_four_sharp_edges", sweep_shape("issue631_Fillet"), [21, 23], 1, 41868.0353),
+        ("issue631_f003_four_sharp_edges", sweep_shape("issue631_Fillet003"), [28, 32], 1,
+         42264.1343),
+        ("issue474_f002_coil_end", sweep_shape("issue474_Fillet002"), [4, 13], 0.3, 1938.8823),
+        ("issue474_f002_coil_end", sweep_shape("issue474_Fillet002"), [4, 13], 1, 1932.9730)):
+    fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
+                _d, "pass", _vol, chamfer=True, vol_tol=1e-3, bop=True)
+# The same at a level below the latest: the chain is made at the latest
+fillet_case("issue962_tooth_upright_and_slope_chamfer_e49_e66_1_level0", _arm962c, [49, 66], 1,
+            "pass", 11684.7052, chamfer=True, vol_tol=1e-3, fix_level=0)
+# Not chained: three contours at a vertex (valid, with slits where the third
+# meets what the first two left); an edge of 0.05 chamfered at 1 with its
+# neighbour (more taken than by the two by themselves, 1.88 for 1.55); and
+# #273's handle, one of the four edges nearly smooth (a vertex of three
+# sharp edges to the builder)
+refused_case("issue962_three_contours_chamfer_e13_e14_e33_e34_1", _arm962c, [13, 14, 33, 34], 1,
+             chamfer=True)
+refused_case("issue962_f_short_edge_chamfer_e4_e13_1", _arm962f, [4, 13], 1, chamfer=True)
+refused_case("issue273_handle_chamfer_e11_e14_1", _h273, [11, 14], 1, chamfer=True)
 # And not before a level above makes the chamfer whole: #631's ellipse at
 # 0.8 is level 1's guide (41501.9498, vertices of 0.00016); set back at
 # level 0 first it was 41502.3346 with vertices of 0.04.

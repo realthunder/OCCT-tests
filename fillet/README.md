@@ -7612,6 +7612,97 @@ and 4, and frozen at 0, 3 and 4, before the four cases added here, and
 fail (not done) and nothing else differs; draft 105; FreeCAD's Python
 suite 4388 OK. Not run: thickness, boolean, the 29 issue models.
 
+## Two chamfers at a vertex of four sharp edges, one after the other (2026-11-28)
+
+At a vertex of four sharp edges and more the builder has no corner for two
+chamfers: the plate's is invalid, and the set back fallback is kept off
+there (4.4 cubes of the size from the two edges alone on #962's tooth, up
+to 4.9 sizes from the vertex). 45 of the 57 pairs the sweeps still refused
+were of this kind.
+
+**What is made.** Where a chamfer of two contours is refused,
+`BRepFilletAPI_MakeChamfer` makes them one after the other, each on what
+the other left of its edges (the edge itself, or the edges that lie along
+it): in the order given and in the reverse. What two chamfer features in a
+row make. The result is kept only where
+
+- the two contours meet at a vertex of four sharp edges or more;
+- each contour is made by itself on the input, and every step makes
+  chamfer faces on the edges it was given;
+- the result's volume is the input's with what each contour takes or adds
+  by itself, to within a quarter of those amounts, and, where both take or
+  both add, no more than by themselves;
+- no edge is looser than the input's or a twentieth of the chamfer;
+- BOP's check finds it not crossing itself (looked at on a copy: frozen,
+  what the result keeps of the input is frozen, and the check found
+  #474's coil crossing itself that it finds clean unfrozen);
+- made in both orders, the two results are the same.
+
+It is made at the latest fix level whatever the caller's, as a level that
+makes nothing goes on to the levels above. Contours of one size on either
+face only (the face a second size is measured on is not kept by the
+builder), and two contours only.
+
+**Why one after the other, and not the two alone put together.** The two
+edges each chamfered by itself and put together by booleans is how pairs
+are judged here, and at a vertex of three edges it is the builder's own
+corner. At four edges each chamfer by itself ends at the vertex in its own
+way (#962's slope edge runs on over the wall), and put together the ends
+stay as fins and knots beside the other chamfer (pictures looked at:
+#962 E49 with E66, E48 with E66; #631 E9 with E16, a tooth 0.07 cubes
+standing out). One after the other each ends on the other.
+
+**What was tried and dropped.** Chained wherever a chamfer of several
+contours is refused, 98 cases of the sweep were made, valid and clean by
+BOP's check, and about half of them wrong: one took 139 where the two by
+themselves take 6.5 (#474's coil at its block); 45 had a contour that
+cannot be made by itself left unchamfered. With each contour made by
+itself required, three contours at a vertex still came out with slits and
+undercuts (every edge of a vertex of four on the mini shapes and #962).
+At a vertex of three sharp edges it made #309's tab and plate edges past
+the size of 1 where the set back stops, another shape 0.8 cubes of the
+size from where the results below 1 lead, and at 1.02 the same two edges
+mirrored came out 12747.34 one way and 12745.98 the other.
+
+**What changes.** The chamfer sweeps at levels 0 and 4 at the vertices
+(12242 cases) and at level 4 at the edges (3921): 32 pairs at the vertices
+refused before and made now, the same at both levels, not another line
+different -- 24 on #962's tooth (both shapes), 6 on #631's wedge, 2 on
+#474's Fillet002. Each measured against its two edges chamfered alone:
+what it takes and adds is no more than their sum, no farther from the
+edges, and both edges are off the result. 25 of the 57 pairs stay refused:
+no order makes them, or a term above is not met.
+
+**History.** The class takes no member, so the history of the two
+computations is kept in a `TopOpeBRepBuild_HBuilder` of its own in the
+builder's place (`ChFi3d_Builder::SetBuilder`, new, with `InputShape` and
+`ChFi3d_FixLevelLatest`); `Generated`, `Modified` and `IsDeleted` answer
+from it. A FreeCAD chamfer feature on a chained result names its chamfer
+faces from the picked edges as on any other.
+
+**A crash on the way.** `PerformIntersectionAtEnd` looked at a null face at
+a vertex of five edges (#962's arm, the contour of the edge that splits its
+wall by itself at 0.3): reached now by a contour made alone, it crashed
+FreeCAD; it fails.
+
+**What it costs.** Nothing where a chamfer is made, or is of one contour.
+Where two contours at a vertex of four sharp edges are refused, each by
+itself and the chain. Every pair at the vertices, level 4, two rounds by
+turns against the build before, in CPU seconds: #474's Fillet (492 pairs,
+131 refused before and now) 50.7 and 48.5 before, 54.7 and 52.9 with the
+chain at any vertex (not timed again with it kept to four sharp edges);
+#309 (332, 28 refused) 10.8 and 10.9 before, 10.6 and 10.7; #962's Chamfer
+(1480, 186 refused before) 102.5 and 99.3 before, 100.8 and 101.4. Load 6
+to 11 from other jobs while measured. The 57 pairs of the list, the final
+build: 46.2 s before, 44.2 s now with 32 made.
+
+**Validation** (on Linux, merged with origin 785a08b063): fillet PASS=984
++ 1 XFAIL at levels 0, 1, 2, 3 and 4 and frozen at 0 and 4; on the
+libraries before, the 12 new cases that are made fail and nothing else
+differs; draft 105; FreeCAD's Python suite 4388 OK (FreeCAD branch
+OcctFix at 67936c97e3, not main). Not run: thickness, boolean, the 29
+issue models (the change is in TKFillet only).
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
