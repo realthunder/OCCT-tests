@@ -3739,6 +3739,24 @@ for _name, _shape, _es, _d, _vol in (
         fillet_case("%s_chamfer_%s_%g_level4" % (_name, "_".join("e%d" % e for e in _es), _d),
                     _shape, _es, _d, "pass", _built[tuple(_es)], chamfer=True, vol_tol=1e-3,
                     bop=True, fix_level=4)
+# A chamfer made, and taken for one not made: the look at a quarter, a half
+# and three quarters of what the setbacks leave measured the edge's point
+# against every face of the result. #309's tab on its disc, the edge of 2
+# across the plate (concave) with the tab's upright edge (convex), the
+# corner set back by the size: from 0.955 up the point at three quarters is
+# nearer the plate's far side, where the edge ends, than half the chamfer's
+# depth (0.261 for 0.262 at 0.956), and the valid chamfer was refused.
+# From fix level 4 a face of the input that is not one of the edge's two
+# does not count (below it noted as passed over: made by the climb). Still
+# refused past 1, where the setback leaves less of the edge than the size.
+for _es in ([2, 5], [7, 21]):
+    for _d, _vol in ((0.96, 12748.3873), (1, 12747.1094)):
+        fillet_case("issue309_tab_edge_and_plate_edge_chamfer_%s_%g"
+                    % ("_".join("e%d" % e for e in _es), _d), sweep_shape("issue309_shape"),
+                    _es, _d, "pass", _vol, 0.03, chamfer=True, vol_tol=1e-3, bop=True)
+    refused_case("issue309_tab_edge_and_plate_edge_chamfer_%s_1.05"
+                 % "_".join("e%d" % e for e in _es), sweep_shape("issue309_shape"), _es, 1.05,
+                 chamfer=True)
 # Not where the plate made two corners -- the sound one is set back with
 # the other (#474's coil, E17 with E20 at 0.3: 5.8 cubes of the chamfer's
 # size less than the two edges alone put together, up to 13 sizes from the

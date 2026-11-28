@@ -7522,6 +7522,58 @@ boolean 111, draft 105; FreeCAD's Python suite 4388 OK. macOS ran the
 commit before (`4b945b4e7e`): as Linux. Not run: thickness, the 29
 issue models.
 
+## A chamfer made, taken for one not made (fix level 4, 2026-11-28)
+
+**Where it was met.** The chamfer pairs still refused, away from a vertex
+of four sharp edges: #309's tab on its disc, V2 and V7, the edge of 2
+across the plate (concave, between the disc's rim and the tab's side) with
+the tab's upright edge (convex). Made up to 0.954, refused from 0.956.
+
+**What went wrong.** The corner of the two is invalid as the plate makes
+it at every size, and the setback fallback mends it: set back by the
+chamfer's size the result is valid, clean by BOP's check, its edges within
+0.013. The fallback then looks whether each chamfer is there
+(`AreChamfersMade`): at a quarter, a half and three quarters of what the
+setbacks leave of the stripe, the edge's point must be off the result's
+faces by half the chamfer's depth. It measured against every face of the
+result. The edge of 2 ends on the plate's far side, and at 0.956 the point
+at three quarters of the 1.044 left is 0.261 from that side for a limit of
+0.262: a chamfer made all along was taken for one not made, and so at each
+further setback.
+
+**The fix.** Where a point fails that look, it is measured again against
+the faces that can tell: those on no surface of the input (the chamfers,
+the corners' patches) and those on the surfaces of the edge's own two
+faces. A face of the input the edge only ends on does not count. From fix
+level 4; below it the chamfer is refused as before and noted as passed
+over, so that the computation climbs to the level that makes it.
+
+**What it does.** Both pairs are made from 0.956 to 1 (12748.3873 at
+0.96, 12747.1094 at 1). Against the two chamfers made alone and put
+together the results are 0.132 cubic units less at 0.956 and 0.151 at 1,
+as the ones made before are just below (0.110 at 0.9, 0.131 at 0.954):
+0.15 cubes of the size throughout. Past 1 they are refused still, the
+setback leaving less of the edge than the chamfer's size. The chamfer
+sweeps at level 4, 12242 cases at the vertices and 3921 at the edges:
+these two refused cases made, not another line different.
+
+**What it costs.** Nothing on a chamfer the fallback does not set back. One set
+back lists the input's surfaces once a look, and a point that fails is
+measured a second time. Every pair at the vertices of #309, #962's
+Fillet and #474's Fillet002 (2532 chamfers, 553 refused before and 551
+now), three rounds by turns against the build before, in CPU seconds: 275,
+333, 313 before and 261, 334, 316 now. Measured beside another session's
+jobs (load 5 to 9), which is the spread between the rounds; no cost shows
+above it.
+
+**Validation** (on Linux): fillet PASS=968 + 1 XFAIL at levels 0, 1 and 2
+and frozen, 967 + 1 at level 4 and frozen at level 4; on the libraries
+before, the four new cases that are made fail and nothing else differs;
+draft 105; FreeCAD's Python suite 4388 OK. At level 3 the suite has five
+failures, the same on the libraries before (#962's tooth, four cases, and
+#474's coil, one: corrections of level 4 that level 3 does not climb to;
+not looked into). Not run: thickness, boolean, the 29 issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |
