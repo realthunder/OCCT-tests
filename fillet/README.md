@@ -7574,6 +7574,44 @@ failures, the same on the libraries before (#962's tooth, four cases, and
 #474's coil, one: corrections of level 4 that level 3 does not climb to;
 not looked into). Not run: thickness, boolean, the 29 issue models.
 
+## Levels below 4 go on to level 4 (2026-11-28)
+
+A computation at a fix level that makes nothing, and passed over a
+correction of a level above (`ChFi3d_FixPassedOver`), is made again at each
+level above in turn. Four of level 4's corrections left no such note: the
+arc that carries a sharp edge on at a corner, the point's place on a sharp
+edge its arc does not meet, each of several plate corners set back alone,
+and the last computation with no step back to a stripe's end. So level 3
+never went on to them, and levels 0 to 2 only where a lower correction
+happened to leave a note: at level 3 this suite had five failures (#962's
+tooth, four chamfers; #474's coil, one) that levels 0 to 2 and 4 did not.
+Each of the four now leaves the note below level 4. Nothing changes at
+level 4, nor in anything a level makes by itself.
+
+**What changes.** The sweeps at levels 0 and 3, chamfers and fillets, at
+the vertices (12242 cases) and the edges (3921), on the libraries before
+and now: 63 chamfers at the vertices at level 3 and 27 at level 0, on
+#474's coil (three shapes) and #962's arm (two), every one refused before
+and made now line for line as level 4 makes it; not another line
+different, and no fillet. `issue474_coil_two_plate_corners_chamfer_e17_e20_0.3`,
+which held that chamfer refused below level 4, is gone: it is level 4's
+1886.6561 at every level now.
+
+**What it costs.** Only at a level below 4, on what it refuses: the
+computation again at the levels above. Every pair of chamfers at the
+vertices of #474's Fillet (492, of them 135 refused at level 0 and 138 at
+level 3 before, 131 now), two rounds by turns, in CPU seconds: at level 0
+44.1 and 44.0 before, 57.7 and 57.7 now; at level 3 35.8 and 36.3 before,
+44.4 and 44.0 now. #309's (332, 28 refused, none changed): 14.4 and 14.2
+before, 14.1 and 14.3 now at level 0; 11.5 and 11.1 before, 11.4 and 11.3
+now at level 3. Load 1 to 4 from other jobs while measured.
+
+**Validation** (on Linux): fillet PASS=967 + 1 XFAIL at levels 0, 1, 2, 3
+and 4, and frozen at 0, 3 and 4, before the four cases added here, and
+971 + 1 at levels 0, 3 and 4 with them; on the libraries before, the four
+fail (not done) and nothing else differs; draft 105; FreeCAD's Python
+suite 4388 OK. Not run: thickness, boolean, the 29 issue models.
+
 ## Known broken (XFAIL)
 
 | Case | Symptom |

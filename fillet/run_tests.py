@@ -3643,6 +3643,18 @@ for _name, _shape, _es, _d, _vol in (
         ("issue474_f003_run_on", sweep_shape("issue474_Fillet003"), [5, 21], 1, 1853.7258)):
     fillet_case("%s_chamfer_%s_%g" % (_name, "_".join("e%d" % e for e in _es), _d), _shape, _es,
                 _d, "pass", _vol, chamfer=True, vol_tol=1e-3, fix_level=4)
+# A level below 4 that makes nothing goes on to level 4 wherever level 4
+# does otherwise (2026-11-28). Four of its corrections left no note of being
+# passed over (ChFi3d_FixPassedOver): level 3 never went on, and level 0
+# only where a lower correction had left one. Refused at level 3 before,
+# each as level 4 makes it.
+for _name, _shape, _es, _d, _vol, _lvl in (
+        ("issue962_tooth_top_and_foot", _arm962c, [48, 72], 1, 11704.9864, 3),
+        ("issue474_coil_upright_and_rim", sweep_shape("issue474_Fillet"), [5, 20], 1, 1752.9626, 3),
+        ("issue474_coil_run_on", sweep_shape("issue474_Fillet"), [17, 20], 0.3, 1886.6561, 3),
+        ("issue474_coil_run_on", sweep_shape("issue474_Fillet"), [17, 20], 0.3, 1886.6561, 0)):
+    fillet_case("%s_chamfer_%s_%g_level%d" % (_name, "_".join("e%d" % e for e in _es), _d, _lvl),
+                _shape, _es, _d, "pass", _vol, chamfer=True, vol_tol=1e-3, fix_level=_lvl)
 # A stripe's end on an arc that does not meet the sharp edge beside it (fix
 # level 4). That arc's parameter was taken as the edge's: #273's handle, two
 # chamfers at 0.3 at a vertex of four edges (E24 with E30), the edge cut 7.86
@@ -3762,10 +3774,9 @@ for _es in ([2, 5], [7, 21]):
 # size less than the two edges alone put together, up to 13 sizes from the
 # vertex) -- nor at a vertex of four sharp edges (#962, E50 with E51 at 1:
 # 4.4 cubes less, up to 4.9 sizes away; #631, E9 with E16: 2.1, up to 3.5).
-# (#474's is made from level 4, by the plate: the last computation, below)
-if int(os.environ.get("FILLET_FIX_LEVEL", "0") or 0) < 4:
-    refused_case("issue474_coil_two_plate_corners_chamfer_e17_e20_0.3",
-                 sweep_shape("issue474_Fillet"), [17, 20], 0.3, chamfer=True)
+# (#474's is made by level 4, by the plate: the last computation, below --
+# and at every level under it since 2026-11-28, when the levels that made
+# nothing began going on to it: issue474_coil_run_on_chamfer_e17_e20_0.3)
 refused_case("issue962_four_sharp_edges_chamfer_e50_e51_1", _arm962c, [50, 51], 1, chamfer=True)
 refused_case("issue631_four_sharp_edges_chamfer_e9_e16_1", sweep_shape("issue631_Fillet"), [9, 16],
              1, chamfer=True)
